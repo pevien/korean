@@ -1,0 +1,1725 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hangul Cards">
+<meta name="theme-color" content="#4f46e5">
+<title>Hangul Cards</title>
+<style>
+:root{
+  --bg:#f6f7fb; --card:#ffffff; --text:#1d2033; --muted:#6b7090; --line:#e3e5ef;
+  --accent:#4f46e5; --accent-soft:#eceafe; --ok:#15935b; --ok-soft:#e3f6ec;
+  --bad:#d93a3a; --bad-soft:#fdeaea; --warn:#b7791f; --radius:16px;
+  --shadow:0 2px 10px rgba(20,24,60,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#12131a; --card:#1c1e28; --text:#eceef7; --muted:#9a9fbd; --line:#2c2f3d;
+    --accent:#8b83ff; --accent-soft:#2a2850; --ok:#3ecf8e; --ok-soft:#173327;
+    --bad:#ff6b6b; --bad-soft:#3a1d1f; --warn:#f0b35a; --shadow:none;}
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  -webkit-text-size-adjust:100%}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+.wrap{max-width:560px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
+header h1{font-size:20px;margin:0}
+.pill{font-size:12px;color:var(--muted);background:var(--card);border:1px solid var(--line);padding:4px 10px;border-radius:99px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+h2{font-size:16px;margin:0 0 10px}
+.muted{color:var(--muted)} .small{font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:11px;color:var(--muted)}
+button{font:inherit;cursor:pointer;border:none;border-radius:12px;padding:12px 16px;font-weight:600}
+.btn{background:var(--accent);color:#fff;width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+.btn2{background:var(--accent-soft);color:var(--accent)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn-danger{background:var(--bad-soft);color:var(--bad)}
+.row{display:flex;gap:8px;align-items:center}
+.row > *{flex:1}
+input,textarea,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);
+  border-radius:12px;padding:12px;width:100%}
+textarea{min-height:120px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:10}
+nav .in{display:flex;max-width:560px;width:100%}
+nav button{flex:1;background:none;color:var(--muted);border-radius:0;padding:10px 4px 12px;font-size:12px;font-weight:500}
+nav button .ic{display:block;font-size:20px;line-height:1.2}
+nav button.on{color:var(--accent)}
+.hidden{display:none!important}
+/* study */
+.qwrap{text-align:center;padding:22px 16px}
+.qtype{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.ko{font-size:44px;font-weight:700;line-height:1.2;word-break:keep-all}
+.mean{font-size:22px;font-weight:600}
+.speak{background:var(--accent-soft);color:var(--accent);border-radius:99px;width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
+.speak.big{width:96px;height:96px;font-size:40px}
+.speak.sm{width:40px;height:40px;font-size:17px;margin:0}
+.choices{display:grid;gap:8px;margin-top:16px}
+.choice{background:var(--bg);color:var(--text);border:1px solid var(--line);text-align:left;font-weight:500;display:flex;gap:10px;align-items:center}
+.choice .k{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.choice.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.choice.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.feedback{margin-top:14px;padding:12px;border-radius:12px;text-align:left}
+.feedback.ok{background:var(--ok-soft);color:var(--ok)}
+.feedback.bad{background:var(--bad-soft);color:var(--bad)}
+.grades{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.grades button small{display:block;font-weight:400;font-size:11px;opacity:.8}
+.progress{height:6px;background:var(--line);border-radius:9px;overflow:hidden;margin-bottom:12px}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.newtag{display:inline-block;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;margin-bottom:10px}
+/* list */
+.wl{list-style:none;margin:0;padding:0}
+.wl li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.wl li:last-child{border-bottom:none}
+.wl .t{flex:1;min-width:0}
+.wl .t b{font-size:18px}
+.wl .t div{font-size:14px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{font-size:11px;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.b-new{background:var(--accent-soft);color:var(--accent)}
+.b-learn{background:#fff4e0;color:var(--warn)}
+.b-master{background:var(--ok-soft);color:var(--ok)}
+@media (prefers-color-scheme: dark){.b-learn{background:#3a2e17}}
+.icon-btn{background:none;color:var(--muted);padding:6px 8px;font-size:16px}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tabs button{background:var(--card);border:1px solid var(--line);color:var(--muted);padding:8px 12px;font-size:14px;font-weight:500}
+.tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.prev{display:grid;grid-template-columns:24px 1fr 1fr 32px;gap:6px;align-items:center;margin-bottom:6px}
+.prev input[type=text]{padding:8px}
+.prev input[type=checkbox]{width:18px;height:18px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));background:var(--text);color:var(--bg);
+  padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%}
+.toast.show{opacity:1}
+.check{display:flex;align-items:center;gap:10px;padding:6px 0;color:var(--text);font-size:15px;margin:0}
+.check input{width:20px;height:20px}
+.drop{border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted);cursor:pointer}
+.drop img{max-width:100%;max-height:220px;border-radius:8px;margin-top:10px}
+.bar{height:8px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.empty{text-align:center;padding:26px 10px}
+.empty .big{font-size:44px}
+/* examples */
+.ex{margin-top:12px;padding:10px 12px;background:var(--bg);border-radius:12px;text-align:left;display:flex;gap:10px;align-items:flex-start}
+.ex .exk{font-size:17px;line-height:1.5} .ex .exm{font-size:14px;color:var(--muted)}
+.wl .exl{font-size:13px;color:var(--muted);white-space:normal!important;margin-top:2px}
+.prev-ex{grid-column:2 / 4;font-size:12px;color:var(--muted);margin:-2px 0 6px}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:var(--bg);border:1px solid var(--line);color:var(--text);font-weight:500;font-size:13px;padding:6px 10px;border-radius:99px}
+.chip:hover{border-color:var(--accent)}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(10,12,30,.55);z-index:30;display:flex;align-items:flex-end;justify-content:center}
+.modal .sheet{background:var(--card);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+@media (min-width:600px){.modal{align-items:center}.modal .sheet{border-radius:18px}}
+.modal textarea{min-height:90px;font-size:13px}
+.steps{margin:0 0 6px;padding-left:20px;font-size:14px}
+.steps li{margin:4px 0}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* reader */
+.plist{list-style:none;margin:0;padding:0}
+.plist li{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.plist li:last-child{border-bottom:none}
+.plist .t{flex:1;min-width:0}
+.plist .t b{display:block}
+.player{position:sticky;top:0;z-index:5;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:12px;box-shadow:var(--shadow)}
+.pctl{display:flex;gap:8px;justify-content:center;align-items:center}
+.pctl button{background:var(--accent-soft);color:var(--accent);width:48px;height:48px;padding:0;border-radius:99px;font-size:18px}
+.pctl button.main{width:60px;height:60px;background:var(--accent);color:#fff;font-size:24px}
+.popts{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin-top:10px;font-size:13px}
+.popts label{display:flex;align-items:center;gap:6px;margin:0;color:var(--text);font-size:13px}
+.popts input[type=checkbox]{width:16px;height:16px}
+.popts select{width:auto;padding:4px 8px;font-size:13px}
+.turn{text-align:center;font-size:14px;font-weight:600;color:var(--ok);min-height:20px;margin-top:8px}
+.sent{padding:12px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:4px}
+.sent:hover{background:var(--bg)}
+.sent.cur{background:var(--accent-soft);border-color:var(--accent)}
+.sent .sk{font-size:20px;line-height:1.6}
+.sent .sm{font-size:14px;color:var(--muted);margin-top:4px}
+.hidek .sent .sk{filter:blur(7px);transition:filter .2s}
+.hidek .sent.reveal .sk{filter:none}
+.hidem .sent .sm{display:none}
+.hidem .sent.reveal .sm{display:block}
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;background:none;color:var(--muted);padding:8px;font-size:14px;border-radius:9px;font-weight:500}
+.seg button.on{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+/* speaking coach */
+.ctarget{font-size:24px;line-height:1.7;text-align:center;margin-top:8px;word-break:keep-all}
+.ctarget mark{background:var(--bad-soft);color:var(--bad);border-radius:4px;padding:0 1px;text-decoration:underline wavy;text-underline-offset:5px}
+.ctarget mark.warn{background:#fff4e0;color:var(--warn)}
+@media (prefers-color-scheme: dark){.ctarget mark.warn{background:#3a2e17}}
+.ctarget mark sup{font-size:11px;text-decoration:none;margin-left:1px}
+.pctl button.rec.on{background:var(--bad);animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(217,58,58,.5)}70%{box-shadow:0 0 0 14px rgba(217,58,58,0)}100%{box-shadow:0 0 0 0 rgba(217,58,58,0)}}
+.scores{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}
+.scores .stat b{font-size:22px}
+.s-hi b{color:var(--ok)} .s-mid b{color:var(--warn)} .s-lo b{color:var(--bad)}
+.issue{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);text-align:left}
+.issue:last-child{border-bottom:none}
+.issue .n{flex:0 0 22px;height:22px;border-radius:99px;background:var(--bad-soft);color:var(--bad);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.issue .ty{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.box{background:var(--bg);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px;text-align:left}
+.sent .smic{flex:0 0 auto!important;font-size:18px;padding:4px 6px}
+.sent .best{font-size:11px;color:var(--ok);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🇰🇷 Hangul Cards</h1>
+    <span class="pill" id="streakPill">🔥 0 day streak</span>
+  </header>
+
+  <!-- STUDY -->
+  <section id="v-study">
+    <div id="studyHome">
+      <div class="stats" style="margin-bottom:14px">
+        <div class="stat"><b id="sDue">0</b><span>Due now</span></div>
+        <div class="stat"><b id="sNew">0</b><span>New today</span></div>
+        <div class="stat"><b id="sLearn">0</b><span>Learning</span></div>
+        <div class="stat"><b id="sMaster">0</b><span>Mastered</span></div>
+      </div>
+      <div class="card" id="homeCard"></div>
+    </div>
+    <div id="studySession" class="hidden">
+      <div class="row" style="margin-bottom:8px">
+        <span class="small muted" id="sessCount" style="flex:3"></span>
+        <button class="btn-ghost small" style="flex:0 0 auto;padding:6px 12px" id="endBtn">End</button>
+      </div>
+      <div class="progress"><i id="sessBar"></i></div>
+      <div class="card qwrap" id="qBox"></div>
+    </div>
+  </section>
+
+  <!-- ADD -->
+  <section id="v-add" class="hidden">
+    <div class="tabs" id="addTabs">
+      <button data-t="ai" class="on">✨ AI generate</button>
+      <button data-t="one">✏️ Single</button>
+      <button data-t="bulk">📋 Paste list</button>
+      <button data-t="shot">📷 Screenshot</button>
+    </div>
+
+    <div class="card" id="add-ai">
+      <h2>Generate words by topic</h2>
+      <label for="genTopic">Topic</label>
+      <input id="genTopic" type="text" placeholder="e.g. ordering food at a restaurant">
+      <div class="chips" id="genChips"></div>
+      <div class="row" style="margin-top:4px">
+        <div><label for="genLevel">Level</label><select id="genLevel"></select></div>
+        <div style="flex:0 0 96px"><label for="genCount">How many</label><input id="genCount" type="number" min="3" max="40" value="10"></div>
+      </div>
+      <p class="small muted" style="margin:8px 0 12px">Each word comes with an example sentence. Words already in your list are skipped automatically.</p>
+      <button class="btn" id="genBtn">✨ Generate</button>
+    </div>
+
+    <div class="card hidden" id="add-one">
+      <h2>Add a word</h2>
+      <label for="inKo">Korean</label>
+      <div class="row">
+        <input id="inKo" type="text" placeholder="e.g. 사과" autocomplete="off" lang="ko">
+        <button class="speak sm" style="flex:0 0 40px" id="inKoSpeak" title="Listen">🔊</button>
+      </div>
+      <label for="inMean">Meaning</label>
+      <div class="row">
+        <input id="inMean" type="text" placeholder="e.g. apple" autocomplete="off">
+        <button class="btn2" style="flex:0 0 auto" id="autoTr">Auto</button>
+      </div>
+      <p class="small muted" style="margin:6px 0 12px">“Auto” suggests a meaning with free online translation — check it before saving.</p>
+      <button class="btn" id="addOneBtn">Add word</button>
+    </div>
+
+    <div class="card hidden" id="add-bulk">
+      <h2>Paste a word list</h2>
+      <p class="small muted" style="margin-top:0">One word per line. Separate Korean and meaning with <b>-</b>, <b>:</b>, <b>=</b> or a tab. Lines without a meaning get auto-translated.</p>
+      <textarea id="bulkIn" placeholder="사과 - apple&#10;학교 : school&#10;물&#10;감사합니다 = thank you"></textarea>
+      <button class="btn" style="margin-top:10px" id="bulkParse">Preview</button>
+    </div>
+
+    <div class="card hidden" id="add-shot">
+      <h2>From a screenshot</h2>
+      <p class="small muted" style="margin-top:0">Works best with a clear vocabulary list. Text is read on your device (free). The first run downloads the Korean reading model (~10 MB).</p>
+      <div class="drop" id="drop">Tap to choose or take a photo<br><span class="small">or paste an image (Ctrl/Cmd+V)</span><div id="shotImg"></div></div>
+      <input type="file" id="shotFile" accept="image/*" class="hidden">
+      <div id="ocrStatus" class="small muted hidden" style="margin-top:10px"></div>
+      <div class="bar hidden" id="ocrBarWrap"><i id="ocrBar"></i></div>
+    </div>
+
+    <div class="card hidden" id="previewCard">
+      <h2>Review before adding</h2>
+      <p class="small muted" style="margin-top:0">Edit anything that looks wrong. Unticked rows are skipped.</p>
+      <div id="prevList"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn2" id="prevTr">Auto-fill empty meanings</button>
+        <button class="btn" id="prevAdd">Add selected</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- READ -->
+  <section id="v-read" class="hidden">
+    <div id="readHome">
+      <div class="card">
+        <h2>New reading passage</h2>
+        <div class="seg" id="readSrc" style="margin-bottom:6px">
+          <button data-s="ai" class="on">✨ Generate</button>
+          <button data-s="own">📋 My own text</button>
+        </div>
+        <div id="rs-ai">
+          <label for="rdPrompt">What should it be about?</label>
+          <textarea id="rdPrompt" style="min-height:80px" placeholder="e.g. A conversation ordering coffee at a café. Or: a short diary entry about my weekend in Seoul."></textarea>
+          <div class="chips" id="rdChips"></div>
+          <div class="row" style="margin-top:4px">
+            <div><label for="rdLevel">Level</label><select id="rdLevel"></select></div>
+            <div><label for="rdLen">Length</label>
+              <select id="rdLen"><option value="4">Short (~4 sentences)</option><option value="8" selected>Medium (~8)</option><option value="14">Long (~14)</option></select></div>
+          </div>
+          <label class="check" style="margin-top:10px"><input type="checkbox" id="rdUseWords"> Use words I'm learning</label>
+          <button class="btn" style="margin-top:10px" id="rdGen">✨ Generate passage</button>
+        </div>
+        <div id="rs-own" class="hidden">
+          <label for="rdOwnTitle">Title (optional)</label>
+          <input id="rdOwnTitle" type="text" placeholder="My text">
+          <label for="rdOwn">Korean text</label>
+          <textarea id="rdOwn" lang="ko" placeholder="Paste Korean text here. It will be split into sentences."></textarea>
+          <label class="check"><input type="checkbox" id="rdOwnTr" checked> Add translations (free auto-translate)</label>
+          <button class="btn" style="margin-top:10px" id="rdOwnBtn">Open in reader</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>My passages</h2>
+        <ul class="plist" id="passList"></ul>
+      </div>
+    </div>
+
+    <div id="reader" class="hidden">
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn-ghost" style="flex:0 0 auto;padding:8px 12px" id="rdBack">← Back</button>
+        <span></span>
+        <button class="btn-ghost" style="flex:0 0 auto;padding:8px 12px" id="rdDel">🗑️</button>
+      </div>
+      <div class="player">
+        <div class="pctl">
+          <button id="pPrev" title="Previous sentence">⏮</button>
+          <button id="pPlay" class="main" title="Play / pause">▶</button>
+          <button id="pNext" title="Next sentence">⏭</button>
+          <button id="pStop" title="Stop">⏹</button>
+        </div>
+        <div class="popts">
+          <label title="Pause after each sentence so you can repeat it"><input type="checkbox" id="pShadow"> 🎤 Shadow mode</label>
+          <label>Repeat <select id="pRep"><option>1</option><option>2</option><option>3</option></select>×</label>
+          <label>Speed <select id="pRate"><option value="0.6">0.6×</option><option value="0.75">0.75×</option><option value="0.85">0.85×</option><option value="1">1× native</option></select></label>
+          <label><input type="checkbox" id="pShowM" checked> Translation</label>
+          <label><input type="checkbox" id="pHideK"> Hide Korean</label>
+        </div>
+        <div class="turn" id="pTurn"></div>
+      </div>
+      <div class="card hidden" id="coach">
+        <div class="row"><h2 style="margin:0">🎙 Speaking coach</h2><button class="icon-btn" style="flex:0 0 auto" id="cClose" title="Close">✕</button></div>
+        <div class="ctarget" id="cTarget" lang="ko"></div>
+        <div class="small muted" style="text-align:center" id="cTargetM"></div>
+        <div class="pctl" style="margin-top:12px">
+          <button id="cListen" title="Listen to the native model">🔊</button>
+          <button id="cRec" class="main rec" title="Record">🎙</button>
+          <button id="cMine" title="Play my recording" disabled>🎧</button>
+        </div>
+        <div class="turn" id="cStatus"></div>
+        <div id="cResult"></div>
+      </div>
+      <div class="card">
+        <h2 id="rdTitle"></h2>
+        <p class="small muted" id="rdSub" style="margin-top:-6px"></p>
+        <div id="sentList"></div>
+        <p class="small muted" style="margin:8px 0 0">Tap a sentence to play from there. Press space to play/pause.</p>
+      </div>
+      <div class="card" id="rdVocabCard">
+        <h2>Key words</h2>
+        <ul class="wl" id="rdVocab"></ul>
+        <button class="btn2" style="width:100%;margin-top:10px" id="rdAddVocab">➕ Add new words to flashcards</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORDS -->
+  <section id="v-words" class="hidden">
+    <div class="card hidden" id="exPrompt">
+      <div class="row"><span class="small" id="exPromptTxt" style="flex:2"></span><button class="btn2" style="flex:0 0 auto" id="exGenBtn">✨ Add examples</button></div>
+    </div>
+    <div class="card">
+      <input id="search" type="search" placeholder="Search words…">
+      <div class="tabs" id="filterTabs" style="margin:10px 0 4px">
+        <button data-f="all" class="on">All</button>
+        <button data-f="new">New</button>
+        <button data-f="learn">Learning</button>
+        <button data-f="master">Mastered</button>
+      </div>
+      <ul class="wl" id="wordList"></ul>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="v-set" class="hidden">
+    <div class="card">
+      <h2>Study</h2>
+      <label for="setNew">New words per day</label>
+      <input id="setNew" type="number" min="1" max="100">
+      <label>Question types</label>
+      <label class="check"><input type="checkbox" data-mode="ko2m"> Korean → choose meaning</label>
+      <label class="check"><input type="checkbox" data-mode="listen2m"> 🔊 Listen → choose meaning</label>
+      <label class="check"><input type="checkbox" data-mode="m2ko"> Meaning → type Korean</label>
+      <label class="check"><input type="checkbox" data-mode="listen2ko"> 🔊 Listen → type Korean (dictation)</label>
+      <label class="check"><input type="checkbox" id="setAuto"> Auto-play audio for Korean words</label>
+    </div>
+    <div class="card">
+      <h2>Voice</h2>
+      <label for="setVoice">Korean voice <span class="muted">(young-adult voices, most natural first)</span></label>
+      <select id="setVoice"></select>
+      <p class="small muted" id="voiceInfo" style="margin:6px 0 0"></p>
+      <p class="small muted" id="voiceWarn" style="margin:6px 0 0"></p>
+      <label class="check" style="margin-top:6px"><input type="checkbox" id="setAllVoices"> Show all Korean voices</label>
+      <label for="setRate">Speed: <span id="rateVal"></span></label>
+      <div class="seg" id="ratePresets" style="margin-bottom:8px">
+        <button data-r="0.7">🐢 Slow</button><button data-r="0.85">Learner</button><button data-r="1">🇰🇷 Native</button>
+      </div>
+      <input id="setRate" type="range" min="0.5" max="1.2" step="0.05" style="padding:0">
+      <button class="btn2" style="margin-top:10px;width:100%" id="testVoice">🔊 Test: 안녕하세요</button>
+    </div>
+    <div class="card">
+      <h2>AI (free)</h2>
+      <p class="small muted" style="margin-top:0">Used for generating words, example sentences and reading passages.</p>
+      <ol class="steps small">
+        <li><b>With a free Google Gemini key</b> (recommended, one click each time): get one at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> and paste it below.</li>
+        <li><b>Without a key:</b> the app shows a prompt you copy into any free chatbot (Gemini, ChatGPT…), then paste the answer back.</li>
+      </ol>
+      <label for="setKey">Gemini API key</label>
+      <div class="row"><input id="setKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn-ghost" style="flex:0 0 auto" id="keyShow">👁</button></div>
+      <label for="setModel">Model</label>
+      <input id="setModel" type="text" placeholder="gemini-flash-latest">
+      <button class="btn2" style="margin-top:10px;width:100%" id="testAI">Test connection</button>
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="setAutoEx"> Auto-add example sentences to new words (needs key)</label>
+      <p class="small muted" style="margin:6px 0 0">The key stays in this browser only and is never included in exports.</p>
+    </div>
+    <div class="card">
+      <h2>Meaning language</h2>
+      <p class="small muted" style="margin-top:0">Used for meanings, example translations and passage translations.</p>
+      <select id="setLang">
+        <option value="en">English</option>
+        <option value="vi">Vietnamese</option>
+      </select>
+    </div>
+    <div class="card">
+      <h2>Backup</h2>
+      <p class="small muted" style="margin-top:0">Your words are stored only in this browser. Export regularly, or to move to another device.</p>
+      <div class="row">
+        <button class="btn2" id="expBtn">⬇️ Export</button>
+        <button class="btn2" id="impBtn">⬆️ Import</button>
+      </div>
+      <input type="file" id="impFile" accept=".json,application/json" class="hidden">
+      <button class="btn-danger" style="width:100%;margin-top:10px" id="resetBtn">Delete all data</button>
+    </div>
+    <p class="small muted" style="text-align:center">Tip: open this page in your phone browser and use “Add to Home Screen” to use it like an app.</p>
+  </section>
+</div>
+
+<nav><div class="in">
+  <button data-v="study" class="on"><span class="ic">🎯</span>Study</button>
+  <button data-v="read"><span class="ic">📖</span>Read</button>
+  <button data-v="add"><span class="ic">➕</span>Add</button>
+  <button data-v="words"><span class="ic">📚</span>Words</button>
+  <button data-v="set"><span class="ic">⚙️</span>Settings</button>
+</div></nav>
+<div class="toast" id="toast"></div>
+
+<div class="modal hidden" id="helpModal"><div class="sheet"><div id="helpBody"></div>
+  <button class="btn" style="margin-top:12px" onclick="document.getElementById('helpModal').classList.add('hidden')">OK</button></div></div>
+<div class="modal hidden" id="aiModal"><div class="sheet">
+  <h2>Use a free chatbot</h2>
+  <ol class="steps">
+    <li>Copy the prompt below.</li>
+    <li>Paste it into <a href="https://gemini.google.com/app" target="_blank" rel="noopener">Gemini</a>, <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a> or any chatbot.</li>
+    <li>Copy its whole answer and paste it in the second box.</li>
+  </ol>
+  <textarea id="mPrompt" readonly></textarea>
+  <button class="btn2" style="width:100%;margin-top:8px" id="mCopy">📋 Copy prompt</button>
+  <label for="mResp">Chatbot answer</label>
+  <textarea id="mResp" placeholder="Paste the answer here…"></textarea>
+  <div class="row" style="margin-top:10px"><button class="btn-ghost" id="mCancel">Cancel</button><button class="btn" id="mOk" style="flex:2">Use answer</button></div>
+  <p class="small muted" style="margin:10px 0 0">Tip: add a free Gemini key in Settings to skip this step.</p>
+</div></div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const DAY = 86400000, MIN = 60000;
+const KEY = "hangulCards.v1";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayStr = () => { const d = new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const shuffle = a => { for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const HANGUL = /[가-힣ᄀ-ᇿ㄰-㆏]/;
+
+/* ---------------- state ---------------- */
+const defaults = () => ({
+  cards: [],
+  settings: { newPerDay: 10, modes: { ko2m:true, listen2m:true, m2ko:true, listen2ko:false }, autoPlay:true, rate:1, voice:"", allVoices:false, voiceV2:true, lang:"en",
+    apiKey:"", model:"gemini-flash-latest", autoEx:true, level:"b1" },
+  passages: [],
+  daily: { date: todayStr(), newCount: 0, reviews: 0 },
+  streak: { last: "", count: 0 }
+});
+let S = defaults();
+function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) { const d = JSON.parse(raw); S = Object.assign(defaults(), d); S.settings = Object.assign(defaults().settings, d.settings||{}); S.settings.modes = Object.assign(defaults().settings.modes, (d.settings||{}).modes||{}); }
+  } catch(e) { console.warn("load failed", e); }
+  if (S.daily.date !== todayStr()) S.daily = { date: todayStr(), newCount: 0, reviews: 0 };
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){ toast("⚠️ Could not save (storage blocked)"); } }
+
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200); }
+
+/* ---------------- card helpers ---------------- */
+function newCard(ko, meaning, ex, exMean){ return { id: uid(), ko: ko.trim(), meaning: (meaning||"").trim(), ex: (ex||"").trim(), exMean: (exMean||"").trim(), ease: 2.5, interval: 0, reps: 0, lapses: 0, due: 0, last: 0, created: Date.now() }; }
+function status(c){ if (!c.last) return "new"; if (c.interval >= 21) return "master"; return "learn"; }
+function addCards(list){
+  const existing = new Set(S.cards.map(c => c.ko));
+  let added = 0, dup = 0; const cards = [];
+  for (const {ko, meaning, ex, exMean} of list){
+    if (!ko || !ko.trim()) continue;
+    if (existing.has(ko.trim())) { dup++; continue; }
+    const c = newCard(ko, meaning, ex, exMean);
+    S.cards.push(c); cards.push(c); existing.add(ko.trim()); added++;
+  }
+  save(); refreshHome();
+  const noEx = cards.filter(c => !c.ex);
+  if (noEx.length && S.settings.autoEx && S.settings.apiKey){
+    toast(`Adding example sentences to ${noEx.length} word${noEx.length===1?"":"s"}…`);
+    genExamples(noEx, true).catch(()=>{});
+  }
+  return {added, dup, cards};
+}
+function exampleHTML(c){
+  if (!c.ex) return "";
+  return `<div class="ex"><button class="speak sm" data-say="${esc(c.ex)}">🔊</button><div><div class="exk" lang="ko">${esc(c.ex)}</div><div class="exm">${esc(c.exMean)}</div></div></div>`;
+}
+function bindSay(root){ root.querySelectorAll("[data-say]").forEach(b => b.onclick = e => { e.stopPropagation(); speak(b.dataset.say); }); }
+
+/* SM-2 spaced repetition. q: 1=again, 3=hard, 4=good, 5=easy */
+function grade(c, q){
+  const now = Date.now();
+  if (q < 3){
+    c.reps = 0; c.interval = 0; c.lapses++;
+    c.ease = Math.max(1.3, c.ease - 0.2);
+    c.due = now + 10*MIN;
+  } else {
+    c.reps++;
+    if (c.reps === 1) c.interval = q === 5 ? 3 : 1;
+    else if (c.reps === 2) c.interval = q === 3 ? 3 : q === 5 ? 7 : 6;
+    else c.interval = Math.round(c.interval * c.ease * (q === 3 ? 0.8 : q === 5 ? 1.3 : 1));
+    c.interval = Math.max(1, c.interval);
+    c.ease = Math.max(1.3, c.ease + 0.1 - (5-q)*(0.08 + (5-q)*0.02));
+    c.due = now + c.interval*DAY;
+  }
+  c.last = now;
+  S.daily.reviews++;
+  bumpStreak();
+  save();
+}
+function nextLabel(c, q){
+  if (q < 3) return "10 min";
+  let reps = c.reps + 1, iv;
+  if (reps === 1) iv = q === 5 ? 3 : 1;
+  else if (reps === 2) iv = q === 3 ? 3 : q === 5 ? 7 : 6;
+  else iv = Math.round(c.interval * c.ease * (q === 3 ? 0.8 : q === 5 ? 1.3 : 1));
+  iv = Math.max(1, iv);
+  return iv >= 30 ? Math.round(iv/30) + " mo" : iv + (iv === 1 ? " day" : " days");
+}
+function bumpStreak(){
+  const t = todayStr();
+  if (S.streak.last === t) return;
+  const y = new Date(Date.now()-DAY); const ys = y.getFullYear()+"-"+(y.getMonth()+1)+"-"+y.getDate();
+  S.streak.count = (S.streak.last === ys) ? S.streak.count + 1 : 1;
+  S.streak.last = t;
+}
+function streakNow(){
+  const t = todayStr(); const y = new Date(Date.now()-DAY); const ys = y.getFullYear()+"-"+(y.getMonth()+1)+"-"+y.getDate();
+  return (S.streak.last === t || S.streak.last === ys) ? S.streak.count : 0;
+}
+const dueCards = () => S.cards.filter(c => c.last && c.due <= Date.now()).sort((a,b)=>a.due-b.due);
+const newCards = () => S.cards.filter(c => !c.last);
+const newLeftToday = () => Math.max(0, S.settings.newPerDay - S.daily.newCount);
+
+/* ---------------- speech ---------------- */
+let voices = [];
+/* Known Korean voices. Browsers don't report age, so this is a hand-made guide (approximate, by ear).
+   age: young = sounds under ~35, older = middle-aged/senior, child. q: higher = more natural (neural/premium). */
+const VOICE_DB = [
+  { re: /yuna.*(premium|프리미엄)/i,  name: "Yuna (Premium)",  g: "♀", age: "young", q: 10, note: "Apple · very natural" },
+  { re: /yuna.*(enhanced|향상)/i,     name: "Yuna (Enhanced)", g: "♀", age: "young", q: 9,  note: "Apple · natural" },
+  { re: /yuna/i,                      name: "Yuna",            g: "♀", age: "young", q: 7,  note: "Apple · clear, young female" },
+  { re: /sunhi|sun-hi|선히/i,         name: "SunHi",           g: "♀", age: "young", q: 9,  note: "Microsoft neural · natural" },
+  { re: /jimin|지민/i,                name: "JiMin",           g: "♀", age: "young", q: 9,  note: "Microsoft neural" },
+  { re: /yujin|유진/i,                name: "YuJin",           g: "♀", age: "young", q: 9,  note: "Microsoft neural" },
+  { re: /injoon|인준/i,               name: "InJoon",          g: "♂", age: "young", q: 9,  note: "Microsoft neural · young male" },
+  { re: /hyunsu|현수/i,               name: "Hyunsu",          g: "♂", age: "young", q: 9,  note: "Microsoft neural · young male" },
+  { re: /google/i,                    name: "Google 한국어",    g: "♀", age: "young", q: 8,  note: "Google · natural" },
+  { re: /minsu|민수/i,                name: "Minsu",           g: "♂", age: "young", q: 7,  note: "Apple" },
+  { re: /suhyun|수현/i,               name: "Suhyun",          g: "♀", age: "young", q: 7,  note: "Apple" },
+  { re: /jian|지안/i,                 name: "Jian",            g: "♂", age: "young", q: 7,  note: "Apple" },
+  { re: /sora|소라/i,                 name: "Sora",            g: "♀", age: "young", q: 7,  note: "Apple" },
+  { re: /bongjin|봉진/i,              name: "BongJin",         g: "♂", age: "older", q: 8 },
+  { re: /gookmin|국민/i,              name: "GookMin",         g: "♂", age: "older", q: 8 },
+  { re: /soonbok|순복/i,              name: "SoonBok",         g: "♀", age: "older", q: 8 },
+  { re: /seohyeon|서현/i,             name: "SeoHyeon",        g: "♀", age: "child", q: 8 },
+  { re: /heami|해미/i,                name: "Heami",           g: "♀", age: "robotic", q: 3, note: "Windows · older robotic style" },
+];
+function voiceMeta(v){
+  const m = VOICE_DB.find(d => d.re.test(v.name)) || { name: v.name, g: "", age: "unknown", q: 5, note: "" };
+  const online = /natural|online|neural|premium|enhanced/i.test(v.name);
+  return Object.assign({}, m, { q: m.q + (online && m.q < 9 ? 1 : 0) + (v.localService === false ? 0.5 : 0) });
+}
+let allKo = [];
+function loadVoices(){
+  if (!("speechSynthesis" in window)) return;
+  allKo = speechSynthesis.getVoices().filter(v => /^ko([-_]|$)/i.test(v.lang || "") || (!v.lang && /korean|한국|yuna|heami|sunhi|injoon/i.test(v.name)));
+  const showAll = !!S.settings.allVoices;
+  const young = allKo.filter(v => voiceMeta(v).age === "young");
+  let usable = showAll || !young.length ? allKo : young;
+  usable = usable.slice().sort((a, b) => voiceMeta(b).q - voiceMeta(a).q);
+  voices = usable;
+  const sel = $("#setVoice");
+  const label = v => { const m = voiceMeta(v); return `${m.g ? m.g + " " : ""}${m.name}${m.name !== v.name ? "" : ""}${m.age !== "young" && m.age !== "unknown" ? " · " + m.age : ""}${m.note ? " — " + m.note : ""}`; };
+  sel.innerHTML = voices.length ? voices.map(v => `<option value="${esc(v.name)}">${esc(label(v))}</option>`).join("") : `<option value="">Default</option>`;
+  // prefer the saved voice; otherwise Yuna, otherwise the most natural young voice
+  if (!S.settings.voice || !voices.some(v => v.name === S.settings.voice)){
+    const yuna = voices.find(v => /yuna/i.test(v.name));
+    if (voices.length) S.settings.voice = (yuna || voices[0]).name;
+  }
+  if (S.settings.voice) sel.value = S.settings.voice;
+  const cur = voices.find(v => v.name === S.settings.voice);
+  $("#voiceInfo").textContent = cur ? `Using: ${cur.name}${cur.localService === false ? " (online voice)" : ""}` : "";
+  if (!showAll && allKo.length && !young.length) $("#voiceInfo").textContent += " · No known young voice on this device — showing all.";
+  $("#voiceWarn").textContent = !("speechSynthesis" in window) ? "This browser can't speak. Try Chrome or Safari."
+    : voices.length ? "" : "No Korean voice found yet. On iPhone: Settings → Accessibility → Spoken Content → Voices → Korean. On Android: install Korean in Google Text-to-Speech. Windows: add Korean speech in Settings → Time & language → Speech.";
+}
+let lastU = null;
+function speak(text, opts){
+  opts = opts || {};
+  if (!("speechSynthesis" in window) || !text) { if (opts.onend) setTimeout(opts.onend, 800); return null; }
+  if (!opts.keepPlayer && typeof stopPlayer === "function") stopPlayer(true);
+  speechSynthesis.cancel();
+  if (!voices.length) loadVoices();               // voices can appear late or change after device settings change
+  const v = voices.find(v => v.name === S.settings.voice) || voices[0];
+  if (!v){
+    // Without a Korean voice the browser falls back to an English voice, which skips Hangul
+    // and reads only the punctuation ("question mark", "comma"…). Don't do that — warn instead.
+    toast("🔇 No Korean voice on this device — see Settings → Voice");
+    if (opts.onend) setTimeout(opts.onend, 800);
+    return null;
+  }
+  // strip symbols some voices read aloud; keep . , ? ! for natural pauses & intonation
+  const clean = String(text).replace(/^[^\s:：]{1,12}[:：]\s*/, "")      // dialogue speaker label "민수: "
+    .replace(/[~*_#"“”'‘’()\[\]{}<>…·•\/\\|@^=+]/g, " ").replace(/\s+/g, " ").trim();
+  const u = new SpeechSynthesisUtterance(clean || text);
+  u.lang = v.lang || "ko-KR"; u.rate = opts.rate || S.settings.rate;
+  u.voice = v;
+  if (opts.onend) { u.onend = opts.onend; u.onerror = opts.onend; }
+  if (opts.onstart) u.onstart = opts.onstart;
+  lastU = u; // keep a reference (Chrome may drop events otherwise)
+  speechSynthesis.speak(u);
+  return u;
+}
+
+/* ---------------- AI (free: Gemini key, or copy/paste into any chatbot) ---------------- */
+const LEVELS = [
+  ["b0","Absolute beginner", "absolute beginner (just learned Hangul): only very common, concrete everyday words; example sentences of 3–5 words in simple polite 해요 style"],
+  ["b1","Beginner (TOPIK 1)", "beginner, TOPIK I level 1: common everyday words; short simple sentences in polite 해요 style, present/past tense only"],
+  ["b2","Elementary (TOPIK 2)", "elementary, TOPIK I level 2: everyday words and simple connectors (-고, -아서/어서, -지만); sentences up to ~10 words in 해요 style"],
+  ["i1","Intermediate (TOPIK 3)", "intermediate, TOPIK II level 3: wider vocabulary, common grammar patterns, natural sentences in 해요 or 합니다 style"],
+  ["i2","Upper-int. (TOPIK 4)", "upper-intermediate, TOPIK II level 4: richer vocabulary incl. some Sino-Korean words, natural written style"]
+];
+const levelDesc = k => (LEVELS.find(l => l[0] === k) || LEVELS[1])[2];
+const langName = () => S.settings.lang === "vi" ? "Vietnamese" : "English";
+
+function extractJSON(text){
+  let t = String(text || "").replace(/```(?:json)?/gi, "").trim();
+  const s = t.search(/[\[{]/); if (s < 0) throw new Error("No JSON found in the answer");
+  const open = t[s], close = open === "{" ? "}" : "]";
+  const e = t.lastIndexOf(close); if (e < s) throw new Error("Answer looks incomplete");
+  return JSON.parse(t.slice(s, e + 1));
+}
+async function gemini(prompt, extraParts){
+  const tryModel = async (model) => {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": S.settings.apiKey.trim() },
+      body: JSON.stringify({ contents: [{ role:"user", parts: [{ text: prompt }, ...(extraParts || [])] }], generationConfig: { responseMimeType: "application/json", temperature: extraParts ? 0.3 : 0.9 } })
+    });
+    if (!r.ok){
+      let msg = ""; try { msg = (await r.json()).error.message; } catch(e){}
+      const err = new Error(r.status === 429 ? "Free limit reached — wait a minute and try again." : r.status === 400 || r.status === 403 ? "API key problem: " + (msg || r.status) : (msg || "HTTP " + r.status));
+      err.status = r.status; throw err;
+    }
+    const j = await r.json();
+    const txt = (j.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("");
+    if (!txt) throw new Error("Empty answer from AI");
+    return txt;
+  };
+  const model = (S.settings.model || "").trim() || "gemini-flash-latest";
+  try { return await tryModel(model); }
+  catch(e){ if ((e.status === 404 || e.status === 400 && /not found|not supported/i.test(e.message)) && model !== "gemini-2.5-flash") return await tryModel("gemini-2.5-flash"); throw e; }
+}
+function manualAI(prompt){
+  return new Promise((resolve, reject) => {
+    const m = $("#aiModal");
+    $("#mPrompt").value = prompt; $("#mResp").value = "";
+    m.classList.remove("hidden");
+    const close = () => { m.classList.add("hidden"); $("#mOk").onclick = $("#mCancel").onclick = null; };
+    $("#mCopy").onclick = async () => {
+      try { await navigator.clipboard.writeText(prompt); toast("Prompt copied"); }
+      catch(e){ $("#mPrompt").select(); document.execCommand && document.execCommand("copy"); toast("Prompt selected — copy it"); }
+    };
+    $("#mCancel").onclick = () => { close(); reject(new Error("cancelled")); };
+    $("#mOk").onclick = () => {
+      const v = $("#mResp").value;
+      try { const j = extractJSON(v); close(); resolve(j); }
+      catch(e){ toast("Couldn't read that answer — paste the whole reply"); }
+    };
+  });
+}
+async function askAI(prompt, {silent} = {}){
+  if (S.settings.apiKey && S.settings.apiKey.trim()) return extractJSON(await gemini(prompt));
+  if (silent) throw new Error("no key");
+  return manualAI(prompt + "\n\nReply with ONLY the JSON, no explanation.");
+}
+function busy(btn, on, label){
+  if (on){ btn.dataset.label = btn.innerHTML; btn.disabled = true; btn.innerHTML = `<span class="spinner"></span>${label || "Working…"}`; }
+  else { btn.disabled = false; if (btn.dataset.label) btn.innerHTML = btn.dataset.label; }
+}
+
+async function genExamples(cards, silent){
+  const batch = cards.slice(0, 30);
+  const prompt = `You are a Korean teacher. For each Korean word below, write ONE short, natural example sentence that uses the word, suitable for a ${levelDesc(S.settings.level)} learner. Use the given meaning to pick the right sense. Also give a ${langName()} translation of the sentence.
+Words: ${JSON.stringify(batch.map(c => ({ ko: c.ko, meaning: c.meaning })))}
+Return JSON exactly like: {"items":[{"ko":"<the word exactly as given>","ex":"<Korean sentence>","exMean":"<translation>"}]}`;
+  const j = await askAI(prompt, { silent });
+  const items = Array.isArray(j) ? j : (j.items || []);
+  let n = 0;
+  for (const it of items){
+    const c = batch.find(x => x.ko === String(it.ko||"").trim()) || batch[items.indexOf(it)];
+    if (c && it.ex && !c.ex){ c.ex = String(it.ex).trim(); c.exMean = String(it.exMean||"").trim(); if (!c.meaning && it.meaning) c.meaning = it.meaning; n++; }
+  }
+  save();
+  if (!$("#v-words").classList.contains("hidden")) renderWords();
+  if (n) toast(`Added ${n} example sentence${n===1?"":"s"}`);
+  if (cards.length > 30) return genExamples(cards.slice(30), silent);
+  return n;
+}
+
+/* ---------------- free translation (MyMemory, no key) ---------------- */
+async function translate(ko){
+  const url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(ko) + "&langpair=ko|" + S.settings.lang;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const j = await r.json();
+  let t = (j.responseData && j.responseData.translatedText) || "";
+  if (/MYMEMORY WARNING|QUERY LENGTH/i.test(t)) throw new Error("limit");
+  return t.trim();
+}
+
+/* ---------------- navigation ---------------- */
+function show(v){
+  $$("section[id^=v-]").forEach(s => s.classList.toggle("hidden", s.id !== "v-"+v));
+  $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  if (v === "study" && !session) refreshHome();
+  if (v !== "read") { stopPlayer(); cancelRec(); }
+  if (v === "read" && !$("#readHome").classList.contains("hidden")) renderPassList();
+  if (v === "words") renderWords();
+  if (v === "set") renderSettings();
+  window.scrollTo(0,0);
+}
+$$("nav button").forEach(b => b.onclick = () => show(b.dataset.v));
+
+/* ---------------- home ---------------- */
+function refreshHome(){
+  const due = dueCards().length, nl = Math.min(newLeftToday(), newCards().length);
+  $("#sDue").textContent = due;
+  $("#sNew").textContent = nl;
+  $("#sLearn").textContent = S.cards.filter(c=>status(c)==="learn").length;
+  $("#sMaster").textContent = S.cards.filter(c=>status(c)==="master").length;
+  const st = streakNow();
+  $("#streakPill").textContent = "🔥 " + st + " day streak";
+  const h = $("#homeCard");
+  if (!S.cards.length){
+    h.innerHTML = `<div class="empty"><div class="big">👋</div><h2>Welcome!</h2><p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">➕ Add words</button></div>`;
+    $("#goAdd").onclick = () => show("add");
+    return;
+  }
+  if (due + nl > 0){
+    h.innerHTML = `<h2>Ready to study</h2><p class="muted" style="margin-top:0">${due} review${due===1?"":"s"} and ${nl} new word${nl===1?"":"s"}. Reviewed today: ${S.daily.reviews}.</p><button class="btn" id="startBtn">▶ Start</button>`;
+    $("#startBtn").onclick = () => startSession(false);
+  } else {
+    const next = S.cards.filter(c=>c.last).sort((a,b)=>a.due-b.due)[0];
+    const when = next ? timeUntil(next.due) : "";
+    h.innerHTML = `<div class="empty"><div class="big">🎉</div><h2>All done for now</h2><p class="muted">${when ? "Next review in " + when + ". " : ""}Add more words or practice without changing your schedule.</p>
+      <div class="row"><button class="btn2" id="pracBtn">🔁 Extra practice</button><button class="btn2" id="moreNew">+5 new words</button></div></div>`;
+    $("#pracBtn").onclick = () => startSession(true);
+    $("#moreNew").onclick = () => { if (!newCards().length) { toast("No new words left — add some!"); return; } S.daily.newCount = Math.max(0, S.daily.newCount - 5); save(); refreshHome(); };
+  }
+}
+function timeUntil(t){
+  const d = t - Date.now(); if (d <= 0) return "";
+  if (d < 3600000) return Math.ceil(d/MIN) + " min";
+  if (d < DAY) return Math.round(d/3600000) + " h";
+  return Math.round(d/DAY) + " days";
+}
+
+/* ---------------- study session ---------------- */
+let session = null;
+function enabledModes(){ const m = Object.keys(S.settings.modes).filter(k => S.settings.modes[k]); return m.length ? m : ["ko2m"]; }
+function startSession(practice){
+  let queue;
+  if (practice){
+    queue = shuffle(S.cards.filter(c=>c.last).slice()).slice(0, 15).map(c => ({ card:c, kind:"quiz" }));
+    if (!queue.length) queue = shuffle(S.cards.slice()).slice(0,10).map(c => ({card:c, kind:"quiz"}));
+  } else {
+    const due = dueCards().map(c => ({ card:c, kind:"quiz" }));
+    const nw = shuffle(newCards()).slice(0, newLeftToday());
+    queue = due.slice();
+    // interleave new words: intro now, quiz a few steps later
+    nw.forEach((c, i) => {
+      const pos = Math.min(queue.length, i*3 + Math.floor(Math.random()*2));
+      queue.splice(pos, 0, { card:c, kind:"intro" });
+    });
+  }
+  if (!queue.length){ toast("Nothing to study"); return; }
+  session = { queue, practice, done:0, total:queue.length, correct:0, answered:0 };
+  $("#studyHome").classList.add("hidden"); $("#studySession").classList.remove("hidden");
+  nextQ();
+}
+$("#endBtn").onclick = () => endSession();
+function endSession(summary){
+  const s = session; session = null;
+  $("#studySession").classList.add("hidden"); $("#studyHome").classList.remove("hidden");
+  refreshHome();
+  if (summary && s && s.answered) {
+    const pct = Math.round(100*s.correct/s.answered);
+    $("#homeCard").insertAdjacentHTML("afterbegin", `<div class="feedback ok" style="margin:0 0 12px">✅ Session complete — ${s.correct}/${s.answered} correct (${pct}%).</div>`);
+  }
+}
+function nextQ(){
+  if (!session) return;
+  if (!session.queue.length) return endSession(true);
+  const item = session.queue[0];
+  $("#sessCount").textContent = (session.practice ? "Practice · " : "") + session.queue.length + " left";
+  $("#sessBar").style.width = Math.round(100*session.done/Math.max(session.total, session.done+session.queue.length)) + "%";
+  if (item.kind === "intro") renderIntro(item); else renderQuiz(item);
+}
+function renderIntro(item){
+  const c = item.card;
+  $("#qBox").innerHTML = `<span class="newtag">NEW WORD</span>
+    <div class="ko" lang="ko">${esc(c.ko)}</div>
+    <button class="speak" id="qSpeak">🔊</button>
+    <div class="mean">${esc(c.meaning) || '<span class="muted">(no meaning)</span>'}</div>
+    ${exampleHTML(c)}
+    <p class="small muted">Listen, say it out loud, then continue.</p>
+    <button class="btn" id="gotIt" style="margin-top:8px">Got it →</button>`;
+  $("#qSpeak").onclick = () => speak(c.ko);
+  bindSay($("#qBox"));
+  if (S.settings.autoPlay) setTimeout(()=>speak(c.ko), 250);
+  $("#gotIt").onclick = () => {
+    session.queue.shift(); session.done++;
+    S.daily.newCount++; save();
+    const pos = Math.min(session.queue.length, 2 + Math.floor(Math.random()*2));
+    session.queue.splice(pos, 0, { card:c, kind:"quiz", fresh:true });
+    session.total++;
+    nextQ();
+  };
+  $("#gotIt").focus();
+}
+function pickMode(c){
+  let modes = enabledModes();
+  // multiple choice needs other words with meanings
+  const pool = S.cards.filter(x => x.id !== c.id && x.meaning);
+  if (pool.length < 1 || !c.meaning) modes = modes.filter(m => m === "m2ko" || m === "listen2ko");
+  if (!c.meaning) modes = modes.filter(m => m !== "m2ko");
+  if (!modes.length) modes = ["listen2ko"];
+  return modes[Math.floor(Math.random()*modes.length)];
+}
+function renderQuiz(item){
+  const c = item.card, mode = item.mode || (item.mode = pickMode(c));
+  const titles = { ko2m:"Choose the meaning", listen2m:"Listen · choose the meaning", m2ko:"Type it in Korean", listen2ko:"Listen · type what you hear" };
+  let prompt = "";
+  if (mode === "ko2m") prompt = `<div class="ko" lang="ko">${esc(c.ko)}</div><button class="speak" id="qSpeak">🔊</button>`;
+  if (mode === "listen2m" || mode === "listen2ko") prompt = `<button class="speak big" id="qSpeak">🔊</button><p class="small muted" style="margin:0">Tap to replay</p>`;
+  if (mode === "m2ko") prompt = `<div class="mean" style="font-size:28px">${esc(c.meaning)}</div>`;
+  let answer = "";
+  if (mode === "ko2m" || mode === "listen2m"){
+    const others = shuffle(S.cards.filter(x => x.id !== c.id && x.meaning && x.meaning !== c.meaning)).slice(0,3);
+    const opts = shuffle([c, ...others]);
+    item.opts = opts;
+    answer = `<div class="choices">${opts.map((o,i)=>`<button class="choice" data-i="${i}"><span class="k">${i+1}</span><span>${esc(o.meaning)}</span></button>`).join("")}</div>`;
+  } else {
+    answer = `<div style="margin-top:16px"><input id="typeIn" type="text" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="한글로 입력…">
+      <div class="row" style="margin-top:8px"><button class="btn-ghost" id="hintBtn">Hint</button><button class="btn" id="checkBtn" style="flex:2">Check</button></div>
+      <p class="small muted" id="hintTxt" style="margin:8px 0 0"></p></div>`;
+  }
+  $("#qBox").innerHTML = `<div class="qtype">${titles[mode]}</div>${prompt}${answer}<div id="fb"></div>`;
+  const sp = $("#qSpeak"); if (sp) sp.onclick = () => speak(c.ko);
+  if (mode === "listen2m" || mode === "listen2ko" || (mode === "ko2m" && S.settings.autoPlay)) setTimeout(()=>speak(c.ko), 250);
+  if (item.opts){
+    $$("#qBox .choice").forEach(b => b.onclick = () => answerChoice(item, +b.dataset.i));
+  } else {
+    const inp = $("#typeIn");
+    setTimeout(()=>inp.focus(), 50);
+    inp.onkeydown = e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); answerTyped(item); } };
+    $("#checkBtn").onclick = () => answerTyped(item);
+    let h = 0;
+    $("#hintBtn").onclick = () => { h = Math.min(h+1, [...c.ko].length); item.hinted = true; $("#hintTxt").textContent = "Starts with: " + [...c.ko].slice(0,h).join("") + " · " + [...c.ko].length + " characters"; };
+  }
+}
+const norm = s => String(s).normalize("NFC").replace(/[\s.,!?~·'"()\-]/g, "").toLowerCase();
+function answerChoice(item, i){
+  if (item.answered) return; item.answered = true;
+  const ok = item.opts[i].id === item.card.id;
+  $$("#qBox .choice").forEach((b, j) => { b.disabled = true; if (item.opts[j].id === item.card.id) b.classList.add("ok"); else if (j === i) b.classList.add("bad"); });
+  finish(item, ok);
+}
+function answerTyped(item){
+  if (item.answered) return;
+  const v = $("#typeIn").value;
+  if (!v.trim()) { $("#typeIn").focus(); return; }
+  item.answered = true;
+  const ok = norm(v) === norm(item.card.ko);
+  $("#typeIn").disabled = true; $("#checkBtn").disabled = true; $("#hintBtn").disabled = true;
+  finish(item, ok, v);
+}
+function finish(item, ok, typed){
+  const c = item.card; session.answered++; if (ok) session.correct++;
+  const reveal = `<div style="margin-top:4px"><b lang="ko" style="font-size:20px">${esc(c.ko)}</b> — ${esc(c.meaning)}</div>`;
+  const exBlock = exampleHTML(c);
+  let html;
+  if (ok){
+    html = `<div class="feedback ok">✅ Correct!${reveal}</div>` + exBlock;
+    if (!session.practice){
+      const base = item.fresh || item.hinted || item.failed ? [3,4] : [3,4,5];
+      html += `<div class="grades" style="grid-template-columns:repeat(${base.length},1fr)">` + base.map(q => {
+        const name = {3:"Hard",4:"Good",5:"Easy"}[q];
+        const cls = q===4 ? "btn" : "btn2";
+        return `<button class="${cls}" data-q="${q}">${name}<small>${nextLabel(c,q)}</small></button>`;
+      }).join("") + `</div>`;
+    } else html += `<button class="btn" style="margin-top:12px" id="contBtn">Continue →</button>`;
+  } else {
+    html = `<div class="feedback bad">❌ Not quite${typed ? ` — you wrote <b lang="ko">${esc(typed)}</b>` : ""}.${reveal}<div class="small" style="margin-top:6px">This word will come back soon.</div></div>${exBlock}
+      <div class="row" style="margin-top:12px"><button class="speak sm" style="flex:0 0 48px;height:48px;width:48px" id="fbSpeak">🔊</button>${typed ? `<button class="btn-ghost" id="typoBtn">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2">Continue →</button></div>`;
+  }
+  $("#fb").innerHTML = html;
+  bindSay($("#fb"));
+  speak(c.ko);
+  const fs = $("#fbSpeak"); if (fs) fs.onclick = () => speak(c.ko);
+  $$("#fb .grades button").forEach(b => b.onclick = () => done(item, +b.dataset.q));
+  const cb = $("#contBtn"); if (cb) { cb.onclick = () => done(item, ok ? 4 : 1); setTimeout(()=>cb.focus(), 30); }
+  const tb = $("#typoBtn"); if (tb) tb.onclick = () => { session.correct++; done(item, 3); };
+  const g = $("#fb .grades .btn"); if (g) setTimeout(()=>g.focus(), 30);
+}
+function done(item, q){
+  const c = item.card;
+  session.queue.shift(); session.done++;
+  if (!session.practice){
+    if (q < 3){
+      if (!item.failed) grade(c, 1);
+      const pos = Math.min(session.queue.length, 3 + Math.floor(Math.random()*3));
+      session.queue.splice(pos, 0, { card:c, kind:"quiz", failed:true });
+      session.total++;
+    } else if (item.failed){
+      // relearned in-session: short step, back tomorrow
+      c.reps = 0; grade(c, 3);
+    } else grade(c, q);
+  } else if (q < 3){
+    const pos = Math.min(session.queue.length, 3);
+    session.queue.splice(pos, 0, { card:c, kind:"quiz" }); session.total++;
+  }
+  nextQ();
+}
+document.addEventListener("keydown", e => {
+  if (!session || $("#v-study").classList.contains("hidden")) return;
+  if (e.target.tagName === "INPUT") return;
+  const item = session.queue[0];
+  if (item && item.opts && !item.answered && /^[1-4]$/.test(e.key)) { const i = +e.key - 1; if (item.opts[i]) answerChoice(item, i); }
+  if (e.key === " " && item) { e.preventDefault(); speak(item.card.ko); }
+});
+
+/* ---------------- add: single ---------------- */
+$$("#addTabs button").forEach(b => b.onclick = () => {
+  $$("#addTabs button").forEach(x => x.classList.toggle("on", x === b));
+  ["ai","one","bulk","shot"].forEach(t => $("#add-"+t).classList.toggle("hidden", t !== b.dataset.t));
+  $("#previewCard").classList.add("hidden");
+});
+$("#inKoSpeak").onclick = () => speak($("#inKo").value.trim());
+$("#autoTr").onclick = async () => {
+  const ko = $("#inKo").value.trim(); if (!ko) { toast("Type a Korean word first"); return; }
+  const b = $("#autoTr"); b.disabled = true; b.textContent = "…";
+  try { $("#inMean").value = await translate(ko); } catch(e){ toast("Translation unavailable — type it yourself"); }
+  b.disabled = false; b.textContent = "Auto";
+};
+$("#addOneBtn").onclick = async () => {
+  const ko = $("#inKo").value.trim(); let m = $("#inMean").value.trim();
+  if (!ko) { toast("Korean word is required"); return; }
+  if (!HANGUL.test(ko)) { toast("That doesn't look like Korean"); return; }
+  if (!m) { try { m = await translate(ko); } catch(e){} }
+  const r = addCards([{ko, meaning:m}]);
+  toast(r.added ? `Added “${ko}”${m ? "" : " (no meaning)"}` : "Already in your list");
+  $("#inKo").value = ""; $("#inMean").value = ""; $("#inKo").focus();
+};
+$("#inKo").onkeydown = e => { if (e.key === "Enter" && !e.isComposing) $("#inMean").focus(); };
+$("#inMean").onkeydown = e => { if (e.key === "Enter" && !e.isComposing) $("#addOneBtn").click(); };
+
+/* ---------------- parsing (paste + OCR) ---------------- */
+function parseLines(text){
+  const out = [];
+  for (let line of text.split(/\r?\n/)){
+    line = line.replace(/^\s*(\d+[.)]|[-•*·▪︎●○])\s*/, "").trim();
+    if (!line || !HANGUL.test(line)) continue;
+    let ko = "", meaning = "";
+    const sep = line.match(/\s*(\t|\s[-–—:=]\s|[:=]|\s–\s|\s—\s)\s*/);
+    if (sep && HANGUL.test(line.slice(0, sep.index))){
+      ko = line.slice(0, sep.index); meaning = line.slice(sep.index + sep[0].length);
+    } else {
+      const m = line.match(/[가-힣]+(?:[ ]?[가-힣?!.~]+)*/);
+      if (!m) continue;
+      ko = m[0]; meaning = (line.slice(0, m.index) + " " + line.slice(m.index + m[0].length));
+    }
+    ko = ko.replace(/[^가-힣ᄀ-ᇿ㄰-㆏\s?!.~]/g, "").replace(/\s+/g," ").trim();
+    meaning = meaning.replace(/^[\s\-–—:=|,.]+|[\s\-–—:=|,]+$/g, "").replace(/\s+/g," ").trim();
+    if (HANGUL.test(meaning)) meaning = meaning.replace(/[가-힣]+/g,"").trim(); // drop stray Korean in meaning
+    if (ko) out.push({ ko, meaning });
+  }
+  return out;
+}
+function showPreview(items){
+  if (!items.length){ toast("No Korean words found"); return; }
+  const have = new Set(S.cards.map(c=>c.ko));
+  $("#prevList").innerHTML = items.map((it,i)=>`<div class="prev" data-i="${i}">
+      <input type="checkbox" ${have.has(it.ko) ? "" : "checked"} title="${have.has(it.ko) ? "Already added" : ""}">
+      <input type="text" class="pk" lang="ko" value="${esc(it.ko)}">
+      <input type="text" class="pm" value="${esc(it.meaning)}" placeholder="meaning">
+      <button class="icon-btn ps" title="Listen">🔊</button>
+      <input type="hidden" class="pe" value="${esc(it.ex||"")}"><input type="hidden" class="pem" value="${esc(it.exMean||"")}">
+      ${it.ex ? `<div></div><div class="prev-ex" lang="ko">${esc(it.ex)}<br>${esc(it.exMean||"")}</div>` : ""}</div>`).join("");
+  $$("#prevList .ps").forEach(b => b.onclick = () => speak(b.parentNode.querySelector(".pk").value));
+  $("#previewCard").classList.remove("hidden");
+  $("#previewCard").scrollIntoView({behavior:"smooth", block:"start"});
+}
+$("#bulkParse").onclick = () => showPreview(parseLines($("#bulkIn").value));
+$("#prevTr").onclick = async () => {
+  const rows = $$("#prevList .prev").filter(r => r.querySelector("input[type=checkbox]").checked && !r.querySelector(".pm").value.trim());
+  if (!rows.length) { toast("No empty meanings"); return; }
+  const b = $("#prevTr"); b.disabled = true;
+  let n = 0, fail = 0;
+  for (const r of rows){
+    b.textContent = `Translating ${++n}/${rows.length}…`;
+    try { r.querySelector(".pm").value = await translate(r.querySelector(".pk").value); } catch(e){ fail++; }
+    await new Promise(res => setTimeout(res, 150));
+  }
+  b.disabled = false; b.textContent = "Auto-fill empty meanings";
+  if (fail) toast(`${fail} couldn't be translated — fill them in manually`);
+};
+$("#prevAdd").onclick = () => {
+  const list = $$("#prevList .prev").filter(r => r.querySelector("input[type=checkbox]").checked)
+    .map(r => ({ ko: r.querySelector(".pk").value, meaning: r.querySelector(".pm").value, ex: r.querySelector(".pe").value, exMean: r.querySelector(".pem").value }));
+  if (!list.length) { toast("Nothing selected"); return; }
+  const r = addCards(list);
+  toast(`Added ${r.added} word${r.added===1?"":"s"}${r.dup ? ` · ${r.dup} duplicate skipped` : ""}`);
+  $("#previewCard").classList.add("hidden"); $("#bulkIn").value = ""; $("#shotImg").innerHTML = "";
+  $("#ocrStatus").classList.add("hidden");
+};
+
+/* ---------------- screenshot OCR (Tesseract.js, free, on-device) ---------------- */
+let tessLoading = null;
+function loadTesseract(){
+  if (window.Tesseract) return Promise.resolve();
+  if (tessLoading) return tessLoading;
+  tessLoading = new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+    s.onload = res; s.onerror = () => { tessLoading = null; rej(new Error("Could not load OCR (are you online?)")); };
+    document.head.appendChild(s);
+  });
+  return tessLoading;
+}
+$("#drop").onclick = () => $("#shotFile").click();
+$("#shotFile").onchange = e => { const f = e.target.files[0]; if (f) runOCR(f); e.target.value = ""; };
+document.addEventListener("paste", e => {
+  if ($("#v-add").classList.contains("hidden")) return;
+  const item = Array.from(e.clipboardData?.items || []).find(i => i.type.startsWith("image/"));
+  if (item){ e.preventDefault(); $("#addTabs button[data-t=shot]").click(); runOCR(item.getAsFile()); }
+});
+async function runOCR(file){
+  const url = URL.createObjectURL(file);
+  $("#shotImg").innerHTML = `<img src="${url}" alt="screenshot">`;
+  const st = $("#ocrStatus"), bw = $("#ocrBarWrap"), bar = $("#ocrBar");
+  st.classList.remove("hidden"); bw.classList.remove("hidden"); bar.style.width = "0";
+  st.textContent = "Loading reader…";
+  try {
+    await loadTesseract();
+    const langs = S.settings.lang === "vi" ? "kor+vie+eng" : "kor+eng";
+    const { data } = await Tesseract.recognize(file, langs, {
+      logger: m => {
+        if (m.status === "recognizing text") { st.textContent = "Reading text… " + Math.round(m.progress*100) + "%"; bar.style.width = Math.round(m.progress*100) + "%"; }
+        else if (/load|init/i.test(m.status)) st.textContent = m.status.replace(/^\w/, c=>c.toUpperCase()) + "…";
+      }
+    });
+    bw.classList.add("hidden");
+    const items = parseLines(data.text || "");
+    st.textContent = items.length ? `Found ${items.length} word${items.length===1?"":"s"}. Please check them below.` : "No Korean text found. Try a sharper or cropped screenshot.";
+    if (items.length) showPreview(items);
+  } catch(err){
+    bw.classList.add("hidden");
+    st.textContent = "⚠️ " + (err.message || "OCR failed");
+  }
+}
+
+/* ---------------- AI: generate vocabulary ---------------- */
+const TOPICS = ["Food & drinks","Family","At a café","Travel","Shopping","Weather","Body & health","Daily routine","School","Work & office","Feelings","Transport","Home","Hobbies","Numbers & time","K-drama phrases"];
+function fillLevels(sel){ sel.innerHTML = LEVELS.map(l => `<option value="${l[0]}">${l[1]}</option>`).join(""); sel.value = S.settings.level; sel.onchange = () => { S.settings.level = sel.value; save(); $$("#genLevel,#rdLevel").forEach(x => x.value = sel.value); }; }
+$("#genChips").innerHTML = TOPICS.map(t => `<button class="chip">${esc(t)}</button>`).join("");
+$$("#genChips .chip").forEach(b => b.onclick = () => { $("#genTopic").value = b.textContent; });
+$("#genBtn").onclick = async () => {
+  const topic = $("#genTopic").value.trim();
+  if (!topic) { toast("Enter or pick a topic"); $("#genTopic").focus(); return; }
+  const n = Math.max(3, Math.min(40, +$("#genCount").value || 10));
+  const known = S.cards.map(c => c.ko);
+  const knownList = known.slice(-400);
+  const prompt = `You are an experienced Korean teacher. Create a vocabulary list of ${n + 3} Korean words/expressions for the topic "${topic}".
+Learner level: ${levelDesc($("#genLevel").value)}.
+Rules:
+- Pick the most useful words for this topic and level. No duplicates.
+- Verbs and adjectives in dictionary form (e.g. 먹다, 예쁘다).
+- "meaning": short ${langName()} meaning (1–4 words).
+- "ex": one short natural example sentence using the word, matching the level.
+- "exMean": ${langName()} translation of the example.
+${knownList.length ? `- The learner ALREADY KNOWS these words — do NOT include any of them: ${knownList.join(", ")}` : ""}
+Return JSON exactly like: {"words":[{"ko":"","meaning":"","ex":"","exMean":""}]}`;
+  const b = $("#genBtn"); busy(b, true, "Generating…");
+  try {
+    const j = await askAI(prompt);
+    const arr = Array.isArray(j) ? j : (j.words || j.items || []);
+    const have = new Set(known.map(norm)); const seen = new Set();
+    const items = [];
+    for (const w of arr){
+      const ko = String(w.ko || w.korean || "").trim();
+      if (!ko || !HANGUL.test(ko) || have.has(norm(ko)) || seen.has(norm(ko))) continue;
+      seen.add(norm(ko));
+      items.push({ ko, meaning: String(w.meaning||"").trim(), ex: String(w.ex||w.example||"").trim(), exMean: String(w.exMean||w.exampleMeaning||"").trim() });
+      if (items.length >= n) break;
+    }
+    if (!items.length) toast("No new words came back — try another topic");
+    else { if (items.length < n) toast(`Got ${items.length} new words (others were already in your list)`); showPreview(items); }
+  } catch(e){ if (e.message !== "cancelled") toast("⚠️ " + e.message); }
+  busy(b, false);
+};
+
+/* ---------------- reading passages ---------------- */
+const RD_CHIPS = ["Ordering at a café","Introducing myself","My weekend","Asking for directions","A day at school","Shopping for clothes","Weather and seasons","A short story about a cat","Texting a friend to meet up","At the doctor"];
+$("#rdChips").innerHTML = RD_CHIPS.map(t => `<button class="chip">${esc(t)}</button>`).join("");
+$$("#rdChips .chip").forEach(b => b.onclick = () => { $("#rdPrompt").value = b.textContent; });
+$$("#readSrc button").forEach(b => b.onclick = () => {
+  $$("#readSrc button").forEach(x => x.classList.toggle("on", x === b));
+  $("#rs-ai").classList.toggle("hidden", b.dataset.s !== "ai"); $("#rs-own").classList.toggle("hidden", b.dataset.s !== "own");
+});
+function renderPassList(){
+  const L = S.passages.slice().sort((a,b)=>b.created-a.created);
+  const lvl = k => (LEVELS.find(l=>l[0]===k)||[])[1] || "";
+  $("#passList").innerHTML = L.length ? L.map(p => `<li data-id="${p.id}"><span style="font-size:22px">📄</span>
+      <div class="t"><b lang="ko">${esc(p.title)}</b><span class="small muted">${esc(p.titleMean||"")}${p.level ? " · " + esc(lvl(p.level)) : ""} · ${p.sentences.length} sentences</span></div><span class="muted">›</span></li>`).join("")
+    : `<li class="muted" style="justify-content:center;cursor:default">No passages yet — generate one above.</li>`;
+  $$("#passList li[data-id]").forEach(li => li.onclick = () => openReader(li.dataset.id));
+}
+function splitSentences(text){
+  return (String(text).replace(/\r/g,"").match(/[^.!?。？！\n]+[.!?。？！]*["'”’)]*/g) || [])
+    .map(s => s.trim()).filter(s => s && HANGUL.test(s));
+}
+$("#rdGen").onclick = async () => {
+  const topic = $("#rdPrompt").value.trim();
+  if (!topic) { toast("Describe what the passage should be about"); $("#rdPrompt").focus(); return; }
+  const level = $("#rdLevel").value, k = +$("#rdLen").value;
+  let wordHint = "";
+  if ($("#rdUseWords").checked){
+    const learning = S.cards.filter(c => status(c) !== "master").slice(-40).map(c => c.ko);
+    if (learning.length) wordHint = `\n- Where natural, reuse some of these words the learner is studying: ${learning.join(", ")}`;
+  }
+  const prompt = `You are a Korean teacher writing reading practice for a learner.
+Topic / instructions from the learner: "${topic}"
+Level: ${levelDesc(level)}.
+Rules:
+- Write about ${k} sentences of natural, correct Korean that fits the level (grammar and vocabulary).
+- If it's a dialogue, start each line with the speaker name followed by a colon (e.g. "민수: ...").
+- Give each sentence separately with a natural ${langName()} translation.
+- List 5–10 key vocabulary items from the passage (dictionary form) with short ${langName()} meanings.${wordHint}
+Return JSON exactly like: {"title":"<short Korean title>","titleMean":"<${langName()} title>","sentences":[{"ko":"","meaning":""}],"vocab":[{"ko":"","meaning":""}]}`;
+  const b = $("#rdGen"); busy(b, true, "Writing passage…");
+  try {
+    const j = await askAI(prompt);
+    const sentences = (j.sentences || []).map(s => ({ ko: String(s.ko||"").trim(), meaning: String(s.meaning||"").trim() })).filter(s => s.ko);
+    if (!sentences.length) throw new Error("The answer had no sentences");
+    const p = { id: uid(), created: Date.now(), title: String(j.title || topic).trim(), titleMean: String(j.titleMean||"").trim(), level, prompt: topic,
+      sentences, vocab: (j.vocab || []).map(v => ({ ko: String(v.ko||"").trim(), meaning: String(v.meaning||"").trim() })).filter(v => v.ko) };
+    S.passages.push(p); save(); openReader(p.id);
+  } catch(e){ if (e.message !== "cancelled") toast("⚠️ " + e.message); }
+  busy(b, false);
+};
+$("#rdOwnBtn").onclick = async () => {
+  const sents = splitSentences($("#rdOwn").value);
+  if (!sents.length) { toast("Paste some Korean text first"); return; }
+  const b = $("#rdOwnBtn"); busy(b, true, "Preparing…");
+  const sentences = sents.map(ko => ({ ko, meaning: "" }));
+  if ($("#rdOwnTr").checked){
+    for (let i = 0; i < sentences.length; i++){
+      b.innerHTML = `<span class="spinner"></span>Translating ${i+1}/${sentences.length}…`;
+      try { sentences[i].meaning = await translate(sentences[i].ko); } catch(e){}
+      await new Promise(r => setTimeout(r, 120));
+    }
+  }
+  const p = { id: uid(), created: Date.now(), title: $("#rdOwnTitle").value.trim() || sents[0].slice(0, 24), titleMean: "", level: "", sentences, vocab: [] };
+  S.passages.push(p); save(); busy(b, false);
+  $("#rdOwn").value = ""; $("#rdOwnTitle").value = "";
+  openReader(p.id);
+};
+
+let curP = null;
+const P = { idx: 0, playing: false, rep: 0, token: 0, timer: null, tick: null };
+function openReader(id){
+  curP = S.passages.find(p => p.id === id); if (!curP) return;
+  stopPlayer(); closeCoach();
+  $("#readHome").classList.add("hidden"); $("#reader").classList.remove("hidden");
+  $("#rdTitle").innerHTML = `<span lang="ko">${esc(curP.title)}</span>`;
+  $("#rdSub").textContent = curP.titleMean || "";
+  $("#pRate").value = String([0.6,0.75,0.85,1].reduce((a,b)=>Math.abs(b-S.settings.rate)<Math.abs(a-S.settings.rate)?b:a));
+  renderSentences();
+  const have = new Set(S.cards.map(c => c.ko));
+  $("#rdVocabCard").classList.toggle("hidden", !curP.vocab.length);
+  $("#rdVocab").innerHTML = curP.vocab.map(v => `<li><button class="speak sm" data-say="${esc(v.ko)}">🔊</button><div class="t"><b lang="ko">${esc(v.ko)}</b><div>${esc(v.meaning)}</div></div>${have.has(v.ko) ? '<span class="badge b-master">In list</span>' : ""}</li>`).join("");
+  bindSay($("#rdVocab"));
+  window.scrollTo(0,0);
+}
+function renderSentences(){
+  $("#sentList").innerHTML = curP.sentences.map((s,i) => `<div class="sent" data-i="${i}"><div class="row" style="align-items:flex-start">
+      <div style="flex:1"><div class="sk" lang="ko">${esc(s.ko)}</div>${s.meaning ? `<div class="sm">${esc(s.meaning)}</div>` : ""}${s.best != null ? `<div class="best">🎙 best ${s.best}/100</div>` : ""}</div>
+      <button class="icon-btn smic" title="Practice speaking this sentence">🎙</button></div></div>`).join("");
+  $$("#sentList .sent").forEach(el => {
+    el.onclick = () => { el.classList.add("reveal"); playFrom(+el.dataset.i); };
+    el.querySelector(".smic").onclick = e => { e.stopPropagation(); openCoach(+el.dataset.i); };
+  });
+  applyReaderView();
+  markSentence(P.playing ? P.idx : -1);
+}
+function applyReaderView(){
+  $("#sentList").classList.toggle("hidem", !$("#pShowM").checked);
+  $("#sentList").classList.toggle("hidek", $("#pHideK").checked);
+}
+$("#pShowM").onchange = applyReaderView; $("#pHideK").onchange = applyReaderView;
+$("#rdBack").onclick = () => { stopPlayer(); closeCoach(); curP = null; $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
+$("#rdDel").onclick = () => {
+  const b = $("#rdDel");
+  if (!b.dataset.confirm){ b.dataset.confirm = "1"; b.textContent = "Delete?"; setTimeout(()=>{ delete b.dataset.confirm; b.textContent = "🗑️"; }, 2500); return; }
+  delete b.dataset.confirm; b.textContent = "🗑️";
+  S.passages = S.passages.filter(p => p !== curP); save(); $("#rdBack").click(); toast("Passage deleted");
+};
+$("#rdAddVocab").onclick = () => {
+  if (!curP) return;
+  const findS = v => curP.sentences.find(s => s.ko.includes(v.ko.replace(/다$/,""))) || {};
+  const r = addCards(curP.vocab.map(v => ({ ko: v.ko, meaning: v.meaning, ex: findS(v).ko || "", exMean: findS(v).meaning || "" })));
+  toast(r.added ? `Added ${r.added} word${r.added===1?"":"s"} to flashcards` : "All these words are already in your list");
+  openReader(curP.id);
+};
+
+function markSentence(i){
+  $$("#sentList .sent").forEach((el, j) => el.classList.toggle("cur", j === i));
+  const el = $$("#sentList .sent")[i];
+  if (el){ const r = el.getBoundingClientRect(); if (r.top < 170 || r.bottom > innerHeight - 90) window.scrollTo({ top: scrollY + r.top - 190, behavior: "smooth" }); }
+}
+function setPlayIcon(){ const b = $("#pPlay"); if (b) b.textContent = P.playing ? "⏸" : "▶"; }
+function clearTimers(){ clearTimeout(P.timer); clearInterval(P.tick); P.timer = P.tick = null; $("#pTurn").textContent = ""; }
+function stopPlayer(){
+  const was = P.playing || P.timer;
+  P.token++; P.playing = false; clearTimers();
+  if (was && "speechSynthesis" in window) speechSynthesis.cancel();
+  P.idx = 0; P.rep = 0; $$("#sentList .sent").forEach(el => el.classList.remove("cur"));
+  setPlayIcon();
+}
+function pausePlayer(){ P.token++; P.playing = false; clearTimers(); if ("speechSynthesis" in window) speechSynthesis.cancel(); setPlayIcon(); }
+function playFrom(i){
+  if (!curP) return;
+  pausePlayer();
+  P.idx = Math.max(0, Math.min(i, curP.sentences.length - 1)); P.rep = 0; P.playing = true; setPlayIcon();
+  playCurrent();
+}
+function playCurrent(){
+  if (!P.playing || !curP) return;
+  if (P.idx >= curP.sentences.length){ P.playing = false; P.idx = 0; P.rep = 0; setPlayIcon(); $("#pTurn").textContent = "✅ Finished"; return; }
+  const tok = ++P.token, s = curP.sentences[P.idx];
+  markSentence(P.idx);
+  $("#pTurn").textContent = "";
+  let started = Date.now();
+  speak(s.ko, { keepPlayer: true, rate: +$("#pRate").value, onstart: () => { started = Date.now(); },
+    onend: () => { if (tok !== P.token || !P.playing) return; afterSentence(Date.now() - started); } });
+}
+function afterSentence(dur){
+  const reps = +$("#pRep").value;
+  const next = () => {
+    if (!P.playing) return;
+    P.rep++;
+    if (P.rep >= reps){ P.rep = 0; P.idx++; }
+    playCurrent();
+  };
+  if ($("#pShadow").checked){
+    const gap = Math.max(1500, Math.min(12000, dur * 1.4 + 600));
+    let left = Math.ceil(gap / 1000);
+    $("#pTurn").textContent = `🎤 Your turn — repeat it! (${left})`;
+    P.tick = setInterval(() => { left--; if (left > 0) $("#pTurn").textContent = `🎤 Your turn — repeat it! (${left})`; }, 1000);
+    P.timer = setTimeout(() => { clearTimers(); next(); }, gap);
+  } else P.timer = setTimeout(next, 450);
+}
+$("#pPlay").onclick = () => {
+  if (!curP) return;
+  if (P.playing) pausePlayer();
+  else { P.playing = true; setPlayIcon(); playCurrent(); }  // resumes from the start of the current sentence
+};
+$("#pStop").onclick = () => stopPlayer();
+$("#pPrev").onclick = () => playFrom(P.idx - 1);
+$("#pNext").onclick = () => playFrom(P.idx + 1);
+$("#pRate").onchange = () => { if (P.playing) { P.rep = 0; pausePlayer(); P.playing = true; setPlayIcon(); playCurrent(); } };
+document.addEventListener("keydown", e => {
+  if ($("#reader").classList.contains("hidden") || $("#v-read").classList.contains("hidden")) return;
+  if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if (e.key === " ") { e.preventDefault(); $("#pPlay").click(); }
+  if (e.key === "ArrowRight") $("#pNext").click();
+  if (e.key === "ArrowLeft") $("#pPrev").click();
+});
+
+/* ---------------- speaking coach (record → evaluate → highlight) ---------------- */
+const C = { i: -1, rec: null, stream: null, chunks: [], blob: null, url: null, recog: null, heard: "", t0: 0, dur: 0, autoStop: null, busy: false };
+const hasKey = () => !!(S.settings.apiKey && S.settings.apiKey.trim());
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const IS_ANDROID = /Android/i.test(navigator.userAgent);
+function micHelp(kind){
+  const android = IS_ANDROID, samsung = /Samsung|SM-|SAMSUNG/i.test(navigator.userAgent) || android;
+  let html;
+  if (kind === "insecure"){
+    html = `<h2>🎙 Microphone needs a web link</h2>
+      <p class="small">You opened the app as a local file, and browsers only allow the microphone on <b>https://</b> pages. Everything else works, but recording doesn't.</p>
+      <ol class="steps"><li>On a computer, go to <a href="https://app.netlify.com/drop" target="_blank" rel="noopener">app.netlify.com/drop</a> (free) and drag this HTML file in.</li>
+      <li>Open the link it gives you on your tablet in Chrome.</li><li>Tap ⋮ → <b>Add to Home screen</b>.</li></ol>
+      <p class="small muted">Your words are saved per address — use Settings → Export / Import to move them to the new link.</p>`;
+  } else {
+    html = `<h2>🎙 Allow the microphone</h2>
+      <p class="small">The microphone is blocked. Check these${android ? "" : " (then reload the page)"}:</p>
+      <ol class="steps">
+        <li><b>Chrome for this site:</b> tap the icon left of the address bar (🔒 / ⓘ / ⚙) → <b>Permissions</b> → <b>Microphone → Allow</b>. Or Chrome ⋮ → Settings → Site settings → Microphone → remove this site from “Blocked”.</li>
+        ${android ? `<li><b>Android → Chrome:</b> Settings → Apps → Chrome → Permissions → <b>Microphone → Allow</b> (“Only while using the app” is fine).</li>` : ""}
+        ${samsung ? `<li><b>Samsung quick toggle:</b> swipe down from the top → make sure <b>Mic access</b> is ON (Settings → Security and privacy → Privacy → Microphone access).</li>` : ""}
+        <li>Reload the page and tap 🎙 again — tap <b>Allow</b> when Chrome asks.</li>
+      </ol>`;
+  }
+  const m = $("#helpModal"); $("#helpBody").innerHTML = html; m.classList.remove("hidden");
+}
+function openCoach(i){
+  if (!curP) return;
+  pausePlayer(); cancelRec();
+  C.i = i; const s = curP.sentences[i];
+  $("#coach").classList.remove("hidden");
+  $("#cTarget").textContent = s.ko; $("#cTargetM").textContent = s.meaning || "";
+  $("#cResult").innerHTML = ""; $("#cMine").disabled = true;
+  $("#cStatus").textContent = hasKey() ? "Listen first 🔊, then tap 🎙 and read aloud. Tap again to stop."
+    : SR ? "Tap 🎙 and read aloud. (Basic check — add a free Gemini key in Settings for full feedback on intonation & fluency.)"
+    : "⚠️ This browser can't check speech without AI. Add a free Gemini key in Settings, or use Chrome/Safari.";
+  $("#coach").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function closeCoach(){ cancelRec(); $("#coach").classList.add("hidden"); C.i = -1; }
+$("#cClose").onclick = closeCoach;
+$("#cListen").onclick = () => { if (curP && C.i >= 0) speak(curP.sentences[C.i].ko, { rate: +$("#pRate").value }); };
+$("#cMine").onclick = () => { if (C.url) new Audio(C.url).play(); };
+$("#cRec").onclick = () => { if (C.busy) return; (C.rec && C.rec.state === "recording") || C.recog ? stopRec() : startRec(); };
+
+function cancelRec(){
+  clearTimeout(C.autoStop);
+  try { if (C.rec && C.rec.state === "recording") { C.rec.onstop = null; C.rec.stop(); } } catch(e){}
+  try { if (C.recog) { C.recog.onend = null; C.recog.abort(); } } catch(e){}
+  if (C.stream) C.stream.getTracks().forEach(t => t.stop());
+  C.rec = C.recog = C.stream = null;
+  const b = $("#cRec"); if (b) { b.classList.remove("on"); b.textContent = "🎙"; }
+}
+async function startRec(){
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  const useAI = hasKey();
+  if (!useAI && !SR) { toast("Needs a Gemini key (Settings) or Chrome/Safari"); return; }
+  C.heard = ""; C.blob = null; $("#cResult").innerHTML = "";
+  if (!window.isSecureContext) { micHelp("insecure"); return; }
+  try { const st = await navigator.permissions.query({ name: "microphone" }); if (st.state === "denied") { micHelp("denied"); return; } } catch(e){}
+  // On Android, Chrome can't record and run speech recognition at the same time → use recognition only in free mode
+  const recordAudio = useAI || !IS_ANDROID;
+  try {
+    if (recordAudio && navigator.mediaDevices && window.MediaRecorder){
+      C.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      C.chunks = [];
+      C.rec = new MediaRecorder(C.stream);
+      C.rec.ondataavailable = e => { if (e.data.size) C.chunks.push(e.data); };
+      C.rec.onstop = onRecStop;
+      C.rec.start();
+    } else if (useAI) throw new Error("Recording isn't supported in this browser");
+  } catch(e){
+    cancelRec();
+    if (e.name === "NotAllowedError" || e.name === "SecurityError") micHelp("denied");
+    else if (e.name === "NotFoundError") toast("No microphone found");
+    else if (e.name === "NotReadableError") toast("Microphone is busy — close other apps using it (calls, recorders) and try again");
+    else toast("⚠️ " + (e.message || "Can't access microphone"));
+    return;
+  }
+  if (!useAI && SR){
+    try {
+      const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = true; r.maxAlternatives = 1;
+      r.onresult = ev => { let t = ""; for (const res of ev.results) t += res[0].transcript; C.heard = t; $("#cStatus").textContent = "Hearing: " + t; };
+      r.onerror = ev => { if (ev.error === "not-allowed" || ev.error === "service-not-allowed") { cancelRec(); micHelp("denied"); } else if (ev.error === "network") toast("Speech check needs internet"); else if (ev.error === "audio-capture") toast("Microphone is busy or unavailable"); };
+      r.onend = () => { if (C.recog) stopRec(); };
+      r.start(); C.recog = r;
+    } catch(e){ C.recog = null; }
+  }
+  C.t0 = Date.now();
+  const b = $("#cRec"); b.classList.add("on"); b.textContent = "⏹";
+  $("#cStatus").textContent = "🔴 Recording… read the sentence, then tap ⏹";
+  C.autoStop = setTimeout(stopRec, 30000);
+}
+function stopRec(){
+  clearTimeout(C.autoStop);
+  C.dur = Date.now() - C.t0;
+  const b = $("#cRec"); b.classList.remove("on"); b.textContent = "🎙";
+  const recog = C.recog; C.recog = null;
+  if (recog){ try { recog.onend = null; recog.stop(); } catch(e){} }
+  if (C.rec && C.rec.state === "recording") C.rec.stop();   // → onRecStop
+  else { if (C.stream) C.stream.getTracks().forEach(t => t.stop()); setTimeout(() => evaluateLocal(), 400); }
+}
+async function onRecStop(){
+  if (C.stream) C.stream.getTracks().forEach(t => t.stop());
+  C.stream = null;
+  C.blob = new Blob(C.chunks, { type: (C.rec && C.rec.mimeType) || "audio/webm" });
+  C.rec = null;
+  if (C.url) URL.revokeObjectURL(C.url);
+  C.url = URL.createObjectURL(C.blob); $("#cMine").disabled = false;
+  if (C.dur < 500) { $("#cStatus").textContent = "That was too short — try again."; return; }
+  if (hasKey()) evaluateAI(); else setTimeout(() => evaluateLocal(), 500); // let final speech results arrive
+}
+
+/* audio → 16 kHz mono WAV (base64) so any AI model accepts it */
+async function blobToWavB64(blob){
+  const buf = await blob.arrayBuffer();
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ac = new AC();
+  const audio = await new Promise((res, rej) => { const p = ac.decodeAudioData(buf, res, rej); if (p && p.then) p.then(res, rej); });
+  ac.close && ac.close();
+  const rate = 16000, len = Math.ceil(audio.duration * rate);
+  const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, len, rate);
+  const src = off.createBufferSource(); src.buffer = audio; src.connect(off.destination); src.start();
+  const out = await off.startRendering();
+  const d = out.getChannelData(0);
+  const ab = new ArrayBuffer(44 + d.length * 2), v = new DataView(ab);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0,"RIFF"); v.setUint32(4, 36 + d.length*2, true); w(8,"WAVE"); w(12,"fmt "); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate*2, true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,"data"); v.setUint32(40, d.length*2, true);
+  for (let i = 0; i < d.length; i++){ const x = Math.max(-1, Math.min(1, d[i])); v.setInt16(44 + i*2, x < 0 ? x*0x8000 : x*0x7FFF, true); }
+  const bytes = new Uint8Array(ab); let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+async function evaluateAI(){
+  const s = curP.sentences[C.i];
+  C.busy = true; $("#cStatus").innerHTML = `<span class="spinner"></span>Coach is listening to your recording…`;
+  try {
+    const b64 = await blobToWavB64(C.blob);
+    const prompt = `You are an expert, honest and encouraging Korean pronunciation coach (standard Seoul Korean). A ${langName()}-speaking learner read this sentence aloud:
+TARGET: "${s.ko}"
+Listen carefully to the attached recording and evaluate it like a native Korean teacher:
+- accuracy: consonants (plain / aspirated / tense: ㄱㅋㄲ, ㄷㅌㄸ, ㅂㅍㅃ, ㅈㅊㅉ, ㅅㅆ), vowels (ㅓ/ㅗ, ㅐ/ㅔ, ㅡ/ㅜ, ㅢ…), final consonants (받침), and required sound-change rules (연음, 비음화, 경음화, 격음화, 유음화, 구개음화, ㅎ 탈락…).
+- fluency: smoothness, pace, unnatural pauses, hesitation, chunking into natural phrases.
+- intonation: natural pitch contour; Korean has no strong word stress — flag syllables that are unnaturally stressed or lengthened, and wrong sentence-final intonation (statement ↓ vs question ↑).
+- native: overall, how close to a native Seoul speaker.
+Scores are 0–100 and must be realistic (typical beginners 40–75; only near-native gets 90+).
+For each problem: "part" MUST be copied exactly from TARGET (a syllable or word); "heard" = how it sounded (Hangul or description); "tip" = concrete fix in ${langName()}: mouth/tongue/airflow, the sound rule if any, and the correct pronunciation in brackets like [머거요]. Max 6 issues, most important first.
+"pron" = standard pronunciation of the whole TARGET written in Hangul in brackets (apply sound-change rules).
+"heard" = what the learner actually said, transcribed in Hangul.
+If the audio is silent or unrelated to the target, return heard "" and all scores 0.
+Write "good", "overall" and all tips in ${langName()}.
+Return JSON exactly like: {"heard":"","pron":"","scores":{"accuracy":0,"fluency":0,"intonation":0,"native":0},"issues":[{"part":"","type":"sound|batchim|sound-rule|intonation|stress|pace|missing|extra","heard":"","tip":""}],"good":"","overall":""}`;
+    const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }]));
+    renderCoachResult(s, j, true);
+  } catch(e){
+    $("#cStatus").textContent = "⚠️ " + e.message;
+  }
+  C.busy = false;
+}
+
+/* ---- free local check (browser speech recognition + Korean sound-rule hints) ---- */
+const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ", JUNG = "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ", JONG = ["","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+function dec(ch){ const c = ch.charCodeAt(0) - 0xAC00; if (c < 0 || c > 11171) return null; return { cho: CHO[Math.floor(c/588)], jung: JUNG[Math.floor((c%588)/28)], jong: JONG[c%28] }; }
+const SERIES = [["ㄱ","ㅋ","ㄲ"],["ㄷ","ㅌ","ㄸ"],["ㅂ","ㅍ","ㅃ"],["ㅈ","ㅊ","ㅉ"],["ㅅ","ㅆ"]];
+const VOW_PAIRS = [["ㅓ","ㅗ"],["ㅐ","ㅔ"],["ㅡ","ㅜ"],["ㅕ","ㅛ"],["ㅢ","ㅣ"],["ㅘ","ㅏ"],["ㅝ","ㅓ"]];
+function vi(){ return S.settings.lang === "vi"; }
+function localTip(tgt, prev, next, heardCh){
+  const a = dec(tgt), h = heardCh ? dec(heardCh) : null, p = prev ? dec(prev) : null, n = next ? dec(next) : null;
+  if (!a) return "";
+  if (!heardCh) return vi() ? `Âm “${tgt}” bị thiếu hoặc không nghe rõ — đọc chậm lại, phát âm đủ từng âm tiết.` : `“${tgt}” was missing or unclear — slow down and pronounce every syllable.`;
+  if (h){
+    if (a.cho !== h.cho){
+      const ser = SERIES.find(s => s.includes(a.cho) && s.includes(h.cho));
+      if (ser){
+        const kind = x => x === ser[0] ? (vi() ? "thường (nhẹ, hơi ít)" : "plain (soft, light breath)") : x === ser[1] && ser.length === 3 ? (vi() ? "bật hơi (thổi mạnh hơi ra)" : "aspirated (strong puff of air)") : (vi() ? "căng (siết cổ họng, không bật hơi)" : "tense (tight throat, no air)");
+        return vi() ? `Bạn đọc ${h.cho} thay vì ${a.cho}. ${a.cho} là âm ${kind(a.cho)}. Để tay trước miệng để kiểm tra luồng hơi.` : `You said ${h.cho} instead of ${a.cho}. ${a.cho} is ${kind(a.cho)}. Hold your hand in front of your mouth to feel the airflow.`;
+      }
+      if ((a.cho === "ㄹ" && h.cho === "ㄴ") || (a.cho === "ㄴ" && h.cho === "ㄹ")) return vi() ? `Phân biệt ㄹ (đầu lưỡi chạm nhẹ lợi rồi bật ra, giống “r” nhẹ) và ㄴ (âm mũi “n”).` : `Distinguish ㄹ (light tongue flap, like a soft “r/l”) from ㄴ (nasal “n”).`;
+    }
+    if (a.jung !== h.jung){
+      const vp = VOW_PAIRS.find(x => x.includes(a.jung) && x.includes(h.jung));
+      if (vp && (a.jung === "ㅓ" || h.jung === "ㅓ")) return vi() ? `ㅓ đọc miệng mở, KHÔNG tròn môi (gần “ơ/o” mở); ㅗ tròn môi (“ô”). Bạn đọc ${h.jung} thay vì ${a.jung}.` : `ㅓ is open with unrounded lips (like “uh/aw”), ㅗ is rounded (“oh”). You said ${h.jung} instead of ${a.jung}.`;
+      if (vp && vp.includes("ㅐ") && vp.includes("ㅔ")) return vi() ? `ㅐ và ㅔ gần như giống nhau trong tiếng Seoul hiện đại (máy cũng hay nhầm). ㅐ mở miệng rộng hơn một chút, ㅔ hẹp hơn — không cần quá lo.` : `ㅐ and ㅔ sound almost the same in modern Seoul Korean (recognizers mix them up too). ㅐ is a bit more open — don't worry too much.`;
+      if (vp && a.jung === "ㅡ") return vi() ? `ㅡ đọc như “ư”, môi dẹt kéo ngang — không tròn môi như ㅜ (“u”).` : `ㅡ is said with flat, spread lips (no rounding), unlike ㅜ (“oo”).`;
+      return vi() ? `Nguyên âm sai: cần ${a.jung}, bạn đọc gần như ${h.jung}. Nghe mẫu 🔊 và chú ý khẩu hình.` : `Vowel: should be ${a.jung}, you said something like ${h.jung}. Listen 🔊 and watch your mouth shape.`;
+    }
+    if (a.jong !== h.jong) {
+      const t = rulesTip(a, n, tgt, next);
+      return t || (vi() ? `Chú ý phụ âm cuối (받침) “${a.jong || "không có"}” của “${tgt}”. Phụ âm cuối tiếng Hàn đọc “nuốt”, không bật hơi.` : `Watch the final consonant (받침) “${a.jong || "none"}” in “${tgt}”. Korean finals are unreleased — don't puff air.`);
+    }
+  }
+  return rulesTip(a, n, tgt, next) || rulesTip(p, a, prev, tgt) || (vi() ? `Âm tiết “${tgt}” chưa rõ — nghe mẫu 🔊 rồi lặp lại chậm.` : `“${tgt}” wasn't clear — listen 🔊 and repeat slowly.`);
+}
+function rulesTip(a, n, ch, nextCh){
+  if (!a || !n || !a.jong) return "";
+  const J = a.jong;
+  if (n.cho === "ㅇ" && J !== "ㅇ") return vi() ? `연음 (nối âm): phụ âm cuối ${J} của “${ch}” được đọc sang âm tiết sau “${nextCh}”.` : `연음 (linking): the final ${J} of “${ch}” moves to the next syllable “${nextCh}”.`;
+  if (["ㄱ","ㄲ","ㅋ","ㄺ"].includes(J) && ["ㄴ","ㅁ"].includes(n.cho)) return vi() ? `비음화: ${J} trước ${n.cho} đọc thành ㅇ (vd. 한국말 → [한궁말]).` : `비음화 (nasalization): ${J} before ${n.cho} becomes ㅇ (e.g. 한국말 → [한궁말]).`;
+  if (["ㄷ","ㅅ","ㅆ","ㅈ","ㅊ","ㅌ","ㅎ"].includes(J) && ["ㄴ","ㅁ"].includes(n.cho)) return vi() ? `비음화: ${J} trước ${n.cho} đọc thành ㄴ (vd. 있는 → [인는]).` : `비음화: ${J} before ${n.cho} becomes ㄴ (e.g. 있는 → [인는]).`;
+  if (["ㅂ","ㅍ","ㄼ","ㅄ"].includes(J) && ["ㄴ","ㅁ"].includes(n.cho)) return vi() ? `비음화: ${J} trước ${n.cho} đọc thành ㅁ (vd. 합니다 → [함니다]).` : `비음화: ${J} before ${n.cho} becomes ㅁ (e.g. 합니다 → [함니다]).`;
+  if ((J === "ㄹ" && n.cho === "ㄴ") || (J === "ㄴ" && n.cho === "ㄹ")) return vi() ? `유음화: ㄴ+ㄹ / ㄹ+ㄴ đọc thành [ㄹㄹ] (vd. 연락 → [열락]).` : `유음화: ㄴ+ㄹ or ㄹ+ㄴ is read as [ㄹㄹ] (e.g. 연락 → [열락]).`;
+  if (J === "ㅎ" && ["ㄱ","ㄷ","ㅈ"].includes(n.cho)) return vi() ? `격음화: ㅎ + ${n.cho} → âm bật hơi (vd. 좋다 → [조타]).` : `격음화: ㅎ + ${n.cho} becomes aspirated (e.g. 좋다 → [조타]).`;
+  if (["ㄱ","ㄷ","ㅂ"].includes(J) && ["ㄱ","ㄷ","ㅂ","ㅅ","ㅈ"].includes(n.cho)) return vi() ? `경음화: sau ${J}, âm ${n.cho} đọc căng (vd. 학교 → [학꾜]).` : `경음화 (tensing): after ${J}, ${n.cho} becomes tense (e.g. 학교 → [학꾜]).`;
+  return "";
+}
+function syls(t){ return [...String(t)].filter(ch => /[가-힣]/.test(ch)); }
+/* align target vs heard syllables (edit distance) → per-target-syllable heard char or null */
+function align(tg, hd){
+  const n = tg.length, m = hd.length, D = Array.from({length:n+1}, () => new Array(m+1).fill(0));
+  for (let i=0;i<=n;i++) D[i][0]=i; for (let j=0;j<=m;j++) D[0][j]=j;
+  for (let i=1;i<=n;i++) for (let j=1;j<=m;j++) D[i][j] = Math.min(D[i-1][j]+1, D[i][j-1]+1, D[i-1][j-1] + (tg[i-1]===hd[j-1]?0:1));
+  const map = new Array(n).fill(null); let i=n, j=m, extra=0;
+  while (i>0 || j>0){
+    if (i>0 && j>0 && D[i][j] === D[i-1][j-1] + (tg[i-1]===hd[j-1]?0:1)){ map[i-1] = hd[j-1]; i--; j--; }
+    else if (i>0 && D[i][j] === D[i-1][j]+1){ map[i-1] = null; i--; }
+    else { extra++; j--; }
+  }
+  return { map, extra };
+}
+function evaluateLocal(){
+  const s = curP.sentences[C.i];
+  const heard = C.heard.trim();
+  if (!heard){ $("#cStatus").textContent = "Didn't catch anything — speak a bit louder and closer to the mic, then try again."; return; }
+  const tg = syls(s.ko), { map, extra } = align(tg, syls(heard));
+  const ok = map.filter((h, i) => h === tg[i]).length;
+  const accuracy = Math.max(0, Math.round(100 * (ok - extra*0.5) / Math.max(1, tg.length)));
+  const sps = tg.length / Math.max(0.5, C.dur / 1000);           // syllables per second
+  const fluency = Math.round(Math.max(20, Math.min(100, (sps / 4.5) * 100)));
+  const issues = [];
+  tg.forEach((ch, i) => { if (map[i] !== ch && issues.length < 6) issues.push({ idx: i, part: ch, heard: map[i] || "", type: map[i] ? "sound" : "missing", tip: localTip(ch, tg[i-1], tg[i+1], map[i]) }); });
+  const j = { heard, scores: { accuracy, fluency }, issues, local: true,
+    good: accuracy >= 90 ? (vi() ? "Phát âm rõ ràng, máy nhận diện gần như chính xác!" : "Very clear — speech recognition understood almost everything!") : "",
+    overall: (vi() ? `Tốc độ: ${sps.toFixed(1)} âm tiết/giây (người bản xứ ~5–7). ` : `Pace: ${sps.toFixed(1)} syllables/sec (natives ~5–7). `) +
+      (vi() ? "Đây là kiểm tra cơ bản bằng nhận diện giọng nói. Thêm Gemini key miễn phí để được chấm ngữ điệu, độ tự nhiên và hướng dẫn chi tiết hơn." : "This is a basic check using speech recognition. Add a free Gemini key for intonation, native-likeness and more detailed coaching.") };
+  renderCoachResult(s, j, false);
+}
+
+function renderCoachResult(s, j, ai){
+  const sc = j.scores || {};
+  const cls = v => v >= 80 ? "s-hi" : v >= 60 ? "s-mid" : "s-lo";
+  const box = (k, label) => sc[k] == null ? `<div class="stat"><b class="muted">–</b><span>${label}</span></div>` : `<div class="stat ${cls(sc[k])}"><b>${Math.round(sc[k])}</b><span>${label}</span></div>`;
+  // highlight target
+  const chars = [...s.ko], flag = new Array(chars.length).fill(0), num = new Array(chars.length).fill(0);
+  const issues = (j.issues || []).filter(x => x && (x.part || x.idx != null));
+  if (j.local){
+    const pos = []; chars.forEach((ch, k) => { if (/[가-힣]/.test(ch)) pos.push(k); });
+    issues.forEach((x, n) => { const k = pos[x.idx]; if (k != null){ flag[k] = 2; num[k] = n + 1; } });
+  } else {
+    let from = 0;
+    issues.forEach((x, n) => {
+      const part = String(x.part || "").trim(); if (!part) return;
+      let at = s.ko.indexOf(part, from); if (at < 0) at = s.ko.indexOf(part); if (at < 0) return;
+      const k0 = [...s.ko.slice(0, at)].length, L = [...part].length;
+      const sev = /intonation|stress|pace/.test(x.type || "") ? 1 : 2;
+      for (let k = k0; k < k0 + L; k++) flag[k] = Math.max(flag[k], sev);
+      num[k0 + L - 1] = n + 1; from = at + part.length;
+    });
+    // also mark syllables the AI transcript shows were missing/wrong
+    if (j.heard){
+      const tg = syls(s.ko), { map } = align(tg, syls(j.heard)); let hi = 0;
+      chars.forEach((ch, k) => { if (/[가-힣]/.test(ch)){ if (map[hi] !== tg[hi] && !flag[k]) flag[k] = 1; hi++; } });
+    }
+  }
+  let html = "", open = 0;
+  chars.forEach((ch, k) => {
+    if (flag[k] !== open){ if (open) html += "</mark>"; if (flag[k]) html += `<mark class="${flag[k] === 1 ? "warn" : ""}">`; open = flag[k]; }
+    html += esc(ch);
+    if (num[k]) html += `<sup>${num[k]}</sup>`;
+  });
+  if (open) html += "</mark>";
+  $("#cTarget").innerHTML = html;
+
+  const overallScore = Math.round(["accuracy","fluency","intonation","native"].map(k => sc[k]).filter(v => v != null).reduce((a,b,_,arr) => a + b/arr.length, 0));
+  const typeName = t => ({ sound:"Sound", batchim:"Final consonant", "sound-rule":"Sound rule", intonation:"Intonation", stress:"Stress", pace:"Pace", missing:"Missing", extra:"Extra" }[t] || t || "Tip");
+  $("#cStatus").textContent = overallScore >= 85 ? "🌟 Excellent!" : overallScore >= 70 ? "👍 Good — a few things to polish" : overallScore >= 50 ? "💪 Getting there — see the tips" : "Keep practicing — listen 🔊 and try again";
+  $("#cResult").innerHTML = `
+    <div class="scores">${box("accuracy","Accuracy")}${box("fluency","Fluency")}${box("intonation","Intonation")}${box("native","Native-like")}</div>
+    ${j.heard ? `<div class="box"><span class="muted small">We heard</span><div lang="ko" style="font-size:17px">${esc(j.heard)}</div></div>` : ""}
+    ${j.pron ? `<div class="box"><span class="muted small">Correct pronunciation</span><div lang="ko" style="font-size:17px">${esc(j.pron)} <button class="icon-btn" data-say="${esc(s.ko)}">🔊</button></div></div>` : ""}
+    ${issues.length ? `<div class="box">${issues.map((x, n) => `<div class="issue"><span class="n">${n+1}</span><div>
+        <div class="ty">${esc(typeName(x.type))}</div>
+        <div><b lang="ko">${esc(x.part)}</b>${x.heard ? ` <span class="muted">→ you said</span> <span lang="ko">${esc(x.heard)}</span>` : ""}</div>
+        <div class="small" style="margin-top:3px">${esc(x.tip)}</div></div></div>`).join("")}</div>` : ""}
+    ${j.good ? `<div class="feedback ok small">✅ ${esc(j.good)}</div>` : ""}
+    ${j.overall ? `<div class="box small">💡 ${esc(j.overall)}</div>` : ""}
+    <div class="row" style="margin-top:12px"><button class="btn2" id="cAgain">🔁 Try again</button>${C.i < curP.sentences.length - 1 ? `<button class="btn" id="cNextS">Next sentence →</button>` : ""}</div>`;
+  bindSay($("#cResult"));
+  $("#cAgain").onclick = () => { $("#cTarget").textContent = s.ko; $("#cResult").innerHTML = ""; startRec(); };
+  const nx = $("#cNextS"); if (nx) nx.onclick = () => openCoach(C.i + 1);
+  if (overallScore && (s.best == null || overallScore > s.best)) { s.best = overallScore; save(); const el = $$("#sentList .sent")[C.i]; if (el) { const keep = C.i; renderSentences(); C.i = keep; } }
+}
+
+/* ---------------- words list ---------------- */
+let filter = "all";
+$$("#filterTabs button").forEach(b => b.onclick = () => { filter = b.dataset.f; $$("#filterTabs button").forEach(x=>x.classList.toggle("on", x===b)); renderWords(); });
+$("#search").oninput = () => renderWords();
+function renderWords(){
+  const q = $("#search").value.trim().toLowerCase();
+  const list = S.cards.filter(c => (filter === "all" || status(c) === filter) && (!q || c.ko.includes(q) || c.meaning.toLowerCase().includes(q)))
+    .sort((a,b) => b.created - a.created);
+  const lab = { new:["New","b-new"], learn:["Learning","b-learn"], master:["Mastered","b-master"] };
+  $("#wordList").innerHTML = list.length ? list.map(c => {
+    const s = status(c), [t, cls] = lab[s];
+    const due = s !== "new" ? (c.due <= Date.now() ? "due now" : "in " + timeUntil(c.due)) : "";
+    return `<li data-id="${c.id}">
+      <button class="speak sm" data-a="say">🔊</button>
+      <div class="t"><b lang="ko">${esc(c.ko)}</b><div>${esc(c.meaning) || "<i>no meaning</i>"}</div>${c.ex ? `<div class="exl" lang="ko">${esc(c.ex)} <span>· ${esc(c.exMean)}</span></div>` : ""}</div>
+      <span class="badge ${cls}" title="${esc(due)}">${t}</span>
+      <button class="icon-btn" data-a="edit" title="Edit">✏️</button>
+      <button class="icon-btn" data-a="del" title="Delete">🗑️</button></li>`;
+  }).join("") : `<li class="muted" style="justify-content:center">${S.cards.length ? "No matches" : "No words yet"}</li>`;
+  const noEx = S.cards.filter(c => !c.ex).length;
+  $("#exPrompt").classList.toggle("hidden", !noEx);
+  $("#exPromptTxt").textContent = `${noEx} word${noEx===1?"":"s"} without an example sentence.`;
+  $$("#wordList button").forEach(b => b.onclick = () => {
+    const id = b.closest("li").dataset.id, c = S.cards.find(x => x.id === id); if (!c) return;
+    if (b.dataset.a === "say") speak(c.ko);
+    if (b.dataset.a === "del"){ S.cards = S.cards.filter(x => x.id !== id); save(); renderWords(); toast("Deleted “" + c.ko + "”"); }
+    if (b.dataset.a === "edit") editRow(b.closest("li"), c);
+  });
+}
+$("#exGenBtn").onclick = async () => {
+  const list = S.cards.filter(c => !c.ex);
+  if (!list.length) return;
+  const b = $("#exGenBtn"); busy(b, true, "Writing…");
+  try { await genExamples(hasKey() ? list : list.slice(0, 30)); } catch(e){ if (e.message !== "cancelled") toast("⚠️ " + e.message); }
+  busy(b, false); renderWords();
+};
+function editRow(li, c){
+  li.innerHTML = `<div class="t" style="display:grid;gap:6px"><input class="ek" lang="ko" value="${esc(c.ko)}"><input class="em" value="${esc(c.meaning)}"><input class="ee" lang="ko" value="${esc(c.ex||"")}" placeholder="Example sentence"><input class="eem" value="${esc(c.exMean||"")}" placeholder="Example translation"></div>
+    <div style="display:grid;gap:6px"><button class="btn2 small" data-a="ok">Save</button><button class="btn-ghost small" data-a="rs" title="Reset progress">Reset</button></div>`;
+  li.querySelector("[data-a=ok]").onclick = () => { c.ko = li.querySelector(".ek").value.trim() || c.ko; c.meaning = li.querySelector(".em").value.trim(); c.ex = li.querySelector(".ee").value.trim(); c.exMean = li.querySelector(".eem").value.trim(); save(); renderWords(); };
+  li.querySelector("[data-a=rs]").onclick = () => { Object.assign(c, { ease:2.5, interval:0, reps:0, lapses:0, due:0, last:0 }); save(); renderWords(); toast("Progress reset"); };
+}
+
+/* ---------------- settings ---------------- */
+function renderSettings(){
+  $("#setNew").value = S.settings.newPerDay;
+  $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]);
+  $("#setAuto").checked = S.settings.autoPlay;
+  $("#setRate").value = S.settings.rate; $("#rateVal").textContent = S.settings.rate + "×";
+  $$("#ratePresets button").forEach(b => b.classList.toggle("on", Math.abs(+b.dataset.r - S.settings.rate) < 0.01));
+  $("#setAllVoices").checked = !!S.settings.allVoices;
+  $("#setLang").value = S.settings.lang;
+  $("#setKey").value = S.settings.apiKey || ""; $("#setModel").value = S.settings.model || ""; $("#setAutoEx").checked = S.settings.autoEx;
+  loadVoices();
+}
+$("#setNew").onchange = e => { S.settings.newPerDay = Math.max(1, Math.min(100, +e.target.value || 10)); save(); };
+$$("[data-mode]").forEach(i => i.onchange = () => {
+  S.settings.modes[i.dataset.mode] = i.checked;
+  if (!Object.values(S.settings.modes).some(Boolean)) { S.settings.modes.ko2m = true; renderSettings(); toast("Keep at least one type on"); }
+  save();
+});
+$("#setAuto").onchange = e => { S.settings.autoPlay = e.target.checked; save(); };
+$("#setRate").oninput = e => { S.settings.rate = +e.target.value; $("#rateVal").textContent = S.settings.rate + "×"; $$("#ratePresets button").forEach(b => b.classList.toggle("on", Math.abs(+b.dataset.r - S.settings.rate) < 0.01)); save(); };
+$("#setVoice").onchange = e => { S.settings.voice = e.target.value; save(); loadVoices(); speak("안녕하세요. 만나서 반가워요!"); };
+$("#setAllVoices").onchange = e => { S.settings.allVoices = e.target.checked; save(); loadVoices(); };
+$$("#ratePresets button").forEach(b => b.onclick = () => { S.settings.rate = +b.dataset.r; save(); renderSettings(); speak("안녕하세요. 만나서 반가워요!"); });
+$("#setLang").onchange = e => { S.settings.lang = e.target.value; save(); };
+$("#testVoice").onclick = () => speak("안녕하세요");
+$("#setKey").onchange = e => { S.settings.apiKey = e.target.value.trim(); save(); };
+$("#setModel").onchange = e => { S.settings.model = e.target.value.trim() || "gemini-flash-latest"; save(); };
+$("#setAutoEx").onchange = e => { S.settings.autoEx = e.target.checked; save(); };
+$("#keyShow").onclick = () => { const i = $("#setKey"); i.type = i.type === "password" ? "text" : "password"; };
+$("#testAI").onclick = async () => {
+  S.settings.apiKey = $("#setKey").value.trim(); save();
+  if (!S.settings.apiKey) { toast("Paste your Gemini key first"); return; }
+  const b = $("#testAI"); busy(b, true, "Testing…");
+  try { const j = extractJSON(await gemini('Translate 안녕하세요 to English. Return JSON {"t":""}')); toast("✅ Connected! " + (j.t || "")); }
+  catch(e){ toast("⚠️ " + e.message); }
+  busy(b, false);
+};
+$("#expBtn").onclick = () => {
+  const data = JSON.parse(JSON.stringify(S)); data.settings.apiKey = "";
+  const blob = new Blob([JSON.stringify(data, null, 1)], { type:"application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = "hangul-cards-backup-" + new Date().toISOString().slice(0,10) + ".json"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+};
+$("#impBtn").onclick = () => $("#impFile").click();
+$("#impFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!Array.isArray(d.cards)) throw new Error();
+    const wasEmpty = !S.cards.length;
+    const ids = new Set(S.cards.map(c=>c.ko)); let n = 0;
+    d.cards.forEach(c => { if (c && c.ko && !ids.has(c.ko)) { S.cards.push(Object.assign(newCard(c.ko, c.meaning||""), c)); ids.add(c.ko); n++; } });
+    if (wasEmpty && d.settings) { const k = S.settings.apiKey; S.settings = Object.assign(S.settings, d.settings); S.settings.apiKey = k; if (d.streak) S.streak = d.streak; }
+    let np = 0; const pids = new Set(S.passages.map(p => p.id));
+    (d.passages || []).forEach(p => { if (p && p.id && Array.isArray(p.sentences) && !pids.has(p.id)) { S.passages.push(Object.assign({ vocab: [] }, p)); np++; } });
+    save(); toast(`Imported ${n} word${n===1?"":"s"}${np ? ` and ${np} passage${np===1?"":"s"}` : ""}`); refreshHome();
+  } catch(err){ toast("Invalid backup file"); }
+  e.target.value = "";
+};
+$("#resetBtn").onclick = () => {
+  const b = $("#resetBtn");
+  if (!b.dataset.confirm){ b.dataset.confirm = "1"; b.textContent = "Tap again to delete everything"; setTimeout(()=>{ delete b.dataset.confirm; b.textContent = "Delete all data"; }, 3000); return; }
+  const k = S.settings.apiKey; S = defaults(); S.settings.apiKey = k; save(); delete b.dataset.confirm; b.textContent = "Delete all data"; renderSettings(); toast("All data deleted");
+};
+
+/* ---------------- init ---------------- */
+load();
+if (!Array.isArray(S.passages)) S.passages = [];
+if (!S.settings.voiceV2) { if (S.settings.rate === 0.85) S.settings.rate = 1; S.settings.voiceV2 = true; save(); }  // native speed by default
+fillLevels($("#genLevel")); fillLevels($("#rdLevel"));
+if ("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+refreshHome();
+setInterval(() => { if (!session && !$("#v-study").classList.contains("hidden")) refreshHome(); }, 60000);
+})();
+</script>
+</body>
+</html>
