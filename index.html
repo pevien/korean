@@ -244,6 +244,9 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .b-master{background:var(--ok-soft);color:var(--ok)}
 @media (prefers-color-scheme: dark){.b-learn{background:#3a2e17}}
 .icon-btn{background:none;color:var(--muted);padding:6px 8px;font-size:16px}
+.srs{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.srs .bar{width:72px;height:4px;border-radius:99px;background:var(--line);overflow:hidden}
+.srs .bar i{display:block;height:100%;background:var(--ok);border-radius:99px}
 .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .tabs button{background:var(--card);border:1px solid var(--line);color:var(--muted);padding:8px 12px;font-size:14px;font-weight:500}
 .tabs button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -2456,10 +2459,12 @@ function renderWords(){
   $("#wordList").innerHTML = list.length ? list.map(c => {
     const s = status(c), [t, cls] = lab[s];
     const due = s !== "new" ? (c.due <= Date.now() ? "due now" : "in " + timeUntil(c.due)) : "";
+    const iv = s === "learn" ? ` · ${c.interval || 0}/21 ${L("ngày", "d")}` : s === "master" ? ` · ${c.interval} ${L("ngày", "d")}` : "";
+    const srs = s !== "learn" ? "" : `<span class="bar" title="${L("Tiến độ đến Đã thuộc (chu kỳ 21 ngày)", "Progress to Mastered (21-day interval)")}"><i style="width:${Math.min(100, Math.round((c.interval||0)/21*100))}%"></i></span>`;
     return `<li data-id="${c.id}">
       <button class="speak sm" data-a="say">🔊</button>
       <div class="t"><b lang="ko">${esc(c.ko)}</b><div>${esc(c.meaning) || "<i>no meaning</i>"}</div>${c.ex ? `<div class="exl" lang="ko">${esc(c.ex)} <span>· ${esc(c.exMean)}</span></div>` : ""}</div>
-      <span class="badge ${cls}" title="${esc(due)}">${t}</span>
+      <div class="srs"><span class="badge ${cls}" title="${esc(due)}">${t}<span class="iv">${iv}</span></span>${srs}</div>
       <button class="icon-btn" data-a="edit" title="Edit">✏️</button>
       <button class="icon-btn" data-a="del" title="Delete">🗑️</button></li>`;
   }).join("") : `<li class="muted" style="justify-content:center">${S.cards.length ? "No matches" : "No words yet"}</li>`;
