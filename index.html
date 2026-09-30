@@ -63,35 +63,44 @@ nav button.on{color:var(--accent)}
 /* ---- welcome / guide ---- */
 .toast{z-index:60}
 #welcome{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto;
-  padding:calc(12px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))}
-#welcome .wbox{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
-#welcome .wtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-#welcome .dots{display:flex;gap:6px}
-#welcome .dots i{width:8px;height:8px;border-radius:9px;background:var(--line);transition:all .2s}
-#welcome .dots i.on{width:22px;background:var(--accent)}
-#welcome .wstep{flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 0}
-#welcome .hero{font-size:112px;line-height:1;font-weight:800;color:var(--accent);text-align:center;margin:10px 0 6px;letter-spacing:-.02em}
-#welcome h2{font-size:22px;margin:0 0 8px;line-height:1.25}
-#welcome .lead{font-size:15px;line-height:1.55;color:var(--muted);margin:0 0 14px}
-#welcome ol, .guide ol, .guide ul{padding-left:20px;margin:6px 0 10px;line-height:1.6;font-size:14px}
-#welcome .feat{display:grid;gap:8px;margin:6px 0 4px}
-#welcome .feat div{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;line-height:1.45}
-#welcome .feat b{display:block;font-size:15px}
-#welcome .feat span.e{font-size:24px;line-height:1}
-#welcome .wnav{display:flex;gap:8px;margin-top:14px}
-#welcome .wnav .btn{flex:1}
-#welcome .note{font-size:13px;background:var(--accent-soft);color:var(--text);border-radius:12px;padding:10px 12px;line-height:1.5;margin:10px 0}
-#welcome .res{font-size:14px;margin:10px 0 0;line-height:1.5}
+  padding:calc(14px + env(safe-area-inset-top)) 20px calc(14px + env(safe-area-inset-bottom))}
+#welcome .wbox{max-width:420px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+#welcome .wtop{display:flex;justify-content:space-between;align-items:center;min-height:36px}
+#welcome .dots{display:flex;gap:5px}
+#welcome .dots i{width:6px;height:6px;border-radius:9px;background:var(--line);transition:width .2s,background .2s}
+#welcome .dots i.on{width:18px;background:var(--accent)}
+#welcome .wlang{padding:2px}
+#welcome .wlang button{padding:4px 10px;font-size:12px}
+#welcome .wstep{flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 0}
+#welcome .wicon{width:64px;height:64px;border-radius:18px;background:var(--accent);color:#fff;font-size:34px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+#welcome .wemoji{font-size:34px;line-height:1;margin-bottom:14px}
+#welcome h2{font-size:22px;margin:0 0 6px;line-height:1.25}
+#welcome .lead{font-size:15px;line-height:1.5;color:var(--muted);margin:0 0 18px}
+#welcome .feat{list-style:none;padding:0;margin:0;display:grid;gap:14px}
+#welcome .feat li{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.4;color:var(--muted)}
+#welcome .feat li > span{font-size:20px;line-height:1.2;width:24px;flex:0 0 24px;text-align:center}
+#welcome .feat b{display:block;color:var(--text);font-size:15px;margin-bottom:1px}
+#welcome ol{padding-left:20px;margin:0 0 14px;line-height:1.6;font-size:14px}
+#welcome .note{font-size:13px;background:var(--accent-soft);border-radius:12px;padding:10px 12px;line-height:1.5;margin:12px 0 0}
+#welcome .res{font-size:14px;margin:10px 0 0;line-height:1.5;min-height:1em}
+#welcome .wnav{display:flex;gap:8px;padding-top:10px}
+#welcome .wnav .btn{flex:1;width:auto}
+#welcome .wnav .btn-ghost{flex:0 0 auto}
+#welcome a, .guide a{color:var(--accent)}
 .linkbtn{background:none;color:var(--accent);padding:0;font-weight:600;font-size:13px}
-.guide details{border-top:1px solid var(--line);padding:4px 0}
-.guide details:first-of-type{border-top:none}
-.guide summary{cursor:pointer;padding:10px 0;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between}
+.guide details{border-top:1px solid var(--line)}
+.guide summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;gap:8px}
 .guide summary::-webkit-details-marker{display:none}
-.guide summary::after{content:"＋";color:var(--muted)}
-.guide details[open] summary::after{content:"－"}
-.guide p{font-size:14px;line-height:1.6;margin:4px 0 10px}
+.guide summary::after{content:"+";color:var(--muted);font-weight:400}
+.guide details[open] summary::after{content:"–"}
+.guide details > div{padding:0 0 10px}
+.guide p, .guide li{font-size:14px;line-height:1.6}
+.guide p{margin:0 0 8px}
+.guide ol, .guide ul{padding-left:20px;margin:0 0 8px}
 .guide code{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12.5px;word-break:break-all}
-.guide a, #welcome a{color:var(--accent)}
+
+
 
 /* study */
 .qwrap{text-align:center;padding:22px 16px}
@@ -408,66 +417,11 @@ nav button.on{color:var(--accent)}
 
   <!-- SETTINGS -->
   <section id="v-set" class="hidden">
-    <div class="card guide" id="guideCard">
-      <h2>📘 Hướng dẫn sử dụng</h2>
-      <details id="g-start"><summary>Bắt đầu nhanh</summary>
-        <ol>
-          <li><b>➕ Add</b>: thêm từ mới. Có thể dán cả danh sách, hoặc chụp ảnh chữ Hàn.</li>
-          <li><b>🎯 Study</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch ôn hợp lý.</li>
-          <li><b>📖 Read</b>: đọc bài theo trình độ. Bấm 🔊 để nghe, 🎙 để đọc to và được chấm điểm.</li>
-          <li><b>📚 Words</b>: xem, sửa, xoá từ.</li>
-        </ol>
-        <p>Chỉnh số từ mới mỗi ngày và kiểu câu hỏi ở khung <b>Study</b> bên dưới.</p>
-      </details>
-      <details id="g-install"><summary>Cài app ra màn hình chính</summary>
-        <ul>
-          <li><b>Android</b>: mở bằng Chrome → menu <b>⋮</b> → <b>Cài đặt ứng dụng</b> (hoặc <b>Thêm vào màn hình chính</b>).</li>
-          <li><b>iPhone / iPad</b>: mở bằng Safari → nút <b>Chia sẻ</b> ⬆️ → <b>Thêm vào MH chính</b>.</li>
-          <li><b>Máy tính</b>: trong Chrome, bấm biểu tượng cài đặt ở cuối thanh địa chỉ.</li>
-        </ul>
-        <p>App cài đặt và trang web dùng chung dữ liệu trên cùng một máy. Luôn mở từ link <code>https://pevien.github.io/korean/</code>, không mở file HTML tải về.</p>
-      </details>
-      <details id="g-key"><summary>Gemini API key</summary>
-        <ol>
-          <li>Mở <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, đăng nhập Gmail.</li>
-          <li>Bấm <b>Create API key</b> và copy key (bắt đầu bằng <code>AIza…</code>).</li>
-          <li>Dán vào ô <b>Gemini API key</b> ở khung AI bên dưới → <b>Test connection</b>.</li>
-        </ol>
-        <p><b>Có key:</b> app tự tạo câu ví dụ, bài đọc, chấm phát âm và ngữ điệu, và cho nghe lại giọng bạn. <b>Không có key:</b> app đưa sẵn câu lệnh để bạn dán vào chatbot miễn phí rồi dán kết quả lại.</p>
-        <p>🔒 Mỗi người nên dùng key riêng. Key không nằm trong file Export. Để an toàn hơn, trong Google Cloud Console hãy giới hạn key cho trang <code>https://pevien.github.io/*</code> và chỉ cho <b>Generative Language API</b>.</p>
-      </details>
-      <details id="g-sync"><summary>Đồng bộ Google Drive</summary>
-        <ol>
-          <li>Gửi <b>Gmail</b> của bạn cho người chia sẻ link app để được thêm vào danh sách <b>Test users</b>.</li>
-          <li>Ở khung <b>☁️ Google Drive sync</b>: dán Client ID (nếu có ô đó) → <b>Connect Google Drive</b> → chọn Gmail.</li>
-          <li>Thấy <i>"Google hasn't verified this app"</i> → <b>Continue</b>.</li>
-          <li>Làm lại trên máy thứ hai.</li>
-        </ol>
-        <p>App tự lưu lên Drive vài giây sau mỗi thay đổi và tải về khi mở app. Dữ liệu được gộp theo từng từ nên học trên nhiều máy không bị mất tiến độ.</p>
-        <p><b>☁️ Tap to sync</b> ở góc trên nghĩa là phiên đăng nhập Google (khoảng 1 giờ) đã hết. Chạm vào để tiếp tục. Quên chạm cũng không mất dữ liệu.</p>
-        <p><b>Lỗi 400 / access blocked</b>: Gmail chưa được thêm vào Test users, hoặc Client ID sai. Hỏi lại người chia sẻ link.</p>
-      </details>
-      <details id="g-mic"><summary>Micro &amp; luyện nói</summary>
-        <p>Lần đầu bấm 🎙, chọn <b>Cho phép</b>. Nếu bị báo <i>"Microphone permission denied"</i>:</p>
-        <ul>
-          <li><b>Android</b>: Cài đặt → Ứng dụng → <b>Chrome</b> → Quyền → <b>Micro</b> → Cho phép. Rồi trong Chrome chạm 🔒 cạnh địa chỉ → Quyền → Micro → Cho phép, tải lại trang.</li>
-          <li><b>iPhone / iPad</b>: Cài đặt → <b>Safari</b> → Micro → Cho phép.</li>
-          <li><b>Mac</b>: Cài đặt hệ thống → Quyền riêng tư &amp; Bảo mật → <b>Micro</b> → bật cho trình duyệt.</li>
-        </ul>
-        <p>Trên Android khi chưa có Gemini key, app chỉ nhận diện chữ nên nút nghe lại giọng mình (🎧) sẽ tắt. Thêm key để dùng đầy đủ.</p>
-        <p><button class="btn2" id="gMicTest">🎙 Thử micro ngay</button> <span class="small" id="gMicRes"></span></p>
-      </details>
-      <details id="g-backup"><summary>Sao lưu &amp; chuyển máy</summary>
-        <p><b>⬇️ Export</b> ở khung Backup để lưu file dự phòng. <b>⬆️ Import</b> để khôi phục hoặc chuyển sang máy khác (từ trùng sẽ được bỏ qua).</p>
-        <p>⚠️ Xoá dữ liệu trình duyệt sẽ xoá từ vựng nếu chưa bật đồng bộ Drive hoặc chưa Export.</p>
-      </details>
-      <details id="g-faq"><summary>Câu hỏi thường gặp</summary>
-        <p><b>Người khác có thấy dữ liệu hay key của mình không?</b> Không. Mỗi người có dữ liệu, key và Drive riêng.</p>
-        <p><b>Có tốn tiền không?</b> Không. Gemini bản miễn phí đủ học hằng ngày, Drive chỉ dùng vài MB.</p>
-        <p><b>App không lên bản mới?</b> Đóng hẳn app rồi mở lại khi có mạng. Trên máy tính bấm Ctrl/Cmd + Shift + R.</p>
-      </details>
-      <button class="btn-ghost" style="width:100%;margin-top:10px" id="gWelcome">↺ Xem lại màn hình chào mừng</button>
+    <div class="card" data-noi18n>
+      <h2>🌐 Ngôn ngữ · Language</h2>
+      <div class="seg" id="uiLangSeg"><button data-ui="vi">Tiếng Việt</button><button data-ui="en">English</button></div>
     </div>
+    <div class="card guide" id="guideCard" data-noi18n></div>
     <div class="card">
       <h2>Study</h2>
       <label for="setNew">New words per day</label>
@@ -500,13 +454,13 @@ nav button.on{color:var(--accent)}
         <li><b>With a free Google Gemini key</b> (recommended, one click each time): get one at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> and paste it below.</li>
         <li><b>Without a key:</b> the app shows a prompt you copy into any free chatbot (Gemini, ChatGPT…), then paste the answer back.</li>
       </ol>
-      <label for="setKey">Gemini API key · <button class="linkbtn" data-guide="g-key">Cách lấy key?</button></label>
+      <label for="setKey">Gemini API key · <button class="linkbtn" data-guide="g-key">How to get a key?</button></label>
       <div class="row"><input id="setKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn-ghost" style="flex:0 0 auto" id="keyShow">👁</button></div>
       <label for="setModel">Model</label>
       <input id="setModel" type="text" placeholder="gemini-flash-latest">
       <button class="btn2" style="margin-top:10px;width:100%" id="testAI">Test connection</button>
       <label class="check" style="margin-top:10px"><input type="checkbox" id="setAutoEx"> Auto-add example sentences to new words (needs key)</label>
-      <p class="small muted" style="margin:6px 0 0">The key stays in this browser only and is never included in exports.</p>
+      <p class="small muted" style="margin:6px 0 0">The key stays on your devices (and your Drive if sync is on) and is never included in exports.</p>
     </div>
     <div class="card">
       <h2>Meaning language</h2>
@@ -517,7 +471,7 @@ nav button.on{color:var(--accent)}
       </select>
     </div>
     <div class="card">
-      <h2>☁️ Google Drive sync <button class="linkbtn" data-guide="g-sync" style="float:right">Hướng dẫn</button></h2>
+      <h2>☁️ Google Drive sync <button class="linkbtn" data-guide="g-sync" style="float:right">Guide</button></h2>
       <p class="small muted" style="margin-top:0">Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.</p>
       <div id="gdClientRow">
         <label for="gdClient">Google OAuth Client ID</label>
@@ -539,7 +493,6 @@ nav button.on{color:var(--accent)}
       <input type="file" id="impFile" accept=".json,application/json" class="hidden">
       <button class="btn-danger" style="width:100%;margin-top:10px" id="resetBtn">Delete all data</button>
     </div>
-    <p class="small muted" style="text-align:center">Tip: open this page in your phone browser and use “Add to Home Screen” to use it like an app.</p>
   </section>
 </div>
 
@@ -550,73 +503,7 @@ nav button.on{color:var(--accent)}
   <button data-v="words"><span class="ic">📚</span>Words</button>
   <button data-v="set"><span class="ic">⚙️</span>Settings</button>
 </div></nav>
-
-<div id="welcome" class="hidden" role="dialog" aria-modal="true" aria-label="Hướng dẫn bắt đầu">
-  <div class="wbox">
-    <div class="wtop"><div class="dots" id="wDots"></div><button class="btn-ghost" id="wSkip" style="padding:8px 14px">Bỏ qua</button></div>
-
-    <div class="wstep" data-s="0">
-      <div class="hero">한</div>
-      <h2 style="text-align:center">Chào mừng đến Hangul Cards</h2>
-      <p class="lead" style="text-align:center">Học từ vựng, luyện đọc và luyện nói tiếng Hàn. Thiết lập mất khoảng 2 phút.</p>
-      <div class="feat">
-        <div><span class="e">🎯</span><div><b>Flashcard thông minh</b>App nhắc lại từ đúng lúc bạn sắp quên.</div></div>
-        <div><span class="e">📖</span><div><b>Bài đọc theo trình độ</b>Nghe giọng bản xứ, tra từ ngay trong bài.</div></div>
-        <div><span class="e">🎙</span><div><b>Luyện nói có chấm điểm</b>Đọc to, AI nhận xét phát âm và ngữ điệu.</div></div>
-      </div>
-    </div>
-
-    <div class="wstep" data-s="1">
-      <h2>📲 Cài app ra màn hình chính</h2>
-      <p class="lead">Mở toàn màn hình như app thật, có icon riêng, vẫn ôn bài được khi mất mạng.</p>
-      <div id="wInstall"></div>
-    </div>
-
-    <div class="wstep" data-s="2">
-      <h2>🤖 Thêm Gemini key (miễn phí)</h2>
-      <p class="lead">Key giúp app tạo câu ví dụ, bài đọc và chấm phát âm chi tiết. Không có key app vẫn chạy, nhưng ít tính năng hơn.</p>
-      <ol>
-        <li>Mở <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> và đăng nhập Gmail.</li>
-        <li>Bấm <b>Create API key</b>, copy key (bắt đầu bằng <b>AIza…</b>).</li>
-        <li>Quay lại đây, dán vào ô bên dưới.</li>
-      </ol>
-      <div class="row"><input id="wKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn2" style="flex:0 0 auto" id="wKeyTest">Kiểm tra</button></div>
-      <p class="res" id="wKeyRes"></p>
-      <div class="note">🔒 Key chỉ lưu trên máy bạn (và Drive riêng của bạn nếu bật đồng bộ). Đừng dùng chung key với người khác.</div>
-    </div>
-
-    <div class="wstep" data-s="3">
-      <h2>🎙 Cho phép micro</h2>
-      <p class="lead">Cần micro để luyện nói ở tab Read. Bấm nút bên dưới, khi trình duyệt hỏi thì chọn <b>Cho phép</b>.</p>
-      <button class="btn2" style="width:100%" id="wMic">🎙 Thử micro</button>
-      <div class="res" id="wMicRes"></div>
-    </div>
-
-    <div class="wstep" data-s="4">
-      <h2>☁️ Đồng bộ Google Drive <span class="muted" style="font-weight:500;font-size:15px">(tuỳ chọn)</span></h2>
-      <p class="lead">Học trên cả điện thoại và máy tính mà tiến độ vẫn khớp nhau. Dữ liệu nằm trong thư mục ẩn trên Drive của chính bạn, chỉ vài MB.</p>
-      <div class="note">Trước tiên, gửi <b>địa chỉ Gmail</b> của bạn cho người đã chia sẻ link app để họ cho phép bạn đăng nhập. Nếu chưa, Google sẽ báo <i>"access blocked"</i>.</div>
-      <div id="wClientRow">
-        <label for="wClient">Google OAuth Client ID <span class="muted">(xin người chia sẻ link)</span></label>
-        <input id="wClient" type="text" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off">
-      </div>
-      <button class="btn2" style="width:100%;margin-top:10px" id="wDrive">Kết nối Google Drive</button>
-      <p class="res muted" id="wDriveRes">Nếu thấy cảnh báo <i>"Google hasn't verified this app"</i>, bấm <b>Continue</b>. Đây là app cá nhân nên cảnh báo này là bình thường.</p>
-    </div>
-
-    <div class="wstep" data-s="5">
-      <div class="hero" style="font-size:80px">🎉</div>
-      <h2 style="text-align:center">Xong rồi!</h2>
-      <p class="lead" style="text-align:center">Bắt đầu bằng việc thêm vài từ ở tab <b>➕ Add</b>, rồi ôn ở tab <b>🎯 Study</b> mỗi ngày.</p>
-      <div class="note" style="text-align:center">Cần xem lại? Vào <b>⚙️ Settings → 📘 Hướng dẫn sử dụng</b>.</div>
-    </div>
-
-    <div class="wnav">
-      <button class="btn-ghost" id="wBack" style="flex:0 0 auto">←</button>
-      <button class="btn" id="wNext">Tiếp tục</button>
-    </div>
-  </div>
-</div>
+<div id="welcome" class="hidden" role="dialog" aria-modal="true" data-noi18n></div>
 <div class="toast" id="toast"></div>
 
 <div class="modal hidden" id="aiModal"><div class="sheet">
@@ -646,12 +533,211 @@ const todayStr = () => { const d = new Date(); return d.getFullYear()+"-"+(d.get
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const shuffle = a => { for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
 const HANGUL = /[가-힣ᄀ-ᇿ㄰-㆏]/;
+/* ---------------- UI language (Vietnamese / English) ---------------- */
+// Interface language is separate from the meaning language (S.settings.lang).
+const UI = (() => { try { const d = JSON.parse(localStorage.getItem("hangulCards.v1") || "{}"); return (d.settings && d.settings.uiLang) || "vi"; } catch(e){ return "vi"; } })();
+document.documentElement.lang = UI;
+const L = (v, e) => UI === "vi" ? v : e;
+const uiLangName = () => UI === "vi" ? "Vietnamese" : "English";
+
+const VI = {
+"Due now":"Cần ôn","New today":"Mới hôm nay","Learning":"Đang học","Mastered":"Đã thuộc","End":"Kết thúc",
+"✨ AI generate":"✨ AI tạo","✏️ Single":"✏️ Từng từ","📋 Paste list":"📋 Dán danh sách","📷 Screenshot":"📷 Ảnh chụp",
+"Generate words by topic":"Tạo từ theo chủ đề","Topic":"Chủ đề","Level":"Trình độ","How many":"Số lượng",
+"Each word comes with an example sentence. Words already in your list are skipped automatically.":"Mỗi từ kèm một câu ví dụ. Từ đã có sẽ tự bỏ qua.",
+"✨ Generate":"✨ Tạo","Add a word":"Thêm một từ","Korean":"Tiếng Hàn","Meaning":"Nghĩa","Auto":"Tự động",
+"“Auto” suggests a meaning with free online translation — check it before saving.":"“Tự động” gợi ý nghĩa bằng dịch online — kiểm tra lại trước khi lưu.",
+"Add word":"Thêm từ","Paste a word list":"Dán danh sách từ",
+"One word per line. Separate Korean and meaning with":"Mỗi dòng một từ. Ngăn tiếng Hàn và nghĩa bằng",
+"or a tab. Lines without a meaning get auto-translated.":"hoặc Tab. Dòng thiếu nghĩa sẽ được tự dịch.",
+"Preview":"Xem trước","From a screenshot":"Từ ảnh chụp màn hình",
+"Works best with a clear vocabulary list. Text is read on your device (free). The first run downloads the Korean reading model (~10 MB).":"Hợp nhất với ảnh danh sách từ rõ nét. Chữ được đọc ngay trên máy, miễn phí. Lần đầu sẽ tải bộ đọc tiếng Hàn (~10 MB).",
+"Tap to choose or take a photo":"Chạm để chọn hoặc chụp ảnh","or paste an image (Ctrl/Cmd+V)":"hoặc dán ảnh (Ctrl/Cmd+V)",
+"Review before adding":"Kiểm tra trước khi thêm","Edit anything that looks wrong. Unticked rows are skipped.":"Sửa chỗ sai. Dòng bỏ tích sẽ không được thêm.",
+"Auto-fill empty meanings":"Tự điền nghĩa trống","Add selected":"Thêm từ đã chọn",
+"New reading passage":"Bài đọc mới","📋 My own text":"📋 Văn bản của tôi","What should it be about?":"Bài đọc về chủ đề gì?",
+"Length":"Độ dài","Short (~4 sentences)":"Ngắn (~4 câu)","Medium (~8)":"Vừa (~8 câu)","Long (~14)":"Dài (~14 câu)",
+"Use words I'm learning":"Dùng từ tôi đang học","✨ Generate passage":"✨ Tạo bài đọc","Title (optional)":"Tiêu đề (tuỳ chọn)",
+"Korean text":"Văn bản tiếng Hàn","Add translations (free auto-translate)":"Thêm bản dịch (tự dịch miễn phí)","Open in reader":"Mở để đọc",
+"My passages":"Bài đọc của tôi","← Back":"← Quay lại","🎤 Shadow mode":"🎤 Nói đuổi","Repeat":"Lặp lại","Speed":"Tốc độ",
+"1× native":"1× bản xứ","Translation":"Bản dịch","Hide Korean":"Ẩn tiếng Hàn","🎙 Speaking coach":"🎙 Luyện nói",
+"Tap a sentence to play from there. Press space to play/pause.":"Chạm vào câu để phát từ đó. Phím cách để phát/dừng.",
+"Key words":"Từ khoá","➕ Add new words to flashcards":"➕ Thêm từ mới vào flashcard","✨ Add examples":"✨ Thêm câu ví dụ",
+"All":"Tất cả","New":"Mới","Study":"Học","New words per day":"Số từ mới mỗi ngày","Question types":"Dạng câu hỏi",
+"Korean → choose meaning":"Tiếng Hàn → chọn nghĩa","🔊 Listen → choose meaning":"🔊 Nghe → chọn nghĩa","Meaning → type Korean":"Nghĩa → gõ tiếng Hàn",
+"🔊 Listen → type Korean (dictation)":"🔊 Nghe → gõ tiếng Hàn (chính tả)","Auto-play audio for Korean words":"Tự phát âm từ tiếng Hàn",
+"Voice":"Giọng đọc","Korean voice":"Giọng tiếng Hàn","(young-adult voices, most natural first)":"(giọng trẻ, tự nhiên nhất ở trên)",
+"Show all Korean voices":"Hiện tất cả giọng","Speed:":"Tốc độ:","🐢 Slow":"🐢 Chậm","Learner":"Người học","🇰🇷 Native":"🇰🇷 Bản xứ",
+"🔊 Test: 안녕하세요":"🔊 Nghe thử: 안녕하세요","AI (free)":"AI (miễn phí)",
+"Used for generating words, example sentences and reading passages.":"Dùng để tạo từ, câu ví dụ và bài đọc.",
+"With a free Google Gemini key":"Có Gemini key miễn phí","(recommended, one click each time): get one at":"(nên dùng, chỉ một chạm): lấy tại",
+"and paste it below.":"rồi dán vào bên dưới.","Without a key:":"Không có key:",
+"the app shows a prompt you copy into any free chatbot (Gemini, ChatGPT…), then paste the answer back.":"app đưa câu lệnh để bạn dán vào chatbot miễn phí (Gemini, ChatGPT…), rồi dán câu trả lời lại.",
+"How to get a key?":"Cách lấy key?","Test connection":"Kiểm tra kết nối",
+"Auto-add example sentences to new words (needs key)":"Tự thêm câu ví dụ cho từ mới (cần key)",
+"The key stays on your devices (and your Drive if sync is on) and is never included in exports.":"Key chỉ lưu trên máy bạn (và Drive nếu bật đồng bộ), không có trong file xuất.",
+"Meaning language":"Ngôn ngữ của nghĩa","Used for meanings, example translations and passage translations.":"Dùng cho nghĩa của từ và bản dịch câu, bài đọc.",
+"English":"Tiếng Anh","Vietnamese":"Tiếng Việt",
+"☁️ Google Drive sync":"☁️ Đồng bộ Google Drive","Guide":"Hướng dẫn",
+"Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.":"Giữ từ vựng, tiến độ, bài đọc và cài đặt (cả Gemini key) giống nhau trên mọi máy. Lưu trong thư mục ẩn trên Drive của bạn.",
+"Connect Google Drive":"Kết nối Google Drive","Disconnect":"Ngắt kết nối",
+"Backup":"Sao lưu","Your words are stored in this browser (and in Google Drive if sync is on). Export a file as an extra backup.":"Từ vựng lưu trên trình duyệt này (và Drive nếu bật đồng bộ). Xuất file để dự phòng thêm.",
+"⬇️ Export":"⬇️ Xuất file","⬆️ Import":"⬆️ Nhập file","Delete all data":"Xoá toàn bộ dữ liệu",
+"Read":"Đọc","Add":"Thêm","Words":"Từ vựng","Settings":"Cài đặt",
+"Use a free chatbot":"Dùng chatbot miễn phí","Copy the prompt below.":"Copy câu lệnh bên dưới.","Paste it into":"Dán vào","or any chatbot.":"hoặc chatbot bất kỳ.",
+"Copy its whole answer and paste it in the second box.":"Copy toàn bộ câu trả lời, dán vào ô thứ hai.","📋 Copy prompt":"📋 Copy câu lệnh",
+"Chatbot answer":"Câu trả lời của chatbot","Cancel":"Huỷ","Use answer":"Dùng câu trả lời",
+"Tip: add a free Gemini key in Settings to skip this step.":"Mẹo: thêm Gemini key miễn phí trong Cài đặt để bỏ qua bước này.",
+"Google Drive sync":"Đồng bộ Google Drive","e.g. ordering food at a restaurant":"vd. gọi món ở nhà hàng","e.g. 사과":"vd. 사과","Listen":"Nghe","e.g. apple":"vd. apple",
+"e.g. A conversation ordering coffee at a café. Or: a short diary entry about my weekend in Seoul.":"vd. Hội thoại gọi cà phê. Hoặc: nhật ký ngắn về cuối tuần ở Seoul.",
+"My text":"Văn bản của tôi","Paste Korean text here. It will be split into sentences.":"Dán văn bản tiếng Hàn vào đây. App sẽ tự tách câu.",
+"Previous sentence":"Câu trước","Play / pause":"Phát / dừng","Next sentence":"Câu sau","Stop":"Dừng",
+"Pause after each sentence so you can repeat it":"Dừng sau mỗi câu để bạn nói theo","Close":"Đóng","Listen to the native model":"Nghe mẫu bản xứ",
+"Record":"Ghi âm","Play my recording":"Nghe lại giọng mình","Search words…":"Tìm từ…","Paste the answer here…":"Dán câu trả lời vào đây…",
+"All these words are already in your list":"Các từ này đều đã có trong danh sách","→ you said":"→ bạn đọc","Next sentence →":"Câu tiếp →",
+"I was right":"Tôi đúng mà","Correct pronunciation":"Phát âm đúng","We heard":"App nghe được","Welcome!":"Chào bạn!",
+"Add some Korean words to start learning.":"Thêm vài từ tiếng Hàn để bắt đầu học.","➕ Add words":"➕ Thêm từ","Ready to study":"Sẵn sàng học",
+"▶ Start":"▶ Bắt đầu","Default":"Mặc định","Working…":"Đang xử lý…","Coach is listening to your recording…":"Đang nghe bản ghi của bạn…",
+"All data deleted":"Đã xoá toàn bộ dữ liệu","Couldn't read that answer — paste the whole reply":"Không đọc được câu trả lời — hãy dán toàn bộ",
+"Delete?":"Xoá?","Describe what the passage should be about":"Hãy mô tả nội dung bài đọc",
+"Didn't catch anything — speak a bit louder and closer to the mic, then try again.":"Chưa nghe thấy gì — nói to và gần micro hơn rồi thử lại.",
+"Drive sync turned off (your data stays on this device)":"Đã tắt đồng bộ Drive (dữ liệu vẫn còn trên máy)",
+"Enter or pick a topic":"Nhập hoặc chọn chủ đề","Generating…":"Đang tạo…","Invalid backup file":"File sao lưu không hợp lệ",
+"Keep at least one type on":"Cần bật ít nhất một dạng","Korean word is required":"Cần nhập từ tiếng Hàn","Loading reader…":"Đang tải bộ đọc…",
+"Microphone permission denied":"Micro bị chặn","Needs a Gemini key (Settings) or Chrome/Safari":"Cần Gemini key (Cài đặt) hoặc Chrome/Safari",
+"No Korean words found":"Không tìm thấy từ tiếng Hàn","No empty meanings":"Không có nghĩa nào trống",
+"No new words came back — try another topic":"Không có từ mới — thử chủ đề khác","No new words left — add some!":"Hết từ mới — thêm từ nhé!",
+"Nothing selected":"Chưa chọn gì","Nothing to study":"Chưa có gì để học","Passage deleted":"Đã xoá bài đọc",
+"Paste some Korean text first":"Hãy dán văn bản tiếng Hàn trước","Paste your Gemini key first":"Hãy dán Gemini key trước",
+"Paste your Google Client ID first":"Hãy dán Google Client ID trước","Preparing…":"Đang chuẩn bị…","Progress reset":"Đã đặt lại tiến độ",
+"Prompt copied":"Đã copy câu lệnh","Prompt selected — copy it":"Đã chọn câu lệnh — hãy copy","Tap again to delete everything":"Chạm lần nữa để xoá hết",
+"Testing…":"Đang kiểm tra…","That doesn't look like Korean":"Đây không phải tiếng Hàn","That doesn't look like a Google Client ID":"Đây không phải Google Client ID",
+"That was too short — try again.":"Ngắn quá — thử lại nhé.","Translation unavailable — type it yourself":"Không dịch được — hãy tự gõ",
+"Type a Korean word first":"Hãy gõ từ tiếng Hàn trước","Writing passage…":"Đang viết bài…","Writing…":"Đang viết…","☁️ Synced":"☁️ Đã đồng bộ",
+"⚠️ Could not save (storage blocked)":"⚠️ Không lưu được (bộ nhớ bị chặn)","⚠️ Speech check needs internet":"⚠️ Chấm giọng nói cần có mạng",
+"✅ Finished":"✅ Hoàn thành","🔇 No Korean voice on this device — see Settings → Voice":"🔇 Máy chưa có giọng tiếng Hàn — xem Cài đặt → Giọng đọc",
+"🔴 Recording… (live check unavailable on this device — tap ⏹ when done)":"🔴 Đang ghi âm… (máy này không chấm trực tiếp — chạm ⏹ khi xong)",
+"🔴 Recording… read the sentence, then tap ⏹":"🔴 Đang ghi âm… đọc câu rồi chạm ⏹",
+"A day at school":"Một ngày ở trường","A short story about a cat":"Chuyện ngắn về con mèo","Absolute beginner":"Mới bắt đầu",
+"Accuracy":"Chính xác","Already added":"Đã thêm","Already in your list":"Đã có trong danh sách","Answer looks incomplete":"Câu trả lời chưa đủ",
+"Asking for directions":"Hỏi đường","At a café":"Ở quán cà phê","At the doctor":"Đi khám bệnh","Beginner (TOPIK 1)":"Sơ cấp 1 (TOPIK 1)",
+"Body & health":"Cơ thể & sức khoẻ","Can't access microphone":"Không dùng được micro","Choose the meaning":"Chọn nghĩa",
+"Could not load OCR (are you online?)":"Không tải được bộ đọc ảnh (có mạng không?)","Couldn't load Google sign-in (offline?)":"Không tải được đăng nhập Google (mất mạng?)",
+"Daily routine":"Sinh hoạt hằng ngày","Delete":"Xoá","Drive permission wasn't granted":"Chưa cấp quyền Drive","Easy":"Dễ","Edit":"Sửa",
+"Elementary (TOPIK 2)":"Sơ cấp 2 (TOPIK 2)","Empty answer from AI":"AI không trả lời","Example sentence":"Câu ví dụ","Example translation":"Dịch câu ví dụ",
+"Extra":"Thừa","Family":"Gia đình","Feelings":"Cảm xúc","Final consonant":"Phụ âm cuối","Fluency":"Trôi chảy","Food & drinks":"Đồ ăn & thức uống",
+"Free limit reached — wait a minute and try again.":"Hết lượt miễn phí — đợi một phút rồi thử lại.","Good":"Tốt","Google sign-in expired":"Phiên đăng nhập Google đã hết hạn",
+"Hard":"Khó","Hobbies":"Sở thích","Home":"Nhà cửa","Intermediate (TOPIK 3)":"Trung cấp 1 (TOPIK 3)","Intonation":"Ngữ điệu",
+"Introducing myself":"Giới thiệu bản thân","K-drama phrases":"Câu trong phim Hàn","Keep practicing — listen 🔊 and try again":"Luyện tiếp nhé — nghe 🔊 rồi thử lại",
+"Listen first 🔊, then tap 🎙 and read aloud. Tap again to stop.":"Nghe mẫu 🔊, chạm 🎙 rồi đọc to. Chạm lần nữa để dừng.",
+"Listen · choose the meaning":"Nghe · chọn nghĩa","Listen · type what you hear":"Nghe · gõ lại","Missing":"Thiếu","My weekend":"Cuối tuần của tôi",
+"Native-like":"Như bản xứ","No JSON found in the answer":"Câu trả lời không đúng định dạng","No Korean text found. Try a sharper or cropped screenshot.":"Không thấy chữ Hàn. Thử ảnh rõ hơn hoặc cắt gọn.",
+"No matches":"Không tìm thấy","No words yet":"Chưa có từ nào","Numbers & time":"Số & thời gian","OCR failed":"Đọc ảnh thất bại","Ordering at a café":"Gọi món ở quán cà phê",
+"Pace":"Tốc độ","Popup blocked — allow popups and try again":"Popup bị chặn — cho phép popup rồi thử lại","Practice speaking this sentence":"Luyện nói câu này",
+"Recording isn't supported in this browser":"Trình duyệt này không hỗ trợ ghi âm","Reset progress":"Đặt lại tiến độ","School":"Trường học",
+"Shopping for clothes":"Mua quần áo","Shopping":"Mua sắm","Sign-in cancelled":"Đã huỷ đăng nhập","Sign-in failed":"Đăng nhập thất bại",
+"Sound rule":"Biến âm","Sound":"Âm","Stress":"Nhấn âm","Tap sync again to sign in":"Chạm đồng bộ lần nữa để đăng nhập",
+"Texting a friend to meet up":"Nhắn tin hẹn gặp bạn","The answer had no sentences":"Câu trả lời không có câu nào",
+"This browser can't speak. Try Chrome or Safari.":"Trình duyệt này không đọc được. Thử Chrome hoặc Safari.","Transport":"Giao thông","Travel":"Du lịch",
+"Type it in Korean":"Gõ bằng tiếng Hàn","Upper-int. (TOPIK 4)":"Trung cấp 2 (TOPIK 4)","Weather and seasons":"Thời tiết & các mùa","Weather":"Thời tiết",
+"Work & office":"Công việc & văn phòng","✅ Correct!":"✅ Chính xác!","❌ Not quite":"❌ Chưa đúng","❌ Not quite.":"❌ Chưa đúng.","❌ Not quite — you wrote":"❌ Chưa đúng — bạn gõ","— you wrote":"— bạn gõ","🔊 Test:":"🔊 Nghe thử:",
+"This word will come back soon.":"Từ này sẽ sớm quay lại.","Continue →":"Tiếp tục →","All done for now":"Xong bài hôm nay",
+"🔁 Extra practice":"🔁 Luyện thêm","+5 new words":"+5 từ mới","🔁 Try again":"🔁 Thử lại","In list":"Đã có",
+"Add more words or practice without changing your schedule.":"Thêm từ hoặc luyện thêm mà không ảnh hưởng lịch ôn.",
+"Tap to reveal":"Chạm để xem","Show answer":"Xem đáp án","Hint":"Gợi ý","Check":"Kiểm tra","Got it":"Đã hiểu","Skip":"Bỏ qua","Next":"Tiếp",
+"No passages yet — generate one above.":"Chưa có bài đọc — tạo một bài ở trên nhé.","NEW WORD":"TỪ MỚI","(no meaning)":"(chưa có nghĩa)","no meaning":"chưa có nghĩa",
+"Listen, say it out loud, then continue.":"Nghe, đọc to theo, rồi tiếp tục.","Got it →":"Đã nhớ →","Tap to replay":"Chạm để nghe lại","Save":"Lưu","Reset":"Đặt lại",
+"🌟 Excellent!":"🌟 Xuất sắc!","👍 Good — a few things to polish":"👍 Tốt — còn vài chỗ cần chỉnh","💪 Getting there — see the tips":"💪 Sắp được rồi — xem gợi ý nhé","Tip":"Gợi ý",
+"Tap 🎙 and read aloud. (Basic check — add a free Gemini key in Settings for full feedback on intonation & fluency.)":"Chạm 🎙 rồi đọc to. (Chấm cơ bản — thêm Gemini key miễn phí trong Cài đặt để được chấm ngữ điệu, độ trôi chảy.)",
+"⚠️ This browser can't check speech without AI. Add a free Gemini key in Settings, or use Chrome/Safari.":"⚠️ Trình duyệt này không chấm giọng được khi chưa có AI. Thêm Gemini key trong Cài đặt, hoặc dùng Chrome/Safari.",
+"No Korean voice found yet. On iPhone: Settings → Accessibility → Spoken Content → Voices → Korean. On Android: install Korean in Google Text-to-Speech. Windows: add Korean speech in Settings → Time & language → Speech.":"Chưa có giọng tiếng Hàn. iPhone: Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói → Tiếng Hàn. Android: cài tiếng Hàn trong Google Text-to-Speech. Windows: Cài đặt → Thời gian & ngôn ngữ → Giọng nói.",
+"due now":"cần ôn","meaning":"nghĩa","Advanced":"Nâng cao",
+"Upper-intermediate (TOPIK 4)":"Trung cấp 2 (TOPIK 4)","Advanced (TOPIK 5–6)":"Cao cấp (TOPIK 5–6)"
+};
+const VI_RX = [
+ [/^(.*?)(\d+) sentences$/s, (m, pre, n) => trLevels(pre) + n + " câu"],
+ [/^in (\d+ (?:min|h|days?|mo))$/, (m, t) => "sau " + viTime(t)],
+ [/^(.*) · No known young voice on this device — showing all\.$/, (m, a) => trText(a) + " · Máy không có giọng trẻ — hiện tất cả."],
+ [/^🔥 (\d+) day streak$/, "🔥 $1 ngày liên tiếp"],
+ [/^(\d+) reviews? and (\d+) new words?\. Reviewed today: (\d+)\.$/, "$1 từ cần ôn và $2 từ mới. Hôm nay đã ôn: $3."],
+ [/^Next review in (.+?)\. Add more words or practice without changing your schedule\.$/, (m, t) => "Lần ôn tới sau " + viTime(t) + ". Thêm từ hoặc luyện thêm mà không ảnh hưởng lịch ôn."],
+ [/^Added (\d+) example sentences?$/, "Đã thêm $1 câu ví dụ"],
+ [/^Adding example sentences to (\d+) words?…$/, "Đang thêm câu ví dụ cho $1 từ…"],
+ [/^(\d+) words? without an example sentence\.$/, "$1 từ chưa có câu ví dụ."],
+ [/^(\d+) couldn't be translated — fill them in manually$/, "$1 từ không dịch được — hãy tự điền"],
+ [/^Got (\d+) new words \(others were already in your list\)$/, "Có $1 từ mới (các từ khác đã có sẵn)"],
+ [/^Imported (\d+) words?(?: and (\d+) passages?)?$/, (m, a, b) => "Đã nhập " + a + " từ" + (b ? " và " + b + " bài đọc" : "")],
+ [/^Translating (\d+)\/(\d+)…$/, "Đang dịch $1/$2…"],
+ [/^🎤 Your turn — repeat it! \((\d+)\)$/, "🎤 Đến lượt bạn — nói theo! ($1)"],
+ [/^Found (\d+) words?\. Please check them below\.$/, "Tìm thấy $1 từ. Kiểm tra lại bên dưới nhé."],
+ [/^Added (\d+) words? to flashcards$/, "Đã thêm $1 từ vào flashcard"],
+ [/^Added (\d+) words?(?: · (\d+) duplicates? skipped)?$/, (m, a, b) => "Đã thêm " + a + " từ" + (b ? " · bỏ qua " + b + " từ trùng" : "")],
+ [/^Added “(.*)”( \(no meaning\))?$/, (m, w, n) => "Đã thêm “" + w + "”" + (n ? " (chưa có nghĩa)" : "")],
+ [/^Deleted “(.*)”$/, "Đã xoá “$1”"],
+ [/^✅ Session complete — (\d+)\/(\d+) correct \((\d+)%\)\.$/, "✅ Xong lượt học — đúng $1/$2 ($3%)."],
+ [/^🎙 best (\d+)\/100$/, "🎙 cao nhất $1/100"],
+ [/^Using: (.*?)( \(online voice\))?$/, (m, v, o) => "Đang dùng: " + v + (o ? " (giọng online)" : "")],
+ [/^(\d+) left$/, "còn $1"],
+ [/^Practice · (\d+) left$/, "Luyện thêm · còn $1"],
+ [/^Starts with: (.*) · (\d+) characters$/, "Bắt đầu bằng: $1 · $2 ký tự"],
+ [/^Hearing: (.*)$/s, "Đang nghe: $1"],
+ [/^Reading text… (\d+)%$/, "Đang đọc chữ… $1%"],
+ [/^API key problem: (.*)$/, "Lỗi API key: $1"],
+ [/^Sync failed: (.*)$/, "Đồng bộ lỗi: $1"],
+ [/^Drive error (\d+)$/, "Lỗi Drive $1"],
+ [/^✅ Connected! (.*)$/, "✅ Đã kết nối! $1"],
+ [/^⚠️ (.+)$/s, (m, t) => "⚠️ " + trText(t)],
+ [/^(\d+) (min|h|day|days|mo)$/, (m) => viTime(m)]
+];
+function trLevels(t){ return String(t).replace(/Absolute beginner|Beginner \(TOPIK 1\)|Elementary \(TOPIK 2\)|Intermediate \(TOPIK 3\)|Upper-int\. \(TOPIK 4\)/g, m => VI[m] || m); }
+function viTime(t){ return String(t).replace(/(\d+) (min|h|days?|mo)\b/, (m, n, u) => n + " " + ({ min:"phút", h:"giờ", day:"ngày", days:"ngày", mo:"tháng" })[u]); }
+// single words that could also be someone's word meaning: only translate inside UI controls
+const VI_UI_ONLY = new Set(["All","New","Add","Read","Study","Words","Settings","Auto","Easy","Good","Hard","Delete","Edit","Close","Extra","Missing","Sound","Stress","Pace","Accuracy","Fluency","Intonation","Family","Home","Hobbies","Feelings","Shopping","School","Travel","Transport","Weather","Level","Topic","Length","Speed","Repeat","Translation","Korean","Meaning","Voice","Backup","Preview","End","Default","English","Vietnamese","Learner","Next","Skip","Check","Hint","Record","Stop","Listen"]);
+const UI_TAGS = /^(BUTTON|LABEL|H1|H2|H3|OPTION|SUMMARY|TH|NAV)$/;
+function trText(t, parent){
+  if (VI.hasOwnProperty(t)){
+    if (!VI_UI_ONLY.has(t) || !parent) return VI[t];
+    if (UI_TAGS.test(parent.tagName) || parent.closest("nav,.stat,.qtype,.chip,.tabs,.seg,.grades,label,button,h2,.badge")) return VI[t];
+    return t;
+  }
+  for (const [rx, to] of VI_RX){ if (rx.test(t)) return t.replace(rx, to); }
+  return t;
+}
+function skipNode(el){ return !el || el.closest("[data-noi18n],[lang=ko],script,style,textarea,.exm,.exl"); }
+function trAttrs(el){
+  ["placeholder","title","aria-label"].forEach(a => { const v = el.getAttribute(a); if (v && /[A-Za-z]/.test(v)){ const o = trText(v.trim()); if (o !== v.trim()) el.setAttribute(a, o); } });
+}
+function trNode(n){
+  if (n.nodeType === 3){
+    const raw = n.nodeValue, t = raw.trim();
+    if (!t || !/[A-Za-z]/.test(t) || skipNode(n.parentElement)) return;
+    const out = trText(t, n.parentElement);
+    if (out !== t) n.nodeValue = raw.replace(t, out);
+  } else if (n.nodeType === 1){
+    if (n.closest("[data-noi18n]")) return;
+    trAttrs(n);
+    const w = document.createTreeWalker(n, 5);   // elements + text
+    let x; while ((x = w.nextNode())){
+      if (x.nodeType === 1){ if (!x.closest("[data-noi18n]")) trAttrs(x); }
+      else trNode(x);
+    }
+  }
+}
+if (UI === "vi"){
+  trNode(document.body);
+  new MutationObserver(ms => ms.forEach(m => {
+    if (m.type === "characterData") trNode(m.target);
+    else if (m.type === "attributes") trNode(m.target);
+    else m.addedNodes.forEach(trNode);
+  })).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["placeholder","title","aria-label"] });
+}
+
 
 /* ---------------- state ---------------- */
 const defaults = () => ({
   cards: [],
   settings: { newPerDay: 10, modes: { ko2m:true, listen2m:true, m2ko:true, listen2ko:false }, autoPlay:true, rate:1, voice:"", allVoices:false, voiceV2:true, lang:"en",
-    apiKey:"", model:"gemini-flash-latest", autoEx:true, level:"b1" },
+    apiKey:"", model:"gemini-flash-latest", autoEx:true, level:"b1", uiLang:"vi" },
   passages: [],
   daily: { date: todayStr(), newCount: 0, reviews: 0 },
   streak: { last: "", count: 0 }
@@ -1552,15 +1638,15 @@ function micHelp(kind){
   const blockedFile = location.protocol === "file:" && /Android/i.test(navigator.userAgent);
   let msg;
   if (kind === "insecure" || blockedFile)
-    msg = "🎙 Chrome on Android blocks the microphone for files opened from storage (file://). Open this page from an https:// link instead (e.g. GitHub Pages / Netlify) — see the guide.";
+    msg = L("🎙 Android chặn micro khi mở file tải về. Hãy mở app từ link https:// (xem Cài đặt → Hướng dẫn).", "🎙 Android blocks the mic for downloaded files. Open the app from its https:// link (see Settings → Guide).");
   else if (kind === "site-denied")
-    msg = "🎙 Mic is blocked for this site. Tap the 🔒/ⓘ icon left of the address bar → Permissions → Microphone → Allow, then reload.";
+    msg = L("🎙 Micro bị chặn cho trang này. Chạm 🔒 cạnh thanh địa chỉ → Quyền → Micro → Cho phép, rồi tải lại.", "🎙 Mic is blocked for this site. Tap 🔒 by the address bar → Permissions → Microphone → Allow, then reload.");
   else if (kind === "audio-capture")
-    msg = "🎙 No microphone found, or another app is using it. Close other apps using the mic and try again.";
+    msg = L("🎙 Không tìm thấy micro hoặc app khác đang dùng. Đóng app đó rồi thử lại.", "🎙 No microphone found, or another app is using it. Close that app and try again.");
   else
-    msg = "🎙 Microphone permission denied. Check: Android Settings → Apps → Chrome → Permissions → Microphone → Allow. Then tap the 🔒 icon in Chrome → Permissions → Microphone → Allow, and reload. On Mac: System Settings → Privacy & Security → Microphone → turn on your browser.";
+    msg = L("🎙 Micro bị chặn. Android: Cài đặt → Ứng dụng → Chrome → Quyền → Micro → Cho phép. Mac: Cài đặt hệ thống → Quyền riêng tư & Bảo mật → Micro. Rồi tải lại trang.", "🎙 Microphone blocked. Android: Settings → Apps → Chrome → Permissions → Microphone → Allow. Mac: System Settings → Privacy & Security → Microphone. Then reload.");
   $("#cStatus").textContent = msg;
-  toast("Microphone permission denied");
+  toast(L("Micro bị chặn", "Microphone permission denied"));
 }
 async function micPermissionState(){
   try { if (navigator.permissions) return (await navigator.permissions.query({ name: "microphone" })).state; } catch(e){}
@@ -1663,7 +1749,7 @@ async function evaluateAI(){
   C.busy = true; $("#cStatus").innerHTML = `<span class="spinner"></span>Coach is listening to your recording…`;
   try {
     const b64 = await blobToWavB64(C.blob);
-    const prompt = `You are an expert, honest and encouraging Korean pronunciation coach (standard Seoul Korean). A ${langName()}-speaking learner read this sentence aloud:
+    const prompt = `You are an expert, honest and encouraging Korean pronunciation coach (standard Seoul Korean). A ${uiLangName()}-speaking learner read this sentence aloud:
 TARGET: "${s.ko}"
 Listen carefully to the attached recording and evaluate it like a native Korean teacher:
 - accuracy: consonants (plain / aspirated / tense: ㄱㅋㄲ, ㄷㅌㄸ, ㅂㅍㅃ, ㅈㅊㅉ, ㅅㅆ), vowels (ㅓ/ㅗ, ㅐ/ㅔ, ㅡ/ㅜ, ㅢ…), final consonants (받침), and required sound-change rules (연음, 비음화, 경음화, 격음화, 유음화, 구개음화, ㅎ 탈락…).
@@ -1671,11 +1757,11 @@ Listen carefully to the attached recording and evaluate it like a native Korean 
 - intonation: natural pitch contour; Korean has no strong word stress — flag syllables that are unnaturally stressed or lengthened, and wrong sentence-final intonation (statement ↓ vs question ↑).
 - native: overall, how close to a native Seoul speaker.
 Scores are 0–100 and must be realistic (typical beginners 40–75; only near-native gets 90+).
-For each problem: "part" MUST be copied exactly from TARGET (a syllable or word); "heard" = how it sounded (Hangul or description); "tip" = concrete fix in ${langName()}: mouth/tongue/airflow, the sound rule if any, and the correct pronunciation in brackets like [머거요]. Max 6 issues, most important first.
+For each problem: "part" MUST be copied exactly from TARGET (a syllable or word); "heard" = how it sounded (Hangul or description); "tip" = concrete fix in ${uiLangName()}: mouth/tongue/airflow, the sound rule if any, and the correct pronunciation in brackets like [머거요]. Max 6 issues, most important first.
 "pron" = standard pronunciation of the whole TARGET written in Hangul in brackets (apply sound-change rules).
 "heard" = what the learner actually said, transcribed in Hangul.
 If the audio is silent or unrelated to the target, return heard "" and all scores 0.
-Write "good", "overall" and all tips in ${langName()}.
+Write "good", "overall" and all tips in ${uiLangName()}.
 Return JSON exactly like: {"heard":"","pron":"","scores":{"accuracy":0,"fluency":0,"intonation":0,"native":0},"issues":[{"part":"","type":"sound|batchim|sound-rule|intonation|stress|pace|missing|extra","heard":"","tip":""}],"good":"","overall":""}`;
     const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }]));
     renderCoachResult(s, j, true);
@@ -1690,7 +1776,7 @@ const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ", JUNG = 
 function dec(ch){ const c = ch.charCodeAt(0) - 0xAC00; if (c < 0 || c > 11171) return null; return { cho: CHO[Math.floor(c/588)], jung: JUNG[Math.floor((c%588)/28)], jong: JONG[c%28] }; }
 const SERIES = [["ㄱ","ㅋ","ㄲ"],["ㄷ","ㅌ","ㄸ"],["ㅂ","ㅍ","ㅃ"],["ㅈ","ㅊ","ㅉ"],["ㅅ","ㅆ"]];
 const VOW_PAIRS = [["ㅓ","ㅗ"],["ㅐ","ㅔ"],["ㅡ","ㅜ"],["ㅕ","ㅛ"],["ㅢ","ㅣ"],["ㅘ","ㅏ"],["ㅝ","ㅓ"]];
-function vi(){ return S.settings.lang === "vi"; }
+function vi(){ return UI === "vi"; }
 function localTip(tgt, prev, next, heardCh){
   const a = dec(tgt), h = heardCh ? dec(heardCh) : null, p = prev ? dec(prev) : null, n = next ? dec(next) : null;
   if (!a) return "";
@@ -1947,24 +2033,24 @@ function setCloud(st){
   cloudState = st;
   const b = $("#cloudBtn");
   b.classList.toggle("hidden", !SY.on);
-  b.textContent = { ok: "☁️ ✓", busy: "☁️ …", expired: "☁️ Tap to sync", error: "☁️ ⚠️", off: "☁️" }[st] || "☁️";
+  b.textContent = { ok: "☁️ ✓", busy: "☁️ …", expired: L("☁️ Chạm để đồng bộ", "☁️ Tap to sync"), error: "☁️ ⚠️", off: "☁️" }[st] || "☁️";
   renderSyncCard();
 }
 function ago(t){
-  if (!t) return "never"; const m = Math.round((Date.now() - t) / MIN);
-  return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m/60) + " h ago" : new Date(t).toLocaleDateString();
+  if (!t) return L("chưa", "never"); const m = Math.round((Date.now() - t) / MIN);
+  return m < 1 ? L("vừa xong", "just now") : m < 60 ? m + L(" phút trước", " min ago") : m < 1440 ? Math.round(m/60) + L(" giờ trước", " h ago") : new Date(t).toLocaleDateString(UI);
 }
 function renderSyncCard(){
   if (!$("#gdStatus")) return;
   $("#gdClientRow").classList.toggle("hidden", !!GOOGLE_CLIENT_ID);
   if ($("#gdClient") !== document.activeElement) $("#gdClient").value = SY.clientId || "";
   $("#gdOff").classList.toggle("hidden", !SY.on);
-  $("#gdConnect").textContent = SY.on ? "🔄 Sync now" : "Connect Google Drive";
-  $("#gdStatus").textContent = !SY.on ? "Not connected" :
-    cloudState === "busy" ? "Syncing…" :
-    cloudState === "error" ? "⚠️ Last sync failed — tap Sync now" :
-    cloudState === "expired" ? `Connected · last sync ${ago(SY.last)} · tap Sync now to continue` :
-    `✅ Connected · last sync ${ago(SY.last)}`;
+  $("#gdConnect").textContent = SY.on ? L("🔄 Đồng bộ ngay", "🔄 Sync now") : L("Kết nối Google Drive", "Connect Google Drive");
+  $("#gdStatus").textContent = !SY.on ? L("Chưa kết nối", "Not connected") :
+    cloudState === "busy" ? L("Đang đồng bộ…", "Syncing…") :
+    cloudState === "error" ? L("⚠️ Đồng bộ lỗi — bấm Đồng bộ ngay", "⚠️ Last sync failed — tap Sync now") :
+    cloudState === "expired" ? L(`Đã kết nối · lần cuối ${ago(SY.last)} · bấm Đồng bộ ngay để tiếp tục`, `Connected · last sync ${ago(SY.last)} · tap Sync now to continue`) :
+    L(`✅ Đã kết nối · lần cuối ${ago(SY.last)}`, `✅ Connected · last sync ${ago(SY.last)}`);
 }
 
 function gisReady(){ return !!(window.google && google.accounts && google.accounts.oauth2); }
@@ -2126,21 +2212,115 @@ const UA = navigator.userAgent;
 const isIOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isAndroid = /Android/i.test(UA);
 const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-let installEvt = null;
+const APP_URL = location.origin + location.pathname;
+let installEvt = null, wStep = 0;
 addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (wStep === 1) renderInstall(); });
 addEventListener("appinstalled", () => { installEvt = null; if (wStep === 1) renderInstall(); });
 
+function setUiLang(v){
+  if (v === UI) return;
+  S.settings.uiLang = v; save();
+  setTimeout(() => location.reload(), 150);   // let a pending Drive sync start first
+}
+function bindLangSeg(root){
+  Array.from(root.querySelectorAll("[data-ui]")).forEach(b => { b.classList.toggle("on", b.dataset.ui === UI); b.onclick = () => setUiLang(b.dataset.ui); });
+}
+
 const W_STEPS = 6;
-let wStep = 0;
-$("#wDots").innerHTML = "<i></i>".repeat(W_STEPS);
+function buildWelcome(){
+  $("#welcome").innerHTML = `
+  <div class="wbox">
+    <div class="wtop">
+      <div class="dots" id="wDots">${"<i></i>".repeat(W_STEPS)}</div>
+      <div class="seg wlang"><button data-ui="vi">VI</button><button data-ui="en">EN</button></div>
+    </div>
+
+    <div class="wstep" data-s="0">
+      <div class="wicon" lang="ko">한</div>
+      <h2>${L("Chào mừng đến Hangul Cards", "Welcome to Hangul Cards")}</h2>
+      <p class="lead">${L("Học từ vựng, luyện đọc và luyện nói tiếng Hàn. Thiết lập mất khoảng 2 phút.", "Learn words, read and speak Korean. Setup takes about 2 minutes.")}</p>
+      <ul class="feat">
+        <li><span>🎯</span><div><b>${L("Flashcard thông minh", "Smart flashcards")}</b>${L("Nhắc lại từ đúng lúc bạn sắp quên.", "Brings words back right before you forget them.")}</div></li>
+        <li><span>📖</span><div><b>${L("Bài đọc theo trình độ", "Readings at your level")}</b>${L("Nghe giọng bản xứ, tra từ ngay trong bài.", "Native audio and key words in every passage.")}</div></li>
+        <li><span>🎙</span><div><b>${L("Luyện nói có chấm điểm", "Speaking practice with scores")}</b>${L("Đọc to, AI nhận xét phát âm và ngữ điệu.", "Read aloud and get feedback on pronunciation.")}</div></li>
+      </ul>
+    </div>
+
+    <div class="wstep" data-s="1">
+      <div class="wemoji">📲</div>
+      <h2>${L("Cài app ra màn hình chính", "Install the app")}</h2>
+      <p class="lead">${L("Mở toàn màn hình, có icon riêng, ôn được cả khi mất mạng.", "Full screen, its own icon, and works offline.")}</p>
+      <div id="wInstall"></div>
+    </div>
+
+    <div class="wstep" data-s="2">
+      <div class="wemoji">🤖</div>
+      <h2>${L("Thêm Gemini key", "Add a Gemini key")}</h2>
+      <p class="lead">${L("Miễn phí. Giúp app tạo câu ví dụ, bài đọc và chấm phát âm chi tiết.", "Free. Lets the app write examples and passages, and coach your pronunciation.")}</p>
+      <ol>
+        <li>${L("Mở", "Open")} <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></li>
+        <li>${L("Bấm <b>Create API key</b> rồi copy key", "Tap <b>Create API key</b> and copy it")}</li>
+        <li>${L("Dán vào ô dưới đây", "Paste it below")}</li>
+      </ol>
+      <div class="row"><input id="wKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn2" style="flex:0 0 auto" id="wKeyTest">${L("Kiểm tra", "Test")}</button></div>
+      <p class="res" id="wKeyRes"></p>
+      <div class="note">🔒 ${L("Key chỉ lưu trên máy bạn. Đừng dùng chung với người khác.", "Your key stays on your device. Don't share it.")}</div>
+    </div>
+
+    <div class="wstep" data-s="3">
+      <div class="wemoji">🎙</div>
+      <h2>${L("Cho phép micro", "Allow the microphone")}</h2>
+      <p class="lead">${L("Cần micro để luyện nói. Khi trình duyệt hỏi, chọn <b>Cho phép</b>.", "Needed for speaking practice. When asked, choose <b>Allow</b>.")}</p>
+      <button class="btn2" style="width:100%" id="wMic">${L("🎙 Thử micro", "🎙 Test microphone")}</button>
+      <p class="res" id="wMicRes"></p>
+    </div>
+
+    <div class="wstep" data-s="4">
+      <div class="wemoji">☁️</div>
+      <h2>${L("Đồng bộ Google Drive", "Google Drive sync")}</h2>
+      <p class="lead">${L("Tuỳ chọn. Học trên nhiều máy mà tiến độ vẫn khớp. Dữ liệu nằm trong Drive của bạn.", "Optional. Keep progress in sync across devices, stored in your own Drive.")}</p>
+      <div id="wClientRow">
+        <label for="wClient">Google OAuth Client ID</label>
+        <input id="wClient" type="text" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off">
+      </div>
+      <button class="btn2" style="width:100%;margin-top:10px" id="wDrive">${L("Kết nối Google Drive", "Connect Google Drive")}</button>
+      <p class="res" id="wDriveRes"></p>
+      <div class="note">${L("Trước tiên, gửi Gmail của bạn cho người chia sẻ link để được cấp quyền. Thấy cảnh báo <i>“Google hasn't verified this app”</i> thì bấm <b>Continue</b>.", "First, send your Gmail to whoever shared this link so they can give you access. If you see <i>“Google hasn't verified this app”</i>, tap <b>Continue</b>.")}</div>
+    </div>
+
+    <div class="wstep" data-s="5">
+      <div class="wemoji">🎉</div>
+      <h2>${L("Xong rồi!", "All set!")}</h2>
+      <p class="lead">${L("Thêm vài từ ở tab <b>➕ Thêm</b>, rồi ôn mỗi ngày ở tab <b>🎯 Học</b>.", "Add a few words in <b>➕ Add</b>, then review daily in <b>🎯 Study</b>.")}</p>
+      <div class="note">${L("Xem lại hướng dẫn trong <b>⚙️ Cài đặt → 📘 Hướng dẫn</b>.", "Find the guide anytime in <b>⚙️ Settings → 📘 Guide</b>.")}</div>
+    </div>
+
+    <div class="wnav">
+      <button class="btn-ghost" id="wSkip">${L("Bỏ qua", "Skip")}</button>
+      <button class="btn-ghost" id="wBack" aria-label="Back">←</button>
+      <button class="btn" id="wNext"></button>
+    </div>
+  </div>`;
+  bindLangSeg($("#welcome"));
+  $("#wNext").onclick = () => {
+    if (wStep === 2) keepWelcomeKey();
+    if (wStep === W_STEPS - 1) closeWelcome(); else wShow(wStep + 1);
+  };
+  $("#wBack").onclick = () => wShow(wStep - 1);
+  $("#wSkip").onclick = closeWelcome;
+  $("#wKeyTest").onclick = testWelcomeKey;
+  $("#wMic").onclick = () => micTest($("#wMicRes"));
+  $("#wDrive").onclick = connectFromWelcome;
+  $("#wClient").onchange = e => { SY.clientId = e.target.value.trim(); saveSY(); if (clientId()) loadGIS().catch(()=>{}); };
+}
 function renderInstall(){
   let h;
-  if (isStandalone()) h = `<div class="note">✅ Bạn đang dùng bản đã cài. Bấm <b>Tiếp tục</b>.</div>`;
-  else if (installEvt) h = `<button class="btn" id="wInstallBtn">📲 Cài app ngay</button>`;
-  else if (isIOS) h = `<ol><li>Mở trang này bằng <b>Safari</b>.</li><li>Bấm nút <b>Chia sẻ</b> ⬆️ ở thanh dưới hoặc trên.</li><li>Chọn <b>Thêm vào MH chính</b> → <b>Thêm</b>.</li></ol>`;
-  else if (isAndroid) h = `<ol><li>Mở trang này bằng <b>Chrome</b>.</li><li>Bấm menu <b>⋮</b> ở góc trên bên phải.</li><li>Chọn <b>Cài đặt ứng dụng</b> hoặc <b>Thêm vào màn hình chính</b>.</li></ol>`;
-  else h = `<ol><li>Trong <b>Chrome</b>, bấm biểu tượng cài đặt 🖥️⬇ ở cuối thanh địa chỉ (hoặc menu <b>⋮</b> → <b>Truyền, lưu và chia sẻ</b> → <b>Cài đặt trang</b>).</li><li>Hoặc cứ dùng trực tiếp trên web, không cần cài.</li></ol>`;
-  $("#wInstall").innerHTML = h + `<p class="small muted" style="margin-top:10px">Có thể làm sau. Luôn mở từ link <b>${esc(location.origin + location.pathname)}</b>.</p>`;
+  if (isStandalone()) h = `<div class="note">✅ ${L("Bạn đang dùng bản đã cài.", "You're already using the installed app.")}</div>`;
+  else if (installEvt) h = `<button class="btn" id="wInstallBtn">${L("📲 Cài app ngay", "📲 Install now")}</button>`;
+  else if (isIOS) h = `<ol><li>${L("Mở trang này bằng <b>Safari</b>", "Open this page in <b>Safari</b>")}</li><li>${L("Bấm <b>Chia sẻ</b> ⬆️", "Tap <b>Share</b> ⬆️")}</li><li>${L("Chọn <b>Thêm vào MH chính</b>", "Choose <b>Add to Home Screen</b>")}</li></ol>`;
+  else if (isAndroid) h = `<ol><li>${L("Mở trang này bằng <b>Chrome</b>", "Open this page in <b>Chrome</b>")}</li><li>${L("Bấm menu <b>⋮</b>", "Tap the <b>⋮</b> menu")}</li><li>${L("Chọn <b>Cài đặt ứng dụng</b>", "Choose <b>Install app</b>")}</li></ol>`;
+  else h = `<ol><li>${L("Trong <b>Chrome</b>, bấm biểu tượng cài đặt ở cuối thanh địa chỉ", "In <b>Chrome</b>, click the install icon at the end of the address bar")}</li><li>${L("Hoặc dùng luôn trên web, không cần cài", "Or just keep using it on the web")}</li></ol>`;
+  $("#wInstall").innerHTML = h;
   const b = $("#wInstallBtn");
   if (b) b.onclick = async () => { installEvt.prompt(); try { await installEvt.userChoice; } catch(e){} installEvt = null; renderInstall(); };
 }
@@ -2149,70 +2329,137 @@ function wShow(i){
   $$("#welcome .wstep").forEach(el => el.classList.toggle("hidden", +el.dataset.s !== wStep));
   $$("#wDots i").forEach((d, k) => d.classList.toggle("on", k === wStep));
   $("#wBack").classList.toggle("hidden", wStep === 0);
-  $("#wNext").textContent = wStep === 0 ? "Bắt đầu thiết lập" : wStep === W_STEPS - 1 ? "Vào học thôi 🚀" : "Tiếp tục";
   $("#wSkip").classList.toggle("hidden", wStep === W_STEPS - 1);
+  $("#wNext").textContent = wStep === 0 ? L("Bắt đầu", "Get started") : wStep === W_STEPS - 1 ? L("Vào học thôi", "Start learning") : L("Tiếp tục", "Continue");
   if (wStep === 1) renderInstall();
   if (wStep === 2) $("#wKey").value = S.settings.apiKey || "";
   if (wStep === 4){
     $("#wClientRow").classList.toggle("hidden", !!GOOGLE_CLIENT_ID);
     $("#wClient").value = SY.clientId || "";
     if (clientId()) loadGIS().catch(()=>{});
-    if (SY.on) $("#wDrive").textContent = "✅ Đã kết nối · Đồng bộ ngay";
+    if (SY.on) $("#wDrive").textContent = L("✅ Đã kết nối · Đồng bộ ngay", "✅ Connected · Sync now");
   }
   $("#welcome").scrollTop = 0;
 }
-function openWelcome(){ $("#welcome").classList.remove("hidden"); document.body.style.overflow = "hidden"; wShow(0); }
+function keepWelcomeKey(){ const k = $("#wKey").value.trim(); if (k !== (S.settings.apiKey || "")){ S.settings.apiKey = k; save(); } }
+function openWelcome(){ buildWelcome(); $("#welcome").classList.remove("hidden"); document.body.style.overflow = "hidden"; wShow(0); }
 function closeWelcome(){
+  keepWelcomeKey();
   $("#welcome").classList.add("hidden"); document.body.style.overflow = "";
   try { localStorage.setItem(WEL_KEY, "1"); } catch(e){}
-  const k = $("#wKey").value.trim();
-  if (k && k !== S.settings.apiKey){ S.settings.apiKey = k; save(); }
   if (!$("#v-set").classList.contains("hidden")) renderSettings();
 }
-$("#wNext").onclick = () => {
-  if (wStep === 2){ const k = $("#wKey").value.trim(); if (k !== (S.settings.apiKey || "")){ S.settings.apiKey = k; save(); } }
-  if (wStep === W_STEPS - 1) closeWelcome(); else wShow(wStep + 1);
-};
-$("#wBack").onclick = () => wShow(wStep - 1);
-$("#wSkip").onclick = closeWelcome;
-
-$("#wKeyTest").onclick = async () => {
+async function testWelcomeKey(){
   const k = $("#wKey").value.trim(), r = $("#wKeyRes");
-  if (!k){ r.textContent = "Dán key vào trước nhé."; return; }
-  if (!/^AIza/.test(k)){ r.textContent = "⚠️ Key Gemini thường bắt đầu bằng AIza… Kiểm tra lại xem đã copy đúng chưa."; }
+  if (!k){ r.textContent = L("Dán key vào trước nhé.", "Paste your key first."); return; }
   S.settings.apiKey = k; save();
-  const b = $("#wKeyTest"); busy(b, true, "…"); r.textContent = "Đang kiểm tra…";
-  try { const j = extractJSON(await gemini('Translate 안녕하세요 to Vietnamese. Return JSON {"t":""}')); r.innerHTML = "✅ Kết nối thành công! " + esc(j.t || ""); }
-  catch(e){ r.textContent = "⚠️ " + e.message + " — kiểm tra lại key, hoặc thử lại sau ít phút."; }
+  const b = $("#wKeyTest"); busy(b, true, "…"); r.textContent = L("Đang kiểm tra…", "Testing…");
+  try { await gemini('Translate 안녕하세요 to English. Return JSON {"t":""}'); r.textContent = L("✅ Kết nối thành công!", "✅ Connected!"); }
+  catch(e){ r.textContent = "⚠️ " + e.message + (/^AIza/.test(k) ? "" : L(" · Key thường bắt đầu bằng AIza…", " · Keys usually start with AIza…")); }
   busy(b, false);
-};
-
+}
+function connectFromWelcome(){
+  if (!GOOGLE_CLIENT_ID){ SY.clientId = $("#wClient").value.trim(); saveSY(); }
+  if (!/\.apps\.googleusercontent\.com$/.test(clientId())){ $("#wDriveRes").textContent = L("⚠️ Client ID chưa đúng. Hỏi lại người chia sẻ link nhé.", "⚠️ That Client ID doesn't look right. Ask whoever shared the link."); return; }
+  syncNow(true).then(() => { if (SY.on){ $("#wDrive").textContent = L("✅ Đã kết nối", "✅ Connected"); $("#wDriveRes").textContent = L("Dữ liệu sẽ tự đồng bộ giữa các máy.", "Your data will now sync across devices."); } });
+}
 async function micTest(out){
-  out.textContent = "Đang xin quyền…";
-  if (location.protocol === "file:" && isAndroid){ out.innerHTML = "⚠️ Bạn đang mở file tải về máy. Hãy mở từ link <b>https://pevien.github.io/korean/</b>."; return; }
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ out.textContent = "⚠️ Trình duyệt này không hỗ trợ micro. Thử Chrome hoặc Safari bản mới."; return; }
+  out.textContent = L("Đang xin quyền…", "Asking for permission…");
+  if (location.protocol === "file:" && isAndroid){ out.textContent = L("⚠️ Hãy mở app từ link ", "⚠️ Open the app from ") + APP_URL; return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ out.textContent = L("⚠️ Trình duyệt này không hỗ trợ micro. Thử Chrome hoặc Safari.", "⚠️ This browser doesn't support the mic. Try Chrome or Safari."); return; }
   try {
     const st = await navigator.mediaDevices.getUserMedia({ audio: true });
     st.getTracks().forEach(t => t.stop());
-    out.innerHTML = "✅ Micro hoạt động tốt!";
+    out.textContent = L("✅ Micro hoạt động tốt!", "✅ Microphone works!");
   } catch(e){
-    const how = isAndroid ? "Cài đặt → Ứng dụng → <b>Chrome</b> → Quyền → <b>Micro</b> → Cho phép. Rồi trong Chrome chạm 🔒 cạnh địa chỉ → Quyền → Micro → Cho phép, tải lại trang."
-      : isIOS ? "Cài đặt → <b>Safari</b> → Micro → Cho phép, rồi tải lại trang."
-      : "Bấm 🔒 cạnh thanh địa chỉ → cho phép Micro. Trên Mac: Cài đặt hệ thống → Quyền riêng tư &amp; Bảo mật → <b>Micro</b> → bật cho trình duyệt.";
-    out.innerHTML = (e.name === "NotFoundError" ? "⚠️ Không tìm thấy micro." : e.name === "NotReadableError" ? "⚠️ Micro đang bị app khác dùng. Đóng app đó rồi thử lại." : "⚠️ Micro bị chặn. ") + (e.name === "NotAllowedError" || e.name === "SecurityError" ? how : "");
+    if (e.name === "NotFoundError") out.textContent = L("⚠️ Không tìm thấy micro.", "⚠️ No microphone found.");
+    else if (e.name === "NotReadableError") out.textContent = L("⚠️ Micro đang bị app khác dùng.", "⚠️ Another app is using the mic.");
+    else out.innerHTML = "⚠️ " + (isAndroid
+      ? L("Micro bị chặn. Vào Cài đặt → Ứng dụng → <b>Chrome</b> → Quyền → <b>Micro</b> → Cho phép. Rồi chạm 🔒 cạnh địa chỉ → Quyền → Micro → Cho phép, tải lại trang.", "Mic blocked. Go to Settings → Apps → <b>Chrome</b> → Permissions → <b>Microphone</b> → Allow. Then tap 🔒 by the address → Permissions → Microphone → Allow, and reload.")
+      : isIOS ? L("Micro bị chặn. Vào Cài đặt → <b>Safari</b> → Micro → Cho phép, rồi tải lại trang.", "Mic blocked. Go to Settings → <b>Safari</b> → Microphone → Allow, then reload.")
+      : L("Micro bị chặn. Bấm 🔒 cạnh thanh địa chỉ → cho phép Micro. Trên Mac: Cài đặt hệ thống → Quyền riêng tư & Bảo mật → <b>Micro</b> → bật cho trình duyệt.", "Mic blocked. Click 🔒 by the address bar → allow Microphone. On Mac: System Settings → Privacy & Security → <b>Microphone</b> → turn on your browser."));
   }
 }
-$("#wMic").onclick = () => micTest($("#wMicRes"));
-$("#gMicTest").onclick = () => micTest($("#gMicRes"));
 
-$("#wDrive").onclick = () => {
-  if (!GOOGLE_CLIENT_ID){ SY.clientId = $("#wClient").value.trim(); saveSY(); }
-  if (!/\.apps\.googleusercontent\.com$/.test(clientId())){ $("#wDriveRes").innerHTML = "⚠️ Client ID chưa đúng. Nó có dạng <b>…apps.googleusercontent.com</b>. Xin lại người chia sẻ link nhé."; return; }
-  syncNow(true).then(() => { if (SY.on){ $("#wDrive").textContent = "✅ Đã kết nối"; $("#wDriveRes").textContent = "Dữ liệu sẽ tự đồng bộ giữa các máy."; } });
-};
-$("#wClient").onchange = e => { SY.clientId = e.target.value.trim(); saveSY(); if (clientId()) loadGIS().catch(()=>{}); };
-
-$("#gWelcome").onclick = openWelcome;
+const GUIDE = [
+  ["g-start", L("Bắt đầu nhanh", "Quick start"), L(`
+    <ol><li><b>➕ Thêm</b>: thêm từ mới. Có thể dán cả danh sách hoặc chụp ảnh.</li>
+    <li><b>🎯 Học</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý.</li>
+    <li><b>📖 Đọc</b>: bài đọc theo trình độ. 🔊 để nghe, 🎙 để đọc to và được chấm.</li>
+    <li><b>📚 Từ vựng</b>: xem, sửa, xoá từ.</li></ol>`, `
+    <ol><li><b>➕ Add</b>: add words. Paste a whole list or use a screenshot.</li>
+    <li><b>🎯 Study</b>: review flashcards daily. Answer honestly so the schedule fits you.</li>
+    <li><b>📖 Read</b>: passages at your level. 🔊 to listen, 🎙 to read aloud and get scored.</li>
+    <li><b>📚 Words</b>: view, edit and delete words.</li></ol>`)],
+  ["g-install", L("Cài app", "Install the app"), L(`
+    <ul><li><b>Android</b>: Chrome → <b>⋮</b> → <b>Cài đặt ứng dụng</b></li>
+    <li><b>iPhone / iPad</b>: Safari → <b>Chia sẻ</b> ⬆️ → <b>Thêm vào MH chính</b></li>
+    <li><b>Máy tính</b>: Chrome → biểu tượng cài đặt ở cuối thanh địa chỉ</li></ul>
+    <p>Luôn mở từ link <code>${APP_URL}</code>, không mở file HTML tải về.</p>`, `
+    <ul><li><b>Android</b>: Chrome → <b>⋮</b> → <b>Install app</b></li>
+    <li><b>iPhone / iPad</b>: Safari → <b>Share</b> ⬆️ → <b>Add to Home Screen</b></li>
+    <li><b>Computer</b>: Chrome → install icon at the end of the address bar</li></ul>
+    <p>Always open it from <code>${APP_URL}</code>, not from a downloaded HTML file.</p>`)],
+  ["g-key", L("Gemini key", "Gemini key"), L(`
+    <ol><li>Mở <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, đăng nhập Gmail</li>
+    <li>Bấm <b>Create API key</b>, copy key (bắt đầu bằng <code>AIza…</code>)</li>
+    <li>Dán vào ô <b>Gemini API key</b> bên dưới → <b>Kiểm tra kết nối</b></li></ol>
+    <p><b>Có key</b>: tự tạo câu ví dụ, bài đọc, chấm phát âm chi tiết. <b>Không có key</b>: app đưa câu lệnh để bạn dán vào chatbot miễn phí.</p>
+    <p>🔒 Mỗi người dùng key riêng. Key không có trong file xuất.</p>`, `
+    <ol><li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> and sign in</li>
+    <li>Tap <b>Create API key</b> and copy it (starts with <code>AIza…</code>)</li>
+    <li>Paste it into <b>Gemini API key</b> below → <b>Test connection</b></li></ol>
+    <p><b>With a key</b>: examples, passages and detailed pronunciation feedback. <b>Without</b>: the app gives you a prompt to paste into a free chatbot.</p>
+    <p>🔒 Everyone should use their own key. It's never included in exports.</p>`)],
+  ["g-sync", L("Đồng bộ Google Drive", "Google Drive sync"), L(`
+    <ol><li>Gửi Gmail cho người chia sẻ link để được cấp quyền</li>
+    <li>Khung <b>☁️ Đồng bộ Google Drive</b> → dán Client ID (nếu có ô) → <b>Kết nối</b></li>
+    <li>Thấy <i>“Google hasn't verified this app”</i> → <b>Continue</b></li>
+    <li>Làm lại trên máy thứ hai</li></ol>
+    <p>App tự lưu sau mỗi thay đổi và tải về khi mở. Dữ liệu gộp theo từng từ nên không mất tiến độ.</p>
+    <p><b>☁️ Chạm để đồng bộ</b> ở góc trên: phiên đăng nhập (~1 giờ) đã hết, chạm để tiếp tục.</p>
+    <p><b>Lỗi 400 / access blocked</b>: Gmail chưa được cấp quyền hoặc Client ID sai.</p>`, `
+    <ol><li>Send your Gmail to whoever shared the link so they can give you access</li>
+    <li>In <b>☁️ Google Drive sync</b> → paste the Client ID (if asked) → <b>Connect</b></li>
+    <li>If you see <i>“Google hasn't verified this app”</i> → <b>Continue</b></li>
+    <li>Repeat on your other device</li></ol>
+    <p>Changes save automatically and download when you open the app. Data merges word by word, so no progress is lost.</p>
+    <p><b>☁️ Tap to sync</b> at the top means the ~1 hour sign-in expired. Tap it to continue.</p>
+    <p><b>Error 400 / access blocked</b>: your Gmail wasn't added yet, or the Client ID is wrong.</p>`)],
+  ["g-mic", L("Micro & luyện nói", "Microphone & speaking"), L(`
+    <p>Lần đầu bấm 🎙, chọn <b>Cho phép</b>. Nếu bị chặn:</p>
+    <ul><li><b>Android</b>: Cài đặt → Ứng dụng → Chrome → Quyền → Micro → Cho phép</li>
+    <li><b>iPhone / iPad</b>: Cài đặt → Safari → Micro → Cho phép</li>
+    <li><b>Mac</b>: Cài đặt hệ thống → Quyền riêng tư & Bảo mật → Micro</li></ul>
+    <p>Android chưa có key: chỉ chấm theo chữ, không nghe lại được giọng mình.</p>`, `
+    <p>The first time you tap 🎙, choose <b>Allow</b>. If it's blocked:</p>
+    <ul><li><b>Android</b>: Settings → Apps → Chrome → Permissions → Microphone → Allow</li>
+    <li><b>iPhone / iPad</b>: Settings → Safari → Microphone → Allow</li>
+    <li><b>Mac</b>: System Settings → Privacy & Security → Microphone</li></ul>
+    <p>On Android without a key, only text is checked and playback of your voice is off.</p>`)
+    + `<p><button class="btn2" id="gMicTest">${L("🎙 Thử micro", "🎙 Test microphone")}</button> <span class="small" id="gMicRes"></span></p>`],
+  ["g-backup", L("Sao lưu & chuyển máy", "Backup & moving devices"), L(`
+    <p><b>⬇️ Xuất file</b> để lưu dự phòng, <b>⬆️ Nhập file</b> để khôi phục hoặc chuyển máy.</p>
+    <p>⚠️ Xoá dữ liệu trình duyệt sẽ mất từ vựng nếu chưa đồng bộ Drive hoặc xuất file.</p>`, `
+    <p><b>⬇️ Export</b> to save a backup file, <b>⬆️ Import</b> to restore or move devices.</p>
+    <p>⚠️ Clearing browser data deletes your words unless Drive sync is on or you exported them.</p>`)],
+  ["g-faq", L("Câu hỏi thường gặp", "FAQ"), L(`
+    <p><b>Người khác có thấy dữ liệu của mình?</b> Không. Mỗi người có dữ liệu, key và Drive riêng.</p>
+    <p><b>Có tốn tiền?</b> Không. Gemini miễn phí đủ học hằng ngày, Drive chỉ dùng vài MB.</p>
+    <p><b>App chưa lên bản mới?</b> Đóng hẳn app rồi mở lại khi có mạng.</p>`, `
+    <p><b>Can others see my data?</b> No. Everyone has their own data, key and Drive.</p>
+    <p><b>Does it cost anything?</b> No. Gemini's free tier covers daily study; Drive uses a few MB.</p>
+    <p><b>Not seeing the latest version?</b> Fully close the app and reopen it while online.</p>`)]
+];
+function buildGuide(){
+  $("#guideCard").innerHTML = `<h2>📘 ${L("Hướng dẫn", "Guide")}</h2>` +
+    GUIDE.map(([id, t, body]) => `<details id="${id}"><summary>${t}</summary><div>${body}</div></details>`).join("") +
+    `<button class="btn-ghost" style="width:100%;margin-top:12px" id="gWelcome">${L("↺ Xem lại màn hình chào mừng", "↺ Show the welcome screen again")}</button>`;
+  $("#gWelcome").onclick = openWelcome;
+  $("#gMicTest").onclick = () => micTest($("#gMicRes"));
+}
+buildGuide();
+bindLangSeg($("#uiLangSeg"));
 $$("[data-guide]").forEach(b => b.onclick = e => {
   e.preventDefault();
   const d = document.getElementById(b.dataset.guide); if (!d) return;
