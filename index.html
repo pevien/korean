@@ -42,8 +42,8 @@ header h1 .leaf{font-size:26px;line-height:1;vertical-align:-.04em}   /* sized t
 @supports (font-synthesis:none){ header h1 .logo{font-synthesis:none} }   /* the script face is already slanted: don't fake-italicise it again */
 .pill{font-size:12px;color:var(--muted);background:var(--card);border:1px solid transparent;padding:4px 10px;border-radius:99px}
 #cloudBtn{white-space:nowrap;flex:0 0 auto}
-#cloudBtn[data-st="expired"]{color:var(--warn);background:color-mix(in srgb, var(--warn) 14%, var(--card));border-color:color-mix(in srgb, var(--warn) 35%, transparent);font-weight:600}
-#cloudBtn[data-st="error"]{color:var(--bad);background:var(--bad-soft);border-color:color-mix(in srgb, var(--bad) 35%, transparent);font-weight:600}
+#cloudBtn .warn-ic{width:1.05em;height:1.05em;vertical-align:-.15em}
+#cloudBtn[data-st="expired"],#cloudBtn[data-st="error"]{color:var(--bad);background:var(--bad-soft);border-color:color-mix(in srgb, var(--bad) 35%, transparent);font-weight:600}
 /* surfaces separate by fill (+ light-mode shadow), not outlines — borders stay transparent so hover/state colours can still use them */
 .card{background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
 /* flat = lists and long reading text sit straight on the page: no box, full width for the content */
@@ -191,6 +191,45 @@ nav button[data-v=army].on{color:var(--army)}
 .ar-pick .tx{flex:1;min-width:0}
 .ar-pick b{display:block;font-size:17px;margin-bottom:3px}
 .ar-pick .d{display:block;font-size:13px;color:var(--muted);line-height:1.45}
+/* 🗣 Speak → 💬 Talk */
+.sp-pick:hover{border-color:var(--accent)}
+.tk-scenes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tk-scene{display:flex;align-items:center;gap:10px;text-align:left;background:var(--card);color:var(--text);border:1px solid transparent;border-radius:14px;padding:14px 12px;box-shadow:var(--shadow);font-weight:600;font-size:14px;line-height:1.3}
+.tk-scene .i{font-size:24px;line-height:1;flex:0 0 auto}
+.tk-scene:hover{border-color:var(--accent)}
+.tk-scene:disabled{opacity:.5;cursor:default}
+.tk-tip{margin:0 2px 10px;text-align:center}
+.tk-lv{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:6px 12px}
+.tk-lv label{margin:0}
+.tk-lv p{grid-column:1/-1}
+.tk-list{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
+.tk-msg{display:flex;flex-direction:column;align-items:flex-start;max-width:88%}
+.tk-msg.ai{flex-direction:row;align-items:flex-end;gap:2px}
+.tk-msg.me{align-self:flex-end;align-items:flex-end}
+.tk-b{background:var(--card);border-radius:18px 18px 18px 6px;padding:10px 14px;box-shadow:var(--shadow);min-width:0}
+.tk-msg.ai .tk-b{cursor:pointer}
+.tk-msg.me .tk-b{background:var(--accent);color:var(--on-accent);border-radius:18px 18px 6px 18px}
+.tk-b .ko{font-size:17px;line-height:1.45}
+.tk-b .mean{font-size:13px;color:var(--muted);margin-top:4px}
+.tk-fb{margin-top:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:14px;width:100%;box-sizing:border-box}
+.tk-fb .ok{color:var(--ok);font-weight:600}
+.tk-fb .fix{color:var(--warn);font-weight:600;font-size:15px}
+.tk-fb .fix .icon-btn{padding:0 4px;font-size:14px}
+.tk-fb .why{font-size:13px;margin-top:3px}
+.tk-more{background:none;color:var(--muted);padding:6px 0 0;font-size:13px;font-weight:500;text-align:left;width:100%}
+.tk-more b{font-size:14px}
+.tk-det{border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font-size:13px;display:grid;gap:5px}
+.tk-det .btn2{flex:0 0 auto;padding:6px 10px;font-size:13px}
+.tk-ctl{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));z-index:5;background:var(--card);border-radius:var(--radius);padding:4px 8px 10px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
+.tk-ctl .turn{margin:4px 0 8px;font-size:13px}
+.tk-hints{display:grid;gap:6px}
+.tk-hint{display:grid;gap:2px;text-align:left;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:500}
+.tk-hint [lang=ko]{font-size:16px}
+.tk-end{font-size:14px!important;padding:6px 12px!important}
+.tk-sum{padding:8px 0;border-bottom:1px solid var(--line)}
+.tk-sum:last-child{border-bottom:none}
+.tk-sum .bad{color:var(--bad);text-decoration:line-through;text-decoration-thickness:1px}
+.tk-sum .good{color:var(--ok);font-weight:600;font-size:16px}
 .ar-hero .h{font-size:34px;line-height:1}
 .ar-go{margin-top:12px}
 body.ar-listening header, body.ar-listening #arHistCard > p{display:none}
@@ -593,8 +632,10 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 
   <!-- READ -->
   <section id="v-read" class="hidden">
-    <div id="readHome">
-      <div class="pg-head" id="rdListHead"><span class="h">📖</span><h2>My passages</h2><button class="btn" id="rdNewOpen" data-noi18n></button></div>
+    <!-- Speak = 📖 Read (passages + pronunciation coach) or 💬 Talk (spoken conversation with AI) -->
+    <div id="spHome" data-noi18n></div>
+    <div id="readHome" class="hidden">
+      <div class="pg-head" id="rdListHead"><button class="btn-ghost back" id="rdListBack" title="Speak" aria-label="Speak"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><h2>My passages</h2><button class="btn" id="rdNewOpen" data-noi18n></button></div>
       <!-- "new passage" is its own sub-page, like Add words: [←] Tạo bài đọc — or a plain page heading when there's nothing to go back to -->
       <div class="sub-head hidden" id="rdNewHead">
         <div class="l"><button class="btn-ghost back" id="rdNewBack" title="My passages" aria-label="My passages"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
@@ -686,6 +727,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
         <ul class="wl" id="rdVocab"></ul>
       </div>
     </div>
+    <div id="talk" class="hidden" data-noi18n></div>
   </section>
 
   <!-- WORDS -->
@@ -796,7 +838,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 
 <nav><div class="in">
   <button data-v="study" class="on"><span class="ic">🎯</span>Study</button>
-  <button data-v="read"><span class="ic">📖</span>Read</button>
+  <button data-v="read" data-noi18n><span class="ic">🗣</span><span id="navSpeak">Speak</span></button>
   <button data-v="words"><span class="ic">📚</span>Words</button>
   <button data-v="army"><span class="ic">💜</span>ARMY</button>
   <button data-v="set"><span class="ic">⚙️</span>Settings</button>
@@ -1378,11 +1420,11 @@ function show(v){
   }
   if (v === "study" && !session) { homeAuto = true; refreshHome(); }
   document.body.classList.toggle("in-session", v === "study" && !!session);   // leaving via a link mid-session must bring the tab bar back
-  if (v !== "read") { stopPlayer(); cancelRec(); }
+  if (v !== "read") { stopPlayer(); cancelRec(); talkStop(); }
   if (v !== "study") frCancel();
   if (v !== "army") arStop();
   if (v === "army") renderArmy();
-  if (v === "read" && !$("#readHome").classList.contains("hidden")) renderPassList();
+  if (v === "read") spShow(spScreen);
   if (v === "words") renderWords();
   if (v === "set") renderSettings();
   window.scrollTo(0,0);
@@ -1396,6 +1438,7 @@ let navScrollT = null;
 addEventListener("scroll", () => { clearTimeout(navScrollT); navScrollT = setTimeout(() => navSave({ y: Math.round(scrollY) }), 200); }, { passive: true });
 addEventListener("pagehide", () => navSave({ y: Math.round(scrollY) }));
 $$("nav button").forEach(b => b.onclick = () => show(b.dataset.v));
+$("#navSpeak").textContent = L("Luyện nói", "Speak");   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
 $("#goAddBig").onclick = () => show("add");
 $("#addBack").onclick = () => show("words");
 
@@ -2089,7 +2132,7 @@ async function runOCR(file){
 
 /* ---------------- AI: generate vocabulary ---------------- */
 const TOPICS = ["Food & drinks","Family","At a café","Travel","Shopping","Weather","Body & health","Daily routine","School","Work & office","Feelings","Transport","Home","Hobbies","Numbers & time","K-drama phrases"];
-function fillLevels(sel){ sel.innerHTML = LEVELS.map(l => `<option value="${l[0]}">${l[1]}</option>`).join(""); sel.value = S.settings.level; sel.onchange = () => { S.settings.level = sel.value; save(); $$("#genLevel,#rdLevel").forEach(x => x.value = sel.value); }; }
+function fillLevels(sel){ sel.innerHTML = LEVELS.map(l => `<option value="${l[0]}">${l[1]}</option>`).join(""); sel.value = S.settings.level; sel.onchange = () => { S.settings.level = sel.value; save(); $$("#genLevel,#rdLevel,#tkLevel").forEach(x => x.value = sel.value); }; }
 $("#genChips").innerHTML = TOPICS.map(t => `<button class="chip">${esc(t)}</button>`).join("");
 $$("#genChips .chip").forEach(b => b.onclick = () => { $("#genTopic").value = b.textContent; });
 $("#genBtn").onclick = async () => {
@@ -2142,13 +2185,13 @@ function renderPassList(){
   $("#rdListHead").classList.toggle("hidden", form);
   $("#passCard").classList.toggle("hidden", form);
   $("#rdNewHead").classList.toggle("hidden", !form);
-  $("#rdNewHead").classList.toggle("no-back", !has);
   $("#rdNewCard").classList.toggle("hidden", !form);
   renderPassItems();
 }
 $("#rdNewOpen").textContent = L("+ Tạo mới", "+ New");
 $("#rdNewOpen").onclick = () => { rdNewOpen = true; renderPassList(); scrollTo(0, 0); $("#rdPrompt").focus({ preventScroll: true }); };
-$("#rdNewBack").onclick = () => { rdNewOpen = false; renderPassList(); scrollTo(0, 0); };
+$("#rdNewBack").onclick = () => { rdNewOpen = false; if (!S.passages.length) return spShow(""); renderPassList(); scrollTo(0, 0); };   // nothing to list → back to Speak
+$("#rdListBack").onclick = () => spShow("");
 function renderPassItems(){
   const L = S.passages.slice().sort((a,b)=>b.created-a.created);
   const lvl = k => { const t = (LEVELS.find(l=>l[0]===k)||[])[1] || ""; return UI === "vi" ? trLevels(t) : t; };
@@ -2491,7 +2534,7 @@ function cancelRec(){
   const b = $("#cRec"); if (b) { b.classList.remove("on"); b.textContent = "🎙"; }
 }
 /* explain *why* the mic is blocked (file://, Chrome app permission, site permission) */
-function micHelp(kind){
+function micHelp(kind, el){
   const blockedFile = location.protocol === "file:" && /Android/i.test(navigator.userAgent);
   let msg;
   if (kind === "insecure" || blockedFile)
@@ -2502,7 +2545,7 @@ function micHelp(kind){
     msg = L("🎙 Không tìm thấy micro hoặc app khác đang dùng. Đóng app đó rồi thử lại.", "🎙 No microphone found, or another app is using it. Close that app and try again.");
   else
     msg = L("🎙 Micro bị chặn. Android: Cài đặt → Ứng dụng → Chrome → Quyền → Micro → Cho phép. Mac: Cài đặt hệ thống → Quyền riêng tư & Bảo mật → Micro. Rồi tải lại trang.", "🎙 Microphone blocked. Android: Settings → Apps → Chrome → Permissions → Microphone → Allow. Mac: System Settings → Privacy & Security → Microphone. Then reload.");
-  $("#cStatus").textContent = msg;
+  (el || $("#cStatus")).textContent = msg;
   toast(L("Micro bị chặn", "Microphone permission denied"));
 }
 async function micPermissionState(){
@@ -2914,10 +2957,12 @@ function setCloud(st){
   cloudState = st;
   const b = $("#cloudBtn");
   b.classList.toggle("hidden", !SY.on);
-  // needs-action states get a short tinted label (fits next to the logo on a phone); the full reason lives in the tooltip
-  b.textContent = { ok: "☁️ ✓", busy: "☁️ …", expired: L("☁️ Đồng bộ", "☁️ Sync"), error: "☁️ ⚠️", off: "☁️" }[st] || "☁️";
+  // needs-action states turn red with a ⚠️ (fits next to the logo on a phone); the full reason lives in the tooltip
+  // ⚠️ is always a yellow emoji → draw the warning triangle so it follows the button's red
+  const warn = `☁️ <svg class="warn-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 1.5 21h21z" fill="currentColor"/><path d="M12 9.5v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="18.2" r="1.35" fill="#fff"/></svg>`;
+  b.innerHTML = { ok: "☁️ ✓", busy: "☁️ …", expired: warn, error: warn, off: "☁️" }[st] || "☁️";
   b.dataset.st = st;
-  b.title = { expired: L("Phiên đăng nhập Google đã hết hạn — chạm để đồng bộ tiếp", "Google sign-in expired — tap to keep syncing"), error: L("Đồng bộ lỗi — chạm để thử lại", "Sync failed — tap to retry") }[st] || "Google Drive sync";
+  b.title = b.ariaLabel = { expired: L("Phiên đăng nhập Google đã hết hạn — chạm để đồng bộ tiếp", "Google sign-in expired — tap to keep syncing"), error: L("Đồng bộ lỗi — chạm để thử lại", "Sync failed — tap to retry") }[st] || "Google Drive sync";
   renderSyncCard();
 }
 function ago(t){
@@ -3534,6 +3579,341 @@ function arToPassage(lines, title){
 function confirmTap(b, label, fn){
   if (!b.dataset.confirm){ b.dataset.confirm = 1; b.textContent = L("Chạm lần nữa để xoá", "Tap again to delete"); setTimeout(() => { delete b.dataset.confirm; b.textContent = label; }, 3000); return; }
   delete b.dataset.confirm; b.textContent = label; fn();
+}
+
+/* ---------------- 🗣 Speak tab: 📖 Read (passages + coach) or 💬 Talk (spoken conversation with AI) ---------------- */
+let spScreen = navGet().sp || "";   // "" = the picker, "read", "talk" — survives a reload
+const BACK_SVG = `<svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>`;
+function spShow(scr){
+  spScreen = scr;
+  if (scr !== "read" && curP){ closeRdEditor(); stopPlayer(); closeCoach(); curP = null; }
+  if (scr !== "talk") talkStop();
+  $("#spHome").classList.toggle("hidden", scr !== "");
+  $("#readHome").classList.toggle("hidden", scr !== "read" || !!curP);
+  $("#reader").classList.toggle("hidden", scr !== "read" || !curP);
+  $("#talk").classList.toggle("hidden", scr !== "talk");
+  if (scr === "") renderSpHome();
+  else if (scr === "read"){ if (!curP) renderPassList(); }
+  else renderTalk();
+  navSave({ sp: scr, p: curP ? curP.id : "" });
+}
+function renderSpHome(){
+  const n = S.passages.length, t = S.talk;
+  const pick = (k, icon, title, desc) => `<button class="ar-pick sp-pick" data-s="${k}"><span class="i">${icon}</span><span class="tx"><b>${title}</b><span class="d">${desc}</span></span><span class="muted">›</span></button>`;
+  $("#spHome").innerHTML = `
+    <div class="pg-head"><span class="h">🗣</span><h2>${L("Luyện nói", "Speak")}</h2></div>
+    ${pick("read", "📖", L("Đọc", "Read") + (n ? ` (${n})` : ""), L("Đọc bài, nghe mẫu và chấm phát âm từng câu.", "Read passages, listen to the model and get each sentence's pronunciation checked."))}
+    ${pick("talk", "💬", L("Hội thoại", "Talk"), t && !t.done
+      ? L(`Đang nói dở: ${esc(talkScene(t).name)} — chạm để nói tiếp.`, `In progress: ${esc(talkScene(t).name)} — tap to continue.`)
+      : L("Nói chuyện với AI bằng tiếng Hàn — AI trả lời và chữa lỗi cho bạn.", "Have a spoken conversation in Korean — the AI answers and corrects you."))}`;
+  $$("#spHome .sp-pick").forEach(b => b.onclick = () => { spShow(b.dataset.s); scrollTo(0, 0); });
+}
+
+// role-play situations: [key, icon, name, role for the AI]
+const TALK_SCENES = [
+  ["intro", "👋", L("Làm quen", "Meeting someone"), "You are 지민, a friendly Korean university student meeting the learner for the first time at a language exchange café. Ask about their name, where they are from, their job or studies, and why they learn Korean."],
+  ["cafe", "☕", L("Gọi đồ ở quán cà phê", "Ordering at a café"), "You are a barista at a café in Seoul. Take the learner's order: drink, size, hot or iced, for here or to go, extras, and payment."],
+  ["shop", "🛍", L("Mua sắm", "Shopping"), "You are a clerk in a clothing shop in Myeongdong. Help the learner find items, sizes and colours, talk about prices and discounts, and take payment."],
+  ["way", "🗺", L("Hỏi đường", "Asking the way"), "You are a kind passer-by in Seoul. The learner asks how to get somewhere (a subway station, a restaurant, a palace). Give simple directions and answer follow-up questions."],
+  ["taxi", "🚕", L("Đi taxi", "Taking a taxi"), "You are a taxi driver in Seoul. Ask where the learner is going, chat briefly about the trip, the traffic and their plans, then handle payment."],
+  ["food", "🍜", L("Ở nhà hàng", "At a restaurant"), "You are a server at a Korean restaurant. Greet the learner, recommend dishes, take their order, ask about spiciness, and bring the bill."],
+  ["pharm", "💊", L("Nhà thuốc", "At the pharmacy"), "You are a pharmacist in Seoul. Ask about the learner's symptoms and how long they have had them, recommend medicine and explain how to take it."],
+  ["hobby", "🎧", L("Sở thích", "Hobbies"), "You are 수빈, the learner's Korean friend. Chat about hobbies, weekends, music, K-dramas, food and travel."],
+  ["free", "✨", L("Nói tự do", "Free talk"), "You are 수빈, the learner's friendly Korean friend. Chat naturally about whatever the learner brings up; if they run out of ideas, ask about their day."],
+];
+const talkScene = t => { const x = TALK_SCENES.find(s => s[0] === t.scene) || TALK_SCENES[TALK_SCENES.length - 1];
+  return { icon: x[1], name: t.topic && t.scene === "custom" ? t.topic : x[2], role: x[3] }; };
+const TK = { rec: null, stream: null, chunks: [], t0: 0, busy: false, autoStop: null, urls: {}, hints: null, open: {}, status: "" };
+const talkVisible = () => !$("#v-read").classList.contains("hidden") && !$("#talk").classList.contains("hidden");
+const talkTts = () => S.settings.talkTts !== false;
+
+function talkStop(){
+  clearTimeout(TK.autoStop);
+  try { if (TK.rec && TK.rec.state === "recording"){ TK.rec.onstop = null; TK.rec.stop(); } } catch(e){}
+  if (TK.stream) TK.stream.getTracks().forEach(t => t.stop());
+  TK.rec = TK.stream = null;
+  const b = $("#tkRec"); if (b){ b.classList.remove("on"); b.textContent = "🎙"; }
+}
+// the status line survives re-renders; empty = the default "tap 🎙" hint (nothing while the AI is still writing)
+function talkStatus(html){
+  TK.status = html || "";
+  const el = $("#tkStatus"); if (!el) return;
+  el.innerHTML = TK.status || (S.talk && S.talk.turns.some(x => x.pending) ? "" : L("Chạm 🎙 để nói, chạm lại để gửi.", "Tap 🎙 to speak, tap again to send."));
+}
+function talkHead(title, right){
+  return `<div class="sub-head">
+    <div class="l"><button class="btn-ghost back" id="tkBack" title="${L("Luyện nói", "Speak")}" aria-label="${L("Quay lại", "Back")}">${BACK_SVG}</button></div>
+    <div class="c"><h2>${title}</h2></div><div class="r">${right || ""}</div></div>`;
+}
+function renderTalk(){
+  const t = S.talk;
+  if (!t) renderTalkSetup(); else if (t.done) renderTalkSummary(); else renderTalkChat();
+  if ($("#tkBack")) $("#tkBack").onclick = () => { spShow(""); scrollTo(0, 0); };
+}
+
+/* ---- setup: pick a situation or type a topic ---- */
+function renderTalkSetup(){
+  const key = hasKey();
+  const goKey = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
+  if (!key){   // nothing below works without AI → just the way to get a key
+    $("#talk").innerHTML = talkHead(`💬 ${L("Hội thoại", "Talk")}`) + `<div class="card tk-key"><b>🔑 ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${L("Hội thoại dùng AI để nghe, trả lời và chữa lỗi. Tạo key miễn phí trong ~1 phút.", "Talk uses AI to listen, answer and correct you. A free key takes ~1 minute to create.")}</p><button class="btn" id="tkKey">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button></div>`;
+    $("#tkKey").onclick = goKey;
+    return;
+  }
+  $("#talk").innerHTML = talkHead(`💬 ${L("Hội thoại", "Talk")}`) + `
+    <div class="card tk-lv">
+      <label for="tkLevel" style="margin-top:0">${L("Trình độ", "Level")}</label>
+      <select id="tkLevel"></select>
+      <p class="small muted" style="margin:6px 0 0">${L("AI dùng từ và ngữ pháp theo trình độ này.", "The AI keeps its words and grammar at this level.")}</p>
+    </div>
+    <p class="small muted" style="margin:0 2px 10px">${L("Chọn một tình huống. AI sẽ đóng vai và nói chuyện với bạn — bạn chỉ cần trả lời bằng giọng nói.", "Pick a situation. The AI plays a role and talks with you — just answer out loud.")}</p>
+    <div class="tk-scenes">${TALK_SCENES.map(s => `<button class="tk-scene" data-k="${s[0]}"><span class="i">${s[1]}</span><span>${esc(s[2])}</span></button>`).join("")}</div>
+    <div class="card" style="margin-top:14px">
+      <label for="tkTopic" style="margin-top:0">${L("Hoặc tự chọn chủ đề", "Or pick your own topic")}</label>
+      <input id="tkTopic" type="text" placeholder="${L("vd. Đặt phòng khách sạn ở Busan", "e.g. Booking a hotel room in Busan")}">
+      <button class="btn" id="tkGo" style="margin-top:10px">💬 ${L("Bắt đầu", "Start")}</button>
+    </div>`;
+  fillLevels($("#tkLevel"));
+  if (UI === "vi") $$("#tkLevel option").forEach(o => o.textContent = trLevels(o.textContent));   // #talk skips the page-wide auto-translation
+  $$("#talk .tk-scene").forEach(b => b.onclick = () => talkBegin(b.dataset.k, ""));
+  $("#tkGo").onclick = () => { const v = $("#tkTopic").value.trim(); if (!v) { $("#tkTopic").focus(); return toast(L("Nhập chủ đề trước", "Type a topic first")); } talkBegin("custom", v); };
+  $("#tkTopic").onkeydown = e => { if (e.key === "Enter") $("#tkGo").click(); };
+}
+async function talkBegin(scene, topic){
+  S.talk = { id: uid(), created: Date.now(), scene, topic, turns: [] };
+  TK.urls = {}; TK.hints = null; TK.open = {}; TK.status = "";
+  save(); renderTalk(); scrollTo(0, 0);
+  await talkOpening();
+}
+
+/* ---- prompts ---- */
+function talkContext(t){
+  const sc = talkScene(t);
+  const role = t.scene === "custom"
+    ? `Play a fitting Korean conversation partner (choose a natural role) for this situation chosen by the learner: "${t.topic}".`
+    : sc.role;
+  const hist = t.turns.filter(x => !x.pending).slice(-14).map(x => x.who === "ai" ? `YOU: ${x.ko}` : `LEARNER: ${x.heard}`).join("\n");
+  return `You are role-playing a spoken conversation in Korean with a ${uiLangName()}-speaking learner of Korean. Learner level: ${levelDesc(S.settings.level)}.
+SCENARIO: ${role}
+Stay in character. Use natural, polite Korean suited to the learner's level (simple vocabulary for beginners). Keep every reply SHORT — 1–2 sentences — and usually end with a question so the conversation keeps going. This is a conversation, NOT translation: never translate what the learner said, answer it like a real partner would.${hist ? `\nCONVERSATION SO FAR:\n${hist}` : ""}`;
+}
+async function talkOpening(){
+  const t = S.talk; if (!t) return;
+  t.turns.push({ who: "ai", pending: true }); renderTalkChat();
+  try {
+    const j = extractJSON(await gemini(`${talkContext(t)}
+Start the conversation now with your first line in character (a greeting plus a question).
+"mean" = translation of your line in ${uiLangName()}.
+Return JSON exactly like: {"ko":"","mean":""}`, null, { temperature: 0.8 }));
+    if (S.talk !== t) return;
+    t.turns = t.turns.filter(x => !x.pending);
+    t.turns.push({ who: "ai", ko: String(j.ko || "").trim(), mean: String(j.mean || "").trim() });
+    TK.status = ""; save(); renderTalkChat(); talkSay(t.turns.length - 1);
+  } catch(e){
+    if (S.talk !== t) return;
+    t.turns = t.turns.filter(x => !x.pending);
+    TK.status = `⚠️ ${esc(e.message)} <button class="linkbtn" id="tkRetry">${L("Thử lại", "Try again")}</button>`;
+    renderTalkChat();
+  }
+}
+async function talkTurn(blob, dur){
+  const t = S.talk; if (!t) return;
+  TK.busy = true; TK.hints = null; TK.status = `<span class="spinner"></span>${L("Đang nghe bạn nói…", "Listening to you…")}`;
+  const me = { who: "me", pending: true }; t.turns.push(me);
+  renderTalkChat();
+  try {
+    const b64 = await blobToWavB64(blob);
+    const prompt = `${talkContext(t)}
+The attached recording is the learner's next turn (${(dur / 1000).toFixed(1)} s). Listen carefully, then:
+- "heard": exactly what the learner said, transcribed in Hangul — keep their grammar mistakes, don't fix them. If the audio is silent, just noise, or not an attempt at Korean, return "heard":"" and leave everything else empty.
+- "ok": true if the sentence is grammatically correct AND natural in this situation (minor accent doesn't make it false).
+- "fix": if not ok, the corrected, natural Korean sentence that keeps their meaning; otherwise "".
+- "why": if not ok, ONE short explanation in ${uiLangName()} of the main mistake; otherwise "".
+- "mean": translation in ${uiLangName()} of what the learner meant (of "fix" if there is one, else of "heard").
+- "score": pronunciation score 0–100 — realistic (typical beginners 40–75, only near-native 90+).
+- "pron": standard pronunciation of their sentence in Hangul brackets, applying sound-change rules, e.g. [감사함니다].
+- "issues": the 0–2 most important pronunciation problems: "part" = the syllable/word from "heard", "tip" = a short concrete fix in ${uiLangName()} with the correct pronunciation in brackets. Empty array if pronunciation was fine.
+- "ko": your in-character reply in Korean — respond to what the learner MEANT, even if it had mistakes. 1–2 short sentences.
+- "koMean": translation of your reply in ${uiLangName()}.
+${feedbackLangRule()}
+Return JSON exactly like: {"heard":"","ok":true,"fix":"","why":"","mean":"","score":0,"pron":"","issues":[{"part":"","tip":""}],"ko":"","koMean":""}`;
+    const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule() }));
+    if (S.talk !== t) return;
+    const heard = String(j.heard || "").trim();
+    t.turns = t.turns.filter(x => x !== me);
+    if (!heard){ TK.busy = false; renderTalkChat(); talkStatus(L("Không nghe rõ — nói to và gần micro hơn rồi thử lại.", "Didn't catch that — speak a bit louder and closer to the mic, then try again.")); return; }
+    const fix = String(j.fix || "").trim();
+    const turn = { who: "me", heard, ok: !!j.ok && !fix, fix: fix === heard ? "" : fix, why: String(j.why || "").trim(), mean: String(j.mean || "").trim(),
+      score: Math.max(0, Math.min(100, Math.round(+j.score || 0))), pron: String(j.pron || "").trim(),
+      issues: (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 2).map(x => ({ part: String(x.part || ""), tip: String(x.tip) })) };
+    if (turn.fix) turn.ok = false;
+    t.turns.push(turn);
+    TK.urls[t.turns.length - 1] = URL.createObjectURL(blob);
+    const reply = String(j.ko || "").trim();
+    if (reply) t.turns.push({ who: "ai", ko: reply, mean: String(j.koMean || "").trim() });
+    save(); TK.busy = false; TK.status = ""; renderTalkChat();
+    if (reply) talkSay(t.turns.length - 1);
+  } catch(e){
+    TK.busy = false;
+    if (S.talk !== t) return;
+    t.turns = t.turns.filter(x => x !== me); TK.status = "⚠️ " + esc(e.message); renderTalkChat();
+  }
+}
+async function talkHint(){
+  const t = S.talk; if (!t || TK.busy) return;
+  const b = $("#tkHint"); b.disabled = true; b.innerHTML = `<span class="spinner" style="margin:0"></span>`;
+  try {
+    const j = extractJSON(await gemini(`${talkContext(t)}
+The learner doesn't know what to say next. Suggest 2 different short, natural answers THE LEARNER could say now, at their level.
+"mean" = translation in ${uiLangName()}.
+Return JSON exactly like: {"hints":[{"ko":"","mean":""}]}`, null, { temperature: 0.8 }));
+    if (S.talk !== t) return;
+    TK.hints = (j.hints || []).filter(h => h && h.ko).slice(0, 3);
+    renderTalkChat();
+  } catch(e){ talkStatus("⚠️ " + esc(e.message)); }
+  const hb = $("#tkHint"); if (hb){ hb.disabled = false; hb.textContent = "💡"; }
+}
+function talkSay(i){
+  const x = S.talk && S.talk.turns[i];
+  if (x && x.ko && talkTts() && talkVisible()) speak(x.ko);
+}
+
+/* ---- chat screen ---- */
+function talkMsg(x, i){
+  if (x.pending) return `<div class="tk-msg ${x.who}"><div class="tk-b"><span class="spinner"></span></div></div>`;
+  if (x.who === "ai") return `<div class="tk-msg ai" data-i="${i}">
+      <div class="tk-b" data-a="tr"><div class="ko" lang="ko">${esc(x.ko)}</div>${x.mean ? `<div class="mean ${TK.open["t" + i] ? "" : "hidden"}">${esc(x.mean)}</div>` : ""}</div>
+      <button class="icon-btn" data-a="say" title="${L("Nghe", "Listen")}" aria-label="${L("Nghe", "Listen")}">🔊</button></div>`;
+  const open = !!TK.open["d" + i], sc = x.score >= 80 ? "s-hi" : x.score >= 60 ? "s-mid" : "s-lo";
+  return `<div class="tk-msg me" data-i="${i}">
+    <div class="tk-b"><div class="ko" lang="ko">${esc(x.heard)}</div></div>
+    <div class="tk-fb">
+      ${x.ok ? `<div class="ok">✅ ${L("Câu đúng và tự nhiên!", "Correct and natural!")}</div>`
+        : `<div class="fix">✏️ <span lang="ko">${esc(x.fix)}</span> <button class="icon-btn" data-a="sayfix" title="${L("Nghe câu đúng", "Hear the correct sentence")}">🔊</button></div>${x.why ? `<div class="why">${esc(x.why)}</div>` : ""}`}
+      ${x.mean ? `<div class="why muted">${esc(x.mean)}</div>` : ""}
+      <button class="tk-more ${sc}" data-a="more">🗣 ${L("Phát âm", "Pronunciation")} <b>${x.score}</b>/100${x.issues.length ? ` · ${L(`${x.issues.length} lỗi`, `${x.issues.length} issue${x.issues.length > 1 ? "s" : ""}`)}` : ""} <span class="muted">${open ? "▴" : "▾"}</span></button>
+      ${open ? `<div class="tk-det">
+        ${x.pron ? `<div><span class="muted">${L("Đọc chuẩn", "Standard")}:</span> <span lang="ko">${esc(x.pron)}</span></div>` : ""}
+        ${x.issues.map(s => `<div class="iss">${s.part ? `<b lang="ko">${esc(s.part)}</b> · ` : ""}${esc(s.tip)}</div>`).join("") || `<div class="muted">${L("Không có lỗi phát âm đáng kể 👍", "No notable pronunciation issues 👍")}</div>`}
+        <div class="row" style="margin-top:8px;gap:6px">${TK.urls[i] ? `<button class="btn2" data-a="mine">🎧 ${L("Giọng của tôi", "My recording")}</button>` : ""}<button class="btn2" data-a="sayme">🔊 ${L("Nghe mẫu", "Model")}</button></div>
+      </div>` : ""}
+    </div></div>`;
+}
+function renderTalkChat(){
+  const t = S.talk; if (!t) return;
+  const sc = talkScene(t), wasBottom = innerHeight + scrollY >= document.body.scrollHeight - 80;
+  $("#talk").innerHTML = talkHead(`${sc.icon} ${esc(sc.name)}`, `<button class="btn2 tk-end" id="tkEnd">${L("Kết thúc", "Finish")}</button>`) + `
+    <p class="small muted tk-tip">${L("Chạm vào câu của AI để xem nghĩa.", "Tap the AI's line to see its meaning.")}</p>
+    <div class="tk-list" id="tkList">${t.turns.map(talkMsg).join("")}</div>
+    ${TK.hints ? `<div class="card tk-hints"><div class="row"><b class="small">💡 ${L("Bạn có thể nói", "You could say")}</b><button class="icon-btn" style="flex:0 0 auto" id="tkHintX" aria-label="${L("Đóng", "Close")}">✕</button></div>
+      ${TK.hints.map((h, k) => `<button class="tk-hint" data-k="${k}"><span lang="ko">${esc(h.ko)}</span><span class="small muted">${esc(h.mean || "")}</span></button>`).join("")}</div>` : ""}
+    <div class="tk-ctl">
+      <div class="turn" id="tkStatus"></div>
+      <div class="pctl">
+        <button id="tkHint" title="${L("Gợi ý câu trả lời", "Suggest an answer")}" aria-label="${L("Gợi ý", "Hint")}">💡</button>
+        <button id="tkRec" class="main rec" title="${L("Nói", "Speak")}" aria-label="${L("Nói", "Speak")}">🎙</button>
+        <button id="tkTts" title="" aria-label=""></button>
+      </div>
+    </div>`;
+  talkStatus(TK.status);
+  const ttsBtn = () => { const b = $("#tkTts"); b.textContent = talkTts() ? "🔊" : "🔇"; b.title = b.ariaLabel = talkTts() ? L("AI đang đọc to — chạm để tắt", "AI reads aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); };
+  ttsBtn();
+  $("#tkTts").onclick = () => { S.settings.talkTts = !talkTts(); save(); ttsBtn(); if (!talkTts() && "speechSynthesis" in window) speechSynthesis.cancel(); };
+  $("#tkHint").onclick = talkHint;
+  if ($("#tkRetry")) $("#tkRetry").onclick = () => { TK.status = ""; talkOpening(); };
+  $("#tkRec").onclick = () => { if (TK.busy || t.turns.some(x => x.pending)) return; TK.rec ? talkRecStop() : talkRecStart(); };
+  $("#tkEnd").onclick = () => {
+    if (TK.busy || t.turns.some(x => x.pending)) return toast(L("Đợi AI trả lời xong đã", "Wait for the AI to answer first"));
+    talkStop(); TK.status = "";
+    if (!t.turns.some(x => x.who === "me")) { S.talk = null; save(); return renderTalk(); }   // nothing said yet → just back to the topics
+    t.done = true; save(); renderTalk(); scrollTo(0, 0);
+  };
+  $("#tkBack").onclick = () => { spShow(""); scrollTo(0, 0); };
+  if ($("#tkHintX")) $("#tkHintX").onclick = () => { TK.hints = null; renderTalkChat(); };
+  $$("#talk .tk-hint").forEach(b => b.onclick = () => speak(TK.hints[+b.dataset.k].ko));
+  $("#tkList").onclick = e => {
+    const a = e.target.closest("[data-a]"), m = e.target.closest(".tk-msg[data-i]"); if (!a || !m) return;
+    const i = +m.dataset.i, x = t.turns[i];
+    if (a.dataset.a === "tr") { TK.open["t" + i] = !TK.open["t" + i]; const el = m.querySelector(".mean"); if (el) el.classList.toggle("hidden", !TK.open["t" + i]); }
+    if (a.dataset.a === "say") speak(x.ko);
+    if (a.dataset.a === "sayfix") speak(x.fix);
+    if (a.dataset.a === "sayme") speak(x.fix || x.heard);
+    if (a.dataset.a === "mine" && TK.urls[i]) new Audio(TK.urls[i]).play();
+    if (a.dataset.a === "more") { TK.open["d" + i] = !TK.open["d" + i]; renderTalkChat(); }
+  };
+  // new messages land at the bottom, right above the mic
+  if (talkVisible() && (wasBottom || t.turns.some(x => x.pending))) requestAnimationFrame(() => scrollTo(0, document.body.scrollHeight));
+}
+async function talkRecStart(){
+  if ("speechSynthesis" in window) speechSynthesis.cancel();   // don't record the AI's own voice
+  const st = $("#tkStatus");
+  if ((location.protocol === "file:" && /Android/i.test(navigator.userAgent)) || (location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices || !window.MediaRecorder) return micHelp("insecure", st);
+  if (await micPermissionState() === "denied") return micHelp("site-denied", st);
+  try {
+    TK.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    TK.chunks = [];
+    TK.rec = new MediaRecorder(TK.stream);
+    TK.rec.ondataavailable = e => { if (e.data.size) TK.chunks.push(e.data); };
+    TK.rec.onstop = () => {
+      const rec = TK.rec, dur = Date.now() - TK.t0;
+      if (TK.stream) TK.stream.getTracks().forEach(t => t.stop());
+      TK.rec = TK.stream = null;
+      const blob = new Blob(TK.chunks, { type: (rec && rec.mimeType) || "audio/webm" });
+      if (dur < 600) return talkStatus(L("Ngắn quá — thử lại nhé.", "That was too short — try again."));
+      talkTurn(blob, dur);
+    };
+    TK.rec.start();
+  } catch(e){
+    talkStop();
+    if (e.name === "NotAllowedError" || e.name === "SecurityError") micHelp("denied", st);
+    else if (e.name === "NotFoundError" || e.name === "NotReadableError") micHelp("audio-capture", st);
+    else toast("⚠️ " + (e.message || "Can't access microphone"));
+    return;
+  }
+  TK.t0 = Date.now(); TK.hints = null;
+  if ($(".tk-hints")) $(".tk-hints").remove();
+  const b = $("#tkRec"); b.classList.add("on"); b.textContent = "⏹";
+  talkStatus("🔴 " + L("Đang ghi… nói xong chạm ⏹", "Recording… tap ⏹ when you're done"));
+  TK.autoStop = setTimeout(talkRecStop, 30000);
+}
+function talkRecStop(){
+  clearTimeout(TK.autoStop);
+  const b = $("#tkRec"); if (b){ b.classList.remove("on"); b.textContent = "🎙"; }
+  if (TK.rec && TK.rec.state === "recording") TK.rec.stop();   // → onstop sends the turn
+}
+
+/* ---- summary: corrections to review + save as a reading passage ---- */
+function renderTalkSummary(){
+  const t = S.talk, sc = talkScene(t), mine = t.turns.filter(x => x.who === "me");
+  const fixes = mine.filter(x => !x.ok && x.fix), avg = mine.length ? Math.round(mine.reduce((a, x) => a + (x.score || 0), 0) / mine.length) : 0;
+  const issues = mine.flatMap(x => x.issues || []);
+  $("#talk").innerHTML = talkHead(`${sc.icon} ${esc(sc.name)}`) + `
+    <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+      <div class="stat"><b>${mine.length}</b><span>${L("lượt nói", "turns")}</span></div>
+      <div class="stat"><b>${mine.length - fixes.length}</b><span>${L("câu đúng", "correct")}</span></div>
+      <div class="stat ${avg >= 80 ? "s-hi" : avg >= 60 ? "s-mid" : "s-lo"}"><b>${avg}</b><span>${L("phát âm TB", "avg. pronunciation")}</span></div>
+    </div>
+    <div class="card">
+      <h2>✏️ ${L("Câu cần sửa", "Corrections")}</h2>
+      ${fixes.length ? fixes.map(x => `<div class="tk-sum"><div class="bad" lang="ko">${esc(x.heard)}</div><div class="good" lang="ko">→ ${esc(x.fix)}</div>${x.why ? `<div class="small muted">${esc(x.why)}</div>` : ""}</div>`).join("")
+        : `<p class="muted" style="margin:0">${L("Không có câu nào sai — tuyệt vời! 🎉", "Nothing to fix — great job! 🎉")}</p>`}
+      ${issues.length ? `<h2 style="margin-top:16px">🗣 ${L("Lưu ý phát âm", "Pronunciation notes")}</h2>${issues.slice(0, 8).map(s => `<div class="tk-sum small">${s.part ? `<b lang="ko">${esc(s.part)}</b> · ` : ""}${esc(s.tip)}</div>`).join("")}` : ""}
+    </div>
+    <button class="btn" id="tkSave" ${t.savedPid ? "disabled" : ""}>${t.savedPid ? "✓ " + L("Đã lưu thành bài đọc", "Saved as a passage") : "📖 " + L("Lưu thành bài đọc để luyện lại", "Save as a passage to practise")}</button>
+    <div class="row" style="margin-top:10px">
+      <button class="btn2" id="tkMore">← ${L("Nói tiếp", "Keep talking")}</button>
+      <button class="btn2" id="tkNew">💬 ${L("Hội thoại mới", "New conversation")}</button>
+    </div>`;
+  $("#tkSave").onclick = () => {
+    // the AI's lines + the learner's lines (corrected), in order — practised later with the Read coach
+    const sentences = t.turns.filter(x => !x.pending).map(x => x.who === "ai" ? { ko: x.ko, meaning: x.mean || "" } : { ko: x.fix || x.heard, meaning: x.mean || "" }).filter(s => s.ko);
+    const p = { id: uid(), created: Date.now(), title: `💬 ${sc.name}`, titleMean: "", level: S.settings.level, sentences, vocab: [] };
+    S.passages.push(p); t.savedPid = p.id; save();
+    toast(L("Đã lưu vào Đọc", "Saved to Read"));
+    spShow("read"); openReader(p.id);
+  };
+  $("#tkMore").onclick = () => { t.done = false; save(); renderTalk(); };
+  $("#tkNew").onclick = () => { S.talk = null; TK.urls = {}; TK.hints = null; TK.open = {}; TK.status = ""; save(); renderTalk(); scrollTo(0, 0); };
 }
 
 // BTS logo: two trapezoid "doors", drawn inline so it follows the theme's purple
