@@ -8,6 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="Hangul Cards">
 <meta name="theme-color" content="#4f46e5">
 <title>Hangul Cards</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
 :root{
   --bg:#f6f7fb; --card:#ffffff; --text:#1d2033; --muted:#6b7090; --line:#e3e5ef;
@@ -176,7 +180,10 @@ nav button.on{color:var(--accent)}
 <div class="wrap">
   <header>
     <h1>🇰🇷 Hangul Cards</h1>
-    <span class="pill" id="streakPill">🔥 0 day streak</span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="pill hidden" id="cloudBtn" style="cursor:pointer;font-weight:500" title="Google Drive sync">☁️</button>
+      <span class="pill" id="streakPill">🔥 0 day streak</span>
+    </div>
   </header>
 
   <!-- STUDY -->
@@ -417,8 +424,21 @@ nav button.on{color:var(--accent)}
       </select>
     </div>
     <div class="card">
+      <h2>☁️ Google Drive sync</h2>
+      <p class="small muted" style="margin-top:0">Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.</p>
+      <div id="gdClientRow">
+        <label for="gdClient">Google OAuth Client ID</label>
+        <input id="gdClient" type="text" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off">
+      </div>
+      <p class="small" id="gdStatus" style="margin:10px 0">Not connected</p>
+      <div class="row">
+        <button class="btn2" id="gdConnect">Connect Google Drive</button>
+        <button class="btn-ghost hidden" id="gdOff" style="flex:0 0 auto">Disconnect</button>
+      </div>
+    </div>
+    <div class="card">
       <h2>Backup</h2>
-      <p class="small muted" style="margin-top:0">Your words are stored only in this browser. Export regularly, or to move to another device.</p>
+      <p class="small muted" style="margin-top:0">Your words are stored in this browser (and in Google Drive if sync is on). Export a file as an extra backup.</p>
       <div class="row">
         <button class="btn2" id="expBtn">⬇️ Export</button>
         <button class="btn2" id="impBtn">⬆️ Import</button>
@@ -439,8 +459,6 @@ nav button.on{color:var(--accent)}
 </div></nav>
 <div class="toast" id="toast"></div>
 
-<div class="modal hidden" id="helpModal"><div class="sheet"><div id="helpBody"></div>
-  <button class="btn" style="margin-top:12px" onclick="document.getElementById('helpModal').classList.add('hidden')">OK</button></div></div>
 <div class="modal hidden" id="aiModal"><div class="sheet">
   <h2>Use a free chatbot</h2>
   <ol class="steps">
@@ -486,7 +504,28 @@ function load(){
   } catch(e) { console.warn("load failed", e); }
   if (S.daily.date !== todayStr()) S.daily = { date: todayStr(), newCount: 0, reviews: 0 };
 }
-function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){ toast("⚠️ Could not save (storage blocked)"); } }
+function save(){ try { track(); localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){ toast("⚠️ Could not save (storage blocked)"); } if (window.__syncChanged) window.__syncChanged(); }
+
+/* ---- change tracking for sync: stamps edited items with .mod, keeps tombstones for deletions ---- */
+let SNAP = null;
+const fp = o => { const { mod, ...r } = o; return JSON.stringify(r); };
+const fpSettings = () => { const { _mod, voice, allVoices, ...r } = S.settings; return JSON.stringify(r); };
+function takeSnap(){
+  SNAP = { cards: new Map(S.cards.map(c => [c.id, fp(c)])), passages: new Map((S.passages||[]).map(x => [x.id, fp(x)])),
+           settings: fpSettings(), deleted: Object.assign({}, S.deleted || {}) };
+}
+function track(){
+  if (!SNAP) { takeSnap(); return; }
+  const now = Date.now();
+  S.deleted = Object.assign({}, SNAP.deleted, S.deleted || {});
+  [["cards", S.cards], ["passages", S.passages || []]].forEach(([k, arr]) => {
+    const seen = new Set();
+    arr.forEach(x => { if (!x.id) x.id = uid(); seen.add(x.id); if (SNAP[k].get(x.id) !== fp(x)) x.mod = now; });
+    SNAP[k].forEach((_, id) => { if (!seen.has(id)) S.deleted[id] = now; });
+  });
+  if (fpSettings() !== SNAP.settings) S.settings._mod = now;
+  takeSnap();
+}
 
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200); }
 
@@ -1313,28 +1352,6 @@ document.addEventListener("keydown", e => {
 const C = { i: -1, rec: null, stream: null, chunks: [], blob: null, url: null, recog: null, heard: "", t0: 0, dur: 0, autoStop: null, busy: false };
 const hasKey = () => !!(S.settings.apiKey && S.settings.apiKey.trim());
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const IS_ANDROID = /Android/i.test(navigator.userAgent);
-function micHelp(kind){
-  const android = IS_ANDROID, samsung = /Samsung|SM-|SAMSUNG/i.test(navigator.userAgent) || android;
-  let html;
-  if (kind === "insecure"){
-    html = `<h2>🎙 Microphone needs a web link</h2>
-      <p class="small">You opened the app as a local file, and browsers only allow the microphone on <b>https://</b> pages. Everything else works, but recording doesn't.</p>
-      <ol class="steps"><li>On a computer, go to <a href="https://app.netlify.com/drop" target="_blank" rel="noopener">app.netlify.com/drop</a> (free) and drag this HTML file in.</li>
-      <li>Open the link it gives you on your tablet in Chrome.</li><li>Tap ⋮ → <b>Add to Home screen</b>.</li></ol>
-      <p class="small muted">Your words are saved per address — use Settings → Export / Import to move them to the new link.</p>`;
-  } else {
-    html = `<h2>🎙 Allow the microphone</h2>
-      <p class="small">The microphone is blocked. Check these${android ? "" : " (then reload the page)"}:</p>
-      <ol class="steps">
-        <li><b>Chrome for this site:</b> tap the icon left of the address bar (🔒 / ⓘ / ⚙) → <b>Permissions</b> → <b>Microphone → Allow</b>. Or Chrome ⋮ → Settings → Site settings → Microphone → remove this site from “Blocked”.</li>
-        ${android ? `<li><b>Android → Chrome:</b> Settings → Apps → Chrome → Permissions → <b>Microphone → Allow</b> (“Only while using the app” is fine).</li>` : ""}
-        ${samsung ? `<li><b>Samsung quick toggle:</b> swipe down from the top → make sure <b>Mic access</b> is ON (Settings → Security and privacy → Privacy → Microphone access).</li>` : ""}
-        <li>Reload the page and tap 🎙 again — tap <b>Allow</b> when Chrome asks.</li>
-      </ol>`;
-  }
-  const m = $("#helpModal"); $("#helpBody").innerHTML = html; m.classList.remove("hidden");
-}
 function openCoach(i){
   if (!curP) return;
   pausePlayer(); cancelRec();
@@ -1361,17 +1378,38 @@ function cancelRec(){
   C.rec = C.recog = C.stream = null;
   const b = $("#cRec"); if (b) { b.classList.remove("on"); b.textContent = "🎙"; }
 }
+/* explain *why* the mic is blocked (file://, Chrome app permission, site permission) */
+function micHelp(kind){
+  const blockedFile = location.protocol === "file:" && /Android/i.test(navigator.userAgent);
+  let msg;
+  if (kind === "insecure" || blockedFile)
+    msg = "🎙 Chrome on Android blocks the microphone for files opened from storage (file://). Open this page from an https:// link instead (e.g. GitHub Pages / Netlify) — see the guide.";
+  else if (kind === "site-denied")
+    msg = "🎙 Mic is blocked for this site. Tap the 🔒/ⓘ icon left of the address bar → Permissions → Microphone → Allow, then reload.";
+  else if (kind === "audio-capture")
+    msg = "🎙 No microphone found, or another app is using it. Close other apps using the mic and try again.";
+  else
+    msg = "🎙 Microphone permission denied. Check: Android Settings → Apps → Chrome → Permissions → Microphone → Allow. Then tap the 🔒 icon in Chrome → Permissions → Microphone → Allow, and reload. On Mac: System Settings → Privacy & Security → Microphone → turn on your browser.";
+  $("#cStatus").textContent = msg;
+  toast("Microphone permission denied");
+}
+async function micPermissionState(){
+  try { if (navigator.permissions) return (await navigator.permissions.query({ name: "microphone" })).state; } catch(e){}
+  return "unknown";
+}
 async function startRec(){
   if ("speechSynthesis" in window) speechSynthesis.cancel();
+  if ((location.protocol === "file:" && /Android/i.test(navigator.userAgent)) || (location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { micHelp("insecure"); return; }
+  if (await micPermissionState() === "denied") { micHelp("site-denied"); return; }
   const useAI = hasKey();
   if (!useAI && !SR) { toast("Needs a Gemini key (Settings) or Chrome/Safari"); return; }
   C.heard = ""; C.blob = null; $("#cResult").innerHTML = "";
-  if (!window.isSecureContext) { micHelp("insecure"); return; }
-  try { const st = await navigator.permissions.query({ name: "microphone" }); if (st.state === "denied") { micHelp("denied"); return; } } catch(e){}
-  // On Android, Chrome can't record and run speech recognition at the same time → use recognition only in free mode
-  const recordAudio = useAI || !IS_ANDROID;
   try {
-    if (recordAudio && navigator.mediaDevices && window.MediaRecorder){
+    // Android Chrome can't feed the mic to MediaRecorder and SpeechRecognition at the same time:
+    // the recorder wins and recognition hears silence. Without an AI key, use recognition only there.
+    const srOnly = !useAI && SR && /Android/i.test(navigator.userAgent);
+    if (srOnly) { $("#cMine").disabled = true; }
+    else if (navigator.mediaDevices && window.MediaRecorder){
       C.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       C.chunks = [];
       C.rec = new MediaRecorder(C.stream);
@@ -1382,16 +1420,24 @@ async function startRec(){
   } catch(e){
     cancelRec();
     if (e.name === "NotAllowedError" || e.name === "SecurityError") micHelp("denied");
-    else if (e.name === "NotFoundError") toast("No microphone found");
-    else if (e.name === "NotReadableError") toast("Microphone is busy — close other apps using it (calls, recorders) and try again");
+    else if (e.name === "NotFoundError" || e.name === "NotReadableError") micHelp("audio-capture");
     else toast("⚠️ " + (e.message || "Can't access microphone"));
     return;
   }
   if (!useAI && SR){
     try {
-      const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = true; r.maxAlternatives = 1;
+      const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = !/Android/i.test(navigator.userAgent); r.maxAlternatives = 1;
       r.onresult = ev => { let t = ""; for (const res of ev.results) t += res[0].transcript; C.heard = t; $("#cStatus").textContent = "Hearing: " + t; };
-      r.onerror = ev => { if (ev.error === "not-allowed" || ev.error === "service-not-allowed") { cancelRec(); micHelp("denied"); } else if (ev.error === "network") toast("Speech check needs internet"); else if (ev.error === "audio-capture") toast("Microphone is busy or unavailable"); };
+      r.onerror = ev => {
+        // Android Chrome often can't share the mic between the recorder and speech recognition:
+        // keep the recording going instead of failing, and just skip live transcription.
+        if (C.rec && C.rec.state === "recording" && (ev.error === "audio-capture" || ev.error === "not-allowed" || ev.error === "service-not-allowed")) {
+          C.recog = null; $("#cStatus").textContent = "🔴 Recording… (live check unavailable on this device — tap ⏹ when done)"; return;
+        }
+        if (ev.error === "not-allowed" || ev.error === "service-not-allowed") micHelp("denied");
+        else if (ev.error === "audio-capture") micHelp("audio-capture");
+        else if (ev.error === "network") toast("⚠️ Speech check needs internet");
+      };
       r.onend = () => { if (C.recog) stopRec(); };
       r.start(); C.recog = r;
     } catch(e){ C.recog = null; }
@@ -1656,6 +1702,7 @@ function renderSettings(){
   $("#setLang").value = S.settings.lang;
   $("#setKey").value = S.settings.apiKey || ""; $("#setModel").value = S.settings.model || ""; $("#setAutoEx").checked = S.settings.autoEx;
   loadVoices();
+  if (typeof renderSyncCard === "function") renderSyncCard();
 }
 $("#setNew").onchange = e => { S.settings.newPerDay = Math.max(1, Math.min(100, +e.target.value || 10)); save(); };
 $$("[data-mode]").forEach(i => i.onchange = () => {
@@ -1711,15 +1758,217 @@ $("#resetBtn").onclick = () => {
   const k = S.settings.apiKey; S = defaults(); S.settings.apiKey = k; save(); delete b.dataset.confirm; b.textContent = "Delete all data"; renderSettings(); toast("All data deleted");
 };
 
+
+/* ---------------- Google Drive sync ---------------- */
+const GOOGLE_CLIENT_ID = "";   // ← optional: paste your Client ID here once, so every device picks it up automatically
+const SYNC_KEY = "hangulCards.sync", TOK_KEY = "hangulCards.gtoken";
+const SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+const DRIVE_FILE = "hangul-cards-sync.json";
+let SY = { clientId: "", on: false, last: 0, fileId: "" };
+try { Object.assign(SY, JSON.parse(localStorage.getItem(SYNC_KEY) || "{}")); } catch(e){}
+let tok = null;
+try { tok = JSON.parse(localStorage.getItem(TOK_KEY) || "null"); } catch(e){}
+const saveSY = () => { try { localStorage.setItem(SYNC_KEY, JSON.stringify(SY)); } catch(e){} };
+const saveTok = () => { try { tok ? localStorage.setItem(TOK_KEY, JSON.stringify(tok)) : localStorage.removeItem(TOK_KEY); } catch(e){} };
+const clientId = () => (GOOGLE_CLIENT_ID || SY.clientId || "").trim();
+const tokValid = () => !!(tok && tok.t && tok.exp > Date.now());
+let cloudState = "off";
+
+function setCloud(st){
+  cloudState = st;
+  const b = $("#cloudBtn");
+  b.classList.toggle("hidden", !SY.on);
+  b.textContent = { ok: "☁️ ✓", busy: "☁️ …", expired: "☁️ Tap to sync", error: "☁️ ⚠️", off: "☁️" }[st] || "☁️";
+  renderSyncCard();
+}
+function ago(t){
+  if (!t) return "never"; const m = Math.round((Date.now() - t) / MIN);
+  return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m/60) + " h ago" : new Date(t).toLocaleDateString();
+}
+function renderSyncCard(){
+  if (!$("#gdStatus")) return;
+  $("#gdClientRow").classList.toggle("hidden", !!GOOGLE_CLIENT_ID);
+  if ($("#gdClient") !== document.activeElement) $("#gdClient").value = SY.clientId || "";
+  $("#gdOff").classList.toggle("hidden", !SY.on);
+  $("#gdConnect").textContent = SY.on ? "🔄 Sync now" : "Connect Google Drive";
+  $("#gdStatus").textContent = !SY.on ? "Not connected" :
+    cloudState === "busy" ? "Syncing…" :
+    cloudState === "error" ? "⚠️ Last sync failed — tap Sync now" :
+    cloudState === "expired" ? `Connected · last sync ${ago(SY.last)} · tap Sync now to continue` :
+    `✅ Connected · last sync ${ago(SY.last)}`;
+}
+
+function gisReady(){ return !!(window.google && google.accounts && google.accounts.oauth2); }
+function loadGIS(){
+  return new Promise((res, rej) => {
+    if (gisReady()) return res();
+    let sc = document.getElementById("gisScript");
+    if (!sc){ sc = document.createElement("script"); sc.id = "gisScript"; sc.src = "https://accounts.google.com/gsi/client"; sc.async = true; document.head.appendChild(sc); }
+    sc.addEventListener("load", () => res()); sc.addEventListener("error", () => rej(new Error("Couldn't load Google sign-in (offline?)")));
+  });
+}
+// Must be called straight from a tap so the Google popup isn't blocked; GIS is preloaded for that.
+async function getToken(){
+  if (!gisReady()) await loadGIS();
+  return new Promise((res, rej) => {
+    const c = google.accounts.oauth2.initTokenClient({
+      client_id: clientId(), scope: SCOPE,
+      callback: r => {
+        if (r.error) return rej(new Error(r.error_description || r.error));
+        if (!google.accounts.oauth2.hasGrantedAllScopes(r, SCOPE)) return rej(new Error("Drive permission wasn't granted"));
+        tok = { t: r.access_token, exp: Date.now() + ((+r.expires_in || 3600) - 60) * 1000 }; saveTok(); res();
+      },
+      error_callback: e => rej(new Error(e && e.type === "popup_closed" ? "Sign-in cancelled" : e && e.type === "popup_failed_to_open" ? "Popup blocked — allow popups and try again" : (e && (e.message || e.type)) || "Sign-in failed"))
+    });
+    c.requestAccessToken({ prompt: SY.on ? "" : "consent" });
+  });
+}
+
+async function gfetch(url, opt = {}){
+  const r = await fetch(url, Object.assign({}, opt, { headers: Object.assign({ Authorization: "Bearer " + tok.t }, opt.headers || {}) }));
+  if (r.status === 401){ tok = null; saveTok(); const e = new Error("Google sign-in expired"); e.auth = true; throw e; }
+  if (!r.ok){ const e = new Error("Drive error " + r.status); e.status = r.status; throw e; }
+  return r;
+}
+async function findFile(){
+  const q = encodeURIComponent(`name='${DRIVE_FILE}' and trashed=false`);
+  const j = await (await gfetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,modifiedTime)&orderBy=modifiedTime desc`)).json();
+  return (j.files && j.files[0] && j.files[0].id) || "";
+}
+async function uploadFile(id, data){
+  const body = JSON.stringify(data);
+  if (id){
+    await gfetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body });
+    return id;
+  }
+  const b = "hc" + Math.random().toString(36).slice(2);
+  const meta = JSON.stringify({ name: DRIVE_FILE, parents: ["appDataFolder"] });
+  const mp = `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${b}--`;
+  const r = await gfetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", { method: "POST", headers: { "Content-Type": "multipart/related; boundary=" + b }, body: mp });
+  return (await r.json()).id;
+}
+
+/* merge: newest version of each word/passage wins, deletions win over older versions */
+const stampOf = x => x.mod || Math.max(x.last || 0, x.created || 0);
+const dnum = d => { if (!d) return 0; const [y, m, dd] = String(d).split("-").map(Number); return y*10000 + m*100 + dd; };
+function mergeList(local, remote, tomb){
+  const byId = new Map(local.map(x => [x.id, x]));
+  (remote || []).forEach(r => {
+    if (!r || !r.id) return;
+    const l = byId.get(r.id);
+    if (!l){ local.push(r); byId.set(r.id, r); }
+    else if (stampOf(r) > stampOf(l)) Object.assign(l, r);   // in place, so an open study session keeps working
+  });
+  for (let i = local.length - 1; i >= 0; i--){ const t = tomb[local[i].id]; if (t && t >= stampOf(local[i])) local.splice(i, 1); }
+}
+function applyRemote(R){
+  if (!R || !Array.isArray(R.cards)) return;
+  track();                                           // stamp any local edits first
+  const now = Date.now(), tomb = Object.assign({}, R.deleted || {});
+  Object.entries(S.deleted || {}).forEach(([id, t]) => { if (!tomb[id] || t > tomb[id]) tomb[id] = t; });
+  Object.keys(tomb).forEach(id => { if (now - tomb[id] > 180*DAY) delete tomb[id]; });
+  S.deleted = tomb;
+  mergeList(S.cards, R.cards, tomb);
+  if (!Array.isArray(S.passages)) S.passages = [];
+  mergeList(S.passages, R.passages, tomb);
+  // same word added separately on two devices → keep the one with more progress
+  const byKo = new Map();
+  S.cards.slice().forEach(c => {
+    const o = byKo.get(c.ko);
+    if (!o){ byKo.set(c.ko, c); return; }
+    const [keep, drop] = ((c.reps||0) > (o.reps||0) || ((c.reps||0) === (o.reps||0) && (c.last||0) > (o.last||0))) ? [c, o] : [o, c];
+    byKo.set(c.ko, keep); S.cards.splice(S.cards.indexOf(drop), 1); tomb[drop.id] = now;
+  });
+  if (R.settings && (R.settings._mod || 0) > (S.settings._mod || 0)){
+    const keep = { voice: S.settings.voice, allVoices: S.settings.allVoices, apiKey: R.settings.apiKey || S.settings.apiKey };
+    Object.assign(S.settings, R.settings, keep);
+    S.settings.modes = Object.assign({}, defaults().settings.modes, R.settings.modes || {});
+  }
+  if (R.streak){
+    if (dnum(R.streak.last) > dnum(S.streak.last) || (dnum(R.streak.last) === dnum(S.streak.last) && (R.streak.count||0) > (S.streak.count||0))) S.streak = R.streak;
+  }
+  if (R.daily && R.daily.date === S.daily.date){
+    S.daily.newCount = Math.max(S.daily.newCount || 0, R.daily.newCount || 0);
+    S.daily.reviews = Math.max(S.daily.reviews || 0, R.daily.reviews || 0);
+  }
+  takeSnap();
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
+  if (!session && !$("#v-study").classList.contains("hidden")) refreshHome();
+  else $("#streakPill").textContent = "🔥 " + streakNow() + " day streak";
+  if (!$("#v-words").classList.contains("hidden")) renderWords();
+  if (!$("#v-read").classList.contains("hidden") && typeof renderPassList === "function") try { renderPassList(); } catch(e){}
+}
+function payload(){ const d = JSON.parse(JSON.stringify(S)); d.syncedAt = Date.now(); return d; }
+
+let syncing = false, again = false, pushT = null;
+async function syncNow(interactive){
+  if (!clientId()){ if (interactive) toast("Paste your Google Client ID first"); return; }
+  if (!tokValid()){
+    if (!interactive){ if (SY.on) setCloud("expired"); return; }
+    setCloud("busy");
+    try { await getToken(); }
+    catch(e){ setCloud(SY.on ? "expired" : "off"); toast("⚠️ " + e.message); return; }
+    if (!SY.on){ SY.on = true; saveSY(); }
+  }
+  if (syncing){ again = true; return; }
+  syncing = true; clearTimeout(pushT); setCloud("busy");
+  try {
+    if (!SY.fileId) SY.fileId = await findFile();
+    if (SY.fileId){
+      try { applyRemote(await (await gfetch(`https://www.googleapis.com/drive/v3/files/${SY.fileId}?alt=media`)).json()); }
+      catch(e){ if (e.status === 404){ SY.fileId = await findFile(); if (SY.fileId) applyRemote(await (await gfetch(`https://www.googleapis.com/drive/v3/files/${SY.fileId}?alt=media`)).json()); } else throw e; }
+    }
+    SY.fileId = await uploadFile(SY.fileId, payload());
+    SY.last = Date.now(); saveSY(); setCloud("ok");
+    if (interactive) toast("☁️ Synced");
+  } catch(e){
+    setCloud(e.auth ? "expired" : "error");
+    if (interactive) toast("⚠️ " + (e.auth ? "Tap sync again to sign in" : "Sync failed: " + e.message));
+  }
+  syncing = false;
+  if (again){ again = false; syncNow(false); }
+}
+window.__syncChanged = () => {
+  if (!SY.on) return;
+  if (!tokValid()){ if (cloudState !== "expired") setCloud("expired"); return; }
+  clearTimeout(pushT); pushT = setTimeout(() => syncNow(false), 4000);
+};
+$("#cloudBtn").onclick = () => syncNow(true);
+$("#gdConnect").onclick = () => {
+  if (!GOOGLE_CLIENT_ID){ SY.clientId = $("#gdClient").value.trim(); saveSY(); }
+  if (!/\.apps\.googleusercontent\.com$/.test(clientId())){ toast("That doesn't look like a Google Client ID"); return; }
+  syncNow(true);
+};
+$("#gdClient").onchange = e => { SY.clientId = e.target.value.trim(); saveSY(); if (clientId()) loadGIS().catch(()=>{}); };
+$("#gdOff").onclick = () => {
+  try { if (tok && gisReady()) google.accounts.oauth2.revoke(tok.t, () => {}); } catch(e){}
+  tok = null; saveTok(); SY.on = false; SY.fileId = ""; saveSY(); setCloud("off"); toast("Drive sync turned off (your data stays on this device)");
+};
+document.addEventListener("visibilitychange", () => {
+  if (!SY.on) return;
+  if (document.visibilityState === "visible") syncNow(false);
+  else if (pushT && tokValid()){ clearTimeout(pushT); syncNow(false); }
+});
+$$("nav button").forEach(b => b.addEventListener("click", () => { if (b.dataset.v === "set") setTimeout(renderSyncCard, 0); }));
+
 /* ---------------- init ---------------- */
 load();
+takeSnap();
 if (!Array.isArray(S.passages)) S.passages = [];
 if (!S.settings.voiceV2) { if (S.settings.rate === 0.85) S.settings.rate = 1; S.settings.voiceV2 = true; save(); }  // native speed by default
 fillLevels($("#genLevel")); fillLevels($("#rdLevel"));
 if ("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
 refreshHome();
+if (clientId()) loadGIS().catch(()=>{});
+setCloud(SY.on ? (tokValid() ? "ok" : "expired") : "off");
+if (SY.on) syncNow(false);
 setInterval(() => { if (!session && !$("#v-study").classList.contains("hidden")) refreshHome(); }, 60000);
 })();
+</script>
+<script>
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
 </script>
 </body>
 </html>
