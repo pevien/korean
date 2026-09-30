@@ -51,6 +51,9 @@ button{font:inherit;cursor:pointer;border:none;border-radius:12px;padding:12px 1
 input,textarea,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);
   border-radius:12px;padding:12px;width:100%}
 textarea{min-height:120px;resize:vertical}
+select{-webkit-appearance:none;appearance:none;padding-right:40px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%238a8fa8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;background-size:12px 8px}
 input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
 label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
@@ -102,6 +105,71 @@ nav button.on{color:var(--accent)}
 .guide code{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12.5px;word-break:break-all}
 
 
+
+/* ---- ARMY live translate ---- */
+:root{--army:#8b5cf6; --army-soft:#f1eafe}
+@media (prefers-color-scheme: dark){:root{--army:#b197fc; --army-soft:#2d2350}}
+nav button[data-v=army].on{color:var(--army)}
+#v-army .seg button.on{color:var(--army)}
+#v-army .seg button:disabled{opacity:.4;cursor:default}
+.ar-hero{display:flex;gap:12px;align-items:center}
+.ar-pick{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--card);color:var(--text);border:1px solid var(--line);
+  border-radius:var(--radius);padding:18px 16px;margin-bottom:12px;box-shadow:var(--shadow);font-weight:400}
+.ar-pick:hover{border-color:var(--army)}
+.ar-pick .i{font-size:34px;line-height:1}
+.bts-logo{width:1em;height:1em;fill:var(--army);vertical-align:-.12em}
+.ar-pick .tx{flex:1;min-width:0}
+.ar-pick b{display:block;font-size:17px;margin-bottom:3px}
+.ar-pick .d{display:block;font-size:13px;color:var(--muted);line-height:1.45}
+.ar-hero .h{font-size:34px;line-height:1}
+.ar-go{background:var(--army);color:#fff;width:100%;padding:16px;font-size:17px;margin-top:14px}
+body.ar-listening header, body.ar-listening #arHistCard > p{display:none}
+#arStatus:empty{display:none}
+/* while listening (like Google Translate's conversation mode): subtitles fill the screen, controls float at the bottom within thumb reach */
+body.ar-listening nav{display:none}
+body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+#arCtl.ar-on{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 14px;margin:0;
+  position:fixed;z-index:15;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));
+  width:min(528px, calc(100% - 24px));border-color:var(--army);box-shadow:0 10px 32px rgba(10,8,30,.35)}
+#arCtl.ar-on .ar-mini{flex:1;margin:0}
+#arCtl.ar-on .ar-dir{font-size:24px;gap:10px}
+#arCtl.ar-on .ar-mini button{min-width:48px;min-height:48px;padding:10px 14px;font-size:18px}
+#arCtl.ar-on .ar-go{width:auto;flex:0 0 auto;margin:0;min-height:48px;padding:10px 18px;font-size:16px;border-radius:99px;animation:pulse 1.6s infinite}
+#arCtl.ar-on .ar-lvl{flex-basis:100%;margin-top:0}
+#arCtl.ar-on #arStatus{flex-basis:100%;margin:0!important}
+.ar-mini{font-weight:600;font-size:15px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ar-mini{flex-wrap:wrap}
+.ar-mini .acts{display:flex;gap:6px}
+.ar-dir{display:flex;align-items:center;gap:8px}
+.ar-mini button{padding:8px 12px;font-size:14px;min-width:40px}
+.ar-mini button.btn-ghost.on{color:var(--army);border-color:var(--army)}
+#v-army .fl{font-size:.8em;margin-right:6px;font-style:normal}
+.ar-go.on{background:var(--bad)}
+.ar-lvl{height:4px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:10px}
+.ar-lvl i{display:block;height:100%;width:0;background:var(--army);transition:width .1s}
+.ar-live{position:sticky;top:calc(8px + env(safe-area-inset-top));z-index:5;max-height:60vh;overflow:auto;min-height:clamp(190px, 34vh, 340px);
+  display:flex;flex-direction:column;justify-content:flex-end;padding:18px;border:2px solid var(--army);
+  background:linear-gradient(165deg, var(--army-soft), var(--card) 75%);
+  box-shadow:0 10px 30px -12px color-mix(in srgb, var(--army) 60%, transparent)}
+.ar-live .tr{font-size:calc(30px * var(--ar-fs,1));font-weight:700;line-height:1.3;letter-spacing:-.01em}
+.ar-live .ko{font-size:calc(18px * var(--ar-fs,1));color:var(--muted);margin-bottom:8px;line-height:1.45;font-weight:500}
+.ar-live .interim{font-size:calc(18px * var(--ar-fs,1));color:var(--muted);font-style:italic;margin-top:12px;opacity:.85}
+.ar-hist{list-style:none;margin:0;padding:0}
+.ar-hist li{padding:10px 0;border-bottom:1px solid var(--line)}
+.ar-hist li:last-child{border-bottom:none}
+.ar-hist .tr{font-size:calc(16px * var(--ar-fs,1));line-height:1.45}
+.ar-hist .ko{font-size:calc(13px * var(--ar-fs,1));color:var(--muted);line-height:1.45;margin-bottom:2px}
+.ar-hist time{font-size:11px;color:var(--muted);float:right;margin-left:8px}
+.ar-noko .ko{display:none}
+.ar-tools{display:flex;gap:6px;flex-wrap:wrap}
+.ar-tools button{flex:1;padding:10px;font-size:14px}
+.ar-disp{display:flex;gap:4px;justify-content:flex-end;margin-bottom:auto;padding-bottom:8px}
+.ar-disp button{background:none;border:1px solid var(--line);color:var(--muted);padding:3px 10px;font-size:12px;border-radius:99px;font-weight:600}
+.ar-disp button.on{color:var(--army);border-color:var(--army)}
+.ar-hhead{display:flex;align-items:center;gap:6px}
+.ar-hhead b{flex:1;font-size:15px}
+.ar-hhead button{padding:8px 12px;font-size:14px}
+.ar-hhead button:disabled{opacity:1;cursor:default}
 
 /* study */
 .qwrap{text-align:center;padding:22px 16px}
@@ -186,7 +254,7 @@ nav button.on{color:var(--accent)}
 .popts{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin-top:10px;font-size:13px}
 .popts label{display:flex;align-items:center;gap:6px;margin:0;color:var(--text);font-size:13px}
 .popts input[type=checkbox]{width:16px;height:16px}
-.popts select{width:auto;padding:4px 8px;font-size:13px}
+.popts select{width:auto;padding:4px 28px 4px 8px;font-size:13px;background-position:right 9px center;background-size:10px 7px}
 .turn{text-align:center;font-size:14px;font-weight:600;color:var(--ok);min-height:20px;margin-top:8px}
 .sent{padding:12px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:4px}
 .sent:hover{background:var(--bg)}
@@ -320,8 +388,9 @@ nav button.on{color:var(--accent)}
   <!-- READ -->
   <section id="v-read" class="hidden">
     <div id="readHome">
-      <div class="card">
-        <h2>New reading passage</h2>
+      <button class="btn2 hidden" id="rdNewOpen" data-noi18n style="width:100%;padding:14px;margin-bottom:14px"></button>
+      <div class="card" id="rdNewCard">
+        <h2>New reading passage <button class="linkbtn hidden" id="rdNewClose" data-noi18n style="float:right"></button></h2>
         <div class="seg" id="readSrc" style="margin-bottom:6px">
           <button data-s="ai" class="on">✨ Generate</button>
           <button data-s="own">📋 My own text</button>
@@ -343,6 +412,10 @@ nav button.on{color:var(--accent)}
           <input id="rdOwnTitle" type="text" placeholder="My text">
           <label for="rdOwn">Korean text</label>
           <textarea id="rdOwn" lang="ko" placeholder="Paste Korean text here. It will be split into sentences."></textarea>
+          <button class="btn2" style="width:100%;margin-top:8px" id="rdShotBtn">📷 From a photo</button>
+          <input type="file" id="rdShotFile" accept="image/*" class="hidden">
+          <div id="rdOcrStatus" class="small muted hidden" style="margin-top:8px"></div>
+          <div class="bar hidden" id="rdOcrBarWrap"><i id="rdOcrBar"></i></div>
           <label class="check"><input type="checkbox" id="rdOwnTr" checked> Add translations (free auto-translate)</label>
           <button class="btn" style="margin-top:10px" id="rdOwnBtn">Open in reader</button>
         </div>
@@ -396,14 +469,14 @@ nav button.on{color:var(--accent)}
       <div class="card" id="rdVocabCard">
         <h2>Key words</h2>
         <ul class="wl" id="rdVocab"></ul>
-        <button class="btn2" style="width:100%;margin-top:10px" id="rdAddVocab">➕ Add new words to flashcards</button>
+        <button class="btn2" style="width:100%;margin-top:10px" id="rdAddVocab">+ Add new words to flashcards</button>
       </div>
     </div>
   </section>
 
   <!-- WORDS -->
   <section id="v-words" class="hidden">
-    <button class="btn" id="goAddBig" style="padding:16px;font-size:17px;margin-bottom:14px">➕ Add words</button>
+    <button class="btn" id="goAddBig" style="padding:16px;font-size:17px;margin-bottom:14px">+ Add words</button>
     <div class="card hidden" id="exPrompt">
       <div class="row"><span class="small" id="exPromptTxt" style="flex:2"></span><button class="btn2" style="flex:0 0 auto" id="exGenBtn">✨ Add examples</button></div>
     </div>
@@ -418,6 +491,9 @@ nav button.on{color:var(--accent)}
       <ul class="wl" id="wordList"></ul>
     </div>
   </section>
+
+  <!-- ARMY: live Korean → Vietnamese/English subtitles for BTS lives -->
+  <section id="v-army" class="hidden" data-noi18n></section>
 
   <!-- SETTINGS -->
   <section id="v-set" class="hidden">
@@ -464,7 +540,8 @@ nav button.on{color:var(--accent)}
       <label for="setKey">Gemini API key · <button class="linkbtn" data-guide="g-key">How to get a key?</button></label>
       <div class="row"><input id="setKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn-ghost" style="flex:0 0 auto" id="keyShow">👁</button></div>
       <label for="setModel">Model</label>
-      <input id="setModel" type="text" placeholder="gemini-flash-latest">
+      <select id="setModel"></select>
+      <p class="small muted" style="margin:6px 0 0" data-noi18n id="setModelHint"></p>
       <button class="btn2" style="margin-top:10px;width:100%" id="testAI">Test connection</button>
       <label class="check" style="margin-top:10px"><input type="checkbox" id="setAutoEx"> Auto-add example sentences to new words (needs key)</label>
       <p class="small muted" style="margin:6px 0 0">The key stays on your devices (and your Drive if sync is on) and is never included in exports.</p>
@@ -508,6 +585,7 @@ nav button.on{color:var(--accent)}
   <button data-v="study" class="on"><span class="ic">🎯</span>Study</button>
   <button data-v="read"><span class="ic">📖</span>Read</button>
   <button data-v="words"><span class="ic">📚</span>Words</button>
+  <button data-v="army"><span class="ic">💜</span>ARMY</button>
   <button data-v="set"><span class="ic">⚙️</span>Settings</button>
 </div></nav>
 <div id="welcome" class="hidden" role="dialog" aria-modal="true" data-noi18n></div>
@@ -569,7 +647,7 @@ const VI = {
 "My passages":"Bài đọc của tôi","← Back":"← Quay lại","🎤 Shadow mode":"🎤 Nói đuổi","Repeat":"Lặp lại","Speed":"Tốc độ",
 "1× native":"1× bản xứ","Translation":"Bản dịch","Hide Korean":"Ẩn tiếng Hàn","🎙 Speaking coach":"🎙 Luyện nói",
 "Tap a sentence to play from there. Press space to play/pause.":"Chạm vào câu để phát từ đó. Phím cách để phát/dừng.",
-"Key words":"Từ khoá","➕ Add new words to flashcards":"➕ Thêm từ mới vào flashcard","✨ Add examples":"✨ Thêm câu ví dụ",
+"Key words":"Từ khoá","+ Add new words to flashcards":"+ Thêm từ mới vào flashcard","✨ Add examples":"✨ Thêm câu ví dụ",
 "All":"Tất cả","New":"Mới","Study":"Học","New words per day":"Số từ mới mỗi ngày","Question types":"Dạng câu hỏi",
 "Korean → choose meaning":"Tiếng Hàn → chọn nghĩa","🔊 Listen → choose meaning":"🔊 Nghe → chọn nghĩa","🔊 Listen → choose the Korean word":"🔊 Nghe → chọn từ tiếng Hàn","Listen · choose what you hear":"Nghe · chọn từ bạn nghe thấy","Meaning → type Korean":"Nghĩa → gõ tiếng Hàn",
 "🔊 Listen → type Korean (dictation)":"🔊 Nghe → gõ tiếng Hàn (chính tả)","Auto-play audio for Korean words":"Tự phát âm từ tiếng Hàn",
@@ -603,14 +681,14 @@ const VI = {
 "Record":"Ghi âm","Play my recording":"Nghe lại giọng mình","Search words…":"Tìm từ…","Paste the answer here…":"Dán câu trả lời vào đây…",
 "All these words are already in your list":"Các từ này đều đã có trong danh sách","→ you said":"→ bạn đọc","Next sentence →":"Câu tiếp →",
 "I was right":"Tôi đúng mà","Correct pronunciation":"Phát âm đúng","We heard":"App nghe được","Welcome!":"Chào bạn!",
-"Add some Korean words to start learning.":"Thêm vài từ tiếng Hàn để bắt đầu học.","➕ Add words":"➕ Thêm từ","← My words":"← Từ vựng của tôi","Ready to study":"Sẵn sàng học",
+"Add some Korean words to start learning.":"Thêm vài từ tiếng Hàn để bắt đầu học.","+ Add words":"+ Thêm từ","← My words":"← Từ vựng của tôi","Ready to study":"Sẵn sàng học",
 "▶ Start":"▶ Bắt đầu","Default":"Mặc định","Working…":"Đang xử lý…","Coach is listening to your recording…":"Đang nghe bản ghi của bạn…",
 "All data deleted":"Đã xoá toàn bộ dữ liệu","Couldn't read that answer — paste the whole reply":"Không đọc được câu trả lời — hãy dán toàn bộ",
 "Delete?":"Xoá?","Describe what the passage should be about":"Hãy mô tả nội dung bài đọc",
 "Didn't catch anything — speak a bit louder and closer to the mic, then try again.":"Chưa nghe thấy gì — nói to và gần micro hơn rồi thử lại.",
 "Drive sync turned off (your data stays on this device)":"Đã tắt đồng bộ Drive (dữ liệu vẫn còn trên máy)",
 "Enter or pick a topic":"Nhập hoặc chọn chủ đề","Generating…":"Đang tạo…","Invalid backup file":"File sao lưu không hợp lệ",
-"Keep at least one type on":"Cần bật ít nhất một dạng","Korean word is required":"Cần nhập từ tiếng Hàn","Loading reader…":"Đang tải bộ đọc…",
+"Keep at least one type on":"Cần bật ít nhất một dạng","Korean word is required":"Cần nhập từ tiếng Hàn","Loading reader…":"Đang tải bộ đọc…","📷 From a photo":"📷 Từ ảnh chụp","Reading text with AI…":"AI đang đọc chữ…","Tip: add a free Gemini key in Settings to read photos much more accurately.":"Mẹo: thêm Gemini key miễn phí trong Cài đặt để đọc ảnh chính xác hơn nhiều.","Text added. Please check it for mistakes.":"Đã thêm chữ. Kiểm tra lại lỗi nhé.",
 "Microphone permission denied":"Micro bị chặn","Needs a Gemini key (Settings) or Chrome/Safari":"Cần Gemini key (Cài đặt) hoặc Chrome/Safari",
 "No Korean words found":"Không tìm thấy từ tiếng Hàn","No empty meanings":"Không có nghĩa nào trống",
 "No new words came back — try another topic":"Không có từ mới — thử chủ đề khác","No new words left — add some!":"Hết từ mới — thêm từ nhé!",
@@ -663,6 +741,7 @@ const VI = {
 "Upper-intermediate (TOPIK 4)":"Trung cấp 2 (TOPIK 4)","Advanced (TOPIK 5–6)":"Cao cấp (TOPIK 5–6)"
 };
 const VI_RX = [
+ [/^⚠️ AI couldn't read it \((.*)\) — used the basic reader, expect mistakes\.$/s, (m, e) => "⚠️ AI không đọc được (" + trText(e) + ") — đã dùng bộ đọc cơ bản, có thể sai nhiều."],
  [/^(.*?)(\d+) sentences$/s, (m, pre, n) => trLevels(pre) + n + " câu"],
  [/^in (\d+ (?:min|h|days?|mo))$/, (m, t) => "sau " + viTime(t)],
  [/^(.*) · No known young voice on this device — showing all\.$/, (m, a) => trText(a) + " · Máy không có giọng trẻ — hiện tất cả."],
@@ -745,8 +824,9 @@ if (UI === "vi"){
 const defaults = () => ({
   cards: [],
   settings: { newPerDay: 10, modes: { ko2m:true, listen2m:true, listen2kc:true, m2ko:true, listen2ko:false, ko2say:false, m2say:false }, autoPlay:true, rate:1, voice:"", allVoices:false, voiceV2:true, lang:"en",
-    apiKey:"", model:"gemini-flash-latest", autoEx:true, level:"b1", uiLang:"vi" },
+    apiKey:"", model:"", autoEx:true, level:"b1", uiLang:"vi" },
   passages: [],
+  lives: [],   // saved ARMY live transcripts
   daily: { date: todayStr(), newCount: 0, reviews: 0 },
   streak: { last: "", count: 0 }
 });
@@ -765,14 +845,14 @@ let SNAP = null;
 const fp = o => { const { mod, ...r } = o; return JSON.stringify(r); };
 const fpSettings = () => { const { _mod, voice, allVoices, ...r } = S.settings; return JSON.stringify(r); };
 function takeSnap(){
-  SNAP = { cards: new Map(S.cards.map(c => [c.id, fp(c)])), passages: new Map((S.passages||[]).map(x => [x.id, fp(x)])),
+  SNAP = { cards: new Map(S.cards.map(c => [c.id, fp(c)])), passages: new Map((S.passages||[]).map(x => [x.id, fp(x)])), lives: new Map((S.lives||[]).map(x => [x.id, fp(x)])),
            settings: fpSettings(), deleted: Object.assign({}, S.deleted || {}) };
 }
 function track(){
   if (!SNAP) { takeSnap(); return; }
   const now = Date.now();
   S.deleted = Object.assign({}, SNAP.deleted, S.deleted || {});
-  [["cards", S.cards], ["passages", S.passages || []]].forEach(([k, arr]) => {
+  [["cards", S.cards], ["passages", S.passages || []], ["lives", S.lives || []]].forEach(([k, arr]) => {
     const seen = new Set();
     arr.forEach(x => { if (!x.id) x.id = uid(); seen.add(x.id); if (SNAP[k].get(x.id) !== fp(x)) x.mod = now; });
     SNAP[k].forEach((_, id) => { if (!seen.has(id)) S.deleted[id] = now; });
@@ -953,12 +1033,50 @@ function extractJSON(text){
   const e = t.lastIndexOf(close); if (e < s) throw new Error("Answer looks incomplete");
   return JSON.parse(t.slice(s, e + 1));
 }
-async function gemini(prompt, extraParts){
+/* ---- Gemini models: listed live with the user's key; the cheapest suitable one is the default ---- */
+const MODELS_KEY = "hangulCards.models";
+const MODEL_FALLBACK = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];   // until the list has been fetched once
+let MODELS = (() => { try { return JSON.parse(localStorage.getItem(MODELS_KEY) || "[]"); } catch(e){ return []; } })();
+const modelVer = id => parseFloat((id.match(/^gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
+const isLite = id => /flash-lite/.test(id), isPreview = id => /preview|exp/.test(id);
+// Flash-Lite before Flash, stable before preview, newest first
+const modelRank = (a, b) => (isLite(b) - isLite(a)) || (isPreview(a) - isPreview(b)) || (modelVer(b) - modelVer(a)) || a.localeCompare(b);
+const modelList = () => MODELS.length ? MODELS : MODEL_FALLBACK;
+const curModel = () => (S.settings.model || "").trim() || modelList()[0];
+async function loadModels(){
+  const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000", { headers: { "x-goog-api-key": S.settings.apiKey.trim() } });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const ids = ((await r.json()).models || [])
+    .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
+    .map(m => m.name.replace(/^models\//, ""))
+    // text + audio-in Flash models only: no Pro (paid), no "latest" aliases, no TTS/image/live variants
+    .filter(id => /^gemini-[\d.]+-flash/.test(id) && !/latest|tts|image|live|audio|embed|robotics|computer|thinking/.test(id))
+    .sort(modelRank);
+  if (ids.length){ MODELS = ids; try { localStorage.setItem(MODELS_KEY, JSON.stringify(ids)); } catch(e){} }
+  return MODELS;
+}
+const modelLabel = id => id.replace(/^gemini-/, "Gemini ").replace(/-flash-lite/, " Flash-Lite").replace(/-flash/, " Flash").replace(/-preview.*$/, " (preview)")
+  + (isLite(id) ? L(" · rẻ, nhanh", " · cheap, fast") : L(" · chính xác hơn", " · more accurate"));
+function fillModelSelect(sel){
+  if (!sel) return;
+  const list = modelList(), cur = (S.settings.model || "").trim();
+  sel.innerHTML = [`<option value="">${esc(L("Tự chọn (khuyên dùng) — ", "Automatic (recommended) — ") + modelLabel(list[0]))}</option>`]
+    .concat(list.map(id => `<option value="${esc(id)}">${esc(modelLabel(id))}</option>`))
+    .concat(cur && !list.includes(cur) ? [`<option value="${esc(cur)}">${esc(cur)}</option>`] : []).join("");
+  sel.value = cur;
+}
+async function refreshModels(sel){
+  if (S.settings.apiKey && S.settings.apiKey.trim()) { try { await loadModels(); } catch(e){} }
+  fillModelSelect(sel);
+}
+const MODEL_HINT = () => L("Flash-Lite: rẻ nhất, nhiều lượt miễn phí nhất — đủ cho học và ARMY. Flash: chính xác hơn nhưng ít lượt miễn phí.",
+  "Flash-Lite: cheapest, most free requests — fine for studying and ARMY. Flash: more accurate but fewer free requests.");
+async function gemini(prompt, extraParts, opts = {}){
   const tryModel = async (model) => {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": S.settings.apiKey.trim() },
-      body: JSON.stringify({ contents: [{ role:"user", parts: [{ text: prompt }, ...(extraParts || [])] }], generationConfig: { responseMimeType: "application/json", temperature: extraParts ? 0.3 : 0.9 } })
+      body: JSON.stringify({ contents: [{ role:"user", parts: [{ text: prompt }, ...(extraParts || [])] }], generationConfig: { responseMimeType: "application/json", temperature: opts.temperature ?? (extraParts ? 0.3 : 0.9) } })
     });
     if (!r.ok){
       let msg = ""; try { msg = (await r.json()).error.message; } catch(e){}
@@ -970,9 +1088,14 @@ async function gemini(prompt, extraParts){
     if (!txt) throw new Error("Empty answer from AI");
     return txt;
   };
-  const model = (S.settings.model || "").trim() || "gemini-flash-latest";
+  const model = curModel();
   try { return await tryModel(model); }
-  catch(e){ if ((e.status === 404 || e.status === 400 && /not found|not supported/i.test(e.message)) && model !== "gemini-2.5-flash") return await tryModel("gemini-2.5-flash"); throw e; }
+  catch(e){
+    // retired (404) or overloaded (503) model: try the next suitable one once
+    const alt = modelList().find(m => m !== model);
+    if (alt && (e.status === 404 || e.status === 503 || e.status === 400 && /not found|not supported/i.test(e.message))) return await tryModel(alt);
+    throw e;
+  }
 }
 function manualAI(prompt){
   return new Promise((resolve, reject) => {
@@ -1041,6 +1164,8 @@ function show(v){
   if (v === "study" && !session) refreshHome();
   if (v !== "read") { stopPlayer(); cancelRec(); }
   if (v !== "study") frCancel();
+  if (v !== "army") arStop();
+  if (v === "army") renderArmy();
   if (v === "read" && !$("#readHome").classList.contains("hidden")) renderPassList();
   if (v === "words") renderWords();
   if (v === "set") renderSettings();
@@ -1069,7 +1194,7 @@ function refreshHome(){
   $("#streakPill").textContent = "🔥 " + st + " day streak";
   const h = $("#homeCard");
   if (!S.cards.length){
-    h.innerHTML = `<div class="empty"><div class="big">👋</div><h2>Welcome!</h2><p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">➕ Add words</button></div>`;
+    h.innerHTML = `<div class="empty"><div class="big">👋</div><h2>Welcome!</h2><p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">+ Add words</button></div>`;
     $("#goAdd").onclick = () => show("add");
     return;
   }
@@ -1552,27 +1677,63 @@ document.addEventListener("paste", e => {
   const item = Array.from(e.clipboardData?.items || []).find(i => i.type.startsWith("image/"));
   if (item){ e.preventDefault(); $("#addTabs button[data-t=shot]").click(); runOCR(item.getAsFile()); }
 });
-async function runOCR(file){
-  const url = URL.createObjectURL(file);
-  $("#shotImg").innerHTML = `<img src="${url}" alt="screenshot">`;
-  const st = $("#ocrStatus"), bw = $("#ocrBarWrap"), bar = $("#ocrBar");
-  st.classList.remove("hidden"); bw.classList.remove("hidden"); bar.style.width = "0";
+// big photos are slow to upload and don't read any better: cap the long side, send as JPEG
+async function imageB64(file, max = 2048){
+  const img = await createImageBitmap(file);
+  const k = Math.min(1, max / Math.max(img.width, img.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.9).split(",")[1];
+}
+async function geminiOCR(file){
+  const prompt = `Transcribe ALL the text in this image exactly as written. Korean must be copied character by character with correct spacing (띄어쓰기) — do not translate, fix, summarize or add anything. Keep each line on its own line and put a blank line between paragraphs. Skip page numbers, UI buttons and watermarks.
+Return JSON exactly like: {"text":""}`;
+  const parts = [{ inline_data: { mime_type: "image/jpeg", data: await imageB64(file) } }];
+  const j = extractJSON(await gemini(prompt, parts, { temperature: 0 }));
+  return String(j.text || "");
+}
+// shared by word screenshots and reading passages: shows progress in st/bar, returns the raw text.
+// Gemini reads Korean far better than Tesseract, so it's used whenever there's a key.
+let aiErr = "";   // why the last photo fell back to the basic reader
+async function ocrText(file, langs, st, bw, bar){
+  st.classList.remove("hidden"); aiErr = "";
+  if (hasKey()){
+    st.innerHTML = `<span class="spinner"></span>Reading text with AI…`;
+    try { return await geminiOCR(file); }
+    catch(e){
+      if (e.status === 400 || e.status === 403) throw e;   // bad key: say so; busy/offline: fall back, but tell why
+      aiErr = e.message || "AI failed";
+    }
+  }
+  bw.classList.remove("hidden"); bar.style.width = "0";
   st.textContent = "Loading reader…";
   try {
     await loadTesseract();
-    const langs = S.settings.lang === "vi" ? "kor+vie+eng" : "kor+eng";
     const { data } = await Tesseract.recognize(file, langs, {
       logger: m => {
         if (m.status === "recognizing text") { st.textContent = "Reading text… " + Math.round(m.progress*100) + "%"; bar.style.width = Math.round(m.progress*100) + "%"; }
         else if (/load|init/i.test(m.status)) st.textContent = m.status.replace(/^\w/, c=>c.toUpperCase()) + "…";
       }
     });
-    bw.classList.add("hidden");
-    const items = parseLines(data.text || "");
+    return data.text || "";
+  } finally { bw.classList.add("hidden"); }
+}
+function ocrHint(st){
+  if (aiErr) st.append(document.createElement("br"), "⚠️ AI couldn't read it (" + aiErr + ") — used the basic reader, expect mistakes.");
+  else if (!hasKey()) st.append(document.createElement("br"), "Tip: add a free Gemini key in Settings to read photos much more accurately.");
+}
+async function runOCR(file){
+  const url = URL.createObjectURL(file);
+  $("#shotImg").innerHTML = `<img src="${url}" alt="screenshot">`;
+  const st = $("#ocrStatus");
+  try {
+    const text = await ocrText(file, S.settings.lang === "vi" ? "kor+vie+eng" : "kor+eng", st, $("#ocrBarWrap"), $("#ocrBar"));
+    const items = parseLines(text);
     st.textContent = items.length ? `Found ${items.length} word${items.length===1?"":"s"}. Please check them below.` : "No Korean text found. Try a sharper or cropped screenshot.";
+    ocrHint(st);
     if (items.length) showPreview(items);
   } catch(err){
-    bw.classList.add("hidden");
     st.textContent = "⚠️ " + (err.message || "OCR failed");
   }
 }
@@ -1625,7 +1786,20 @@ $$("#readSrc button").forEach(b => b.onclick = () => {
   $$("#readSrc button").forEach(x => x.classList.toggle("on", x === b));
   $("#rs-ai").classList.toggle("hidden", b.dataset.s !== "ai"); $("#rs-own").classList.toggle("hidden", b.dataset.s !== "own");
 });
+// with passages saved, "new passage" folds into one button so the list comes first
+let rdNewOpen = false;
 function renderPassList(){
+  const has = S.passages.length > 0;
+  $("#rdNewCard").classList.toggle("hidden", has && !rdNewOpen);
+  $("#rdNewOpen").classList.toggle("hidden", !has || rdNewOpen);
+  $("#rdNewClose").classList.toggle("hidden", !has);
+  renderPassItems();
+}
+$("#rdNewOpen").textContent = L("➕ Tạo bài đọc mới", "➕ New reading passage");
+$("#rdNewClose").textContent = L("Thu gọn", "Collapse");
+$("#rdNewOpen").onclick = () => { rdNewOpen = true; renderPassList(); $("#rdPrompt").focus(); };
+$("#rdNewClose").onclick = () => { rdNewOpen = false; renderPassList(); };
+function renderPassItems(){
   const L = S.passages.slice().sort((a,b)=>b.created-a.created);
   const lvl = k => (LEVELS.find(l=>l[0]===k)||[])[1] || "";
   $("#passList").innerHTML = L.length ? L.map(p => `<li data-id="${p.id}"><span style="font-size:22px">📄</span>
@@ -1666,6 +1840,29 @@ Return JSON exactly like: {"title":"<short Korean title>","titleMean":"<${langNa
   } catch(e){ if (e.message !== "cancelled") toast("⚠️ " + e.message); }
   busy(b, false);
 };
+$("#rdShotBtn").onclick = () => $("#rdShotFile").click();
+$("#rdShotFile").onchange = e => { const f = e.target.files[0]; if (f) rdOCR(f); e.target.value = ""; };
+document.addEventListener("paste", e => {
+  if ($("#rs-own").offsetParent === null) return;
+  const item = Array.from(e.clipboardData?.items || []).find(i => i.type.startsWith("image/"));
+  if (item){ e.preventDefault(); rdOCR(item.getAsFile()); }
+});
+async function rdOCR(file){
+  const st = $("#rdOcrStatus"), b = $("#rdShotBtn");
+  b.disabled = true;
+  try {
+    const raw = await ocrText(file, "kor+eng", st, $("#rdOcrBarWrap"), $("#rdOcrBar"));
+    // photo line breaks are layout, not sentences: keep blank lines as paragraphs, join the rest
+    const text = raw.split(/\n\s*\n/).map(p => p.replace(/\s*\n\s*/g, " ").trim()).filter(p => /[\uac00-\ud7a3]/.test(p)).join("\n\n");
+    if (!text){ st.textContent = "No Korean text found. Try a sharper or cropped screenshot."; return; }
+    const ta = $("#rdOwn");
+    ta.value = ta.value.trim() ? ta.value.trim() + "\n\n" + text : text;
+    st.textContent = "Text added. Please check it for mistakes.";
+    ocrHint(st);
+  } catch(err){
+    st.textContent = "⚠️ " + (err.message || "OCR failed");
+  } finally { b.disabled = false; }
+}
 $("#rdOwnBtn").onclick = async () => {
   const sents = splitSentences($("#rdOwn").value);
   if (!sents.length) { toast("Paste some Korean text first"); return; }
@@ -1687,6 +1884,7 @@ $("#rdOwnBtn").onclick = async () => {
 let curP = null;
 const P = { idx: 0, playing: false, rep: 0, token: 0, timer: null, tick: null };
 function openReader(id){
+  rdNewOpen = false;   // back on the list, the form is folded again
   curP = S.passages.find(p => p.id === id); if (!curP) return;
   stopPlayer(); closeCoach();
   $("#readHome").classList.add("hidden"); $("#reader").classList.remove("hidden");
@@ -1916,7 +2114,7 @@ async function onRecStop(){
 }
 
 /* audio → 16 kHz mono WAV (base64) so any AI model accepts it */
-async function blobToWavB64(blob){
+async function blobToWavB64(blob, stats){
   const buf = await blob.arrayBuffer();
   const AC = window.AudioContext || window.webkitAudioContext;
   const ac = new AC();
@@ -1932,6 +2130,7 @@ async function blobToWavB64(blob){
   w(0,"RIFF"); v.setUint32(4, 36 + d.length*2, true); w(8,"WAVE"); w(12,"fmt "); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
   v.setUint32(24, rate, true); v.setUint32(28, rate*2, true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,"data"); v.setUint32(40, d.length*2, true);
   for (let i = 0; i < d.length; i++){ const x = Math.max(-1, Math.min(1, d[i])); v.setInt16(44 + i*2, x < 0 ? x*0x8000 : x*0x7FFF, true); }
+  if (stats){ let pk = 0; for (let i = 0; i < d.length; i++){ const a = Math.abs(d[i]); if (a > pk) pk = a; } stats.peak = pk; }
   const bytes = new Uint8Array(ab); let bin = "";
   for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   return btoa(bin);
@@ -2148,7 +2347,7 @@ function renderSettings(){
   $$("#ratePresets button").forEach(b => b.classList.toggle("on", Math.abs(+b.dataset.r - S.settings.rate) < 0.01));
   $("#setAllVoices").checked = !!S.settings.allVoices;
   $("#setLang").value = S.settings.lang;
-  $("#setKey").value = S.settings.apiKey || ""; $("#setModel").value = S.settings.model || ""; $("#setAutoEx").checked = S.settings.autoEx;
+  $("#setKey").value = S.settings.apiKey || ""; fillModelSelect($("#setModel")); $("#setModelHint").textContent = MODEL_HINT(); if (!MODELS.length && hasKey()) refreshModels($("#setModel")); $("#setAutoEx").checked = S.settings.autoEx;
   loadVoices();
   if (typeof renderSyncCard === "function") renderSyncCard();
 }
@@ -2165,14 +2364,15 @@ $("#setAllVoices").onchange = e => { S.settings.allVoices = e.target.checked; sa
 $$("#ratePresets button").forEach(b => b.onclick = () => { S.settings.rate = +b.dataset.r; save(); renderSettings(); speak("안녕하세요. 만나서 반가워요!"); });
 $("#setLang").onchange = e => { S.settings.lang = e.target.value; save(); };
 $("#testVoice").onclick = () => speak("안녕하세요");
-$("#setKey").onchange = e => { S.settings.apiKey = e.target.value.trim(); save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]); };
-$("#setModel").onchange = e => { S.settings.model = e.target.value.trim() || "gemini-flash-latest"; save(); };
+$("#setKey").onchange = e => { S.settings.apiKey = e.target.value.trim(); save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]); refreshModels($("#setModel")); };
+$("#setModel").onchange = e => { S.settings.model = e.target.value; save(); };
 $("#setAutoEx").onchange = e => { S.settings.autoEx = e.target.checked; save(); };
 $("#keyShow").onclick = () => { const i = $("#setKey"); i.type = i.type === "password" ? "text" : "password"; };
 $("#testAI").onclick = async () => {
   S.settings.apiKey = $("#setKey").value.trim(); save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]);
   if (!S.settings.apiKey) { toast("Paste your Gemini key first"); return; }
   const b = $("#testAI"); busy(b, true, "Testing…");
+  await refreshModels($("#setModel"));
   try { const j = extractJSON(await gemini('Translate 안녕하세요 to English. Return JSON {"t":""}')); toast("✅ Connected! " + (j.t || "")); }
   catch(e){ toast("⚠️ " + e.message); }
   busy(b, false);
@@ -2196,6 +2396,8 @@ $("#impFile").onchange = async e => {
     if (wasEmpty && d.settings) { const k = S.settings.apiKey; S.settings = Object.assign(S.settings, d.settings); S.settings.apiKey = k; if (d.streak) S.streak = d.streak; }
     let np = 0; const pids = new Set(S.passages.map(p => p.id));
     (d.passages || []).forEach(p => { if (p && p.id && Array.isArray(p.sentences) && !pids.has(p.id)) { S.passages.push(Object.assign({ vocab: [] }, p)); np++; } });
+    const lids = new Set(S.lives.map(x => x.id));
+    (d.lives || []).forEach(x => { if (x && x.id && Array.isArray(x.lines) && !lids.has(x.id)) S.lives.push(x); });
     save(); toast(`Imported ${n} word${n===1?"":"s"}${np ? ` and ${np} passage${np===1?"":"s"}` : ""}`); refreshHome();
   } catch(err){ toast("Invalid backup file"); }
   e.target.value = "";
@@ -2319,6 +2521,8 @@ function applyRemote(R){
   mergeList(S.cards, R.cards, tomb);
   if (!Array.isArray(S.passages)) S.passages = [];
   mergeList(S.passages, R.passages, tomb);
+  if (!Array.isArray(S.lives)) S.lives = [];
+  mergeList(S.lives, R.lives, tomb);
   // same word added separately on two devices → keep the one with more progress
   const byKo = new Map();
   S.cards.slice().forEach(c => {
@@ -2528,6 +2732,9 @@ function buildWelcome(){
       </ol>
       <div class="row"><input id="wKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn2" style="flex:0 0 auto" id="wKeyTest">${L("Kiểm tra", "Test")}</button></div>
       <p class="res" id="wKeyRes"></p>
+      <label for="wModel">${L("Model AI", "AI model")}</label>
+      <select id="wModel"></select>
+      <p class="small muted" style="margin:6px 0 0">${MODEL_HINT()}</p>
       <div class="note">🔒 ${L("Key chỉ lưu trên máy bạn. Đừng dùng chung với người khác.", "Your key stays on your device. Don't share it.")}</div>
     </div>
 
@@ -2573,6 +2780,8 @@ function buildWelcome(){
   $("#wBack").onclick = () => wShow(wStep - 1);
   $("#wSkip").onclick = closeWelcome;
   $("#wKeyTest").onclick = testWelcomeKey;
+  $("#wModel").onchange = e => { S.settings.model = e.target.value; save(); };
+  $("#wKey").onchange = () => { keepWelcomeKey(); refreshModels($("#wModel")); };
   $("#wMic").onclick = () => micTest($("#wMicRes"));
   $("#wDrive").onclick = connectFromWelcome;
   $("#wClient").onchange = e => { SY.clientId = e.target.value.trim(); saveSY(); if (clientId()) loadGIS().catch(()=>{}); };
@@ -2602,7 +2811,7 @@ function wShow(i){
   $("#wBack").classList.toggle("hidden", wStep === 0);
   $("#wSkip").classList.toggle("hidden", wStep === W_STEPS - 1);
   $("#wNext").textContent = wStep === 0 ? L("Bắt đầu", "Get started") : wStep === W_STEPS - 1 ? L("Vào học thôi", "Start learning") : L("Tiếp tục", "Continue");
-  if (wStep === 2) $("#wKey").value = S.settings.apiKey || "";
+  if (wStep === 2){ $("#wKey").value = S.settings.apiKey || ""; refreshModels($("#wModel")); }
   if (wStep === 4) renderInstall();
   if (wStep === 3){
     $("#wClientRow").classList.toggle("hidden", !!GOOGLE_CLIENT_ID);
@@ -2625,7 +2834,8 @@ async function testWelcomeKey(){
   if (!k){ r.textContent = L("Dán key vào trước nhé.", "Paste your key first."); return; }
   S.settings.apiKey = k; save();
   const b = $("#wKeyTest"); busy(b, true, "…"); r.textContent = L("Đang kiểm tra…", "Testing…");
-  try { await gemini('Translate 안녕하세요 to English. Return JSON {"t":""}'); r.textContent = L("✅ Kết nối thành công!", "✅ Connected!"); }
+  await refreshModels($("#wModel"));
+  try { await gemini('Translate 안녕하세요 to English. Return JSON {"t":""}'); r.textContent = L("✅ Kết nối thành công! · ", "✅ Connected! · ") + modelLabel(curModel()); }
   catch(e){ r.textContent = "⚠️ " + e.message + (/^AIza/.test(k) ? "" : L(" · Key thường bắt đầu bằng AIza…", " · Keys usually start with AIza…")); }
   busy(b, false);
 }
@@ -2656,10 +2866,10 @@ const GUIDE = [
   ["g-start", L("Bắt đầu nhanh", "Quick start"), L(`
     <ol>    <li><b>🎯 Học</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý.</li>
     <li><b>📖 Đọc</b>: bài đọc theo trình độ. 🔊 để nghe, 🎙 để đọc to và được chấm.</li>
-    <li><b>📚 Từ vựng</b>: xem, sửa, xoá từ. Bấm <b>➕ Thêm từ</b> để thêm từ mới, dán cả danh sách hoặc chụp ảnh.</li></ol>`, `
+    <li><b>📚 Từ vựng</b>: xem, sửa, xoá từ. Bấm <b>+ Thêm từ</b> để thêm từ mới, dán cả danh sách hoặc chụp ảnh.</li></ol>`, `
     <ol>    <li><b>🎯 Study</b>: review flashcards daily. Answer honestly so the schedule fits you.</li>
     <li><b>📖 Read</b>: passages at your level. 🔊 to listen, 🎙 to read aloud and get scored.</li>
-    <li><b>📚 Words</b>: view, edit and delete words. Tap <b>➕ Add words</b> to add more, paste a whole list or use a screenshot.</li></ol>`)],
+    <li><b>📚 Words</b>: view, edit and delete words. Tap <b>+ Add words</b> to add more, paste a whole list or use a screenshot.</li></ol>`)],
   ["g-install", L("Cài app", "Install the app"), L(`
     <ul><li><b>Android</b>: Chrome → <b>⋮</b> → <b>Cài đặt ứng dụng</b></li>
     <li><b>iPhone / iPad</b>: Safari → <b>Chia sẻ</b> ⬆️ → <b>Thêm vào MH chính</b></li>
@@ -2737,11 +2947,520 @@ $$("[data-guide]").forEach(b => b.onclick = e => {
   d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
+/* ---------------- ARMY: live subtitles for BTS lives ---------------- */
+// Listens to speech (mic, or a browser tab's audio with a Gemini key) and shows running translated subtitles.
+// Free mode: browser speech recognition + MyMemory. AI mode: ~10 s audio chunks → Gemini transcribes + translates.
+const AR = { on: false, engine: "", recog: null, stream: null, rec: null, lines: [], interim: "", ac: null, raf: 0,
+  wake: null, chain: Promise.resolve(), queued: 0, quota: 0, trq: [], trBusy: false,
+  savedId: "",   // once the live is saved, that saved copy keeps growing with new lines
+  view: "" };    // id of the saved conversation being reviewed
+const AR_KEY = "hangulCards.army", AR_CHUNK = 10000;
+const AR_LANGS = { ko: ["🇰🇷", "Tiếng Hàn", "Korean", "ko-KR"], vi: ["🇻🇳", "Tiếng Việt", "Vietnamese", "vi-VN"], en: ["🇬🇧", "Tiếng Anh", "English", "en-US"] };
+const BTS_GLOSSARY = `Context: a BTS livestream (Weverse Live / YouTube). Members — always write their stage names: RM (김남준, 남준, 알엠), Jin (김석진, 석진, 진), SUGA (민윤기, 윤기, 슈가), j-hope (정호석, 호석, 제이홉), Jimin (박지민, 지민), V (김태형, 태형, 뷔), Jung Kook (전정국, 정국, 꾹).
+Fandom terms: 방탄/방탄소년단 = BTS, 아미 = ARMY, 보라해 = "I purple you" (keep it), 형 = hyung, 막내 = maknae, 위버스 = Weverse, 컴백 = comeback, 무대 = stage.`;
+AR.mode = "bts";     // last mode entered: "bts" or "talk"
+AR.screen = "home";  // "home" = pick a mode, "mode" = inside AR.mode
+AR.sess = { bts: { lines: [], savedId: "" }, talk: { lines: [], savedId: "" } };   // each mode keeps its own running transcript
+const arMode = () => AR.mode;
+const arTalk = () => arMode() === "talk";
+const arTts = () => arTalk() && S.settings.armyTts !== false;
+const arCtx = () => arTalk() ? `Context: a face-to-face everyday conversation between someone speaking ${arName(arIn())} and someone speaking ${arName(arOut())}.` : BTS_GLOSSARY;
+const arHow = to => arTalk() ? `natural, clear ${arName(to)} that a native speaker would actually say in conversation, polite and friendly`
+  : `natural, casual ${arName(to)}, like good fan subs, keeping the warm, playful tone`;
+const arTitle = t => (arTalk() ? "💬 " + L("Giao tiếp", "Conversation") : "💜 BTS Live") + " · " + arDate(t);
+// languages are remembered per mode: a live is usually 🇰🇷→you, a conversation you⇄🇰🇷
+const AR_DEF = { bts: ["ko", UI === "vi" ? "vi" : "en"], talk: [UI === "vi" ? "vi" : "en", "ko"] };
+const arLangs = () => (S.settings.armyLangs || {})[arMode()] || {};
+const arIn = () => arLangs().in || (arMode() === "bts" && S.settings.armyIn) || AR_DEF[arMode()][0];
+const arOut = () => { const o = arLangs().out || (arMode() === "bts" && S.settings.armyOut) || AR_DEF[arMode()][1]; return o === arIn() ? (arIn() === "vi" ? "en" : "vi") : o; };
+function arSetLangs(i, o){ S.settings.armyLangs = Object.assign({}, S.settings.armyLangs, { [arMode()]: { in: i, out: o } }); save(); }
+const arName = k => AR_LANGS[k][2];
+const arCanTab = () => !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+// Free by default; AI only when picked (and a key exists)
+const arEngine = () => { const e = S.settings.armyEngine || "free"; return e === "ai" && hasKey() ? "ai" : SR ? "free" : hasKey() ? "ai" : ""; };
+const arSrc = () => !arTalk() && arEngine() === "ai" && arCanTab() && S.settings.armySrc === "tab" ? "tab" : "mic";
+function arPersist(){
+  AR.sess[AR.mode] = { lines: AR.lines, savedId: AR.savedId };
+  try { localStorage.setItem(AR_KEY, JSON.stringify({ mode: AR.mode, screen: AR.screen, sess: AR.sess })); } catch(e){}
+}
+function arUseSess(){ const x = AR.sess[AR.mode]; AR.lines = x.lines; AR.savedId = x.savedId; }
+try {
+  const d = JSON.parse(localStorage.getItem(AR_KEY) || "{}");
+  if (d.sess) Object.assign(AR.sess, d.sess);
+  else if (d.lines) AR.sess.bts = { lines: d.lines, savedId: d.savedId || "" };   // older single-transcript format
+  if (d.mode === "talk") AR.mode = "talk";
+} catch(e){}
+Object.values(AR.sess).forEach(x => x.lines.forEach(l => { if (!l.tr) l.fail = true; }));   // translations still in flight when the page closed
+arUseSess();
+const arSaved = () => AR.savedId && (S.lives || []).find(x => x.id === AR.savedId);
+const arCopyLine = l => ({ t: l.t, ko: l.ko, tr: l.tr || "", from: l.from, to: l.to });
+const arDate = t => { const d = new Date(t); return `${d.getDate()}/${d.getMonth()+1} ${arTime(t)}`; };
+let arSyncT = null;
+function arSyncSaved(){   // debounced: a busy live adds lines every few seconds
+  const x = arSaved(); if (!x) return;
+  clearTimeout(arSyncT);
+  arSyncT = setTimeout(() => { x.lines = AR.lines.map(arCopyLine); save(); }, 4000);
+}
+function arSaveNow(){
+  if (!AR.lines.length) { toast(L("Chưa có câu nào để lưu", "Nothing to save yet")); return; }
+  let x = arSaved();
+  if (!x){
+    x = { id: uid(), created: AR.lines[0].t || Date.now(), title: arTitle(AR.lines[0].t || Date.now()), from: arIn(), to: arOut(), lines: [] };
+    S.lives.push(x); AR.savedId = x.id;
+  }
+  x.lines = AR.lines.map(arCopyLine); save(); arPersist();
+  toast(L("💾 Đã lưu — câu mới sẽ tự thêm vào", "💾 Saved — new lines are added automatically"));
+  renderArmy();
+}
+function arToPassage(lines, title){
+  // passages are Korean-first: only lines heard in Korean make sense in the reader
+  const ko = lines.filter(l => /[가-힣]/.test(l.ko));
+  if (!ko.length) { toast(L("Chưa có câu tiếng Hàn nào", "No Korean lines yet")); return; }
+  S.passages.push({ id: uid(), created: Date.now(), title, titleMean: "", level: "", sentences: ko.map(l => ({ ko: l.ko, meaning: l.tr || "" })), vocab: [] });
+  save(); toast(L(`Đã lưu ${ko.length} câu vào mục Đọc`, `Saved ${ko.length} lines to Read`));
+}
+async function arCopyText(lines){
+  try { await navigator.clipboard.writeText(lines.map(l => l.ko + "\n" + (l.tr || "")).join("\n\n")); toast(L("Đã chép hội thoại", "Transcript copied")); }
+  catch(e){ toast(L("Không chép được", "Couldn't copy")); }
+}
+function confirmTap(b, label, fn){
+  if (!b.dataset.confirm){ b.dataset.confirm = 1; b.textContent = L("Chạm lần nữa để xoá", "Tap again to delete"); setTimeout(() => { delete b.dataset.confirm; b.textContent = label; }, 3000); return; }
+  delete b.dataset.confirm; b.textContent = label; fn();
+}
+
+// BTS logo: two trapezoid "doors", drawn inline so it follows the theme's purple
+const BTS_LOGO = `<svg class="bts-logo" viewBox="0 0 100 100" aria-label="BTS" role="img"><path d="M6 4 L42 18 V82 L6 96 Z M94 4 L58 18 V82 L94 96 Z"/></svg>`;
+const AR_MODES = {
+  bts: [BTS_LOGO, () => "BTS Live", () => L("Phụ đề cho live — dịch kiểu fansub, hiểu tên thành viên và từ fandom.", "Subtitles for lives — fan-sub style, knows member names and fandom words.")],
+  talk: ["💬", () => L("Giao tiếp", "Conversation"), () => L("Nói chuyện trực tiếp — dịch tự nhiên, đọc to bản dịch, bấm ⇄ khi đổi lượt nói.", "Talk face to face — natural translations, read aloud, tap ⇄ when you take turns.")]
+};
+function renderArmy(){
+  if (AR.view && !(S.lives || []).some(x => x.id === AR.view)) AR.view = "";
+  if (AR.view) return renderArmyView();
+  if (AR.screen !== "mode") return renderArmyHome();
+  const sec = $("#v-army"), eng = arEngine(), src = arSrc(), [icon, title, desc] = AR_MODES[arMode()];
+  sec.innerHTML = `
+    <button class="btn-ghost" id="arHome" style="margin-bottom:10px">← ARMY</button>
+    <div class="card" id="arCtl">
+      <div id="arSetup">
+      <h2 style="margin:0;font-size:18px">${icon} ${title()}</h2>
+      <p class="small muted" style="margin:4px 0 0">${desc()}</p>
+      <div class="row" style="margin-top:14px;align-items:flex-end">
+        <div><label style="margin-top:0">${L("Ngôn ngữ nói", "Spoken language")}</label><select id="arIn">${Object.keys(AR_LANGS).map(k => `<option value="${k}">${AR_LANGS[k][0]} ${L(AR_LANGS[k][1], AR_LANGS[k][2])}</option>`).join("")}</select></div>
+        <button class="btn-ghost" id="arSwap" style="flex:0 0 auto;padding:12px" title="${L("Đổi chiều", "Swap")}">⇄</button>
+        <div><label style="margin-top:0">${L("Dịch sang", "Translate to")}</label><select id="arOut">${Object.keys(AR_LANGS).filter(k => k !== arIn()).map(k => `<option value="${k}">${AR_LANGS[k][0]} ${L(AR_LANGS[k][1], AR_LANGS[k][2])}</option>`).join("")}</select></div>
+      </div>
+      <label>${L("Cách nghe", "Listening mode")}</label>
+      <div class="seg" id="arEng"><button data-e="ai" ${hasKey() ? "" : "disabled"}>✨ AI Gemini</button><button data-e="free" ${SR ? "" : "disabled"}>⚡ ${L("Miễn phí", "Free")}</button></div>
+      <p class="small muted" style="margin:6px 0 0">${
+        !eng ? L("⚠️ Trình duyệt này không nhận giọng nói. Thêm Gemini key trong Cài đặt, hoặc dùng Chrome/Safari.", "⚠️ This browser can't recognise speech. Add a Gemini key in Settings, or use Chrome/Safari.")
+        : eng === "ai" ? L("AI nghe từng đoạn ~10 giây: chính xác hơn, nhưng phụ đề trễ ~10–15 giây. Dùng lượt Gemini miễn phí.", "AI listens in ~10 s chunks: more accurate, but subtitles lag ~10–15 s. Uses your free Gemini quota.")
+        : L("Nhận giọng nói của trình duyệt: gần như tức thì, nhưng dễ nghe nhầm khi nói nhanh/ồn." + (hasKey() ? "" : " Dịch miễn phí có giới hạn mỗi ngày — thêm Gemini key để dịch tốt hơn."), "Browser speech recognition: near-instant, but mishears fast or noisy talk." + (hasKey() ? "" : " Free translation has a daily cap — add a Gemini key for better translations."))
+      }${hasKey() ? "" : ` <button class="linkbtn" id="arKeyLink">${L("Thêm key", "Add a key")}</button>`}</p>
+      ${eng === "ai" && arCanTab() && !arTalk() ? `<label>${L("Nguồn âm thanh", "Audio source")}</label>
+      <div class="seg" id="arSrc"><button data-s="mic">🎙 ${L("Micro", "Microphone")}</button><button data-s="tab">🖥 ${L("Âm thanh tab", "Tab audio")}</button></div>
+      <p class="small muted" style="margin:6px 0 0">${src === "tab" ? L("Chọn tab đang phát live và bật <b>“Chia sẻ âm thanh tab”</b>. Không cần bật loa.", "Pick the tab playing the live and turn on <b>“Share tab audio”</b>. No speakers needed.") : L("Micro nghe tiếng từ loa.", "The mic listens to your speakers.")}</p>` : ""}
+      </div>
+      <div class="ar-mini" id="arMini">${arTalk()
+        // swap sits between the two languages, like Google Translate
+        ? `<span class="ar-dir">${AR_LANGS[arIn()][0]}<button class="btn2" id="arMiniSwap" title="${L("Đổi lượt nói", "Swap turns")}" aria-label="${L("Đổi lượt nói", "Swap turns")}">⇄</button>${AR_LANGS[arOut()][0]}</span>
+          <span class="acts"><button class="btn-ghost" id="arMiniTts"></button></span>`
+        : `<span>${BTS_LOGO} ${AR_LANGS[arIn()][0]} → ${AR_LANGS[arOut()][0]} · ${eng === "ai" ? "✨ AI" : "⚡ " + L("Miễn phí", "Free")}${src === "tab" ? " · 🖥" : ""}</span>`}</div>
+      <button class="ar-go" id="arGo" ${eng ? "" : "disabled"}></button>
+      <div class="ar-lvl hidden" id="arLvlBar"><i id="arLvl"></i></div>
+      <p class="small muted" id="arStatus" style="margin:8px 0 0"></p>
+    </div>
+    <div class="card ar-live" id="arLiveCard">
+      <div class="ar-disp">
+        <button id="arFsDown" title="${L("Chữ nhỏ hơn", "Smaller text")}">A−</button>
+        <button id="arFsUp" title="${L("Chữ to hơn", "Bigger text")}">A+</button>
+        <button id="arOrig" title="${L("Hiện/ẩn câu gốc", "Show/hide the original")}">${L("Câu gốc", "Original")}</button>
+      </div>
+      <div id="arLive"></div>
+    </div>
+    <div class="card" id="arHistCard">
+      <div class="ar-hhead">
+        <b>📝 ${L("Hội thoại", "Conversation")} · <span id="arCount"></span></b>
+        <button class="${arSaved() ? "btn-ghost" : "btn2"}" id="arSave" ${arSaved() ? "disabled" : ""}>${arSaved() ? L("✅ Đã lưu", "✅ Saved") : L("💾 Lưu", "💾 Save")}</button>
+        <button class="btn-ghost" id="arNew" title="${L("Xoá màn hình, bắt đầu hội thoại mới", "Clear the screen and start a new conversation")}">🆕 ${L("Mới", "New")}</button>
+      </div>
+      <p class="small muted" style="margin:6px 0 0">${arSaved()
+        ? L("Câu mới được tự lưu thêm. Xem lại, chép hoặc lưu thành bài đọc ở ← ARMY → “Hội thoại đã lưu”.", "New lines are saved automatically. Review, copy or turn it into a reading passage under ← ARMY → “Saved conversations”.")
+        : L("Bấm 💾 Lưu để giữ bản song ngữ và xem lại sau (không lưu giọng nói).", "Tap 💾 Save to keep the bilingual transcript for later (no audio is kept).")}</p>
+      <ul class="ar-hist" id="arHist"></ul>
+    </div>
+`;
+  $("#arIn").value = arIn(); $("#arOut").value = arOut();
+  $("#arIn").onchange = e => { const i = e.target.value; arSetLangs(i, arOut() === i ? arIn() : arOut()); arRestart(); };
+  $("#arOut").onchange = e => { arSetLangs(arIn(), e.target.value); arRestart(); };
+  $("#arHome").onclick = () => { arStop(); AR.screen = "home"; arPersist(); renderArmy(); scrollTo(0, 0); };
+  $("#arSwap").onclick = arSwapLangs;
+  if ($("#arMiniSwap")) $("#arMiniSwap").onclick = arSwapLangs;
+  const ttsBtn = () => { const b = $("#arMiniTts"); if (b){ b.textContent = arTts() ? "🔊" : "🔇"; b.classList.toggle("on", arTts());
+    b.title = b.ariaLabel = arTts() ? L("Đang đọc to bản dịch — chạm để tắt", "Reading translations aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); } };
+  if ($("#arMiniTts")) $("#arMiniTts").onclick = () => {
+    S.settings.armyTts = !arTts(); save(); ttsBtn();
+    if (!arTts() && "speechSynthesis" in window){ speechSynthesis.cancel(); AR.saying = 0; arResumeEars(); }
+  };
+  ttsBtn();
+  $$("#arEng button").forEach(b => { b.classList.toggle("on", b.dataset.e === eng); b.onclick = () => { S.settings.armyEngine = b.dataset.e; save(); arRestart(); }; });
+  $$("#arSrc button").forEach(b => { b.classList.toggle("on", b.dataset.s === src); b.onclick = () => { S.settings.armySrc = b.dataset.s; save(); arRestart(); }; });
+  if ($("#arKeyLink")) $("#arKeyLink").onclick = () => { show("set"); const d = document.getElementById("g-key"); if (d){ d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); } };
+  $("#arGo").onclick = () => AR.on ? arStop() : arStart();
+  const fs = (d) => { S.settings.armyFs = Math.max(0.8, Math.min(1.8, Math.round(((S.settings.armyFs || 1) + d) * 10) / 10)); save(); arStyle(); };
+  $("#arFsDown").onclick = () => fs(-0.1); $("#arFsUp").onclick = () => fs(0.1);
+  $("#arOrig").onclick = () => { S.settings.armyHideOrig = !S.settings.armyHideOrig; save(); arStyle(); };
+  $("#arSave").onclick = () => { if (!arSaved()) arSaveNow(); };
+  $("#arNew").onclick = e => {
+    const go = () => { arFlushSaved(); AR.lines = []; AR.trq = []; AR.savedId = ""; arPersist(); renderArmy(); };
+    // unsaved lines are lost on "New", so ask first; saved ones stay in the list
+    if (!AR.lines.length || arSaved()) go(); else confirmTap(e.currentTarget, `🆕 ${L("Mới", "New")}`, go);
+  };
+  arStyle(); arUI(); arRender();
+}
+function renderArmyHome(){
+  const saved = (S.lives || []).slice().sort((a, b) => b.created - a.created);
+  const pick = m => {
+    const [icon, title, desc] = AR_MODES[m], x = AR.sess[m];
+    const open = x.lines.length && !x.savedId ? `<span class="badge b-new" style="display:inline-block;margin-top:6px">${L(`Đang dở · ${x.lines.length} câu`, `In progress · ${x.lines.length} lines`)}</span>` : "";
+    return `<button class="ar-pick" data-m="${m}"><span class="i">${icon}</span><span class="tx"><b>${title()}</b><span class="d">${desc()}</span>${open}</span><span class="muted">›</span></button>`;
+  };
+  $("#v-army").innerHTML = `
+    <div class="ar-hero" style="margin:2px 2px 14px"><span class="h">💜</span><div><h2 style="margin:0">ARMY Borahae</h2></div></div>
+    ${pick("bts")}${pick("talk")}
+    ${saved.length ? `<div class="card" style="margin-top:4px"><h2>💾 ${L("Hội thoại đã lưu", "Saved conversations")}</h2><ul class="wl" id="arSavedList">${saved.map(x =>
+      `<li data-id="${x.id}" style="cursor:pointer"><div class="t"><b style="font-size:15px">${esc(x.title)}</b><div>${arDate(x.created)} · ${AR_LANGS[x.from] ? AR_LANGS[x.from][0] : ""}→${AR_LANGS[x.to] ? AR_LANGS[x.to][0] : ""} · ${x.lines.length} ${L("câu", "lines")}</div></div><span class="muted">›</span></li>`).join("")}</ul></div>` : ""}`;
+  $$("#v-army .ar-pick").forEach(b => b.onclick = () => { AR.mode = b.dataset.m; AR.screen = "mode"; arUseSess(); arPersist(); renderArmy(); scrollTo(0, 0); });
+  $$("#arSavedList li").forEach(li => li.onclick = () => { AR.view = li.dataset.id; renderArmy(); scrollTo(0, 0); });
+}
+function arFlushSaved(){ const x = arSaved(); if (x){ clearTimeout(arSyncT); x.lines = AR.lines.map(arCopyLine); save(); } }
+function renderArmyView(){
+  const x = S.lives.find(v => v.id === AR.view), sec = $("#v-army");
+  sec.innerHTML = `
+    <button class="btn-ghost" id="avBack" style="margin-bottom:10px">← ARMY</button>
+    <div class="card">
+      <input id="avTitle" type="text" value="${esc(x.title)}" aria-label="${L("Tên hội thoại", "Conversation name")}" style="font-weight:600">
+      <p class="small muted" style="margin:8px 0 12px">${arDate(x.created)} · ${AR_LANGS[x.from] ? L(AR_LANGS[x.from][1], AR_LANGS[x.from][2]) : ""} → ${AR_LANGS[x.to] ? L(AR_LANGS[x.to][1], AR_LANGS[x.to][2]) : ""} · ${x.lines.length} ${L("câu", "lines")}${x.id === AR.savedId ? " · " + L("đang tự lưu", "auto-saving") : ""}</p>
+      <div class="ar-tools">
+        <button class="btn-ghost" id="avCopy">📋 ${L("Chép", "Copy")}</button>
+        <button class="btn-ghost" id="avRead">📖 ${L("Lưu bài đọc", "Save to Read")}</button>
+        <button class="btn-danger" id="avDel">🗑 ${L("Xoá", "Delete")}</button>
+      </div>
+    </div>
+    <div class="card"><div class="ar-disp">
+        <button id="arFsDown" title="${L("Chữ nhỏ hơn", "Smaller text")}">A−</button>
+        <button id="arFsUp" title="${L("Chữ to hơn", "Bigger text")}">A+</button>
+        <button id="arOrig" title="${L("Hiện/ẩn câu gốc", "Show/hide the original")}">${L("Câu gốc", "Original")}</button>
+      </div><ul class="ar-hist">${x.lines.map(l => `<li>${arLine(Object.assign({}, l, { from: l.from || x.from, to: l.to || x.to, fail: !l.tr }), true)}</li>`).join("")
+      || `<li class="muted">${L("Trống", "Empty")}</li>`}</ul></div>`;
+  $("#avBack").onclick = () => { AR.view = ""; renderArmy(); };
+  $("#avTitle").onchange = e => { x.title = e.target.value.trim() || x.title; save(); };
+  const fs = (d) => { S.settings.armyFs = Math.max(0.8, Math.min(1.8, Math.round(((S.settings.armyFs || 1) + d) * 10) / 10)); save(); arStyle(); };
+  $("#arFsDown").onclick = () => fs(-0.1); $("#arFsUp").onclick = () => fs(0.1);
+  $("#arOrig").onclick = () => { S.settings.armyHideOrig = !S.settings.armyHideOrig; save(); arStyle(); };
+  $("#avCopy").onclick = () => arCopyText(x.lines);
+  $("#avRead").onclick = () => arToPassage(x.lines, x.title);
+  $("#avDel").onclick = e => confirmTap(e.currentTarget, `🗑 ${L("Xoá", "Delete")}`, () => {
+    S.lives = S.lives.filter(v => v !== x);
+    if (AR.savedId === x.id) { AR.savedId = ""; arPersist(); }   // the live keeps its lines, just no longer saved
+    save(); AR.view = ""; renderArmy(); toast(L("Đã xoá hội thoại", "Conversation deleted"));
+  });
+  arStyle();
+}
+function arSwapLangs(){ arSetLangs(arOut(), arIn()); arRestart(); }
+function arRestart(){ const was = AR.on; arStop(); renderArmy(); if (was) arStart(); }
+function arStyle(){
+  const sec = $("#v-army");
+  sec.style.setProperty("--ar-fs", S.settings.armyFs || 1);
+  sec.classList.toggle("ar-noko", !!S.settings.armyHideOrig);
+  if ($("#arOrig")) $("#arOrig").classList.toggle("on", !S.settings.armyHideOrig);
+}
+function arUI(msg){
+  // while listening, everything above the subtitles shrinks to one slim row (app header and back button hide too)
+  document.body.classList.toggle("ar-listening", AR.on);
+  const b = $("#arGo"); if (!b) return;
+  b.classList.toggle("on", AR.on);
+  $("#arCtl").classList.toggle("ar-on", AR.on); $("#arHome").classList.toggle("hidden", AR.on);
+  $("#arLiveCard").classList.toggle("hidden", !AR.on);   // when stopped, the newest line is already at the top of the list
+  $("#arSetup").classList.toggle("hidden", AR.on); $("#arMini").classList.toggle("hidden", !AR.on);
+  b.textContent = AR.on ? L("⏹ Dừng", "⏹ Stop") : L("▶ Bắt đầu nghe", "▶ Start listening");
+  $("#arLvlBar").classList.toggle("hidden", !(AR.on && AR.ac));
+  if (msg !== undefined) $("#arStatus").innerHTML = msg;
+  else $("#arStatus").innerHTML = AR.on ? (AR.engine === "ai" ? `<span class="spinner"></span>${L("Đoạn đầu tiên hiện sau ~10 giây", "The first chunk shows in ~10 s")}` : "") : "";
+}
+const arTime = t => { const d = new Date(t); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+const arFlag = k => AR_LANGS[k] ? `<span class="fl">${AR_LANGS[k][0]}</span>` : "";
+const arLine = (l, time) => `${time ? `<time>${arTime(l.t)}</time>` : ""}<div class="ko">${arFlag(l.from)}${esc(l.ko)}</div><div class="tr">${arFlag(l.to)}${arTr(l)}</div>`;
+const arTr = l => l.tr ? esc(l.tr) : l.fail ? `<span class="muted">${L("(chưa dịch được)", "(not translated)")}</span>` : `<span class="spinner"></span>`;
+function arRenderLive(){
+  const live = $("#arLive"); if (!live) return;
+  const last = AR.lines[AR.lines.length - 1];
+  live.innerHTML = (last || AR.interim)
+    ? (last ? arLine(last) : "") + (AR.interim ? `<div class="interim">${arFlag(arIn())}${esc(AR.interim)}${AR.interimTr ? `<div>${arFlag(arOut())}${esc(AR.interimTr)}</div>` : ""}</div>` : "")
+    : `<div class="muted" style="text-align:center;margin:auto">${L("💜 Phụ đề sẽ hiện ở đây", "💜 Subtitles appear here")}</div>`;
+}
+function arRender(){
+  arRenderLive();
+  const h = $("#arHist"); if (!h) return;
+  const all = AR.lines.slice().reverse();   // newest first, right under the live box
+  $("#arHistCard").classList.toggle("hidden", !AR.lines.length);
+  $("#arCount").textContent = AR.lines.length + " " + L("câu", AR.lines.length === 1 ? "line" : "lines");
+  h.innerHTML = all.map(l => `<li>${arLine(l, true)}</li>`).join("");
+}
+function arAdd(ko, tr){
+  const l = { t: Date.now(), ko, tr: tr || "", from: arIn(), to: arOut() };
+  AR.lines.push(l); if (AR.lines.length > 500) AR.lines.shift();
+  if (!tr) { arDraft(l); AR.trq.push(l); arFlushTr(); } else arSayLine(l);
+  AR.interimTr = "";
+  arRender(); arPersist(); arSyncSaved();
+}
+
+/* translation of browser-recognised lines:
+   1) Chrome's on-device Translator (instant, free, unlimited) shows a draft right away — also for the half-finished sentence,
+   2) Gemini (with context) replaces it with a better one when there's a key, 3) MyMemory is the free web fallback */
+const AR_OD = {};   // "ko>vi" → ready Translator, or null when the browser can't do that pair
+async function arOnDevice(from, to, create){
+  const k = from + ">" + to;
+  if (!("Translator" in self) || AR_OD[k] === null) return null;
+  if (AR_OD[k] && !(AR_OD[k] instanceof Promise)) return AR_OD[k];
+  if (AR_OD[k] || !create) return null;   // still loading, or not requested yet
+  AR_OD[k] = (async () => {
+    const av = await Translator.availability({ sourceLanguage: from, targetLanguage: to });
+    if (av === "unavailable") return null;
+    // first use downloads the language pack; needs the tap on "Start", which is why create happens there
+    return await Translator.create({ sourceLanguage: from, targetLanguage: to, monitor(m){
+      m.addEventListener("downloadprogress", e => { if (AR.on && e.loaded < 1) arUI(L(`⬇️ Đang tải bộ dịch trên máy… ${Math.round(e.loaded * 100)}%`, `⬇️ Downloading the on-device translator… ${Math.round(e.loaded * 100)}%`)); });
+    } });
+  })();
+  try { AR_OD[k] = await AR_OD[k]; } catch(e){ delete AR_OD[k]; return null; }   // e.g. no user tap: try again next Start
+  if (AR.on && AR_OD[k]) arUI();
+  return AR_OD[k];
+}
+async function arQuickTr(text, from, to){
+  const t = await arOnDevice(from, to);
+  if (!t) return "";
+  try { return String(await t.translate(text)).trim(); } catch(e){ return ""; }
+}
+function arSayLine(l){ if (l.tr && !l.spoken){ l.spoken = true; arSay(l.tr, l.to); } }
+async function arDraft(l){
+  const t = await arQuickTr(l.ko, l.from, l.to);
+  if (t && !l.tr){ l.tr = t; l.draft = true; arSayLine(l); arRender(); arPersist(); arSyncSaved(); }
+}
+let arInterimT = null;
+function arInterimTr(){   // translate the sentence while it's still being spoken
+  clearTimeout(arInterimT);
+  if (!AR.interim){ AR.interimTr = ""; return; }
+  arInterimT = setTimeout(async () => {
+    const src = AR.interim, t = await arQuickTr(src, arIn(), arOut());
+    if (t && AR.interim === src){ AR.interimTr = t; arRenderLive(); }
+  }, 150);
+}
+async function arFreeTr(text, from, to){
+  const r = await fetch("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=" + from + "|" + to);
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const t = ((await r.json()).responseData || {}).translatedText || "";
+  if (!t || /MYMEMORY WARNING|QUERY LENGTH/i.test(t)) throw new Error("limit");
+  return t.trim();
+}
+async function arFlushTr(){
+  if (AR.trBusy || !AR.trq.length) return;
+  AR.trBusy = true;
+  const batch = AR.trq.splice(0, 6), from = arIn(), to = arOut();
+  if (hasKey()){
+    try {
+      const ctx = AR.lines.filter(l => l.tr).slice(-4).map(l => l.ko).join("\n");
+      const prompt = `You are a live interpreter. ${arCtx()}
+The lines below come from automatic ${arName(from)} speech recognition, so they may contain recognition mistakes — fix obvious ones from context${arTalk() ? "" : " (e.g. misheard member names)"}.
+Translate each line into ${arHow(to)}.
+Earlier lines for context (don't translate): ${ctx || "(none)"}
+Lines: ${JSON.stringify(batch.map(l => l.ko))}
+Return JSON exactly like: {"t":["<translation of line 1>", "..."]} with the same number of items, in order.`;
+      const j = extractJSON(await gemini(prompt, []));   // [] = no attachment, but the low (factual) temperature
+      batch.forEach((l, i) => { const t = String((j.t || [])[i] || "").trim(); if (t){ l.tr = t; delete l.draft; } });
+    } catch(e){}
+  }
+  for (const l of batch) if (!l.tr) { try { l.tr = await arQuickTr(l.ko, from, to) || await arFreeTr(l.ko, from, to); } catch(e){ l.fail = true; } }
+  batch.forEach(arSayLine);
+  AR.trBusy = false; arRender(); arPersist(); arSyncSaved();
+  arFlushTr();
+}
+
+/* ---- talk mode: read each translation aloud; the ears pause meanwhile so the app doesn't translate its own voice ---- */
+function arVoiceFor(lang){
+  const vs = speechSynthesis.getVoices(), norm = v => (v.lang || "").toLowerCase().replace("_", "-");
+  if (lang === "ko"){ const v = vs.find(v => v.name === S.settings.voice); if (v) return v; }
+  return vs.find(v => norm(v).startsWith(lang + "-") && v.localService) || vs.find(v => norm(v).startsWith(lang)) || null;
+}
+function arSay(text, lang){
+  if (!arTts() || !AR.on || !text || !("speechSynthesis" in window)) return;
+  const v = arVoiceFor(lang);
+  if (!v){ if (!AR.noVoice){ AR.noVoice = true; toast(L("🔇 Máy chưa có giọng đọc cho ngôn ngữ này", "🔇 No voice for this language on this device")); } return; }
+  const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang;
+  let done = false;
+  u.onend = u.onerror = () => { if (done) return; done = true; if (--AR.saying <= 0){ AR.saying = 0; setTimeout(arResumeEars, 350); } };
+  AR.saying = (AR.saying || 0) + 1; arPauseEars();
+  (AR.utts = (AR.utts || []).slice(-5)).push(u);   // keep references (Chrome may drop events otherwise)
+  speechSynthesis.speak(u);
+}
+function arPauseEars(){
+  AR.taint = true;   // AI engine: the chunk being recorded now contains our own voice
+  if (AR.recog){ const r = AR.recog; AR.recog = null; try { r.onend = null; r.abort(); } catch(e){} }
+  if (AR.interim){ AR.interim = ""; arRenderLive(); }
+}
+function arResumeEars(){ if (AR.on && !AR.saying && AR.engine === "free" && !AR.recog) try { arStartFree(); } catch(e){} }
+
+/* ---- free engine: browser speech recognition, restarted whenever it stops on its own ---- */
+function arStartFree(){
+  const android = /Android/i.test(navigator.userAgent);
+  const r = new SR(); r.lang = AR_LANGS[arIn()][3]; r.interimResults = true; r.maxAlternatives = 1;
+  r.continuous = !android;   // Android repeats earlier results in continuous mode
+  r.onresult = ev => {
+    let interim = "";
+    for (let i = ev.resultIndex; i < ev.results.length; i++){
+      const res = ev.results[i];
+      if (res.isFinal){ const t = res[0].transcript.trim(); if (t) arAdd(t); }
+      else interim += res[0].transcript;
+    }
+    AR.interim = interim.trim(); arInterimTr(); arRenderLive();
+  };
+  r.onerror = ev => {
+    if (ev.error === "not-allowed" || ev.error === "service-not-allowed"){ arStop(); arUI(L("🎙 Micro bị chặn — cho phép micro cho trang này rồi thử lại (Cài đặt → Hướng dẫn → Micro).", "🎙 Microphone blocked — allow it for this site and try again (Settings → Guide → Microphone).")); }
+    else if (ev.error === "audio-capture"){ arStop(); arUI(L("🎙 Không tìm thấy micro hoặc app khác đang dùng.", "🎙 No microphone found, or another app is using it.")); }
+    else if (ev.error === "network") arUI(L("⚠️ Cần có mạng để nhận giọng nói", "⚠️ Speech recognition needs internet"));
+  };
+  r.onend = () => {
+    if (!AR.on || AR.recog !== r) return;
+    try { r.start(); } catch(e){ setTimeout(() => { if (AR.on && AR.recog === r) try { r.start(); } catch(e){} }, 400); }
+  };
+  r.start(); AR.recog = r;
+}
+
+/* ---- AI engine: record back-to-back chunks, send each to Gemini in order ---- */
+async function arStartAI(){
+  if (arSrc() === "tab"){
+    const ds = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    if (!ds.getAudioTracks().length){
+      ds.getTracks().forEach(t => t.stop());
+      throw new Error(L("Chưa chia sẻ âm thanh — chọn tab live và bật “Chia sẻ âm thanh tab”.", "No audio shared — pick the live tab and turn on “Share tab audio”."));
+    }
+    ds.getTracks().forEach(t => t.onended = () => { if (AR.on) arStop(); });
+    AR.stream = ds;
+  } else {
+    // echo cancellation would erase the very speaker audio we want to hear
+    AR.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } });
+  }
+  arMeter();
+  arRecChunk();
+}
+function arRecChunk(){
+  if (!AR.on || !AR.stream) return;
+  const rec = new MediaRecorder(new MediaStream(AR.stream.getAudioTracks())), parts = [];
+  let self = AR.saying > 0;   // talk mode: drop chunks that caught the app reading a translation aloud
+  // the recorder's own timeslice drives the cycle: timers get throttled while the live plays in another tab
+  rec.ondataavailable = e => {
+    if (e.data.size) parts.push(e.data);
+    self = self || AR.taint;
+    if (rec.state === "recording"){ AR.taint = AR.saying > 0; arRecChunk(); rec.stop(); }
+  };
+  rec.onstop = () => { if (parts.length && !self) arQueueChunk(new Blob(parts, { type: rec.mimeType || "audio/webm" })); };
+  rec.start(AR_CHUNK);
+  AR.rec = rec;
+}
+function arQueueChunk(blob){
+  if (AR.queued >= 3){ arUI(L("⚠️ Mạng chậm — bỏ qua một đoạn", "⚠️ Slow connection — skipped a chunk")); return; }
+  AR.queued++;
+  AR.chain = AR.chain.then(() => arChunk(blob)).catch(() => {}).then(() => { AR.queued--; });
+}
+async function arChunk(blob){
+  const stats = {};
+  const b64 = await blobToWavB64(blob, stats);
+  if (stats.peak < 0.01) return;   // silence: don't spend quota
+  const from = arIn(), to = arOut();
+  const ctx = AR.lines.slice(-4).map(l => l.ko).join("\n");
+  const prompt = `You are a live interpreter. ${arCtx()}
+The attached audio is the next ~10 seconds. Transcribe only the ${arName(from)} speech (ignore music, singing, noise and laughter${arTalk() ? "; ignore any synthetic voice reading a translation aloud" : ""}). The clip may start or end mid-word — drop cut-off fragments. Keep any words spoken in other languages as they are.
+Split it into short subtitle lines (about one sentence each) and translate each into ${arHow(to)}. Don't guess who is speaking.
+Earlier lines for context (don't repeat them): ${ctx || "(none)"}
+If there is no clear speech, return {"lines":[]}.
+Return JSON exactly like: {"lines":[{"src":"<transcription>","tr":"<translation>"}]}`;
+  try {
+    const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }]));
+    AR.quota = 0;
+    (j.lines || []).forEach(l => { const src = String(l.src || l.ko || "").trim(); if (src) arAdd(src, String(l.tr || "").trim() || null); });
+    if (AR.on) arUI("");
+  } catch(e){
+    if (e.status === 429 && ++AR.quota >= 3 && AR.on){
+      // out of free Gemini requests: keep going with the browser's recogniser when we can
+      if (SR && arSrc() === "mic"){ S.settings.armyEngine = "free"; save(); arRestart(); arUI(L("⚠️ Hết lượt Gemini miễn phí — đã chuyển sang chế độ Miễn phí.", "⚠️ Out of free Gemini requests — switched to Free mode.")); }
+      else { arStop(); arUI("⚠️ " + e.message); }
+    } else if (AR.on) arUI("⚠️ " + e.message);
+  }
+}
+function arMeter(){
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    AR.ac = new AC();
+    const an = AR.ac.createAnalyser(); an.fftSize = 512;
+    AR.ac.createMediaStreamSource(new MediaStream(AR.stream.getAudioTracks())).connect(an);
+    const buf = new Uint8Array(an.fftSize);
+    const tick = () => {
+      if (!AR.ac) return;
+      an.getByteTimeDomainData(buf);
+      let pk = 0; for (const x of buf){ const a = Math.abs(x - 128); if (a > pk) pk = a; }
+      const el = $("#arLvl"); if (el) el.style.width = Math.min(100, pk / 128 * 160) + "%";
+      AR.raf = requestAnimationFrame(tick);
+    };
+    tick();
+  } catch(e){ AR.ac = null; }
+}
+
+async function arWake(on){
+  try {
+    if (on && "wakeLock" in navigator && !AR.wake) { AR.wake = await navigator.wakeLock.request("screen"); AR.wake.onrelease = () => { AR.wake = null; }; }
+    if (!on && AR.wake) { AR.wake.release(); AR.wake = null; }
+  } catch(e){}
+}
+document.addEventListener("visibilitychange", () => { if (AR.on && document.visibilityState === "visible") arWake(true); });
+
+async function arStart(){
+  const eng = arEngine(); if (!eng) return;
+  if ((location.protocol === "file:" && /Android/i.test(navigator.userAgent)) || (location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { arUI(L("🎙 Cần mở app từ link https:// để dùng micro.", "🎙 Open the app from its https:// link to use the mic.")); return; }
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  AR.on = true; AR.engine = eng; AR.quota = 0;
+  arUI();
+  arOnDevice(arIn(), arOut(), true); if (arTalk()) arOnDevice(arOut(), arIn(), true);   // both ways: talk mode swaps turns
+  try { eng === "ai" ? await arStartAI() : arStartFree(); }
+  catch(e){
+    arStop();
+    arUI(e.name === "NotAllowedError" ? L("🎙 Chưa cho phép micro / chia sẻ màn hình.", "🎙 Microphone / screen sharing wasn't allowed.")
+      : e.name === "NotFoundError" || e.name === "NotReadableError" ? L("🎙 Không tìm thấy micro hoặc app khác đang dùng.", "🎙 No microphone found, or another app is using it.")
+      : "⚠️ " + esc(e.message || e));
+    return;
+  }
+  arWake(true); arUI(); scrollTo(0, 0);
+}
+function arStop(){
+  if (!AR.on && !AR.stream && !AR.recog) return;
+  AR.on = false;
+  if (AR.recog){ const r = AR.recog; AR.recog = null; try { r.onend = null; r.stop(); } catch(e){} }
+  if (AR.rec && AR.rec.state === "recording") AR.rec.stop();   // the last partial chunk still gets translated
+  AR.rec = null;
+  if (AR.stream) AR.stream.getTracks().forEach(t => t.stop());
+  AR.stream = null;
+  cancelAnimationFrame(AR.raf);
+  if (AR.ac) { try { AR.ac.close(); } catch(e){} AR.ac = null; }
+  AR.interim = ""; AR.saying = 0; AR.taint = false;
+  if (arTalk() && "speechSynthesis" in window) speechSynthesis.cancel();
+  arWake(false); arUI(""); arRenderLive(); arFlushSaved();
+}
+
 /* ---------------- init ---------------- */
 load();
 takeSnap();
 if (!S.settings.speakAuto && S.settings.apiKey && S.settings.apiKey.trim()) save();   // existing key → speaking questions on (once)
 if (!Array.isArray(S.passages)) S.passages = [];
+if (!Array.isArray(S.lives)) S.lives = [];
+if (S.settings.model === "gemini-flash-latest") { S.settings.model = ""; save(); }   // old default alias, often overloaded
 if (!S.settings.voiceV2) { if (S.settings.rate === 0.85) S.settings.rate = 1; S.settings.voiceV2 = true; save(); }  // native speed by default
 fillLevels($("#genLevel")); fillLevels($("#rdLevel"));
 if ("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
@@ -2750,12 +3469,12 @@ if (clientId()) loadGIS().catch(()=>{});
 setCloud(SY.on ? (tokValid() ? "ok" : "expired") : "off");
 if (SY.on) syncNow(false);
 try { if (!localStorage.getItem(WEL_KEY)) openWelcome(); } catch(e){}
-(() => {   // restore last page after a reload
+(() => {   // restore the last menu tab after a reload (sub-pages like an open passage go back to the tab's main screen)
   const n = navGet();
   if (!n.v || !document.getElementById("v-" + n.v)) return;
-  if (n.v !== "study") show(n.v);
-  if (n.v === "read" && n.p && S.passages.some(x => x.id === n.p)) openReader(n.p);
-  const y = n.y || 0;
+  const v = n.v === "add" ? "words" : n.v;
+  if (v !== "study") show(v);
+  const y = v === n.v && !n.p && v !== "army" ? n.y || 0 : 0;   // a sub-page's scroll means nothing on the main screen
   if (y) requestAnimationFrame(() => setTimeout(() => { scrollTo(0, y); navSave({ y }); }, 60));
 })();
 setInterval(() => { if (!session && !$("#v-study").classList.contains("hidden")) refreshHome(); }, 60000);
