@@ -33,14 +33,15 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom));
 .wrap{max-width:560px;margin:0 auto;padding:16px}
 header{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
 header h1{font-size:20px;margin:0}
-.pill{font-size:12px;color:var(--muted);background:var(--card);border:1px solid var(--line);padding:4px 10px;border-radius:99px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+.pill{font-size:12px;color:var(--muted);background:var(--card);border:1px solid transparent;padding:4px 10px;border-radius:99px}
+/* surfaces separate by fill (+ light-mode shadow), not outlines — borders stay transparent so hover/state colours can still use them */
+.card{background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
 h2{font-size:16px;margin:0 0 10px}
 .muted{color:var(--muted)} .small{font-size:13px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
-.stat b{display:block;font-size:20px}
-.stat span{font-size:11px;color:var(--muted)}
+.stat{background:var(--card);border:1px solid transparent;border-radius:12px;padding:10px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0}
+.stat b{display:flex;align-items:baseline;justify-content:center;gap:2px;font-size:20px;line-height:24px;height:24px;white-space:nowrap}
+.stat span{display:block;font-size:11px;line-height:1.25;color:var(--muted)}
 /* home stats: each tile tinted; fg/bg pairs checked for ≥4.5:1 so the 11px labels pass too */
 .stat.tone{background:var(--t-bg);border-color:transparent;color:var(--t-fg)}
 .stat.tone span{color:inherit}
@@ -59,7 +60,8 @@ button{font:inherit;cursor:pointer;border:none;border-radius:12px;padding:12px 1
 .btn-cta{padding:12px 16px;font-size:16px;margin-bottom:14px}
 .btn:disabled{opacity:.5;cursor:default}
 .btn2{background:var(--accent-soft);color:var(--accent)}
-.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn-ghost{background:color-mix(in srgb, var(--muted) 14%, transparent);color:var(--muted)}
+.btn-ghost:hover{background:color-mix(in srgb, var(--muted) 22%, transparent)}
 .btn-danger{background:var(--bad-soft);color:var(--bad)}
 .row{display:flex;gap:8px;align-items:center}
 .row > *{flex:1}
@@ -133,7 +135,7 @@ nav button[data-v=army].on{color:var(--army)}
 #v-army .seg button.on{color:var(--army)}
 #v-army .seg button:disabled{opacity:.4;cursor:default}
 .ar-hero{display:flex;gap:12px;align-items:center}
-.ar-pick{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--card);color:var(--text);border:1px solid var(--line);
+.ar-pick{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--card);color:var(--text);border:1px solid transparent;
   border-radius:var(--radius);padding:18px 16px;margin-bottom:12px;box-shadow:var(--shadow);font-weight:400}
 .ar-pick:hover{border-color:var(--army)}
 .ar-pick .i{font-size:34px;line-height:1}
@@ -150,6 +152,9 @@ body.ar-listening nav{display:none}
 /* during a study session the tab bar is just a mis-tap target — "End" is the way out */
 body.in-session nav{display:none}
 body.in-session{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+/* …except a session the app opened by itself: until the first answer the user hasn't chosen to study, so keep the way elsewhere */
+body.in-session.auto-session nav{display:flex}
+body.in-session.auto-session{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 #arCtl.ar-on{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 14px;margin:0;
   position:fixed;z-index:15;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));
@@ -213,6 +218,8 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 @media (max-width:600px){
   body.in-session{padding-bottom:calc(260px + env(safe-area-inset-bottom))}
   body.in-session .toast{bottom:auto;top:calc(16px + env(safe-area-inset-top))}
+  body.in-session.auto-session{padding-bottom:calc(330px + env(safe-area-inset-bottom))}
+  body.in-session.auto-session .dock{bottom:calc(66px + env(safe-area-inset-bottom));padding-bottom:16px}
   .dock{margin:0;position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);
     border-radius:20px 20px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.18);padding:16px 16px calc(36px + env(safe-area-inset-bottom))}
   /* lifted off the very edge (home indicator / hard-to-reach corner) into the comfortable thumb arc */
@@ -259,7 +266,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .menu button:hover{background:var(--bg)}
 .menu .danger{color:var(--bad)}
 .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-.tabs button{background:var(--card);border:1px solid var(--line);color:var(--muted);padding:8px 12px;font-size:14px;font-weight:500}
+.tabs button{background:var(--card);border:1px solid transparent;color:var(--muted);padding:8px 12px;font-size:14px;font-weight:500}
 .tabs button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .prev{display:grid;grid-template-columns:24px 1fr 1fr 32px;gap:6px;align-items:center;margin-bottom:6px}
 .prev input[type=text]{padding:8px}
@@ -299,6 +306,9 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 /* examples */
 .ex{margin-top:12px;padding:10px 12px;background:var(--bg);border-radius:12px;text-align:left;display:flex;gap:10px;align-items:flex-start}
 .ex .exk{font-size:17px;line-height:1.5} .ex .exm{font-size:14px;color:var(--muted)}
+#rdVocab li{padding:8px 0}
+#rdVocab .t b{display:block;font-size:17px}
+#rdVocab .badge{flex:0 0 auto}
 .wl .exl{font-size:13px;color:var(--muted);white-space:normal!important;margin-top:2px}
 .prev-ex{grid-column:2 / 4;font-size:12px;color:var(--muted);margin:-2px 0 6px}
 /* chips */
@@ -320,14 +330,29 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .plist li:last-child{border-bottom:none}
 .plist .t{flex:1;min-width:0}
 .plist .t b{display:block}
-.player{position:sticky;top:0;z-index:5;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:12px;box-shadow:var(--shadow)}
+/* reader: one slim pinned bar — ⏮ ▶ ⏭ · speed · ⚙; the rarely-changed options fold into the ⚙ panel */
+.player{position:sticky;top:calc(6px + env(safe-area-inset-top));z-index:5;background:var(--card);border:1px solid transparent;border-radius:30px;padding:6px 8px;margin-bottom:12px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
 .pctl{display:flex;gap:8px;justify-content:center;align-items:center}
 .pctl button{background:var(--accent-soft);color:var(--accent);width:48px;height:48px;padding:0;border-radius:99px;font-size:18px}
 .pctl button.main{width:60px;height:60px;background:var(--accent);color:var(--on-accent);font-size:24px}
-.popts{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin-top:10px;font-size:13px}
-.popts label{display:flex;align-items:center;gap:6px;margin:0;color:var(--text);font-size:13px}
-.popts input[type=checkbox]{width:16px;height:16px}
-.popts select{width:auto;padding:4px 28px 4px 8px;font-size:13px;background-position:right 9px center;background-size:10px 7px}
+.player .pctl button{width:40px;height:40px;font-size:15px}
+.player .pctl button.main{width:48px;height:48px;font-size:20px}
+.player .pctl .prate{margin-left:auto}
+.player .pctl .prate, .player .pctl .popt-btn{background-color:transparent;color:var(--text)}
+.prate{width:auto;border:0;padding:6px 20px 6px 6px;font-size:14px;font-weight:600;background-position:right 4px center;background-size:10px 7px}
+.popt-btn[aria-expanded=true]{background:var(--accent-soft)!important}
+.player .pctl #pPrev{margin-left:auto}
+.player .turn{font-size:13px;min-height:0;margin:4px 0 2px}
+.player .turn:empty{display:none}
+.popts{border-top:1px solid var(--line);margin:8px 4px 2px;padding-top:4px}
+.popts label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:8px 6px;color:var(--text);font-size:14px;font-weight:500;cursor:pointer}
+.popts select{width:auto;padding:4px 26px 4px 10px;font-size:14px;background-position:right 9px center;background-size:10px 7px}
+/* iOS-style switch */
+input.sw{appearance:none;-webkit-appearance:none;width:40px;height:24px;border-radius:99px;background:var(--line);position:relative;margin:0;flex:0 0 auto;cursor:pointer;transition:background .15s}
+input.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s}
+input.sw:checked{background:var(--accent)}
+input.sw:checked::after{transform:translateX(16px)}
+input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .turn{text-align:center;font-size:14px;font-weight:600;color:var(--ok);min-height:20px;margin-top:8px}
 .sent{padding:12px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:4px}
 .sent:hover{background:var(--bg)}
@@ -358,7 +383,18 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .issue .ty{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .box{background:var(--bg);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px;text-align:left}
 .sent .smic{flex:0 0 auto!important;font-size:18px;padding:4px 6px}
-.sent .best{font-size:11px;color:var(--ok);font-weight:600}
+.sent .best{font-size:11px;color:var(--ok);font-weight:600;margin-top:6px}
+/* speaking coach expanded inline under its sentence: one joined block, no repeated sentence text until there are marks to show */
+.sent.coaching{background:var(--accent-soft);border-color:var(--accent);border-bottom-color:transparent;border-radius:12px 12px 0 0;margin-bottom:0}
+#sentList #coach{margin:0 0 8px;padding:12px;box-shadow:none;background:var(--accent-soft);border:1px solid var(--accent);border-top:0;border-radius:0 0 12px 12px}
+#sentList #coach > .row:first-child{display:none}
+.rd-hint{font-size:13px;font-weight:600;color:var(--ok);text-align:center;margin:8px 0 6px}
+.player .turn:not(:empty) + .rd-hint{display:none}   /* "your turn…" / "finished" takes that line while it shows */
+#sentList #coach .pctl{margin-top:4px!important}
+.cgrade-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px}
+.cgrade{width:max-content;padding:2px;background:transparent}
+.cgrade button{flex:0 0 auto;padding:4px 12px;font-size:12.5px}
+#sentList #coach #cTargetM, #sentList #coach .ctarget:not(:has(mark)){display:none}
 </style>
 </head>
 <body>
@@ -500,7 +536,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 
     <div id="reader" class="hidden">
       <div class="row" style="margin-bottom:10px">
-        <button class="btn-ghost" style="flex:0 0 auto;padding:8px 12px" id="rdBack">← Back</button>
+        <button class="btn-ghost" style="flex:0 0 auto;padding:8px 14px;font-size:18px" id="rdBack" title="Back" aria-label="Back">←</button>
         <span></span>
         <button class="btn-ghost" style="flex:0 0 auto;padding:8px 12px" id="rdDel">🗑️</button>
       </div>
@@ -509,16 +545,17 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
           <button id="pPrev" title="Previous sentence">⏮</button>
           <button id="pPlay" class="main" title="Play / pause">▶</button>
           <button id="pNext" title="Next sentence">⏭</button>
-          <button id="pStop" title="Stop">⏹</button>
-        </div>
-        <div class="popts">
-          <label title="Pause after each sentence so you can repeat it"><input type="checkbox" id="pShadow"> 🎤 Shadow mode</label>
-          <label>Repeat <select id="pRep"><option>1</option><option>2</option><option>3</option></select>×</label>
-          <label>Speed <select id="pRate"><option value="0.6">0.6×</option><option value="0.75">0.75×</option><option value="0.85">0.85×</option><option value="1">1× native</option></select></label>
-          <label><input type="checkbox" id="pShowM" checked> Translation</label>
-          <label><input type="checkbox" id="pHideK"> Hide Korean</label>
+          <select id="pRate" class="prate" title="Speed"><option value="0.6">0.6×</option><option value="0.75">0.75×</option><option value="0.85">0.85×</option><option value="1">1×</option></select>
+          <button id="pOptBtn" class="popt-btn" title="Options" aria-expanded="false" aria-controls="pOpts">⚙️</button>
         </div>
         <div class="turn" id="pTurn"></div>
+        <p class="rd-hint" id="rdHint">Tap 🎙 to check your pronunciation</p>
+        <div class="popts hidden" id="pOpts">
+          <label title="Pause after each sentence so you can repeat it"><span>🎤 Shadow mode</span><input type="checkbox" id="pShadow" class="sw"></label>
+          <label><span>Repeat</span><select id="pRep"><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option></select></label>
+          <label><span>Hide Korean</span><input type="checkbox" id="pHideK" class="sw"></label>
+          <label><span>Hide translation</span><input type="checkbox" id="pHideM" class="sw"></label>
+        </div>
       </div>
       <div class="card hidden" id="coach">
         <div class="row"><h2 style="margin:0">🎙 Speaking coach</h2><button class="icon-btn" style="flex:0 0 auto" id="cClose" title="Close">✕</button></div>
@@ -530,18 +567,18 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
           <button id="cMine" title="Play my recording" disabled>🎧</button>
         </div>
         <div class="turn" id="cStatus"></div>
+        <div class="cgrade-row"><span class="small muted">Grading</span><div class="seg cgrade" id="cGrade" title="How your speaking practice is checked"><button data-g="basic">⚡ Basic</button><button data-g="ai">✨ AI</button></div></div>
+        <p class="small muted hidden" id="cNote" style="text-align:center;margin:6px 0 0">AI grading needs a Gemini key. <button class="linkbtn" id="cKeyLink">Add key</button></p>
         <div id="cResult"></div>
       </div>
       <div class="card">
         <h2 id="rdTitle"></h2>
         <p class="small muted" id="rdSub" style="margin-top:-6px"></p>
         <div id="sentList"></div>
-        <p class="small muted" style="margin:8px 0 0">Tap a sentence to play from there. Press space to play/pause.</p>
       </div>
       <div class="card" id="rdVocabCard">
-        <h2>Key words</h2>
+        <div class="row" style="margin-bottom:10px"><h2 style="margin:0">Key words</h2><button class="btn2" style="flex:0 0 auto;padding:6px 12px;font-size:13px" id="rdAddVocab"></button></div>
         <ul class="wl" id="rdVocab"></ul>
-        <button class="btn2" style="width:100%;margin-top:10px" id="rdAddVocab">+ Add new words to flashcards</button>
       </div>
     </div>
   </section>
@@ -675,7 +712,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
   <label for="mResp">Chatbot answer</label>
   <textarea id="mResp" placeholder="Paste the answer here…"></textarea>
   <div class="row" style="margin-top:10px"><button class="btn-ghost" id="mCancel">Cancel</button><button class="btn" id="mOk" style="flex:2">Use answer</button></div>
-  <p class="small muted" style="margin:10px 0 0">Tip: add a free Gemini key in Settings to skip this step.</p>
+  <p class="small muted" style="margin:10px 0 0">Tip: add a Gemini key in Settings to skip this step.</p>
 </div></div>
 
 <script>
@@ -698,7 +735,7 @@ const L = (v, e) => UI === "vi" ? v : e;
 const uiLangName = () => UI === "vi" ? "Vietnamese" : "English";
 
 const VI = {
-"Due today":"Cần học hôm nay","Day streak":"Ngày liên tiếp","Learning":"Đang học","Mastered":"Đã thuộc","End":"Kết thúc",
+"Due today":"Cần học","Day streak":"Chuỗi ngày","Learning":"Đang học","Mastered":"Đã thuộc","End":"Kết thúc",
 "✨ AI generate":"✨ AI tạo","✏️ Single":"✏️ Từng từ","📋 Paste list":"📋 Dán danh sách","📷 Screenshot":"📷 Ảnh chụp",
 "Generate words by topic":"Tạo từ theo chủ đề","Topic":"Chủ đề","Level":"Trình độ","How many":"Số lượng",
 "Each word comes with an example sentence. Words already in your list are skipped automatically.":"Mỗi từ kèm một câu ví dụ. Từ đã có sẽ tự bỏ qua.",
@@ -717,7 +754,7 @@ const VI = {
 "Use words I'm learning":"Dùng từ tôi đang học","✨ Generate passage":"✨ Tạo bài đọc","Title (optional)":"Tiêu đề (tuỳ chọn)",
 "Korean text":"Văn bản tiếng Hàn","Add translations (free auto-translate)":"Thêm bản dịch (tự dịch miễn phí)","Open in reader":"Mở để đọc",
 "My passages":"Bài đọc của tôi","← Back":"← Quay lại","🎤 Shadow mode":"🎤 Nói đuổi","Repeat":"Lặp lại","Speed":"Tốc độ",
-"1× native":"1× bản xứ","Translation":"Bản dịch","Hide Korean":"Ẩn tiếng Hàn","🎙 Speaking coach":"🎙 Luyện nói",
+"1× native":"1× bản xứ","Translation":"Bản dịch","Hide Korean":"Ẩn tiếng Hàn","Hide translation":"Ẩn bản dịch","Tap 🎙 to check your pronunciation":"Chạm 🎙 để chấm điểm phát âm","⚡ Basic":"⚡ Cơ bản","Grading":"Chấm điểm","AI grading needs a Gemini key.":"Chấm bằng AI cần Gemini key.","Add key":"Thêm key","How your speaking practice is checked":"Cách chấm phần luyện nói","🎙 Speaking coach":"🎙 Luyện nói",
 "Tap a sentence to play from there. Press space to play/pause.":"Chạm vào câu để phát từ đó. Phím cách để phát/dừng.",
 "Key words":"Từ khoá","+ Add new words to flashcards":"+ Thêm từ mới vào flashcard","✨ Add examples":"✨ Thêm câu ví dụ",
 "All":"Tất cả","New":"Mới","Study":"Học","New words per day":"Số từ mới mỗi ngày","Question types":"Dạng câu hỏi","Choose":"Chọn","Type":"Gõ","Speak":"Nói","Korean → meaning":"Hàn → nghĩa","🔊 → meaning":"🔊 → nghĩa","🔊 → Korean word":"🔊 → từ Hàn","Meaning → Korean":"Nghĩa → Hàn","🔊 Dictation":"🔊 Chính tả","🎙 Read aloud":"🎙 Đọc to","🎙 From meaning":"🎙 Nói từ nghĩa",
@@ -744,14 +781,14 @@ const VI = {
 "Use a free chatbot":"Dùng chatbot miễn phí","Copy the prompt below.":"Copy câu lệnh bên dưới.","Paste it into":"Dán vào","or any chatbot.":"hoặc chatbot bất kỳ.",
 "Copy its whole answer and paste it in the second box.":"Copy toàn bộ câu trả lời, dán vào ô thứ hai.","📋 Copy prompt":"📋 Copy câu lệnh",
 "Chatbot answer":"Câu trả lời của chatbot","Cancel":"Huỷ","Use answer":"Dùng câu trả lời",
-"Tip: add a free Gemini key in Settings to skip this step.":"Mẹo: thêm Gemini key miễn phí trong Cài đặt để bỏ qua bước này.",
+"Tip: add a Gemini key in Settings to skip this step.":"Mẹo: thêm Gemini key trong Cài đặt để bỏ qua bước này.",
 "Google Drive sync":"Đồng bộ Google Drive","e.g. ordering food at a restaurant":"vd. gọi món ở nhà hàng","e.g. 사과":"vd. 사과","Listen":"Nghe","e.g. apple":"vd. apple",
 "e.g. A conversation ordering coffee at a café. Or: a short diary entry about my weekend in Seoul.":"vd. Hội thoại gọi cà phê. Hoặc: nhật ký ngắn về cuối tuần ở Seoul.",
 "My text":"Văn bản của tôi","Paste Korean text here. It will be split into sentences.":"Dán văn bản tiếng Hàn vào đây. App sẽ tự tách câu.",
 "Previous sentence":"Câu trước","Play / pause":"Phát / dừng","Next sentence":"Câu sau","Stop":"Dừng",
 "Pause after each sentence so you can repeat it":"Dừng sau mỗi câu để bạn nói theo","Close":"Đóng","Listen to the native model":"Nghe mẫu bản xứ",
 "Record":"Ghi âm","Play my recording":"Nghe lại giọng mình","Search words…":"Tìm từ…","Paste the answer here…":"Dán câu trả lời vào đây…",
-"All these words are already in your list":"Các từ này đều đã có trong danh sách","→ you said":"→ bạn đọc","Next sentence →":"Câu tiếp →",
+"All these words are already in your list":"Các từ này đều đã có trong danh sách","→ you said":"→ bạn đọc",
 "I was right":"Tôi đúng mà","Correct pronunciation":"Phát âm đúng","We heard":"App nghe được","Welcome!":"Chào bạn!",
 "Add some Korean words to start learning.":"Thêm vài từ tiếng Hàn để bắt đầu học.","+ Add words":"+ Thêm từ","← My words":"← Từ vựng của tôi","Ready to study":"Sẵn sàng học",
 "▶ Start":"▶ Bắt đầu","Default":"Mặc định","Working…":"Đang xử lý…","Coach is listening to your recording…":"Đang nghe bản ghi của bạn…",
@@ -760,7 +797,7 @@ const VI = {
 "Didn't catch anything — speak a bit louder and closer to the mic, then try again.":"Chưa nghe thấy gì — nói to và gần micro hơn rồi thử lại.",
 "Drive sync turned off (your data stays on this device)":"Đã tắt đồng bộ Drive (dữ liệu vẫn còn trên máy)",
 "Enter or pick a topic":"Nhập hoặc chọn chủ đề","Generating…":"Đang tạo…","Invalid backup file":"File sao lưu không hợp lệ",
-"Keep at least one type on":"Cần bật ít nhất một dạng","Korean word is required":"Cần nhập từ tiếng Hàn","Loading reader…":"Đang tải bộ đọc…","📷 From a photo":"📷 Từ ảnh chụp","Reading text with AI…":"AI đang đọc chữ…","Tip: add a free Gemini key in Settings to read photos much more accurately.":"Mẹo: thêm Gemini key miễn phí trong Cài đặt để đọc ảnh chính xác hơn nhiều.","Text added. Please check it for mistakes.":"Đã thêm chữ. Kiểm tra lại lỗi nhé.",
+"Keep at least one type on":"Cần bật ít nhất một dạng","Korean word is required":"Cần nhập từ tiếng Hàn","Loading reader…":"Đang tải bộ đọc…","📷 From a photo":"📷 Từ ảnh chụp","Reading text with AI…":"AI đang đọc chữ…","Tip: add a Gemini key in Settings to read photos much more accurately.":"Mẹo: thêm Gemini key trong Cài đặt để đọc ảnh chính xác hơn nhiều.","Text added. Please check it for mistakes.":"Đã thêm chữ. Kiểm tra lại lỗi nhé.",
 "Microphone permission denied":"Micro bị chặn","Needs a Gemini key (Settings) or Chrome/Safari":"Cần Gemini key (Cài đặt) hoặc Chrome/Safari",
 "No Korean words found":"Không tìm thấy từ tiếng Hàn","No empty meanings":"Không có nghĩa nào trống",
 "No new words came back — try another topic":"Không có từ mới — thử chủ đề khác","No new words left — add some!":"Hết từ mới — thêm từ nhé!",
@@ -783,7 +820,7 @@ const VI = {
 "Daily routine":"Sinh hoạt hằng ngày","Delete":"Xoá","Drive permission wasn't granted":"Chưa cấp quyền Drive","Easy":"Dễ","Edit":"Sửa",
 "Elementary (TOPIK 2)":"Sơ cấp 2 (TOPIK 2)","Empty answer from AI":"AI không trả lời","Example sentence":"Câu ví dụ","Example translation":"Dịch câu ví dụ",
 "Extra":"Thừa","Family":"Gia đình","Feelings":"Cảm xúc","Final consonant":"Phụ âm cuối","Fluency":"Trôi chảy","Food & drinks":"Đồ ăn & thức uống",
-"Free limit reached — wait a minute and try again.":"Hết lượt miễn phí — đợi một phút rồi thử lại.","Good":"Tốt","Google sign-in expired":"Phiên đăng nhập Google đã hết hạn",
+"Gemini limit reached — wait a minute and try again.":"Hết lượt Gemini — đợi một phút rồi thử lại.","Good":"Tốt","Google sign-in expired":"Phiên đăng nhập Google đã hết hạn",
 "Hard":"Khó","Hobbies":"Sở thích","Home":"Nhà cửa","Intermediate (TOPIK 3)":"Trung cấp 1 (TOPIK 3)","Intonation":"Ngữ điệu",
 "Introducing myself":"Giới thiệu bản thân","K-drama phrases":"Câu trong phim Hàn","Keep practicing — listen 🔊 and try again":"Luyện tiếp nhé — nghe 🔊 rồi thử lại",
 "Listen first 🔊, then tap 🎙 and read aloud. Tap again to stop.":"Nghe mẫu 🔊, chạm 🎙 rồi đọc to. Chạm lần nữa để dừng.",
@@ -806,8 +843,8 @@ const VI = {
 "No passages yet — generate one above.":"Chưa có bài đọc — tạo một bài ở trên nhé.","NEW WORD":"TỪ MỚI","(no meaning)":"(chưa có nghĩa)","no meaning":"chưa có nghĩa",
 "Listen, say it out loud, then continue.":"Nghe, đọc to theo, rồi tiếp tục.","Got it →":"Đã nhớ →","Tap to replay":"Chạm để nghe lại","Save":"Lưu","Reset":"Đặt lại",
 "🌟 Excellent!":"🌟 Xuất sắc!","👍 Good — a few things to polish":"👍 Tốt — còn vài chỗ cần chỉnh","💪 Getting there — see the tips":"💪 Sắp được rồi — xem gợi ý nhé","Tip":"Gợi ý",
-"Tap 🎙 and read aloud. (Basic check — add a free Gemini key in Settings for full feedback on intonation & fluency.)":"Chạm 🎙 rồi đọc to. (Chấm cơ bản — thêm Gemini key miễn phí trong Cài đặt để được chấm ngữ điệu, độ trôi chảy.)",
-"⚠️ This browser can't check speech without AI. Add a free Gemini key in Settings, or use Chrome/Safari.":"⚠️ Trình duyệt này không chấm giọng được khi chưa có AI. Thêm Gemini key trong Cài đặt, hoặc dùng Chrome/Safari.",
+"Tap 🎙 and read aloud.":"Chạm 🎙 rồi đọc to.",
+"⚠️ This browser can't check speech without AI. Add a Gemini key in Settings, or use Chrome/Safari.":"⚠️ Trình duyệt này không chấm giọng được khi chưa có AI. Thêm Gemini key trong Cài đặt, hoặc dùng Chrome/Safari.",
 "No Korean voice found yet. On iPhone: Settings → Accessibility → Spoken Content → Voices → Korean. On Android: install Korean in Google Text-to-Speech. Windows: add Korean speech in Settings → Time & language → Speech.":"Chưa có giọng tiếng Hàn. iPhone: Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói → Tiếng Hàn. Android: cài tiếng Hàn trong Google Text-to-Speech. Windows: Cài đặt → Thời gian & ngôn ngữ → Giọng nói.",
 "due now":"cần ôn","meaning":"nghĩa","Advanced":"Nâng cao",
 "Upper-intermediate (TOPIK 4)":"Trung cấp 2 (TOPIK 4)","Advanced (TOPIK 5–6)":"Cao cấp (TOPIK 5–6)"
@@ -1149,7 +1186,7 @@ async function gemini(prompt, extraParts, opts = {}){
     });
     if (!r.ok){
       let msg = ""; try { msg = (await r.json()).error.message; } catch(e){}
-      const err = new Error(r.status === 429 ? "Free limit reached — wait a minute and try again." : r.status === 400 || r.status === 403 ? "API key problem: " + (msg || r.status) : (msg || "HTTP " + r.status));
+      const err = new Error(r.status === 429 ? "Gemini limit reached — wait a minute and try again." : r.status === 400 || r.status === 403 ? "API key problem: " + (msg || r.status) : (msg || "HTTP " + r.status));
       err.status = r.status; throw err;
     }
     const j = await r.json();
@@ -1268,7 +1305,7 @@ function refreshStats(){
 }
 function refreshHome(){
   const { due, nl } = refreshStats();
-  if (homeAuto && due + nl > 0 && !session && !$("#v-study").classList.contains("hidden")) return startSession(false);
+  if (homeAuto && due + nl > 0 && !session && !$("#v-study").classList.contains("hidden")) return startSession(false, null, true);
   const h = $("#homeCard");
   if (!S.cards.length){
     h.innerHTML = `<div class="empty">${cheerHTML([["환영해요!", "Chào mừng bạn!", "Welcome!"]])}<p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">+ Add words</button></div>`;
@@ -1363,7 +1400,7 @@ function pickWeak(cards, n){
   const w = c => 1 + 2*Math.min(c.lapses||0, 5) + 4*Math.max(0, 2.5-(c.ease||2.5)) + (c.interval < 7 ? 2 : c.interval < 21 ? 1 : 0) + (c.due - now < DAY ? 2 : 0);
   return cards.map(c => ({ c, k: Math.pow(Math.random(), 1/w(c)) })).sort((x,y) => y.k - x.k).slice(0, n).map(x => x.c);
 }
-function startSession(practice, only){
+function startSession(practice, only, auto){
   let queue;
   if (only && only.length){
     // retry just the words missed last session, each twice (spaced), without touching the schedule
@@ -1386,6 +1423,7 @@ function startSession(practice, only){
   session = { queue, practice, done:0, total:queue.length, correct:0, answered:0, missed:new Set(), streak0:streakNow() };
   $("#studyHome").classList.add("hidden"); $("#studySession").classList.remove("hidden");
   document.body.classList.add("in-session");
+  document.body.classList.toggle("auto-session", !!auto);
   nextQ();
 }
 $("#endBtn").onclick = () => endSession();
@@ -1394,7 +1432,7 @@ function endSession(summary){
   homeAuto = false;
   const s = session; session = null;
   $("#studySession").classList.add("hidden"); $("#studyHome").classList.remove("hidden");
-  document.body.classList.remove("in-session");
+  document.body.classList.remove("in-session", "auto-session");
   if (summary && s && s.answered){ S.daily.result = { correct: s.correct, answered: s.answered, missed: [...s.missed] }; save(); }
   cheerTry = !!(summary && s && s.missed.size); refreshHome(); cheerTry = false;
   // streak went up this session → bump the tile; milestones get the big burst, a perfect run a normal one
@@ -1444,6 +1482,7 @@ function renderIntro(item){
   bindSay($("#qBox"));
   if (S.settings.autoPlay) setTimeout(()=>speak(c.ko), 250);
   $("#gotIt").onclick = () => {
+    document.body.classList.remove("auto-session");
     session.queue.shift(); session.done++;
     S.daily.newCount++; save();
     const pos = Math.min(session.queue.length, 2 + Math.floor(Math.random()*2));
@@ -1580,6 +1619,7 @@ function answerTyped(item){
   finish(item, ok, v);
 }
 function finish(item, ok, typed, extra){
+  document.body.classList.remove("auto-session");   // they're studying now → focus mode, tab bar goes
   const c = item.card; session.answered++; if (ok) session.correct++; else session.missed.add(c.id);
   const reveal = `<div style="margin-top:4px"><b lang="ko" style="font-size:20px">${esc(c.ko)}</b> — ${esc(c.meaning)}</div>`;
   const exBlock = exampleHTML(c);
@@ -1882,7 +1922,7 @@ async function ocrText(file, langs, st, bw, bar){
 }
 function ocrHint(st){
   if (aiErr) st.append(document.createElement("br"), "⚠️ AI couldn't read it (" + aiErr + ") — used the basic reader, expect mistakes.");
-  else if (!hasKey()) st.append(document.createElement("br"), "Tip: add a free Gemini key in Settings to read photos much more accurately.");
+  else if (!hasKey()) st.append(document.createElement("br"), "Tip: add a Gemini key in Settings to read photos much more accurately.");
 }
 async function runOCR(file){
   const url = URL.createObjectURL(file);
@@ -2043,7 +2083,7 @@ $("#rdOwnBtn").onclick = async () => {
 };
 
 let curP = null;
-const P = { idx: 0, playing: false, rep: 0, token: 0, timer: null, tick: null };
+const P = { idx: 0, single: false, playing: false, rep: 0, token: 0, timer: null, tick: null };
 function openReader(id){
   rdNewOpen = false;   // back on the list, the form is folded again
   curP = S.passages.find(p => p.id === id); if (!curP) return;
@@ -2053,29 +2093,35 @@ function openReader(id){
   $("#rdSub").textContent = curP.titleMean || "";
   $("#pRate").value = String([0.6,0.75,0.85,1].reduce((a,b)=>Math.abs(b-S.settings.rate)<Math.abs(a-S.settings.rate)?b:a));
   renderSentences();
-  const have = new Set(S.cards.map(c => c.ko));
-  $("#rdVocabCard").classList.toggle("hidden", !curP.vocab.length);
-  $("#rdVocab").innerHTML = curP.vocab.map(v => `<li><button class="speak sm" data-say="${esc(v.ko)}">🔊</button><div class="t"><b lang="ko">${esc(v.ko)}</b><div>${esc(v.meaning)}</div></div>${have.has(v.ko) ? '<span class="badge b-master">In list</span>' : ""}</li>`).join("");
-  bindSay($("#rdVocab"));
+  renderRdVocab();
   window.scrollTo(0,0);
   navSave({ v: "read", p: curP.id, y: 0 });
 }
 function renderSentences(){
+  $("#reader .player").after($("#coach"));   // park the inline coach before the list is rebuilt, or innerHTML would destroy it
   $("#sentList").innerHTML = curP.sentences.map((s,i) => `<div class="sent" data-i="${i}"><div class="row" style="align-items:flex-start">
       <div style="flex:1"><div class="sk" lang="ko">${esc(s.ko)}</div>${s.meaning ? `<div class="sm">${esc(s.meaning)}</div>` : ""}${s.best != null ? `<div class="best">🎙 best ${s.best}/100</div>` : ""}</div>
       <button class="icon-btn smic" title="Practice speaking this sentence">🎙</button></div></div>`).join("");
   $$("#sentList .sent").forEach(el => {
-    el.onclick = () => { el.classList.add("reveal"); playFrom(+el.dataset.i); };
-    el.querySelector(".smic").onclick = e => { e.stopPropagation(); openCoach(+el.dataset.i); };
+    el.onclick = () => { el.classList.add("reveal"); playFrom(+el.dataset.i, true); };
+    el.querySelector(".smic").onclick = e => { e.stopPropagation(); +el.dataset.i === C.i ? closeCoach() : openCoach(+el.dataset.i); };
   });
   applyReaderView();
   markSentence(P.playing ? P.idx : -1);
+  if (C.i >= 0 && !$("#coach").classList.contains("hidden")) placeCoach();
+}
+// the coach opens right under its sentence, like an expanding row, instead of a separate card above the list
+function placeCoach(){
+  const el = $$("#sentList .sent")[C.i]; if (!el) return;
+  $$("#sentList .sent").forEach(x => { x.classList.toggle("coaching", x === el); setMic(x, x === el); });
+  el.after($("#coach"));
+  return el;
 }
 function applyReaderView(){
-  $("#sentList").classList.toggle("hidem", !$("#pShowM").checked);
+  $("#sentList").classList.toggle("hidem", $("#pHideM").checked);
   $("#sentList").classList.toggle("hidek", $("#pHideK").checked);
 }
-$("#pShowM").onchange = applyReaderView; $("#pHideK").onchange = applyReaderView;
+$("#pHideM").onchange = applyReaderView; $("#pHideK").onchange = applyReaderView;
 $("#rdBack").onclick = () => { stopPlayer(); closeCoach(); curP = null; navSave({ p: "", y: 0 }); $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
 $("#rdDel").onclick = () => {
   const b = $("#rdDel");
@@ -2083,13 +2129,30 @@ $("#rdDel").onclick = () => {
   delete b.dataset.confirm; b.textContent = "🗑️";
   S.passages = S.passages.filter(p => p !== curP); save(); $("#rdBack").click(); toast("Passage deleted");
 };
-$("#rdAddVocab").onclick = () => {
-  if (!curP) return;
+// key words: 🔊 | word over meaning | status badge (saved) or ＋ (not saved yet), all vertically centred
+function renderRdVocab(){
+  const byKo = new Map(S.cards.map(c => [c.ko, c]));
+  const lab = { new:["New","b-new"], learn:["Learning","b-learn"], master:["Mastered","b-master"] };
+  $("#rdVocabCard").classList.toggle("hidden", !curP.vocab.length);
+  $("#rdVocab").innerHTML = curP.vocab.map((v, i) => {
+    const c = byKo.get(v.ko), [t, cls] = c ? lab[status(c)] : [];
+    return `<li><button class="speak sm" data-say="${esc(v.ko)}" title="${L("Nghe", "Listen")}">🔊</button><div class="t"><b lang="ko">${esc(v.ko)}</b>
+      <div>${esc(v.meaning)}</div></div>${c ? `<span class="badge ${cls}">${t}</span>` : `<button class="icon-btn" style="flex:0 0 auto;color:var(--accent);font-size:22px" data-add="${i}" title="${L("Thêm vào thẻ", "Add to flashcards")}" aria-label="${L("Thêm vào thẻ", "Add to flashcards")}">＋</button>`}</li>`;
+  }).join("");
+  bindSay($("#rdVocab"));
+  $$("#rdVocab [data-add]").forEach(b => b.onclick = () => rdAdd([curP.vocab[+b.dataset.add]]));
+  const left = curP.vocab.filter(v => !byKo.has(v.ko)).length;
+  $("#rdAddVocab").classList.toggle("hidden", left < 2);
+  $("#rdAddVocab").title = L("Thêm các từ chưa có vào thẻ", "Add the words you don't have yet to flashcards");
+  $("#rdAddVocab").textContent = L(`+ Lưu ${left} từ`, `+ Save ${left} words`);
+}
+function rdAdd(vs){
   const findS = v => curP.sentences.find(s => s.ko.includes(v.ko.replace(/다$/,""))) || {};
-  const r = addCards(curP.vocab.map(v => ({ ko: v.ko, meaning: v.meaning, ex: findS(v).ko || "", exMean: findS(v).meaning || "" })));
+  const r = addCards(vs.map(v => ({ ko: v.ko, meaning: v.meaning, ex: findS(v).ko || "", exMean: findS(v).meaning || "" })));
   toast(r.added ? `Added ${r.added} word${r.added===1?"":"s"} to flashcards` : "All these words are already in your list");
-  openReader(curP.id);
-};
+  renderRdVocab();   // re-render just this card — reopening the reader would jump back to the top
+}
+$("#rdAddVocab").onclick = () => { if (curP) rdAdd(curP.vocab); };
 
 function markSentence(i){
   $$("#sentList .sent").forEach((el, j) => el.classList.toggle("cur", j === i));
@@ -2106,9 +2169,11 @@ function stopPlayer(){
   setPlayIcon();
 }
 function pausePlayer(){ P.token++; P.playing = false; clearTimers(); if ("speechSynthesis" in window) speechSynthesis.cancel(); setPlayIcon(); }
-function playFrom(i){
+// single: a tapped sentence plays just itself (repeats/shadow included) and stops; ▶ ⏮ ⏭ keep going through the passage
+function playFrom(i, single){
   if (!curP) return;
   pausePlayer();
+  P.single = !!single;
   P.idx = Math.max(0, Math.min(i, curP.sentences.length - 1)); P.rep = 0; P.playing = true; setPlayIcon();
   playCurrent();
 }
@@ -2116,6 +2181,7 @@ function playCurrent(){
   if (!P.playing || !curP) return;
   if (P.idx >= curP.sentences.length){ P.playing = false; P.idx = 0; P.rep = 0; setPlayIcon(); $("#pTurn").textContent = "✅ Finished"; return; }
   const tok = ++P.token, s = curP.sentences[P.idx];
+  if (C.i >= 0) closeCoach();   // listening and speaking practice are one-at-a-time → only one sentence is ever highlighted
   markSentence(P.idx);
   $("#pTurn").textContent = "";
   let started = Date.now();
@@ -2127,7 +2193,11 @@ function afterSentence(dur){
   const next = () => {
     if (!P.playing) return;
     P.rep++;
-    if (P.rep >= reps){ P.rep = 0; P.idx++; }
+    if (P.rep >= reps){
+      P.rep = 0;
+      if (P.single){ P.playing = false; setPlayIcon(); return; }   // stays on this sentence, so ▶ continues from here
+      P.idx++;
+    }
     playCurrent();
   };
   if ($("#pShadow").checked){
@@ -2141,11 +2211,14 @@ function afterSentence(dur){
 $("#pPlay").onclick = () => {
   if (!curP) return;
   if (P.playing) pausePlayer();
-  else { P.playing = true; setPlayIcon(); playCurrent(); }  // resumes from the start of the current sentence
+  else { P.single = false; P.playing = true; setPlayIcon(); playCurrent(); }  // resumes from the start of the current sentence
 };
-$("#pStop").onclick = () => stopPlayer();
-$("#pPrev").onclick = () => playFrom(P.idx - 1);
-$("#pNext").onclick = () => playFrom(P.idx + 1);
+$("#pOptBtn").onclick = e => { e.stopPropagation(); const open = $("#pOpts").classList.toggle("hidden") === false; $("#pOptBtn").setAttribute("aria-expanded", open); };
+document.addEventListener("click", e => { if (!$("#pOpts").classList.contains("hidden") && !e.target.closest("#pOpts")) { $("#pOpts").classList.add("hidden"); $("#pOptBtn").setAttribute("aria-expanded", false); } });
+// while the speaking coach is open, ⏮ ⏭ move it between sentences (the bar is always on screen); otherwise they play
+const coachStep = d => { const j = C.i + d; if (j >= 0 && j < curP.sentences.length) openCoach(j); };
+$("#pPrev").onclick = () => C.i >= 0 ? coachStep(-1) : playFrom(P.idx - 1);
+$("#pNext").onclick = () => C.i >= 0 ? coachStep(1) : playFrom(P.idx + 1);
 $("#pRate").onchange = () => { if (P.playing) { P.rep = 0; pausePlayer(); P.playing = true; setPlayIcon(); playCurrent(); } };
 document.addEventListener("keydown", e => {
   if ($("#reader").classList.contains("hidden") || $("#v-read").classList.contains("hidden")) return;
@@ -2159,19 +2232,38 @@ document.addEventListener("keydown", e => {
 const C = { i: -1, rec: null, stream: null, chunks: [], blob: null, url: null, recog: null, heard: "", t0: 0, dur: 0, autoStop: null, busy: false };
 const hasKey = () => !!(S.settings.apiKey && S.settings.apiKey.trim());
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+// speaking coach grading: AI (Gemini, needs a key) or basic (browser speech recognition), picked in the reader's ⚙ panel
+const coachAI = () => hasKey() && S.settings.coachGrade !== "basic";
+function syncGrade(askKey){
+  $$("#cGrade button").forEach(b => b.classList.toggle("on", b.dataset.g === (coachAI() ? "ai" : "basic")));
+  $("#cGrade [data-g=ai]").textContent = "✨ AI" + (hasKey() ? "" : " 🔒");
+  $("#cNote").classList.toggle("hidden", !askKey);   // no key + tapped AI → say what's missing, right there
+}
+$$("#cGrade button").forEach(b => b.onclick = () => {
+  if (b.dataset.g === "ai" && !hasKey()) return syncGrade(true);
+  S.settings.coachGrade = b.dataset.g; save();
+  if (C.i >= 0) openCoach(C.i);   // refresh the coach's hint for the new mode
+});
+$("#cKeyLink").onclick = () => { closeCoach(); show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
 function openCoach(i){
   if (!curP) return;
   pausePlayer(); cancelRec();
   C.i = i; const s = curP.sentences[i];
-  $("#coach").classList.remove("hidden");
+  $("#coach").classList.remove("hidden"); $("#rdHint").classList.add("hidden");
+  $$("#sentList .sent.cur").forEach(x => x.classList.remove("cur"));   // playback is paused → drop its highlight, the coached row is the active one
+  const el = placeCoach();
   $("#cTarget").textContent = s.ko; $("#cTargetM").textContent = s.meaning || "";
   $("#cResult").innerHTML = ""; $("#cMine").disabled = true;
-  $("#cStatus").textContent = hasKey() ? "Listen first 🔊, then tap 🎙 and read aloud. Tap again to stop."
-    : SR ? "Tap 🎙 and read aloud. (Basic check — add a free Gemini key in Settings for full feedback on intonation & fluency.)"
-    : "⚠️ This browser can't check speech without AI. Add a free Gemini key in Settings, or use Chrome/Safari.";
-  $("#coach").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("#cStatus").textContent = coachAI() ? "Listen first 🔊, then tap 🎙 and read aloud. Tap again to stop."
+    : SR ? "Tap 🎙 and read aloud."
+    : "⚠️ This browser can't check speech without AI. Add a Gemini key in Settings, or use Chrome/Safari.";
+  syncGrade();
+  // the sticky player sits on top of whatever scrolls to the top edge → stop just below it so 🔊/🎙 stay tappable
+  if (el){ el.style.scrollMarginTop = ($("#reader .player").offsetHeight + 12) + "px"; el.scrollIntoView({ behavior: "smooth", block: "start" }); }
 }
-function closeCoach(){ cancelRec(); $("#coach").classList.add("hidden"); C.i = -1; }
+// the row's 🎙 turns into the coach's close button while it's open
+function setMic(row, open){ const b = row.querySelector(".smic"); if (!b) return; b.textContent = open ? "✕" : "🎙"; b.title = open ? L("Đóng", "Close") : L("Luyện nói câu này", "Practice speaking this sentence"); }
+function closeCoach(){ cancelRec(); $("#coach").classList.add("hidden"); $("#rdHint").classList.remove("hidden"); $$("#sentList .sent.coaching").forEach(x => { x.classList.remove("coaching"); setMic(x, false); }); C.i = -1; }
 $("#cClose").onclick = closeCoach;
 $("#cListen").onclick = () => { if (curP && C.i >= 0) speak(curP.sentences[C.i].ko, { rate: +$("#pRate").value }); };
 $("#cMine").onclick = () => { if (C.url) new Audio(C.url).play(); };
@@ -2208,9 +2300,10 @@ async function startRec(){
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   if ((location.protocol === "file:" && /Android/i.test(navigator.userAgent)) || (location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { micHelp("insecure"); return; }
   if (await micPermissionState() === "denied") { micHelp("site-denied"); return; }
-  const useAI = hasKey();
+  const useAI = coachAI();
   if (!useAI && !SR) { toast("Needs a Gemini key (Settings) or Chrome/Safari"); return; }
   C.heard = ""; C.blob = null; $("#cResult").innerHTML = "";
+  if (curP && C.i >= 0) $("#cTarget").textContent = curP.sentences[C.i].ko;   // re-recording (the big 🎙 is the "try again") clears the old marks
   try {
     // Android Chrome can't feed the mic to MediaRecorder and SpeechRecognition at the same time:
     // the recorder wins and recognition hears silence. Without an AI key, use recognition only there.
@@ -2271,7 +2364,7 @@ async function onRecStop(){
   if (C.url) URL.revokeObjectURL(C.url);
   C.url = URL.createObjectURL(C.blob); $("#cMine").disabled = false;
   if (C.dur < 500) { $("#cStatus").textContent = "That was too short — try again."; return; }
-  if (hasKey()) evaluateAI(); else setTimeout(() => evaluateLocal(), 500); // let final speech results arrive
+  if (coachAI()) evaluateAI(); else setTimeout(() => evaluateLocal(), 500); // let final speech results arrive
 }
 
 /* audio → 16 kHz mono WAV (base64) so any AI model accepts it */
@@ -2397,7 +2490,7 @@ function evaluateLocal(){
   const j = { heard, scores: { accuracy, fluency }, issues, local: true,
     good: accuracy >= 90 ? (vi() ? "Phát âm rõ ràng, máy nhận diện gần như chính xác!" : "Very clear — speech recognition understood almost everything!") : "",
     overall: (vi() ? `Tốc độ: ${sps.toFixed(1)} âm tiết/giây (người bản xứ ~5–7). ` : `Pace: ${sps.toFixed(1)} syllables/sec (natives ~5–7). `) +
-      (vi() ? "Đây là kiểm tra cơ bản bằng nhận diện giọng nói. Thêm Gemini key miễn phí để được chấm ngữ điệu, độ tự nhiên và hướng dẫn chi tiết hơn." : "This is a basic check using speech recognition. Add a free Gemini key for intonation, native-likeness and more detailed coaching.") };
+      (vi() ? "Đây là kiểm tra cơ bản bằng nhận diện giọng nói. Thêm Gemini key để được chấm ngữ điệu, độ tự nhiên và hướng dẫn chi tiết hơn." : "This is a basic check using speech recognition. Add a Gemini key for intonation, native-likeness and more detailed coaching.") };
   renderCoachResult(s, j, false);
 }
 
@@ -2449,10 +2542,8 @@ function renderCoachResult(s, j, ai){
         <div class="small" style="margin-top:3px">${esc(x.tip)}</div></div></div>`).join("")}</div>` : ""}
     ${j.good ? `<div class="feedback ok small">✅ ${esc(j.good)}</div>` : ""}
     ${j.overall ? `<div class="box small">💡 ${esc(j.overall)}</div>` : ""}
-    <div class="row" style="margin-top:12px"><button class="btn2" id="cAgain">🔁 Try again</button>${C.i < curP.sentences.length - 1 ? `<button class="btn" id="cNextS">Next sentence →</button>` : ""}</div>`;
+    `;
   bindSay($("#cResult"));
-  $("#cAgain").onclick = () => { $("#cTarget").textContent = s.ko; $("#cResult").innerHTML = ""; startRec(); };
-  const nx = $("#cNextS"); if (nx) nx.onclick = () => openCoach(C.i + 1);
   if (overallScore && (s.best == null || overallScore > s.best)) { s.best = overallScore; save(); const el = $$("#sentList .sent")[C.i]; if (el) { const keep = C.i; renderSentences(); C.i = keep; } }
 }
 
@@ -3122,8 +3213,10 @@ const AR = { on: false, engine: "", recog: null, stream: null, rec: null, lines:
   savedId: "",   // once the live is saved, that saved copy keeps growing with new lines
   view: "" };    // id of the saved conversation being reviewed
 const AR_KEY = "hangulCards.army", AR_CHUNK = 10000;
-const AR_LANGS = { ko: ["🇰🇷", "Tiếng Hàn", "Korean", "ko-KR"], vi: ["🇻🇳", "Tiếng Việt", "Vietnamese", "vi-VN"], en: ["🇬🇧", "Tiếng Anh", "English", "en-US"],
-  zh: ["🇨🇳", "Tiếng Trung", "Chinese", "zh-CN"], ja: ["🇯🇵", "Tiếng Nhật", "Japanese", "ja-JP"], th: ["🇹🇭", "Tiếng Thái", "Thai", "th-TH"] };
+const AR_LANGS = { ko: ["🇰🇷", "Tiếng Hàn", "Korean", "ko-KR", "KOR"], vi: ["🇻🇳", "Tiếng Việt", "Vietnamese", "vi-VN", "VIE"], en: ["🇬🇧", "Tiếng Anh", "English", "en-US", "ENG"],
+  zh: ["🇨🇳", "Tiếng Trung", "Chinese", "zh-CN", "CHN"], ja: ["🇯🇵", "Tiếng Nhật", "Japanese", "ja-JP", "JPN"], th: ["🇹🇭", "Tiếng Thái", "Thai", "th-TH", "THA"] };
+// language <option>: short code (VIE) on narrow screens so the select doesn't truncate, full name otherwise
+const arOpt = k => `<option value="${k}">${AR_LANGS[k][0]} ${innerWidth < 560 ? AR_LANGS[k][4] : L(AR_LANGS[k][1], AR_LANGS[k][2])}</option>`;
 const BTS_GLOSSARY = `Context: a BTS livestream (Weverse Live / YouTube). Members — always write their stage names: RM (김남준, 남준, 알엠), Jin (김석진, 석진, 진), SUGA (민윤기, 윤기, 슈가), j-hope (정호석, 호석, 제이홉), Jimin (박지민, 지민), V (김태형, 태형, 뷔), Jung Kook (전정국, 정국, 꾹).
 Fandom terms: 방탄/방탄소년단 = BTS, 아미 = ARMY, 보라해 = "I purple you" (keep it), 형 = hyung, 막내 = maknae, 위버스 = Weverse, 컴백 = comeback, 무대 = stage.`;
 AR.mode = "bts";     // last mode entered: "bts" or "talk"
@@ -3216,18 +3309,18 @@ function renderArmy(){
       <h2 style="margin:0;font-size:18px">${icon} ${title()}</h2>
       <p class="small muted" style="margin:4px 0 0">${desc()}</p>
       <div class="row" style="margin-top:14px;align-items:flex-end">
-        <div><label style="margin-top:0">${L("Ngôn ngữ nói", "Spoken language")}</label><select id="arIn">${Object.keys(AR_LANGS).map(k => `<option value="${k}">${AR_LANGS[k][0]} ${L(AR_LANGS[k][1], AR_LANGS[k][2])}</option>`).join("")}</select></div>
+        <div><label style="margin-top:0">${L("Ngôn ngữ nói", "Spoken language")}</label><select id="arIn">${Object.keys(AR_LANGS).map(arOpt).join("")}</select></div>
         <button class="btn-ghost" id="arSwap" style="flex:0 0 auto;padding:12px" title="${L("Đổi chiều", "Swap")}">⇄</button>
-        <div><label style="margin-top:0">${L("Dịch sang", "Translate to")}</label><select id="arOut">${Object.keys(AR_LANGS).filter(k => k !== arIn()).map(k => `<option value="${k}">${AR_LANGS[k][0]} ${L(AR_LANGS[k][1], AR_LANGS[k][2])}</option>`).join("")}</select></div>
+        <div><label style="margin-top:0">${L("Dịch sang", "Translate to")}</label><select id="arOut">${Object.keys(AR_LANGS).filter(k => k !== arIn()).map(arOpt).join("")}</select></div>
       </div>
       <label>${L("Cách nghe", "Listening mode")}</label>
-      <div class="seg" id="arEng"><button data-e="free" ${SR ? "" : "disabled"}>⚡ ${L("Miễn phí", "Free")}</button><button data-e="ai">✨ AI Gemini${hasKey() ? "" : " 🔒"}</button></div>
-      ${aiAsk ? `<p class="small muted" style="margin:6px 0 0">${L("AI Gemini cần <b>Gemini key</b> (miễn phí, tạo trong ~1 phút). Thêm xong quay lại đây là dùng được AI — hoặc chọn ⚡ Miễn phí để nghe ngay.", "AI Gemini needs a <b>Gemini key</b> (free, takes ~1 minute). Add it and come back to use AI — or pick ⚡ Free to start listening now.")}</p>` : ""}
+      <div class="seg" id="arEng"><button data-e="free" ${SR ? "" : "disabled"}>⚡ ${L("Cơ bản", "Basic")}</button><button data-e="ai">✨ AI${hasKey() ? "" : " 🔒"}</button></div>
+      ${aiAsk ? `<p class="small muted" style="margin:6px 0 0">${L("AI cần <b>Gemini key</b> (tạo trong ~1 phút). Thêm xong quay lại đây là dùng được AI — hoặc chọn ⚡ Cơ bản để nghe ngay.", "AI needs a <b>Gemini key</b> (takes ~1 minute to create). Add it and come back to use AI — or pick ⚡ Basic to start listening now.")}</p>` : ""}
       ${aiAsk && eng ? "" : `<p class="small muted" style="margin:6px 0 0">${
         !eng ? L("⚠️ Trình duyệt này không nhận giọng nói. Thêm Gemini key trong Cài đặt, hoặc dùng Chrome/Safari.", "⚠️ This browser can't recognise speech. Add a Gemini key in Settings, or use Chrome/Safari.")
-        : eng === "ai" ? L("AI nghe từng đoạn ~10 giây: chính xác hơn, nhưng phụ đề trễ ~10–15 giây. Dùng lượt Gemini miễn phí.", "AI listens in ~10 s chunks: more accurate, but subtitles lag ~10–15 s. Uses your free Gemini quota.")
-        : L("Nhận giọng nói của trình duyệt: gần như tức thì, nhưng dễ nghe nhầm khi nói nhanh/ồn." + (hasKey() ? "" : " Dịch miễn phí có giới hạn mỗi ngày — thêm Gemini key để dịch tốt hơn."), "Browser speech recognition: near-instant, but mishears fast or noisy talk." + (hasKey() ? "" : " Free translation has a daily cap — add a Gemini key for better translations."))
-      }${hasKey() || aiAsk ? "" : ` <button class="linkbtn" id="arKeyLink">${L("Thêm key", "Add a key")}</button>`}</p>`}
+        : eng === "ai" ? L("AI nghe từng đoạn ~10 giây: chính xác hơn, nhưng phụ đề trễ ~10–15 giây. Dùng lượt Gemini của bạn.", "AI listens in ~10 s chunks: more accurate, but subtitles lag ~10–15 s. Uses your Gemini quota.")
+        : L("Nhận giọng nói của trình duyệt: gần như tức thì, nhưng dễ nghe nhầm khi nói nhanh/ồn.", "Browser speech recognition: near-instant, but mishears fast or noisy talk.")
+      }</p>`}
       ${eng === "ai" && arCanTab() && !arTalk() ? `<label>${L("Nguồn âm thanh", "Audio source")}</label>
       <div class="seg" id="arSrc"><button data-s="mic">🎙 ${L("Micro", "Microphone")}</button><button data-s="tab">🖥 ${L("Âm thanh tab", "Tab audio")}</button></div>
       <p class="small muted" style="margin:6px 0 0">${src === "tab" ? L("Chọn tab đang phát live và bật <b>“Chia sẻ âm thanh tab”</b>. Không cần bật loa.", "Pick the tab playing the live and turn on <b>“Share tab audio”</b>. No speakers needed.") : L("Micro nghe tiếng từ loa.", "The mic listens to your speakers.")}</p>` : ""}
@@ -3236,7 +3329,7 @@ function renderArmy(){
         // swap sits between the two languages, like Google Translate
         ? `<span class="ar-dir">${AR_LANGS[arIn()][0]}<button class="btn2" id="arMiniSwap" title="${L("Đổi lượt nói", "Swap turns")}" aria-label="${L("Đổi lượt nói", "Swap turns")}">⇄</button>${AR_LANGS[arOut()][0]}</span>
           <span class="acts"><button class="btn-ghost" id="arMiniTts"></button></span>`
-        : `<span>${BTS_LOGO} ${AR_LANGS[arIn()][0]} → ${AR_LANGS[arOut()][0]} · ${eng === "ai" ? "✨ AI" : "⚡ " + L("Miễn phí", "Free")}${src === "tab" ? " · 🖥" : ""}</span>`}</div>
+        : `<span>${BTS_LOGO} ${AR_LANGS[arIn()][0]} → ${AR_LANGS[arOut()][0]} · ${eng === "ai" ? "✨ AI" : "⚡ " + L("Cơ bản", "Basic")}${src === "tab" ? " · 🖥" : ""}</span>`}</div>
       <button class="btn ar-go" id="arGo" ${eng || aiAsk ? "" : "disabled"}></button>
       <div class="ar-lvl hidden" id="arLvlBar"><i id="arLvl"></i></div>
       <p class="small muted" id="arStatus" style="margin:8px 0 0"></p>
@@ -3602,7 +3695,7 @@ Return JSON exactly like: {"lines":[{"src":"<transcription>","tr":"<translation>
   } catch(e){
     if (e.status === 429 && ++AR.quota >= 3 && AR.on){
       // out of free Gemini requests: keep going with the browser's recogniser when we can
-      if (SR && arSrc() === "mic"){ S.settings.armyEngine = "free"; save(); arRestart(); arUI(L("⚠️ Hết lượt Gemini miễn phí — đã chuyển sang chế độ Miễn phí.", "⚠️ Out of free Gemini requests — switched to Free mode.")); }
+      if (SR && arSrc() === "mic"){ S.settings.armyEngine = "free"; save(); arRestart(); arUI(L("⚠️ Hết lượt Gemini — đã chuyển sang chế độ Cơ bản.", "⚠️ Out of Gemini requests — switched to Basic mode.")); }
       else { arStop(); arUI("⚠️ " + e.message); }
     } else if (AR.on) arUI("⚠️ " + e.message);
   }
