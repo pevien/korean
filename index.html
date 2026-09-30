@@ -28,7 +28,8 @@
 html,body{margin:0;background:var(--bg);color:var(--text);
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
   -webkit-text-size-adjust:100%}
-body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom));
+  word-break:keep-all;overflow-wrap:break-word}   /* Korean wraps at spaces, not mid-word (안녕/하세요) */
 .wrap{max-width:560px;margin:0 auto;padding:16px}
 header{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
 header h1{font-size:20px;margin:0}
@@ -114,7 +115,9 @@ nav button.on{color:var(--accent)}
 .guide details[open] summary::after{content:"–"}
 .guide details > div{padding:0 0 10px}
 .card > .guide{margin-top:10px}
-#gMicRes:empty{display:none}
+#gMicRes:empty,#voiceInfo:empty{display:none}
+.eye-btn{display:flex;align-items:center;justify-content:center;align-self:stretch}
+.eye-btn[aria-pressed="false"] .eye-off{display:none}   /* slashed eye while the key is visible */
 .card > .guide details{border-bottom:1px solid var(--line)}   /* a how-to inside a settings card */
 .guide p, .guide li{font-size:14px;line-height:1.6}
 .guide p{margin:0 0 8px}
@@ -244,9 +247,17 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .b-master{background:var(--ok-soft);color:var(--ok)}
 @media (prefers-color-scheme: dark){.b-learn{background:#3a2e17}}
 .icon-btn{background:none;color:var(--muted);padding:6px 8px;font-size:16px}
-.srs{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
-.srs .bar{width:72px;height:4px;border-radius:99px;background:var(--line);overflow:hidden}
-.srs .bar i{display:block;height:100%;background:var(--ok);border-radius:99px}
+/* my-words row: [🔊] word + status / meaning / example [⋯]; edit & delete live in the ⋯ menu so text gets the width */
+#wordList li{align-items:flex-start;position:relative}
+#wordList .speak.sm{width:32px;height:32px;font-size:14px;flex:0 0 32px}   /* sits right after the word, so meaning/example get the full row width */
+.wl .t .wh{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;white-space:normal;overflow:visible;font-size:inherit;color:inherit}
+.wh .badge{margin-left:auto}   /* status sits at the right, next to ⋯ */
+.more-btn{flex:0 0 auto;margin:-2px -6px 0 0;padding:8px 10px;line-height:1;font-size:20px;letter-spacing:1px}
+.menu{position:absolute;right:0;top:34px;z-index:6;background:var(--card);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 6px 24px rgba(0,0,0,.25);padding:4px;min-width:140px;display:flex;flex-direction:column}
+.menu button{background:none;color:var(--text);text-align:left;padding:10px 12px;border-radius:8px;font-weight:500;font-size:15px}
+.menu button:hover{background:var(--bg)}
+.menu .danger{color:var(--bad)}
 .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .tabs button{background:var(--card);border:1px solid var(--line);color:var(--muted);padding:8px 12px;font-size:14px;font-weight:500}
 .tabs button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -261,11 +272,13 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .set-inline{justify-content:space-between}
 .set-inline > label{flex:1;margin:0;font-size:15px;color:var(--text)}
 .set-inline > input{flex:0 0 84px;text-align:center}
-.qrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px}
-.qlab{flex:0 0 58px;font-size:12px;font-weight:600;color:var(--muted)}
-.qt{display:inline-flex;align-items:center;margin:0;padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--bg);
+.set-lab{font-size:15px;color:var(--text);margin:22px 0 10px}   /* a settings row title, same look as the .set-inline labels */
+.qrow{display:flex;align-items:flex-start;gap:6px;margin:0 0 8px}
+.qlab{flex:0 0 58px;font-size:12px;font-weight:600;color:var(--muted);padding-top:11px}
+.qchips{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px}   /* wrapped chips stay in their own column, not under the label */
+.qt{position:relative;display:inline-flex;align-items:center;margin:0;padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--bg);
   color:var(--muted);font-size:14px;cursor:pointer;user-select:none}
-.qt input{position:absolute;opacity:0;pointer-events:none}
+.qt input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}   /* hidden box must not stretch the page (global input width:100%) */
 .qt:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
 .qt:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
 .drop{border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted);cursor:pointer}
@@ -566,23 +579,23 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
       <div class="row set-inline" style="margin-top:8px"><label for="setLang">Meaning language</label>
         <select id="setLang" style="flex:0 0 140px"><option value="en">English</option><option value="vi">Vietnamese</option></select></div>
       <p class="small muted" style="margin:4px 0 0">Used for meanings, example translations and passage translations.</p>
-      <label>Question types</label>
+      <label class="set-lab">Question types</label>
       <!-- grouped by how you answer; each chip is a checkbox -->
-      <div class="qrow"><span class="qlab">Choose</span>
+      <div class="qrow"><span class="qlab">Choose</span><div class="qchips">
         <label class="qt"><input type="checkbox" data-mode="ko2m">Korean → meaning</label>
         <label class="qt"><input type="checkbox" data-mode="listen2m">🔊 → meaning</label>
-        <label class="qt"><input type="checkbox" data-mode="listen2kc">🔊 → Korean word</label></div>
-      <div class="qrow"><span class="qlab">Type</span>
+        <label class="qt"><input type="checkbox" data-mode="listen2kc">🔊 → Korean word</label></div></div>
+      <div class="qrow"><span class="qlab">Type</span><div class="qchips">
         <label class="qt"><input type="checkbox" data-mode="m2ko">Meaning → Korean</label>
-        <label class="qt"><input type="checkbox" data-mode="listen2ko">🔊 Dictation</label></div>
-      <div class="qrow"><span class="qlab">Speak</span>
+        <label class="qt"><input type="checkbox" data-mode="listen2ko">🔊 Dictation</label></div></div>
+      <div class="qrow"><span class="qlab">Speak</span><div class="qchips">
         <label class="qt"><input type="checkbox" data-mode="ko2say">🎙 Read aloud</label>
-        <label class="qt"><input type="checkbox" data-mode="m2say">🎙 From meaning</label></div>
+        <label class="qt"><input type="checkbox" data-mode="m2say">🎙 From meaning</label></div></div>
       <label class="check"><input type="checkbox" id="setAuto"> Auto-play audio for Korean words</label>
     </div>
     <div class="card">
       <h2>Voice</h2>
-      <label for="setVoice">Korean voice <span class="muted">(young-adult voices, most natural first)</span></label>
+      <label for="setVoice">Korean voice</label>
       <select id="setVoice"></select>
       <p class="small muted" id="voiceInfo" style="margin:6px 0 0"></p>
       <p class="small muted" id="voiceWarn" style="margin:6px 0 0"></p>
@@ -591,7 +604,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
         <button data-r="0.7">🐢 Slow</button><button data-r="0.85">Learner</button><button data-r="1">🇰🇷 Native</button>
       </div>
       <input id="setRate" type="range" min="0.5" max="1.2" step="0.05" style="padding:0">
-      <div class="row" style="margin-top:10px">
+      <div class="row" style="margin-top:10px;align-items:stretch">
         <button class="btn2" id="testVoice">🔊 Test: 안녕하세요</button>
         <button class="btn2" id="gMicTest">🎙 Test microphone</button>
       </div>
@@ -603,7 +616,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
       <p class="small muted" style="margin-top:0">Used for generating words, example sentences and reading passages.</p>
       <div class="guide" data-g="g-key" data-noi18n></div>
       <label for="setKey">Gemini API key</label>
-      <div class="row"><input id="setKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn-ghost" style="flex:0 0 auto" id="keyShow">👁</button></div>
+      <div class="row"><input id="setKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn-ghost eye-btn" style="flex:0 0 auto" id="keyShow" aria-label="Show key" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="eye-off" d="M4 4l16 16"/></svg></button></div>
       <label for="setModel">Model</label>
       <select id="setModel"></select>
       <p class="small muted" style="margin:6px 0 0" data-noi18n id="setModelHint"></p>
@@ -710,7 +723,7 @@ const VI = {
 "All":"Tất cả","New":"Mới","Study":"Học","New words per day":"Số từ mới mỗi ngày","Question types":"Dạng câu hỏi","Choose":"Chọn","Type":"Gõ","Speak":"Nói","Korean → meaning":"Hàn → nghĩa","🔊 → meaning":"🔊 → nghĩa","🔊 → Korean word":"🔊 → từ Hàn","Meaning → Korean":"Nghĩa → Hàn","🔊 Dictation":"🔊 Chính tả","🎙 Read aloud":"🎙 Đọc to","🎙 From meaning":"🎙 Nói từ nghĩa",
 "Korean → choose meaning":"Tiếng Hàn → chọn nghĩa","🔊 Listen → choose meaning":"🔊 Nghe → chọn nghĩa","🔊 Listen → choose the Korean word":"🔊 Nghe → chọn từ tiếng Hàn","Listen · choose what you hear":"Nghe · chọn từ bạn nghe thấy","Meaning → type Korean":"Nghĩa → gõ tiếng Hàn",
 "🔊 Listen → type Korean (dictation)":"🔊 Nghe → gõ tiếng Hàn (chính tả)","Auto-play audio for Korean words":"Tự phát âm từ tiếng Hàn",
-"Voice":"Giọng đọc","Korean voice":"Giọng tiếng Hàn","(young-adult voices, most natural first)":"(giọng trẻ, tự nhiên nhất ở trên)",
+"Voice":"Giọng đọc","Korean voice":"Giọng tiếng Hàn","No known young voice on this device — showing all.":"Máy không có giọng trẻ — hiện tất cả.",
 "Show all Korean voices":"Hiện tất cả giọng","Speed:":"Tốc độ:","🐢 Slow":"🐢 Chậm","Learner":"Người học","🇰🇷 Native":"🇰🇷 Bản xứ",
 "🔊 Test: 안녕하세요":"🔊 Nghe thử: 안녕하세요","🎙 Test microphone":"🎙 Thử micro","AI (free)":"AI (miễn phí)",
 "Used for generating words, example sentences and reading passages.":"Dùng để tạo từ, câu ví dụ và bài đọc.",
@@ -787,7 +800,7 @@ const VI = {
 "Work & office":"Công việc & văn phòng","✅ Correct!":"✅ Chính xác!","❌ Not quite":"❌ Chưa đúng","❌ Not quite.":"❌ Chưa đúng.","❌ Not quite — you wrote":"❌ Chưa đúng — bạn gõ","— you wrote":"— bạn gõ","❌ Not quite — we heard":"❌ Chưa đúng — app nghe được","— we heard":"— app nghe được",
 "🎙 Korean → read it aloud":"🎙 Tiếng Hàn → đọc to","🎙 Meaning → say it in Korean":"🎙 Nghĩa → nói tiếng Hàn","Read it aloud":"Đọc to từ này","Say it in Korean":"Nói bằng tiếng Hàn","Can't speak now":"Giờ không nói được","Tap 🎙 and say it":"Bấm 🎙 rồi nói","🔊 Test:":"🔊 Nghe thử:",
 "This word will come back soon.":"Từ này sẽ sớm quay lại.","Continue →":"Tiếp tục →",
-"🔁 Extra practice":"🔁 Luyện thêm","+5 new words":"+5 từ mới","🔁 Try again":"🔁 Thử lại","In list":"Đã có",
+"Extra practice":"Luyện thêm","+5 new words":"+5 từ mới","🔁 Try again":"🔁 Thử lại","In list":"Đã có",
 "Add more words or practice without changing your schedule.":"Thêm từ hoặc luyện thêm mà không ảnh hưởng lịch ôn.",
 "Tap to reveal":"Chạm để xem","Show answer":"Xem đáp án","Hint":"Gợi ý","Check":"Kiểm tra","Got it":"Đã hiểu","Skip":"Bỏ qua","Next":"Tiếp",
 "No passages yet — generate one above.":"Chưa có bài đọc — tạo một bài ở trên nhé.","NEW WORD":"TỪ MỚI","(no meaning)":"(chưa có nghĩa)","no meaning":"chưa có nghĩa",
@@ -803,7 +816,6 @@ const VI_RX = [
  [/^⚠️ AI couldn't read it \((.*)\) — used the basic reader, expect mistakes\.$/s, (m, e) => "⚠️ AI không đọc được (" + trText(e) + ") — đã dùng bộ đọc cơ bản, có thể sai nhiều."],
  [/^(.*?)(\d+) sentences$/s, (m, pre, n) => trLevels(pre) + n + " câu"],
  [/^in (\d+ (?:min|h|days?|mo))$/, (m, t) => "sau " + viTime(t)],
- [/^(.*) · No known young voice on this device — showing all\.$/, (m, a) => trText(a) + " · Máy không có giọng trẻ — hiện tất cả."],
  [/^🔥 (\d+) day streak$/, "🔥 $1 ngày liên tiếp"],
  [/^(\d+) reviews? and (\d+) new words?\. Reviewed today: (\d+)\.$/, "$1 từ cần ôn và $2 từ mới. Hôm nay đã ôn: $3."],
  [/^Next review in (.+?)\. Add more words or practice without changing your schedule\.$/, (m, t) => "Lần ôn tới sau " + viTime(t) + ". Thêm từ hoặc luyện thêm mà không ảnh hưởng lịch ôn."],
@@ -824,7 +836,6 @@ const VI_RX = [
  [/^💪 Session complete — (\d+)\/(\d+) correct \((\d+)%\)\. Let's lock in the words you missed\.$/, "💪 Xong lượt học — đúng $1/$2 ($3%). Luyện lại các từ còn sai nhé."],
  [/^🔁 Practice (\d+) missed words?$/, "🔁 Luyện lại $1 từ sai"],
  [/^🎙 best (\d+)\/100$/, "🎙 cao nhất $1/100"],
- [/^Using: (.*?)( \(online voice\))?$/, (m, v, o) => "Đang dùng: " + v + (o ? " (giọng online)" : "")],
  [/^(\d+) left$/, "còn $1"],
  [/^Practice · (\d+) left$/, "Luyện thêm · còn $1"],
  [/^Starts with: (.*) · (\d+) characters$/, "Bắt đầu bằng: $1 · $2 ký tự"],
@@ -1041,9 +1052,7 @@ function loadVoices(){
     if (voices.length) S.settings.voice = (yuna || voices[0]).name;
   }
   if (S.settings.voice) sel.value = S.settings.voice;
-  const cur = voices.find(v => v.name === S.settings.voice);
-  $("#voiceInfo").textContent = cur ? `Using: ${cur.name}${cur.localService === false ? " (online voice)" : ""}` : "";
-  if (allKo.length && !young.length) $("#voiceInfo").textContent += " · No known young voice on this device — showing all.";
+  $("#voiceInfo").textContent = allKo.length && !young.length ? "No known young voice on this device — showing all." : "";
   $("#voiceWarn").textContent = !("speechSynthesis" in window) ? "This browser can't speak. Try Chrome or Safari."
     : voices.length ? "" : "No Korean voice found yet. On iPhone: Settings → Accessibility → Spoken Content → Voices → Korean. On Android: install Korean in Google Text-to-Speech. Windows: add Korean speech in Settings → Time & language → Speech.";
 }
@@ -1273,7 +1282,7 @@ function refreshHome(){
     const next = S.cards.filter(c=>c.last).sort((a,b)=>a.due-b.due)[0];
     const when = next ? timeUntil(next.due) : "";
     h.innerHTML = `${resultHTML()}<div class="empty">${cheerHTML()}<p class="muted" style="margin-top:0">${when ? "Next review in " + when + ". " : ""}Add more words or practice without changing your schedule.</p>
-      <div class="row"><button class="btn2" id="pracBtn">🔁 Extra practice</button><button class="btn2" id="moreNew">+5 new words</button></div></div>`;
+      <div class="row" style="align-items:stretch"><button class="btn2" id="pracBtn">Extra practice</button><button class="btn2" id="moreNew">+5 new words</button></div></div>`;
     $("#pracBtn").onclick = () => startSession(true); bindResult();
     $("#moreNew").onclick = () => { if (!newCards().length) { toast("No new words left — add some!"); return; } S.daily.newCount = Math.max(0, S.daily.newCount - 5); save(); refreshHome(); };
   }
@@ -2460,24 +2469,33 @@ function renderWords(){
     const s = status(c), [t, cls] = lab[s];
     const due = s !== "new" ? (c.due <= Date.now() ? "due now" : "in " + timeUntil(c.due)) : "";
     const iv = s === "learn" ? ` · ${c.interval || 0}/21 ${L("ngày", "d")}` : s === "master" ? ` · ${c.interval} ${L("ngày", "d")}` : "";
-    const srs = s !== "learn" ? "" : `<span class="bar" title="${L("Tiến độ đến Đã thuộc (chu kỳ 21 ngày)", "Progress to Mastered (21-day interval)")}"><i style="width:${Math.min(100, Math.round((c.interval||0)/21*100))}%"></i></span>`;
     return `<li data-id="${c.id}">
-      <button class="speak sm" data-a="say">🔊</button>
-      <div class="t"><b lang="ko">${esc(c.ko)}</b><div>${esc(c.meaning) || "<i>no meaning</i>"}</div>${c.ex ? `<div class="exl" lang="ko">${esc(c.ex)} <span>· ${esc(c.exMean)}</span></div>` : ""}</div>
-      <div class="srs"><span class="badge ${cls}" title="${esc(due)}">${t}<span class="iv">${iv}</span></span>${srs}</div>
-      <button class="icon-btn" data-a="edit" title="Edit">✏️</button>
-      <button class="icon-btn" data-a="del" title="Delete">🗑️</button></li>`;
+      <div class="t"><div class="wh"><button class="speak sm" data-a="say" title="${L("Nghe", "Listen")}">🔊</button><b lang="ko">${esc(c.ko)}</b><span class="badge ${cls}" title="${esc(due)}">${t}<span class="iv">${iv}</span></span></div>
+        <div>${esc(c.meaning) || "<i>no meaning</i>"}</div>${c.ex ? `<div class="exl" lang="ko">${esc(c.ex)} <span>· ${esc(c.exMean)}</span></div>` : ""}</div>
+      <button class="icon-btn more-btn" data-a="more" title="${L("Thêm", "More")}" aria-haspopup="menu" aria-expanded="false">⋯</button></li>`;
   }).join("") : `<li class="muted" style="justify-content:center">${S.cards.length ? "No matches" : "No words yet"}</li>`;
   const noEx = S.cards.filter(c => !c.ex).length;
   $("#exPrompt").classList.toggle("hidden", !noEx);
   $("#exPromptTxt").textContent = `${noEx} word${noEx===1?"":"s"} without an example sentence.`;
-  $$("#wordList button").forEach(b => b.onclick = () => {
-    const id = b.closest("li").dataset.id, c = S.cards.find(x => x.id === id); if (!c) return;
+  $$("#wordList button").forEach(b => b.onclick = e => {
+    const li = b.closest("li"), id = li.dataset.id, c = S.cards.find(x => x.id === id); if (!c) return;
     if (b.dataset.a === "say") speak(c.ko);
-    if (b.dataset.a === "del"){ S.cards = S.cards.filter(x => x.id !== id); save(); renderWords(); toast("Deleted “" + c.ko + "”"); }
-    if (b.dataset.a === "edit") editRow(b.closest("li"), c);
+    if (b.dataset.a === "more"){ e.stopPropagation(); wordMenu(li, b, c); }
   });
 }
+// ⋯ menu on a word row: Edit / Delete. One menu open at a time; tapping elsewhere closes it.
+function closeWordMenu(){ const m = $("#wordList .menu"); if (m){ m.previousElementSibling.setAttribute("aria-expanded", "false"); m.remove(); } }
+function wordMenu(li, btn, c){
+  const open = li.querySelector(".menu"); closeWordMenu(); if (open) return;
+  btn.setAttribute("aria-expanded", "true");
+  btn.insertAdjacentHTML("afterend", `<div class="menu" role="menu"><button role="menuitem" data-m="edit">✏️ ${L("Sửa", "Edit")}</button><button role="menuitem" class="danger" data-m="del">🗑️ ${L("Xoá", "Delete")}</button></div>`);
+  const m = li.querySelector(".menu");
+  m.onclick = e => e.stopPropagation();
+  m.querySelector("[data-m=edit]").onclick = () => { closeWordMenu(); editRow(li, c); };
+  m.querySelector("[data-m=del]").onclick = () => { closeWordMenu(); S.cards = S.cards.filter(x => x.id !== c.id); save(); renderWords(); toast("Deleted “" + c.ko + "”"); };
+}
+document.addEventListener("click", closeWordMenu);
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeWordMenu(); });
 $("#exGenBtn").onclick = async () => {
   const list = S.cards.filter(c => !c.ex);
   if (!list.length) return;
@@ -2519,7 +2537,7 @@ $("#testVoice").onclick = () => speak("안녕하세요");
 $("#setKey").onchange = e => { S.settings.apiKey = e.target.value.trim(); save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]); refreshModels($("#setModel")); };
 $("#setModel").onchange = e => { S.settings.model = e.target.value; save(); };
 $("#setAutoEx").onchange = e => { S.settings.autoEx = e.target.checked; save(); };
-$("#keyShow").onclick = () => { const i = $("#setKey"); i.type = i.type === "password" ? "text" : "password"; };
+$("#keyShow").onclick = e => { const i = $("#setKey"); i.type = i.type === "password" ? "text" : "password"; e.currentTarget.setAttribute("aria-pressed", i.type === "text"); };
 $("#testAI").onclick = async () => {
   S.settings.apiKey = $("#setKey").value.trim(); save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]);
   if (!S.settings.apiKey) { toast("Paste your Gemini key first"); return; }
