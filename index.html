@@ -104,6 +104,8 @@ button{font:inherit;cursor:pointer;border:none;border-radius:12px;padding:12px 1
 /* back links: no box at rest (it's navigation, not an action); the hover/press tint keeps the tap target visible */
 .btn-ghost.back{background:none;padding:6px 8px;margin-left:-8px;font-size:15px}
 .btn-ghost.back:hover,.btn-ghost.back:active{background:color-mix(in srgb, var(--muted) 14%, transparent);color:var(--text)}
+.caret{display:block;width:1.2em;height:1.2em;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+#wBack .caret{display:inline-block;vertical-align:middle}
 .sub-head .back,.rd-top > .back{font-size:20px;padding:6px 10px}   /* arrow-only: a bit bigger so it's easy to hit */
 .btn-danger{background:var(--bad-soft);color:var(--bad)}
 .row{display:flex;gap:8px;align-items:center}
@@ -259,6 +261,9 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .qwrap{text-align:center;padding:22px 16px}
 .qtype{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
 .ko{font-size:44px;font-weight:700;line-height:1.2;word-break:keep-all}
+/* word + 🔊 on one row, so the prompt stays short and the dock never covers the speaker */
+.ko-line{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.ko-line .speak.sm{flex:0 0 auto}
 .mean{font-size:22px;font-weight:600}
 .speak{background:var(--accent-soft);color:var(--accent);border-radius:99px;width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
 .speak.big{width:96px;height:96px;font-size:40px}
@@ -276,6 +281,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
     border-radius:20px 20px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.18);padding:16px 16px calc(36px + env(safe-area-inset-bottom))}
   /* lifted off the very edge (home indicator / hard-to-reach corner) into the comfortable thumb arc */
   .dock button:not(.speak){min-height:52px}
+  .dock .cgrade button{min-height:0}
   .dock > *{max-width:528px;margin-left:auto;margin-right:auto}
   .dock .speak.big{margin-top:0}
 }
@@ -517,7 +523,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   <!-- ADD -->
   <section id="v-add" class="hidden">
     <div class="sub-head">
-      <div class="l"><button class="btn-ghost back" id="addBack" title="My words" aria-label="My words">←</button></div>
+      <div class="l"><button class="btn-ghost back" id="addBack" title="My words" aria-label="My words"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
       <div class="c"><span class="h">📚</span><h2>Add words</h2></div><div class="r"></div>
     </div>
     <div class="seg seg-ico" id="addTabs">
@@ -588,7 +594,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <div class="pg-head" id="rdListHead"><span class="h">📖</span><h2>My passages</h2><button class="btn" id="rdNewOpen" data-noi18n></button></div>
       <!-- "new passage" is its own sub-page, like Add words: [←] Tạo bài đọc — or a plain page heading when there's nothing to go back to -->
       <div class="sub-head hidden" id="rdNewHead">
-        <div class="l"><button class="btn-ghost back" id="rdNewBack" title="My passages" aria-label="My passages">←</button></div>
+        <div class="l"><button class="btn-ghost back" id="rdNewBack" title="My passages" aria-label="My passages"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
         <div class="c"><span class="h">📖</span><h2>Create a passage</h2></div><div class="r"></div>
       </div>
       <!-- same layout as Add words: icon tabs above the form card -->
@@ -632,7 +638,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     <div id="reader" class="hidden">
       <!-- [←] title … [✏️] [🗑] on one row; the title stays left-aligned since passage names run long -->
       <div class="rd-top">
-        <button class="btn-ghost back" id="rdBack" title="Back" aria-label="Back">←</button>
+        <button class="btn-ghost back" id="rdBack" title="Back" aria-label="Back"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="tt"><h2 id="rdTitle"></h2><p class="small muted" id="rdSub"></p></div>
         <button class="btn-ghost" id="rdEdit" title="Edit" aria-label="Edit">✏️</button>
         <button class="btn-ghost" id="rdDel">🗑️</button>
@@ -688,7 +694,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     <div class="wbar">
       <input id="search" type="search" placeholder="Search words…">
       <div class="tabs" id="filterTabs" style="margin:10px 0 0">
-        <button data-f="all" class="on">All<span class="n"></span></button>
         <button data-f="new">New<span class="n"></span></button>
         <button data-f="learn">Learning<span class="n"></span></button>
         <button data-f="master">Mastered<span class="n"></span></button>
@@ -1607,7 +1612,7 @@ function renderQuiz(item){
   const c = item.card, mode = item.mode || (item.mode = pickMode(c));
   const titles = { ko2m:"Choose the meaning", listen2m:"Listen · choose the meaning", listen2kc:"Listen · choose what you hear", m2ko:"Type it in Korean", listen2ko:"Listen · type what you hear", ko2say:"Read it aloud", m2say:"Say it in Korean" };
   let prompt = "";
-  if (mode === "ko2m" || mode === "ko2say") prompt = `<div class="ko" lang="ko">${esc(c.ko)}</div><button class="speak" id="qSpeak">🔊</button>`;
+  if (mode === "ko2m" || mode === "ko2say") prompt = `<div class="ko-line"><div class="ko" lang="ko">${esc(c.ko)}</div><button class="speak sm" id="qSpeak" title="Listen" aria-label="Listen">🔊</button></div>`;
   if (mode === "listen2m" || mode === "listen2ko" || mode === "listen2kc") prompt = `<button class="speak big" id="qSpeak">🔊</button><p class="small muted" style="margin:0">Tap to replay</p>`;
   if (mode === "m2ko" || mode === "m2say") prompt = `<div class="mean" style="font-size:28px">${esc(c.meaning)}</div>`;
   let answer = "";
@@ -1752,7 +1757,7 @@ function finish(item, ok, typed, extra){
     } else html += `<div class="dock"><button class="btn" id="contBtn">Continue →</button></div>`;
   } else {
     html = `<div class="feedback bad">❌ Not quite${typed ? ` ${item.spoken ? "— we heard" : "— you wrote"} <b lang="ko">${esc(typed)}</b>` : ""}.${reveal}${extra || ""}</div>${exBlock}
-      <div class="dock"><div class="row">${$("#qSpeak") ? "" : `<button class="speak sm" style="flex:0 0 48px;height:48px;width:48px" id="fbSpeak">🔊</button>`}${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2">Continue →</button></div></div>`;
+      <div class="dock"><div class="row">${$("#qSpeak") ? "" : `<button class="speak sm" style="flex:0 0 48px;height:48px;width:48px" id="fbSpeak">🔊</button>`}${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn" style="flex:0 0 auto;white-space:nowrap">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2">Continue →</button></div></div>`;
   }
   $("#fb").innerHTML = html;
   bindSay($("#fb"));
@@ -2763,7 +2768,8 @@ function renderCoachResult(s, j, ai){
 
 /* ---------------- words list ---------------- */
 let filter = "all";
-$$("#filterTabs button").forEach(b => b.onclick = () => { filter = b.dataset.f; $$("#filterTabs button").forEach(x=>x.classList.toggle("on", x===b)); renderWords(); });
+// no "All" tab: nothing selected shows every word; tapping the selected tab again clears it
+$$("#filterTabs button").forEach(b => b.onclick = () => { filter = filter === b.dataset.f ? "all" : b.dataset.f; $$("#filterTabs button").forEach(x=>x.classList.toggle("on", x.dataset.f===filter)); renderWords(); });
 $("#search").oninput = () => renderWords();
 function renderWords(){
   const q = $("#search").value.trim().toLowerCase();
@@ -3230,7 +3236,7 @@ function buildWelcome(){
 
     <div class="wnav">
       <button class="btn-ghost" id="wSkip">${L("Bỏ qua", "Skip")}</button>
-      <button class="btn-ghost" id="wBack" aria-label="Back">←</button>
+      <button class="btn-ghost" id="wBack" aria-label="Back"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
       <button class="btn" id="wNext"></button>
     </div>
   </div>`;
@@ -3539,7 +3545,7 @@ function renderArmy(){
   const aiAsk = arAiAsk();
   sec.innerHTML = `
     <div class="sub-head" id="arHead">
-      <div class="l"><button class="btn-ghost back" id="arHome" title="ARMY" aria-label="${L("Quay lại ARMY", "Back to ARMY")}">←</button></div>
+      <div class="l"><button class="btn-ghost back" id="arHome" title="ARMY" aria-label="${L("Quay lại ARMY", "Back to ARMY")}"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
       <div class="c"><h2>${icon} ${title()}</h2></div><div class="r"></div>
     </div>
     <div class="card" id="arCtl">
@@ -3648,7 +3654,7 @@ function renderArmySaved(){
   const saved = (S.lives || []).filter(x => arLiveMode(x) === tab).sort((a, b) => b.created - a.created);
   $("#v-army").innerHTML = `
     <div class="sub-head">
-      <div class="l"><button class="btn-ghost back" id="asBack" title="ARMY" aria-label="${L("Quay lại ARMY", "Back to ARMY")}">←</button></div>
+      <div class="l"><button class="btn-ghost back" id="asBack" title="ARMY" aria-label="${L("Quay lại ARMY", "Back to ARMY")}"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
       <div class="c"><h2>💾 ${L("Hội thoại đã lưu", "Saved conversations")}</h2></div><div class="r"></div>
     </div>
     <div class="card flat">
@@ -3667,7 +3673,7 @@ function renderArmyView(){
   const x = S.lives.find(v => v.id === AR.view), sec = $("#v-army");
   sec.innerHTML = `
     <div class="sub-head">
-      <div class="l"><button class="btn-ghost back" id="avBack" title="${L("Hội thoại đã lưu", "Saved conversations")}" aria-label="${L("Quay lại Hội thoại đã lưu", "Back to Saved conversations")}">←</button></div>
+      <div class="l"><button class="btn-ghost back" id="avBack" title="${L("Hội thoại đã lưu", "Saved conversations")}" aria-label="${L("Quay lại Hội thoại đã lưu", "Back to Saved conversations")}"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
       <div class="c"><input id="avTitle" class="av-title" type="text" value="${esc(arShownTitle(x))}" aria-label="${L("Tên hội thoại", "Conversation name")}" title="${L("Chạm để đổi tên", "Tap to rename")}"></div><div class="r"></div>
     </div>
     <div class="ar-tools" style="margin-bottom:14px">
