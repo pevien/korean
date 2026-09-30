@@ -1,0 +1,16 @@
+{
+  "name": "Hangul with PV",
+  "short_name": "Hangul with PV",
+  "description": "Học từ vựng, luyện đọc và luyện nói tiếng Hàn",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#12131a",
+  "theme_color": "#4f46e5",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

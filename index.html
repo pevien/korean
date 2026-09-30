@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Hangul Cards">
+<meta name="apple-mobile-web-app-title" content="Hangul with PV">
 <meta name="theme-color" content="#4f46e5">
-<title>Hangul Cards</title>
+<title>Hangul with PV</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -78,7 +78,7 @@ nav button.on{color:var(--accent)}
 #welcome h2{font-size:22px;margin:0 0 6px;line-height:1.25}
 #welcome .lead{font-size:15px;line-height:1.5;color:var(--muted);margin:0 0 18px}
 #welcome .feat{list-style:none;padding:0;margin:0;display:grid;gap:14px}
-#welcome .feat li{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.4;color:var(--muted)}
+#welcome .feat li{display:flex;gap:12px;align-items:center;font-size:15px;line-height:1.4;color:var(--text)}
 #welcome .feat li > span{font-size:20px;line-height:1.2;width:24px;flex:0 0 24px;text-align:center}
 #welcome .feat b{display:block;color:var(--text);font-size:15px;margin-bottom:1px}
 #welcome ol{padding-left:20px;margin:0 0 14px;line-height:1.6;font-size:14px}
@@ -88,6 +88,7 @@ nav button.on{color:var(--accent)}
 #welcome .wnav .btn{flex:1;width:auto}
 #welcome .wnav .btn-ghost{flex:0 0 auto}
 #welcome a, .guide a{color:var(--accent)}
+#welcome code{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12.5px;word-break:break-all}
 .linkbtn{background:none;color:var(--accent);padding:0;font-weight:600;font-size:13px}
 .guide details{border-top:1px solid var(--line)}
 .guide summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;gap:8px}
@@ -221,7 +222,7 @@ nav button.on{color:var(--accent)}
 <body>
 <div class="wrap">
   <header>
-    <h1>🇰🇷 Hangul Cards</h1>
+    <h1>🇰🇷 Hangul with PV</h1>
     <div style="display:flex;gap:6px;align-items:center">
       <button class="pill hidden" id="cloudBtn" style="cursor:pointer;font-weight:500" title="Google Drive sync">☁️</button>
       <span class="pill" id="streakPill">🔥 0 day streak</span>
@@ -483,6 +484,7 @@ nav button.on{color:var(--accent)}
         <button class="btn-ghost hidden" id="gdOff" style="flex:0 0 auto">Disconnect</button>
       </div>
     </div>
+    <div class="card" id="notifyCard" data-noi18n></div>
     <div class="card">
       <h2>Backup</h2>
       <p class="small muted" style="margin-top:0">Your words are stored in this browser (and in Google Drive if sync is on). Export a file as an extra backup.</p>
@@ -750,7 +752,7 @@ function load(){
   } catch(e) { console.warn("load failed", e); }
   if (S.daily.date !== todayStr()) S.daily = { date: todayStr(), newCount: 0, reviews: 0 };
 }
-function save(){ try { track(); localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){ toast("⚠️ Could not save (storage blocked)"); } if (window.__syncChanged) window.__syncChanged(); }
+function save(){ try { track(); localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){ toast("⚠️ Could not save (storage blocked)"); } if (window.__syncChanged) window.__syncChanged(); if (window.__notifySnap) window.__notifySnap(); }
 
 /* ---- change tracking for sync: stamps edited items with .mod, keeps tombstones for deletions ---- */
 let SNAP = null;
@@ -2148,6 +2150,7 @@ function applyRemote(R){
   }
   takeSnap();
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
+  if (window.__notifySnap) window.__notifySnap();
   if (!session && !$("#v-study").classList.contains("hidden")) refreshHome();
   else $("#streakPill").textContent = "🔥 " + streakNow() + " day streak";
   if (!$("#v-words").classList.contains("hidden")) renderWords();
@@ -2206,16 +2209,84 @@ document.addEventListener("visibilitychange", () => {
 });
 $$("nav button").forEach(b => b.addEventListener("click", () => { if (b.dataset.v === "set") setTimeout(renderSyncCard, 0); }));
 
+/* ---------------- review reminders (Periodic Background Sync) ---------------- */
+// The service worker can't read localStorage, so we keep a tiny snapshot in Cache Storage for it.
+// Per-device on purpose (notification permission is per device), so it is not part of S / Drive sync.
+const NOTIFY_KEY = "hangulCards.notify", NOTIFY_TAG = "review-reminder", NOTIFY_CACHE = "hangul-notify";
+const notifyOn = () => { try { return localStorage.getItem(NOTIFY_KEY) === "1"; } catch(e){ return false; } };
+const canPeriodic = () => "serviceWorker" in navigator && "Notification" in window && "periodicSync" in ServiceWorkerRegistration.prototype;
+let notifyT = null;
+window.__notifySnap = () => {
+  if (!("caches" in window)) return;
+  clearTimeout(notifyT);
+  notifyT = setTimeout(() => {
+    const snap = { on: notifyOn(), ui: UI, dues: S.cards.filter(c => c.last).map(c => c.due),
+      newTotal: newCards().length, newPerDay: S.settings.newPerDay, date: S.daily.date, newCount: S.daily.newCount, at: Date.now() };
+    caches.open(NOTIFY_CACHE).then(c => c.put("./__notify-state", new Response(JSON.stringify(snap), { headers: { "Content-Type": "application/json" } }))).catch(() => {});
+  }, 800);
+};
+async function setNotify(on){
+  if (on){
+    if (!canPeriodic()){ toast(L("Trình duyệt này không hỗ trợ nhắc nền", "This browser doesn't support background reminders")); return renderNotifyCard(); }
+    if (await Notification.requestPermission() !== "granted"){ toast(L("Bạn chưa cho phép thông báo", "Notifications are not allowed")); return renderNotifyCard(); }
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.periodicSync.register(NOTIFY_TAG, { minInterval: 4 * 60 * 60 * 1000 });
+    } catch(e){ toast(L("Chưa bật được — hãy cài app vào màn hình chính trước", "Couldn't enable — install the app to your home screen first")); return renderNotifyCard(); }
+    try { localStorage.setItem(NOTIFY_KEY, "1"); } catch(e){}
+    toast(L("🔔 Đã bật nhắc ôn tập", "🔔 Reminders on"));
+  } else {
+    try { localStorage.removeItem(NOTIFY_KEY); } catch(e){}
+    try { const reg = await navigator.serviceWorker.ready; await reg.periodicSync.unregister(NOTIFY_TAG); } catch(e){}
+  }
+  window.__notifySnap(); renderNotifyCard();
+}
+async function renderNotifyCard(){
+  const el = $("#notifyCard"); if (!el) return;
+  let note = "";
+  if (location.protocol !== "https:") note = L("Chỉ hoạt động khi mở app từ link https://.", "Only works when the app is opened from its https:// link.");
+  else if (!canPeriodic()) note = L("Trình duyệt này không hỗ trợ (cần Chrome/Edge trên Android hoặc máy tính, app đã cài).", "Not supported here (needs Chrome/Edge on Android or desktop, with the app installed).");
+  else if (Notification.permission === "denied") note = L("Thông báo đang bị chặn — hãy cho phép trong cài đặt trình duyệt.", "Notifications are blocked — allow them in your browser settings.");
+  else if (notifyOn()){
+    try { const st = await navigator.permissions.query({ name: "periodic-background-sync" }); if (st.state !== "granted") note = L("Trình duyệt chưa cho chạy nền — hãy cài app vào màn hình chính.", "Background runs not allowed yet — install the app to your home screen."); } catch(e){}
+  }
+  el.innerHTML = `<h2>🔔 ${L("Nhắc ôn tập", "Review reminders")}</h2>
+    <p class="small muted" style="margin-top:0">${L("Gửi thông báo khi có từ cần ôn. Trình duyệt tự chọn thời điểm kiểm tra (khoảng vài giờ một lần), không nhắc từ 22h đến 8h.", "Get a notification when words are due. The browser decides when to check (roughly every few hours); no reminders between 22:00 and 8:00.")}</p>
+    <label class="check"><input type="checkbox" id="setNotify" ${notifyOn() ? "checked" : ""}> ${L("Bật nhắc trên thiết bị này", "Remind me on this device")}</label>
+    ${note ? `<p class="small muted" style="margin:6px 0 0">${note}</p>` : ""}`;
+  $("#setNotify").onchange = e => setNotify(e.target.checked);
+}
+$$("nav button").forEach(b => b.addEventListener("click", () => { if (b.dataset.v === "set") setTimeout(renderNotifyCard, 0); }));
+renderNotifyCard();
+window.__notifySnap();
+
 /* ---------------- welcome & guide ---------------- */
 const WEL_KEY = "hangulCards.welcomed";
 const UA = navigator.userAgent;
 const isIOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isAndroid = /Android/i.test(UA);
 const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-const APP_URL = location.origin + location.pathname;
+const APP_URL = "https://pevien.github.io/korean/";
+const ORIGIN = new URL(APP_URL).origin;
+const appLink = () => `<a href="${APP_URL}" target="_blank" rel="noopener">${APP_URL}</a>`;
+const clientIdSteps = () => L(`
+    <ol><li>Mở <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a>, đăng nhập Gmail, tạo project mới (tên tuỳ ý, ví dụ <i>Hangul with PV</i>) → <b>Create</b></li>
+    <li>Mở <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a> (chọn đúng project vừa tạo) → <b>Enable</b></li>
+    <li>Mở <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> → <b>Get started</b>: App name <i>Hangul with PV</i>, support email là Gmail của bạn → Audience: <b>External</b> → email liên hệ → đồng ý điều khoản → <b>Create</b></li>
+    <li>Mục <b>Audience</b> → <b>Test users</b> → <b>Add users</b>: thêm chính Gmail bạn sẽ dùng để đồng bộ</li>
+    <li>Mục <b>Clients</b> → <b>Create client</b> → Application type: <b>Web application</b> → <b>Authorized JavaScript origins</b> → <b>Add URI</b>: <code>${ORIGIN}</code> → <b>Create</b></li>
+    <li>Copy <b>Client ID</b> (dạng <code>xxxx.apps.googleusercontent.com</code>) và dán vào ô Client ID</li></ol>
+    <p>Không cần Client secret. Origin phải khớp đúng địa chỉ bạn mở app (có <code>https://</code>, không có <code>/</code> ở cuối). Thay đổi có thể mất vài phút mới có hiệu lực.</p>`, `
+    <ol><li>Open <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a>, sign in, and create a new project (any name, e.g. <i>Hangul with PV</i>) → <b>Create</b></li>
+    <li>Open <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a> (with that project selected) → <b>Enable</b></li>
+    <li>Open <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> → <b>Get started</b>: app name <i>Hangul with PV</i>, support email = your Gmail → Audience: <b>External</b> → contact email → accept the terms → <b>Create</b></li>
+    <li><b>Audience</b> → <b>Test users</b> → <b>Add users</b>: add the Gmail you will sync with</li>
+    <li><b>Clients</b> → <b>Create client</b> → Application type: <b>Web application</b> → <b>Authorized JavaScript origins</b> → <b>Add URI</b>: <code>${ORIGIN}</code> → <b>Create</b></li>
+    <li>Copy the <b>Client ID</b> (looks like <code>xxxx.apps.googleusercontent.com</code>) and paste it into the Client ID box</li></ol>
+    <p>No client secret needed. The origin must exactly match the address you open the app from (with <code>https://</code>, no trailing <code>/</code>). Changes can take a few minutes to apply.</p>`);
 let installEvt = null, wStep = 0;
-addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (wStep === 1) renderInstall(); });
-addEventListener("appinstalled", () => { installEvt = null; if (wStep === 1) renderInstall(); });
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (wStep === 4) renderInstall(); });
+addEventListener("appinstalled", () => { installEvt = null; if (wStep === 4) renderInstall(); });
 
 function setUiLang(v){
   if (v === UI) return;
@@ -2226,7 +2297,7 @@ function bindLangSeg(root){
   Array.from(root.querySelectorAll("[data-ui]")).forEach(b => { b.classList.toggle("on", b.dataset.ui === UI); b.onclick = () => setUiLang(b.dataset.ui); });
 }
 
-const W_STEPS = 6;
+const W_STEPS = 5;
 function buildWelcome(){
   $("#welcome").innerHTML = `
   <div class="wbox">
@@ -2237,20 +2308,22 @@ function buildWelcome(){
 
     <div class="wstep" data-s="0">
       <div class="wicon" lang="ko">한</div>
-      <h2>${L("Chào mừng đến Hangul Cards", "Welcome to Hangul Cards")}</h2>
+      <h2>${L("Chào mừng đến Hangul with PV", "Welcome to Hangul with PV")}</h2>
       <p class="lead">${L("Học từ vựng, luyện đọc và luyện nói tiếng Hàn. Thiết lập mất khoảng 2 phút.", "Learn words, read and speak Korean. Setup takes about 2 minutes.")}</p>
       <ul class="feat">
-        <li><span>🎯</span><div><b>${L("Flashcard thông minh", "Smart flashcards")}</b>${L("Nhắc lại từ đúng lúc bạn sắp quên.", "Brings words back right before you forget them.")}</div></li>
-        <li><span>📖</span><div><b>${L("Bài đọc theo trình độ", "Readings at your level")}</b>${L("Nghe giọng bản xứ, tra từ ngay trong bài.", "Native audio and key words in every passage.")}</div></li>
-        <li><span>🎙</span><div><b>${L("Luyện nói có chấm điểm", "Speaking practice with scores")}</b>${L("Đọc to, AI nhận xét phát âm và ngữ điệu.", "Read aloud and get feedback on pronunciation.")}</div></li>
+        <li><span>🎯</span><div>${L("Flashcard nhắc từ đúng lúc sắp quên", "Flashcards that return right before you forget")}</div></li>
+        <li><span>📖</span><div>${L("Bài đọc theo trình độ, có giọng bản xứ", "Readings at your level, with native audio")}</div></li>
+        <li><span>🎙</span><div>${L("Luyện nói, AI chấm phát âm", "Speaking practice with AI feedback")}</div></li>
       </ul>
+      <div class="note" style="margin-top:18px">${L("Bangtanie bảo mình học tiếng Hàn đi nên mình học nè 💜", "Bangtanie told me to learn Korean, so here I am 💜")} <span lang="ko">보라해!</span><br>${L("Vì tương lai xem live không cần sub 💪", "For a future of watching lives without subs 💪")} <span class="muted">— PV</span></div>
     </div>
 
     <div class="wstep" data-s="1">
-      <div class="wemoji">📲</div>
-      <h2>${L("Cài app ra màn hình chính", "Install the app")}</h2>
-      <p class="lead">${L("Mở toàn màn hình, có icon riêng, ôn được cả khi mất mạng.", "Full screen, its own icon, and works offline.")}</p>
-      <div id="wInstall"></div>
+      <div class="wemoji">🎙</div>
+      <h2>${L("Cho phép micro", "Allow the microphone")}</h2>
+      <p class="lead">${L("Cần micro để luyện nói. Khi trình duyệt hỏi, chọn <b>Cho phép</b>.", "Needed for speaking practice. When asked, choose <b>Allow</b>.")}</p>
+      <button class="btn2" style="width:100%" id="wMic">${L("🎙 Thử micro", "🎙 Test microphone")}</button>
+      <p class="res" id="wMicRes"></p>
     </div>
 
     <div class="wstep" data-s="2">
@@ -2268,31 +2341,31 @@ function buildWelcome(){
     </div>
 
     <div class="wstep" data-s="3">
-      <div class="wemoji">🎙</div>
-      <h2>${L("Cho phép micro", "Allow the microphone")}</h2>
-      <p class="lead">${L("Cần micro để luyện nói. Khi trình duyệt hỏi, chọn <b>Cho phép</b>.", "Needed for speaking practice. When asked, choose <b>Allow</b>.")}</p>
-      <button class="btn2" style="width:100%" id="wMic">${L("🎙 Thử micro", "🎙 Test microphone")}</button>
-      <p class="res" id="wMicRes"></p>
-    </div>
-
-    <div class="wstep" data-s="4">
       <div class="wemoji">☁️</div>
       <h2>${L("Đồng bộ Google Drive", "Google Drive sync")}</h2>
-      <p class="lead">${L("Tuỳ chọn. Học trên nhiều máy mà tiến độ vẫn khớp. Dữ liệu nằm trong Drive của bạn.", "Optional. Keep progress in sync across devices, stored in your own Drive.")}</p>
+      <p class="lead">${L("Không bắt buộc. Học trên nhiều máy mà tiến độ vẫn khớp. Dữ liệu nằm trong Drive của bạn.", "Optional. Keep progress in sync across devices, stored in your own Drive.")}</p>
       <div id="wClientRow">
-        <label for="wClient">Google OAuth Client ID</label>
+        <ol>
+          <li>${L("Mở", "Open")} <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a> ${L("và tạo project mới", "and create a new project")}</li>
+          <li>${L("Bật", "Enable")} <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a></li>
+          <li>${L("Mở", "Open")} <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> → ${L("bấm <b>Get started</b>, chọn <b>External</b>", "tap <b>Get started</b>, choose <b>External</b>")}</li>
+          <li>${L("<b>Audience</b> → <b>Test users</b> → thêm Gmail của bạn", "<b>Audience</b> → <b>Test users</b> → add your Gmail")}</li>
+          <li>${L("<b>Clients</b> → <b>Create client</b> → <b>Web application</b>, thêm origin", "<b>Clients</b> → <b>Create client</b> → <b>Web application</b>, add the origin")} <code>${ORIGIN}</code></li>
+          <li>${L("Copy <b>Client ID</b> và dán vào ô dưới đây", "Copy the <b>Client ID</b> and paste it below")}</li>
+        </ol>
         <input id="wClient" type="text" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off">
       </div>
       <button class="btn2" style="width:100%;margin-top:10px" id="wDrive">${L("Kết nối Google Drive", "Connect Google Drive")}</button>
       <p class="res" id="wDriveRes"></p>
-      <div class="note">${L("Trước tiên, gửi Gmail của bạn cho người chia sẻ link để được cấp quyền. Thấy cảnh báo <i>“Google hasn't verified this app”</i> thì bấm <b>Continue</b>.", "First, send your Gmail to whoever shared this link so they can give you access. If you see <i>“Google hasn't verified this app”</i>, tap <b>Continue</b>.")}</div>
+      <div class="note">🔒 ${L("Miễn phí, mỗi người tự tạo Client ID riêng. Trên máy khác, dán lại <b>cùng Client ID</b>. Thấy <i>“Google hasn't verified this app”</i> thì bấm <b>Continue</b>. Chi tiết từng bước: <b>⚙️ Cài đặt → 📘 Hướng dẫn</b>.", "Free, everyone creates their own Client ID. On other devices, paste the <b>same Client ID</b>. If you see <i>“Google hasn't verified this app”</i>, tap <b>Continue</b>. Step-by-step details: <b>⚙️ Settings → 📘 Guide</b>.")}</div>
     </div>
 
-    <div class="wstep" data-s="5">
-      <div class="wemoji">🎉</div>
-      <h2>${L("Xong rồi!", "All set!")}</h2>
-      <p class="lead">${L("Thêm vài từ ở tab <b>➕ Thêm</b>, rồi ôn mỗi ngày ở tab <b>🎯 Học</b>.", "Add a few words in <b>➕ Add</b>, then review daily in <b>🎯 Study</b>.")}</p>
-      <div class="note">${L("Xem lại hướng dẫn trong <b>⚙️ Cài đặt → 📘 Hướng dẫn</b>.", "Find the guide anytime in <b>⚙️ Settings → 📘 Guide</b>.")}</div>
+    <div class="wstep" data-s="4">
+      <div class="wemoji">📲</div>
+      <h2>${L("Cuối cùng: cài app ra màn hình chính", "Last step: install the app")}</h2>
+      <p class="lead">${L("Toàn màn hình, chạy offline, nhận 🔔 nhắc ôn tập.", "Full screen, works offline, sends 🔔 review reminders.")}</p>
+      <div id="wInstall"></div>
+      <div class="note">🎉 ${L("Xong rồi! Thêm từ ở <b>➕ Thêm</b>, ôn mỗi ngày ở <b>🎯 Học</b>.", "All set! Add words in <b>➕ Add</b>, review daily in <b>🎯 Study</b>.")}</div>
     </div>
 
     <div class="wnav">
@@ -2304,7 +2377,7 @@ function buildWelcome(){
   bindLangSeg($("#welcome"));
   $("#wNext").onclick = () => {
     if (wStep === 2) keepWelcomeKey();
-    if (wStep === W_STEPS - 1) closeWelcome(); else wShow(wStep + 1);
+    if (wStep === W_STEPS - 1){ closeWelcome(); show("add"); } else wShow(wStep + 1);
   };
   $("#wBack").onclick = () => wShow(wStep - 1);
   $("#wSkip").onclick = closeWelcome;
@@ -2315,11 +2388,18 @@ function buildWelcome(){
 }
 function renderInstall(){
   let h;
+  const ios = `<ol><li>${L("Mở", "Open")} ${appLink()} ${L("bằng <b>Safari</b>", "in <b>Safari</b>")}</li>
+    <li>${L("<b>Chia sẻ</b> ⬆️ → <b>Thêm vào MH chính</b>", "<b>Share</b> ⬆️ → <b>Add to Home Screen</b>")}</li></ol>
+    <p class="small muted" style="margin:0">${L("App cài và Safari lưu dữ liệu riêng. Bật đồng bộ Drive để giữ từ vựng.", "The app and Safari keep separate data. Turn on Drive sync to keep your words.")}</p>`;
+  const android = `<ol><li>${L("Mở", "Open")} ${appLink()} ${L("bằng <b>Chrome</b>", "in <b>Chrome</b>")}</li>
+    <li>${L("Menu <b>⋮</b> → <b>Cài đặt ứng dụng</b>", "<b>⋮</b> menu → <b>Install app</b>")}</li></ol>`;
+  const desktop = `<ol><li>${L("Mở", "Open")} ${appLink()} ${L("bằng <b>Chrome</b>", "in <b>Chrome</b>")}</li>
+    <li>${L("Menu <b>⋮</b> → <b>Truyền, lưu và chia sẻ</b> (Cast, Save, and Share) → <b>Cài đặt Hangul with PV</b>", "<b>⋮</b> menu → <b>Cast, Save, and Share</b> → <b>Install Hangul with PV</b>")}</li></ol>`;
   if (isStandalone()) h = `<div class="note">✅ ${L("Bạn đang dùng bản đã cài.", "You're already using the installed app.")}</div>`;
   else if (installEvt) h = `<button class="btn" id="wInstallBtn">${L("📲 Cài app ngay", "📲 Install now")}</button>`;
-  else if (isIOS) h = `<ol><li>${L("Mở trang này bằng <b>Safari</b>", "Open this page in <b>Safari</b>")}</li><li>${L("Bấm <b>Chia sẻ</b> ⬆️", "Tap <b>Share</b> ⬆️")}</li><li>${L("Chọn <b>Thêm vào MH chính</b>", "Choose <b>Add to Home Screen</b>")}</li></ol>`;
-  else if (isAndroid) h = `<ol><li>${L("Mở trang này bằng <b>Chrome</b>", "Open this page in <b>Chrome</b>")}</li><li>${L("Bấm menu <b>⋮</b>", "Tap the <b>⋮</b> menu")}</li><li>${L("Chọn <b>Cài đặt ứng dụng</b>", "Choose <b>Install app</b>")}</li></ol>`;
-  else h = `<ol><li>${L("Trong <b>Chrome</b>, bấm biểu tượng cài đặt ở cuối thanh địa chỉ", "In <b>Chrome</b>, click the install icon at the end of the address bar")}</li><li>${L("Hoặc dùng luôn trên web, không cần cài", "Or just keep using it on the web")}</li></ol>`;
+  else if (isIOS) h = ios;
+  else if (isAndroid) h = android;
+  else h = desktop;
   $("#wInstall").innerHTML = h;
   const b = $("#wInstallBtn");
   if (b) b.onclick = async () => { installEvt.prompt(); try { await installEvt.userChoice; } catch(e){} installEvt = null; renderInstall(); };
@@ -2331,9 +2411,9 @@ function wShow(i){
   $("#wBack").classList.toggle("hidden", wStep === 0);
   $("#wSkip").classList.toggle("hidden", wStep === W_STEPS - 1);
   $("#wNext").textContent = wStep === 0 ? L("Bắt đầu", "Get started") : wStep === W_STEPS - 1 ? L("Vào học thôi", "Start learning") : L("Tiếp tục", "Continue");
-  if (wStep === 1) renderInstall();
   if (wStep === 2) $("#wKey").value = S.settings.apiKey || "";
-  if (wStep === 4){
+  if (wStep === 4) renderInstall();
+  if (wStep === 3){
     $("#wClientRow").classList.toggle("hidden", !!GOOGLE_CLIENT_ID);
     $("#wClient").value = SY.clientId || "";
     if (clientId()) loadGIS().catch(()=>{});
@@ -2360,7 +2440,7 @@ async function testWelcomeKey(){
 }
 function connectFromWelcome(){
   if (!GOOGLE_CLIENT_ID){ SY.clientId = $("#wClient").value.trim(); saveSY(); }
-  if (!/\.apps\.googleusercontent\.com$/.test(clientId())){ $("#wDriveRes").textContent = L("⚠️ Client ID chưa đúng. Hỏi lại người chia sẻ link nhé.", "⚠️ That Client ID doesn't look right. Ask whoever shared the link."); return; }
+  if (!/\.apps\.googleusercontent\.com$/.test(clientId())){ $("#wDriveRes").textContent = L("⚠️ Client ID chưa đúng. Nó phải kết thúc bằng .apps.googleusercontent.com — xem mục tự tạo ở trên.", "⚠️ That Client ID doesn't look right. It should end in .apps.googleusercontent.com — see the steps above."); return; }
   syncNow(true).then(() => { if (SY.on){ $("#wDrive").textContent = L("✅ Đã kết nối", "✅ Connected"); $("#wDriveRes").textContent = L("Dữ liệu sẽ tự đồng bộ giữa các máy.", "Your data will now sync across devices."); } });
 }
 async function micTest(out){
@@ -2395,11 +2475,11 @@ const GUIDE = [
     <ul><li><b>Android</b>: Chrome → <b>⋮</b> → <b>Cài đặt ứng dụng</b></li>
     <li><b>iPhone / iPad</b>: Safari → <b>Chia sẻ</b> ⬆️ → <b>Thêm vào MH chính</b></li>
     <li><b>Máy tính</b>: Chrome → biểu tượng cài đặt ở cuối thanh địa chỉ</li></ul>
-    <p>Luôn mở từ link <code>${APP_URL}</code>, không mở file HTML tải về.</p>`, `
+    <p>Luôn mở từ link ${appLink()}, không mở file HTML tải về.</p>`, `
     <ul><li><b>Android</b>: Chrome → <b>⋮</b> → <b>Install app</b></li>
     <li><b>iPhone / iPad</b>: Safari → <b>Share</b> ⬆️ → <b>Add to Home Screen</b></li>
     <li><b>Computer</b>: Chrome → install icon at the end of the address bar</li></ul>
-    <p>Always open it from <code>${APP_URL}</code>, not from a downloaded HTML file.</p>`)],
+    <p>Always open it from ${appLink()}, not from a downloaded HTML file.</p>`)],
   ["g-key", L("Gemini key", "Gemini key"), L(`
     <ol><li>Mở <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, đăng nhập Gmail</li>
     <li>Bấm <b>Create API key</b>, copy key (bắt đầu bằng <code>AIza…</code>)</li>
@@ -2412,20 +2492,22 @@ const GUIDE = [
     <p><b>With a key</b>: examples, passages and detailed pronunciation feedback. <b>Without</b>: the app gives you a prompt to paste into a free chatbot.</p>
     <p>🔒 Everyone should use their own key. It's never included in exports.</p>`)],
   ["g-sync", L("Đồng bộ Google Drive", "Google Drive sync"), L(`
-    <ol><li>Gửi Gmail cho người chia sẻ link để được cấp quyền</li>
-    <li>Khung <b>☁️ Đồng bộ Google Drive</b> → dán Client ID (nếu có ô) → <b>Kết nối</b></li>
-    <li>Thấy <i>“Google hasn't verified this app”</i> → <b>Continue</b></li>
-    <li>Làm lại trên máy thứ hai</li></ol>
+    <ol><li>Tự tạo Client ID riêng (các bước ở cuối mục này, miễn phí, ~5 phút)</li>
+    <li>Khung <b>☁️ Đồng bộ Google Drive</b> → dán Client ID → <b>Kết nối</b></li>
+    <li>Thấy <i>“Google hasn't verified this app”</i> → <b>Continue</b> (đây là app do chính bạn tạo)</li>
+    <li>Trên máy thứ hai: dán lại <b>cùng Client ID</b> đó → <b>Kết nối</b> bằng cùng Gmail</li></ol>
     <p>App tự lưu sau mỗi thay đổi và tải về khi mở. Dữ liệu gộp theo từng từ nên không mất tiến độ.</p>
     <p><b>☁️ Chạm để đồng bộ</b> ở góc trên: phiên đăng nhập (~1 giờ) đã hết, chạm để tiếp tục.</p>
-    <p><b>Lỗi 400 / access blocked</b>: Gmail chưa được cấp quyền hoặc Client ID sai.</p>`, `
-    <ol><li>Send your Gmail to whoever shared the link so they can give you access</li>
-    <li>In <b>☁️ Google Drive sync</b> → paste the Client ID (if asked) → <b>Connect</b></li>
-    <li>If you see <i>“Google hasn't verified this app”</i> → <b>Continue</b></li>
-    <li>Repeat on your other device</li></ol>
+    <p><b>Lỗi 400 / access blocked</b>: Gmail chưa có trong <b>Test users</b> (bước 4), Client ID sai, hoặc origin (bước 5) không khớp link app.</p>
+    <p><b>Cách tạo Client ID:</b></p>`, `
+    <ol><li>Create your own Client ID (steps at the end of this section, free, ~5 min)</li>
+    <li>In <b>☁️ Google Drive sync</b> → paste the Client ID → <b>Connect</b></li>
+    <li>If you see <i>“Google hasn't verified this app”</i> → <b>Continue</b> (it's the app you created)</li>
+    <li>On your other device: paste the <b>same Client ID</b> → <b>Connect</b> with the same Gmail</li></ol>
     <p>Changes save automatically and download when you open the app. Data merges word by word, so no progress is lost.</p>
     <p><b>☁️ Tap to sync</b> at the top means the ~1 hour sign-in expired. Tap it to continue.</p>
-    <p><b>Error 400 / access blocked</b>: your Gmail wasn't added yet, or the Client ID is wrong.</p>`)],
+    <p><b>Error 400 / access blocked</b>: your Gmail isn't in <b>Test users</b> (step 4), the Client ID is wrong, or the origin (step 5) doesn't match the app's link.</p>
+    <p><b>How to create a Client ID:</b></p>`) + clientIdSteps()],
   ["g-mic", L("Micro & luyện nói", "Microphone & speaking"), L(`
     <p>Lần đầu bấm 🎙, chọn <b>Cho phép</b>. Nếu bị chặn:</p>
     <ul><li><b>Android</b>: Cài đặt → Ứng dụng → Chrome → Quyền → Micro → Cho phép</li>
