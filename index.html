@@ -273,7 +273,8 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .empty .big{font-size:44px}
 /* completion cheer: a random BTS member emoji + a short Korean phrase */
 .cheer-m{font-size:52px;line-height:1;display:inline-block;animation:bob 1.6s ease-in-out infinite}
-.cheer-ko{font-size:22px;font-weight:800;margin-top:10px}
+.cheer-ko{font-size:22px;font-weight:800;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.cheer-ko .speak.sm{width:34px;height:34px;font-size:15px;flex:0 0 34px}
 .cheer-tr{font-size:14px;margin:2px 0 14px}
 .stat.pop{animation:pop .6s ease}
 @keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(-4deg)}}
@@ -1258,7 +1259,7 @@ function refreshHome(){
   if (homeAuto && due + nl > 0 && !session && !$("#v-study").classList.contains("hidden")) return startSession(false);
   const h = $("#homeCard");
   if (!S.cards.length){
-    h.innerHTML = `<div class="empty"><div data-noi18n><div class="cheer-m">${pickOne(BTS)}</div><div class="cheer-ko" lang="ko">환영해요!</div><div class="cheer-tr muted">${L("Chào mừng bạn!", "Welcome!")}</div></div><p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">+ Add words</button></div>`;
+    h.innerHTML = `<div class="empty">${cheerHTML([["환영해요!", "Chào mừng bạn!", "Welcome!"]])}<p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">+ Add words</button></div>`;
     $("#goAdd").onclick = () => show("add");
     return;
   }
@@ -1302,8 +1303,10 @@ const pickOne = a => a[Math.floor(Math.random()*a.length)];
 function cheerHTML(list){
   const e = pickOne(BTS), [ko, vi, en] = list ? pickOne(list) : streakCheer() || pickOne(cheerTry ? CHEER_TRY : CHEER_OK);
   return `<div data-noi18n><div class="cheer-m">${e}</div>
-    <div class="cheer-ko" lang="ko">${ko}</div><div class="cheer-tr muted">${L(vi, en)}</div></div>`;
+    <div class="cheer-ko"><span lang="ko">${ko}</span><button class="speak sm cheer-say" data-say="${esc(ko.replace(/\p{Extended_Pictographic}/gu, "").trim())}" title="Listen">🔊</button></div><div class="cheer-tr muted">${L(vi, en)}</div></div>`;
 }
+// the cheer card is rendered from many places, so one delegated listener covers them all
+document.addEventListener("click", e => { const b = e.target.closest(".cheer-say"); if (b){ e.stopPropagation(); speak(b.dataset.say); } });
 function confetti(n = 90){
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const cv = document.createElement("canvas"), W = innerWidth, H = innerHeight, dpr = devicePixelRatio || 1;
@@ -3101,7 +3104,7 @@ const arTts = () => arTalk() && S.settings.armyTts !== false;
 const arCtx = () => arTalk() ? `Context: a face-to-face everyday conversation between someone speaking ${arName(arIn())} and someone speaking ${arName(arOut())}.` : BTS_GLOSSARY;
 const arHow = to => arTalk() ? `natural, clear ${arName(to)} that a native speaker would actually say in conversation, polite and friendly`
   : `natural, casual ${arName(to)}, like good fan subs, keeping the warm, playful tone`;
-const arTitle = t => (arTalk() ? "💬 " + L("Giao tiếp", "Conversation") : "💜 BTS Live") + " · " + arDate(t);
+const arTitle = t => (arTalk() ? "🌐 " + L("Phiên dịch", "Interpreter") : "💜 BTS Live") + " · " + arDate(t);
 // languages are remembered per mode: a live is usually 🇰🇷→you, a conversation you⇄🇰🇷
 const AR_DEF = { bts: ["ko", UI === "vi" ? "vi" : "en"], talk: [UI === "vi" ? "vi" : "en", "ko"] };
 const arLangs = () => (S.settings.armyLangs || {})[arMode()] || {};
@@ -3167,7 +3170,7 @@ function confirmTap(b, label, fn){
 const BTS_LOGO = `<svg class="bts-logo" viewBox="0 0 100 100" aria-label="BTS" role="img"><path d="M6 4 L42 18 V82 L6 96 Z M94 4 L58 18 V82 L94 96 Z"/></svg>`;
 const AR_MODES = {
   bts: [BTS_LOGO, () => "BTS Live", () => L("Phụ đề cho live — dịch kiểu fansub, hiểu tên thành viên và từ fandom.", "Subtitles for lives — fan-sub style, knows member names and fandom words.")],
-  talk: ["💬", () => L("Giao tiếp", "Conversation"), () => L("Nói chuyện trực tiếp — dịch tự nhiên, đọc to bản dịch, bấm ⇄ khi đổi lượt nói.", "Talk face to face — natural translations, read aloud, tap ⇄ when you take turns.")]
+  talk: ["🌐", () => L("Phiên dịch", "Interpreter"), () => L("Dịch hội thoại trực tiếp — nói là dịch và đọc to ngay, bấm ⇄ khi đổi lượt nói.", "Live interpreter for face-to-face talks — speak, it translates and reads aloud, tap ⇄ when you take turns.")]
 };
 function renderArmy(){
   if (AR.view && !(S.lives || []).some(x => x.id === AR.view)) AR.view = "";
