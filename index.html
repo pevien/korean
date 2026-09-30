@@ -83,6 +83,20 @@ h2{font-size:16px;margin:0 0 10px}
 /* home stats: each tile tinted; fg/bg pairs checked for ≥4.5:1 so the 11px labels pass too */
 .stat.tone{background:var(--t-bg);border-color:transparent;color:var(--t-fg)}
 .stat.tone span{color:inherit}
+button.stat{font:inherit;cursor:pointer;width:auto;padding:10px 4px}
+button.stat:hover{border-color:color-mix(in srgb, var(--t-fg) 40%, transparent)}
+button.stat:active{transform:scale(.97)}
+.study-links{display:flex;gap:8px;margin-bottom:14px}
+.nudge .nu-h{display:flex;gap:12px;align-items:flex-start}
+.nudge .nu-h > span{font-size:28px;line-height:1}
+.nudge .nu-h p{margin:4px 0 0;line-height:1.45}
+.nudge ol{margin:10px 0 4px;padding-left:20px;font-size:14px}
+.nudge .nu-act{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.nudge .nu-act button{flex:0 0 auto;width:auto;padding:8px 14px;font-size:14px}
+#nuInstall:empty{display:none}
+#nuInstall .btn2{margin-top:10px}
+.study-links button{flex:1;padding:8px 10px;font-size:13px;font-weight:600}
+body.in-session:not(.auto-session) .study-links{display:none}
 .stat.tone b .of{font-size:14px;font-weight:600;opacity:.75}
 .stat.tone small{display:block;font-size:10px;margin-top:2px;opacity:.9}
 .t-purple{--t-bg:var(--accent-soft);--t-fg:#4f46e5}
@@ -157,6 +171,7 @@ nav button.on{color:var(--accent)}
 #welcome .wnav .btn-ghost{flex:0 0 auto}
 #welcome a, .guide a{color:var(--accent)}
 #welcome code{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12.5px;word-break:break-all}
+.ai-hint{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);line-height:1.45}
 .linkbtn{background:none;color:var(--accent);padding:0;font-weight:600;font-size:13px}
 .guide details{border-top:1px solid var(--line)}
 .guide summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;gap:8px}
@@ -198,7 +213,6 @@ nav button[data-v=army].on{color:var(--army)}
 .tk-scene .i{font-size:24px;line-height:1;flex:0 0 auto}
 .tk-scene:hover{border-color:var(--accent)}
 .tk-scene:disabled{opacity:.5;cursor:default}
-.tk-tip{margin:0 2px 10px;text-align:center}
 .tk-lv{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:6px 12px}
 .tk-lv label{margin:0}
 .tk-lv p{grid-column:1/-1}
@@ -207,10 +221,9 @@ nav button[data-v=army].on{color:var(--army)}
 .tk-msg.ai{flex-direction:row;align-items:flex-end;gap:2px}
 .tk-msg.me{align-self:flex-end;align-items:flex-end}
 .tk-b{background:var(--card);border-radius:18px 18px 18px 6px;padding:10px 14px;box-shadow:var(--shadow);min-width:0}
-.tk-msg.ai .tk-b{cursor:pointer}
 .tk-msg.me .tk-b{background:var(--accent);color:var(--on-accent);border-radius:18px 18px 6px 18px}
 .tk-b .ko{font-size:17px;line-height:1.45}
-.tk-b .mean{font-size:13px;color:var(--muted);margin-top:4px}
+.tk-b .mean{font-size:14px;color:var(--muted);margin-top:4px;line-height:1.4}
 .tk-fb{margin-top:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:14px;width:100%;box-sizing:border-box}
 .tk-fb .ok{color:var(--ok);font-weight:600}
 .tk-fb .fix{color:var(--warn);font-weight:600;font-size:15px}
@@ -223,10 +236,19 @@ nav button[data-v=army].on{color:var(--army)}
 .tk-ctl{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));z-index:5;background:var(--card);border-radius:var(--radius);padding:4px 8px 10px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
 .tk-ctl .turn{margin:4px 0 8px;font-size:13px}
 .tk-hints{display:grid;gap:6px}
-.tk-hint{display:grid;gap:2px;text-align:left;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:500}
+.tk-hint{display:flex;align-items:center;gap:10px;text-align:left;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:500}
+.tk-hint .tx{flex:1;min-width:0;display:grid;gap:2px}
+.tk-hint .sp{flex:0 0 auto;font-size:16px}
+.tk-hint:hover{border-color:var(--accent)}
+.tk-ask{margin:0;padding:8px 10px;border-radius:10px;background:var(--accent-soft);color:var(--text);line-height:1.45}
+.tk-btns{gap:22px;align-items:flex-end}
+.tk-btns > div{display:flex;flex-direction:column;align-items:center;gap:4px}
+.tk-btns > div > span{font-size:12px;color:var(--muted);font-weight:500}
 .tk-hint [lang=ko]{font-size:16px}
 .tk-end{font-size:14px!important;padding:6px 12px!important}
 .tk-sum{padding:8px 0;border-bottom:1px solid var(--line)}
+.tk-read{margin-bottom:16px}
+.tk-read [data-say]{cursor:pointer}
 .tk-sum:last-child{border-bottom:none}
 .tk-sum .bad{color:var(--bad);text-decoration:line-through;text-decoration-thickness:1px}
 .tk-sum .good{color:var(--ok);font-weight:600;font-size:16px}
@@ -543,14 +565,17 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 
   <!-- STUDY -->
   <section id="v-study">
-    <div class="stats" style="margin-bottom:14px">
-      <div class="stat tone t-amber"><b id="sToday">0</b><span>Due today</span></div>
-      <div class="stat tone t-purple"><b id="sLearn">0</b><span>Learning</span></div>
-      <div class="stat tone t-master"><b id="sMaster">0</b><span>Mastered</span></div>
+    <!-- the first three tiles open My words filtered to that group -->
+    <div class="stats" style="margin-bottom:10px">
+      <button class="stat tone t-amber st-go" data-f="today" title="See these words"><b id="sToday">0</b><span>Due today</span></button>
+      <button class="stat tone t-purple st-go" data-f="learn" title="See these words"><b id="sLearn">0</b><span>Learning</span></button>
+      <button class="stat tone t-master st-go" data-f="master" title="See these words"><b id="sMaster">0</b><span>Mastered</span></button>
       <div class="stat tone t-streak"><b id="sStreak">🔥 0</b><span>Day streak</span></div>
     </div>
+    <div class="study-links"><button class="btn-ghost" id="goWords">📚 <span>My words</span><span id="goWordsN"></span></button><button class="btn-ghost" id="goAddTop">+ Add words</button></div>
     <div id="studyHome">
       <div class="card" id="homeCard"></div>
+      <div class="card nudge hidden" id="nudge" data-noi18n></div>
     </div>
     <div id="studySession" class="hidden">
       <div class="row" style="margin-bottom:8px">
@@ -576,6 +601,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     </div>
 
     <div class="card" id="add-ai">
+      <p class="small ai-hint hidden" id="addKeyHint" data-noi18n></p>
       <label for="genTopic" style="margin-top:0">Generate words by topic</label>
       <input id="genTopic" type="text" placeholder="e.g. ordering food at a restaurant">
       <div class="chips" id="genChips"></div>
@@ -732,13 +758,14 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 
   <!-- WORDS -->
   <section id="v-words" class="hidden">
-    <div class="pg-head"><span class="h">📚</span><h2>My words</h2><button class="btn" id="goAddBig">+ Add words</button></div>
+    <div class="pg-head"><button class="btn-ghost back" id="wordsBack" title="Study" aria-label="Back"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><h2>My words</h2><button class="btn" id="goAddBig">+ Add words</button></div>
     <div class="card hidden" id="exPrompt">
       <div class="row"><span class="small" id="exPromptTxt" style="flex:2"></span><button class="btn2" style="flex:0 0 auto" id="exGenBtn">✨ Add examples</button></div>
     </div>
     <div class="wbar">
       <input id="search" type="search" placeholder="Search words…">
       <div class="tabs" id="filterTabs" style="margin:10px 0 0">
+        <button data-f="today">Due today<span class="n"></span></button>
         <button data-f="new">New<span class="n"></span></button>
         <button data-f="learn">Learning<span class="n"></span></button>
         <button data-f="master">Mastered<span class="n"></span></button>
@@ -837,9 +864,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 </div>
 
 <nav><div class="in">
-  <button data-v="study" class="on"><span class="ic">🎯</span>Study</button>
+  <button data-v="study" class="on" data-noi18n><span class="ic">🎯</span><span id="navStudy">Study</span></button>
   <button data-v="read" data-noi18n><span class="ic">🗣</span><span id="navSpeak">Speak</span></button>
-  <button data-v="words"><span class="ic">📚</span>Words</button>
   <button data-v="army"><span class="ic">💜</span>ARMY</button>
   <button data-v="set"><span class="ic">⚙️</span>Settings</button>
 </div></nav>
@@ -883,7 +909,7 @@ const uiLangName = () => ({ vi: "Vietnamese", en: "English" }[UI] || "English");
 const feedbackLangRule = () => `Write every explanation (tips, "good", "overall") in ${uiLangName()}, NOT in Korean. Use Hangul only for the Korean words/syllables being discussed and for pronunciations in brackets. If for any reason you cannot write in ${uiLangName()}, you MUST answer in English. Never write explanations in Korean.`;
 
 const VI = {
-"Due today":"Cần học","Day streak":"Chuỗi ngày","Learning":"Đang học","Mastered":"Đã thuộc","End":"Kết thúc",
+"Due today":"Cần học","See these words":"Xem các từ này","Day streak":"Chuỗi ngày","Learning":"Đang học","Mastered":"Đã thuộc","End":"Kết thúc",
 "Single":"Từng từ","Paste list":"Danh sách","Screenshot":"Ảnh chụp",
 "Generate words by topic":"Tạo từ theo chủ đề","Topic":"Chủ đề","Level":"Trình độ","How many":"Số lượng",
 "Each word comes with an example sentence. Words already in your list are skipped automatically.":"Mỗi từ kèm một câu ví dụ. Từ đã có sẽ tự bỏ qua.",
@@ -1084,6 +1110,7 @@ const defaults = () => ({
     apiKey:"", model:"", autoEx:true, level:"b1", uiLang:"vi" },
   passages: [],
   lives: [],   // saved ARMY live transcripts
+  talks: [],   // finished 💬 Talk conversations (text only), for reviewing corrections later
   daily: { date: todayStr(), newCount: 0, reviews: 0 },
   streak: { last: "", count: 0 }
 });
@@ -1102,14 +1129,14 @@ let SNAP = null;
 const fp = o => { const { mod, ...r } = o; return JSON.stringify(r); };
 const fpSettings = () => { const { _mod, voice, allVoices, ...r } = S.settings; return JSON.stringify(r); };   // allVoices: retired setting, may linger in old data
 function takeSnap(){
-  SNAP = { cards: new Map(S.cards.map(c => [c.id, fp(c)])), passages: new Map((S.passages||[]).map(x => [x.id, fp(x)])), lives: new Map((S.lives||[]).map(x => [x.id, fp(x)])),
+  SNAP = { cards: new Map(S.cards.map(c => [c.id, fp(c)])), passages: new Map((S.passages||[]).map(x => [x.id, fp(x)])), lives: new Map((S.lives||[]).map(x => [x.id, fp(x)])), talks: new Map((S.talks||[]).map(x => [x.id, fp(x)])),
            settings: fpSettings(), deleted: Object.assign({}, S.deleted || {}) };
 }
 function track(){
   if (!SNAP) { takeSnap(); return; }
   const now = Date.now();
   S.deleted = Object.assign({}, SNAP.deleted, S.deleted || {});
-  [["cards", S.cards], ["passages", S.passages || []], ["lives", S.lives || []]].forEach(([k, arr]) => {
+  [["cards", S.cards], ["passages", S.passages || []], ["lives", S.lives || []], ["talks", S.talks || []]].forEach(([k, arr]) => {
     const seen = new Set();
     arr.forEach(x => { if (!x.id) x.id = uid(); seen.add(x.id); if (SNAP[k].get(x.id) !== fp(x)) x.mod = now; });
     SNAP[k].forEach((_, id) => { if (!seen.has(id)) S.deleted[id] = now; });
@@ -1413,11 +1440,10 @@ async function translate(ko){
 function show(v){
   if (v === "words" && !S.cards.length) v = "add";   // nothing to list yet → straight to adding words
   $$("section[id^=v-]").forEach(s => s.classList.toggle("hidden", s.id !== "v-"+v));
-  $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" ? "words" : v)));
-  if (v === "add"){   // no words yet = nowhere to go back to: the title then reads as a page heading, left-aligned
-    $("#addBack").classList.toggle("hidden", !S.cards.length);
-    $("#addBack").closest(".sub-head").classList.toggle("no-back", !S.cards.length);
-  }
+  $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" || v === "words" ? "study" : v)));   // My words / Add words are pages of Study
+  if (v === "add" && curView !== "add") addFrom = curView === "words" && S.cards.length ? "words" : "study";
+  curView = v;
+  if (v === "add") syncAddKeyHint();
   if (v === "study" && !session) { homeAuto = true; refreshHome(); }
   document.body.classList.toggle("in-session", v === "study" && !!session);   // leaving via a link mid-session must bring the tab bar back
   if (v !== "read") { stopPlayer(); cancelRec(); talkStop(); }
@@ -1437,10 +1463,28 @@ function navSave(patch){ try { sessionStorage.setItem(NAV_KEY, JSON.stringify(Ob
 let navScrollT = null;
 addEventListener("scroll", () => { clearTimeout(navScrollT); navScrollT = setTimeout(() => navSave({ y: Math.round(scrollY) }), 200); }, { passive: true });
 addEventListener("pagehide", () => navSave({ y: Math.round(scrollY) }));
-$$("nav button").forEach(b => b.onclick = () => show(b.dataset.v));
-$("#navSpeak").textContent = L("Luyện nói", "Speak");   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
+// tapping the tab you're already on takes you back to its first page (Speak picker, ARMY menu, word list…)
+$$("nav button").forEach(b => b.onclick = () => { if (b.classList.contains("on")) navRoot(b.dataset.v); show(b.dataset.v); });
+function navRoot(v){
+  if (v === "read"){ spScreen = ""; rdNewOpen = false; TK.view = ""; TK.showAll = false; }   // show() → spShow("") also closes an open passage
+  if (v === "army"){ arStop(); AR.view = ""; AR.screen = "home"; arPersist(); }
+}
+$("#navSpeak").textContent = L("Luyện nói", "Speak");
+$("#navStudy").textContent = L("Học từ vựng", "Vocabulary");   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
 $("#goAddBig").onclick = () => show("add");
-$("#addBack").onclick = () => show("words");
+let curView = "study", addFrom = "study";
+// without a key, AI still works by copy/paste into another chatbot — say so, and offer the 1-minute key
+function syncAddKeyHint(){
+  const el = $("#addKeyHint"); el.classList.toggle("hidden", hasKey());
+  if (hasKey()) return;
+  el.innerHTML = `💡 ${L("Thêm <b>Gemini key</b> miễn phí (~1 phút) để AI tạo từ ngay trong app. Chưa có key thì app sẽ đưa bạn câu lệnh để dán vào ChatGPT/Gemini.", "Add a free <b>Gemini key</b> (~1 minute) and AI makes the words right here. Without one, the app gives you a prompt to paste into ChatGPT/Gemini.")} <button class="linkbtn" id="addKeyGo">${L("Thêm key", "Add key")}</button>`;
+  $("#addKeyGo").onclick = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
+}   // Add words goes back to whichever page opened it
+$("#addBack").onclick = () => show(addFrom);
+$("#wordsBack").onclick = () => show("study");
+$("#goWords").onclick = () => { setFilter("all"); show("words"); };
+$("#goAddTop").onclick = () => show("add");
+$$("#v-study .st-go").forEach(b => b.onclick = () => { setFilter(b.dataset.f); show("words"); });
 
 /* ---------------- home ---------------- */
 /* opening the Study tab drops straight into the first question; after "End" the home card waits for a tap */
@@ -1453,10 +1497,36 @@ function refreshStats(){
   $("#sLearn").textContent = S.cards.filter(c=>status(c)==="learn").length;
   $("#sMaster").textContent = S.cards.filter(c=>status(c)==="master").length;
   $("#sStreak").textContent = "🔥 " + streakNow();
+  $("#goWordsN").textContent = S.cards.length ? ` (${S.cards.length})` : "";
+  $(".study-links").classList.toggle("hidden", !S.cards.length);   // no words yet: the home card's own "+ Add words" is the only way in
   return { due, nl };
+}
+// one gentle suggestion at a time, on the Study home (not mid-session); "Later" hides it for 2 weeks on this device
+const NUDGE_KEY = "hangulCards.nudge";
+function nudgeLater(k){ try { const d = JSON.parse(localStorage.getItem(NUDGE_KEY) || "{}"); d[k] = Date.now(); localStorage.setItem(NUDGE_KEY, JSON.stringify(d)); } catch(e){} }
+function nudgeSnoozed(k){ try { return Date.now() - (JSON.parse(localStorage.getItem(NUDGE_KEY) || "{}")[k] || 0) < 14 * DAY; } catch(e){ return true; } }
+function renderNudge(){
+  const el = $("#nudge"); if (!el) return;
+  const studied = S.cards.some(c => c.last);
+  const kind = !isStandalone() && !installed && (isIOS || isAndroid) && studied && !nudgeSnoozed("install") ? "install"
+    : !SY.on && S.cards.length >= 20 && !nudgeSnoozed("sync") ? "sync" : "";
+  el.classList.toggle("hidden", !kind);
+  if (!kind) { el.innerHTML = ""; return; }
+  const later = `<button class="btn-ghost" id="nuLater">${L("Để sau", "Later")}</button>`;
+  if (kind === "install"){
+    el.innerHTML = `<div class="nu-h"><span>📲</span><div><b>${L("Cài app ra màn hình chính", "Install the app")}</b><p class="small muted">${L("Mở nhanh như app thật, toàn màn hình, chạy cả khi offline và nhận 🔔 nhắc ôn tập.", "Opens like a real app, full screen, works offline and sends 🔔 review reminders.")}</p></div></div>
+      <div id="nuInstall"></div><div class="nu-act">${later}</div>`;
+    renderInstall($("#nuInstall"));
+  } else {
+    el.innerHTML = `<div class="nu-h"><span>☁️</span><div><b>${L(`Bạn đã có ${S.cards.length} từ — giữ chúng an toàn nhé`, `You have ${S.cards.length} words — keep them safe`)}</b><p class="small muted">${L("Bật đồng bộ Google Drive để không mất tiến độ khi đổi máy hoặc xoá dữ liệu trình duyệt, và học tiếp trên máy khác.", "Turn on Google Drive sync so you don't lose progress when you switch phones or clear browser data, and keep learning on other devices.")}</p></div></div>
+      <div class="nu-act">${later}<button class="btn2" id="nuGo">${L("Thiết lập", "Set it up")}</button></div>`;
+    $("#nuGo").onclick = () => { show("set"); const d = $("#g-sync"); if (d){ d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); } };
+  }
+  $("#nuLater").onclick = () => { nudgeLater(kind); renderNudge(); };
 }
 function refreshHome(){
   const { due, nl } = refreshStats();
+  renderNudge();
   if (homeAuto && due + nl > 0 && !session && !$("#v-study").classList.contains("hidden")) return startSession(false, null, true);
   const h = $("#homeCard");
   if (!S.cards.length){
@@ -2814,13 +2884,21 @@ function renderCoachResult(s, j, ai){
 
 /* ---------------- words list ---------------- */
 let filter = "all";
+function setFilter(f){ filter = f; $("#search").value = ""; $$("#filterTabs button").forEach(x => x.classList.toggle("on", x.dataset.f === filter)); }
+// "due today" = what today's study covers: the words left in the running session, else reviews due + today's new words
+function todayIds(){
+  if (session && !session.practice) return new Set(session.queue.map(q => q.card.id));
+  const nl = Math.min(newLeftToday(), newCards().length);
+  return new Set(dueCards().concat(newCards().sort((a, b) => a.created - b.created).slice(0, nl)).map(c => c.id));
+}
 // no "All" tab: nothing selected shows every word; tapping the selected tab again clears it
-$$("#filterTabs button").forEach(b => b.onclick = () => { filter = filter === b.dataset.f ? "all" : b.dataset.f; $$("#filterTabs button").forEach(x=>x.classList.toggle("on", x.dataset.f===filter)); renderWords(); });
+$$("#filterTabs button").forEach(b => b.onclick = () => { setFilter(filter === b.dataset.f ? "all" : b.dataset.f); renderWords(); });
 $("#search").oninput = () => renderWords();
 function renderWords(){
   const q = $("#search").value.trim().toLowerCase();
   const hits = S.cards.filter(c => !q || c.ko.includes(q) || c.meaning.toLowerCase().includes(q));
-  const list = hits.filter(c => filter === "all" || status(c) === filter).sort((a,b) => b.created - a.created);
+  const today = filter === "today" ? todayIds() : null;
+  const list = hits.filter(c => filter === "all" || (today ? today.has(c.id) : status(c) === filter)).sort((a,b) => b.created - a.created);
   // only the selected filter tab shows its count (within the current search), so the row stays short
   $$("#filterTabs button").forEach(b => b.querySelector(".n").textContent = b.dataset.f === filter ? ` (${list.length})` : "");
   const lab = { new:["New","b-new"], learn:["Learning","b-learn"], master:["Mastered","b-master"] };
@@ -2832,7 +2910,7 @@ function renderWords(){
       <div class="t"><div class="wh"><button class="speak sm" data-a="say" title="${L("Nghe", "Listen")}">🔊</button><b lang="ko">${esc(c.ko)}</b><span class="badge ${cls}" title="${esc(due)}">${t}<span class="iv">${iv}</span></span></div>
         <div>${esc(c.meaning) || "<i>no meaning</i>"}</div>${c.ex ? `<div class="exl" lang="ko">${esc(c.ex)} <span>· ${esc(c.exMean)}</span></div>` : ""}</div>
       <button class="icon-btn more-btn" data-a="more" title="${L("Thêm", "More")}" aria-haspopup="menu" aria-expanded="false">⋯</button></li>`;
-  }).join("") : `<li class="muted" style="justify-content:center">${S.cards.length ? "No matches" : "No words yet"}</li>`;
+  }).join("") : `<li class="muted" style="justify-content:center">${!S.cards.length ? "No words yet" : today ? L("Hôm nay học xong rồi 🎉", "All done for today 🎉") : "No matches"}</li>`;
   const noEx = S.cards.filter(c => !c.ex).length;
   $("#exPrompt").classList.toggle("hidden", !noEx);
   $("#exPromptTxt").textContent = `${noEx} word${noEx===1?"":"s"} without an example sentence.`;
@@ -2927,6 +3005,9 @@ $("#impFile").onchange = async e => {
     (d.passages || []).forEach(p => { if (p && p.id && Array.isArray(p.sentences) && !pids.has(p.id)) { S.passages.push(Object.assign({ vocab: [] }, p)); np++; } });
     const lids = new Set(S.lives.map(x => x.id));
     (d.lives || []).forEach(x => { if (x && x.id && Array.isArray(x.lines) && !lids.has(x.id)) S.lives.push(x); });
+    if (!Array.isArray(S.talks)) S.talks = [];
+    const tids = new Set(S.talks.map(x => x.id));
+    (d.talks || []).forEach(x => { if (x && x.id && Array.isArray(x.turns) && !tids.has(x.id)) S.talks.push(x); });
     save(); toast(`Imported ${n} word${n===1?"":"s"}${np ? ` and ${np} passage${np===1?"":"s"}` : ""}`); refreshHome();
   } catch(err){ toast("Invalid backup file"); }
   e.target.value = "";
@@ -3057,6 +3138,8 @@ function applyRemote(R){
   mergeList(S.passages, R.passages, tomb);
   if (!Array.isArray(S.lives)) S.lives = [];
   mergeList(S.lives, R.lives, tomb);
+  if (!Array.isArray(S.talks)) S.talks = [];
+  mergeList(S.talks, R.talks, tomb);
   // same word added separately on two devices → keep the one with more progress
   const byKo = new Map();
   S.cards.slice().forEach(c => {
@@ -3199,8 +3282,8 @@ const APP_URL = "https://pevien.github.io/korean/";
 const ORIGIN = new URL(APP_URL).origin;
 const appLink = () => `<a href="${APP_URL}" target="_blank" rel="noopener">${APP_URL}</a>`;
 let installEvt = null, installed = false, wStep = 0;
-addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (wStep === 4) renderInstall(); });
-addEventListener("appinstalled", () => { installEvt = null; installed = true; if (wStep === 4) renderInstall(); });
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; renderNudge(); });
+addEventListener("appinstalled", () => { installEvt = null; installed = true; renderNudge(); });
 
 function setUiLang(v){
   if (v === UI) return;
@@ -3213,7 +3296,7 @@ function bindLangSeg(root){
   Array.from(root.querySelectorAll("[data-ui]")).forEach(b => { b.classList.toggle("on", b.dataset.ui === UI); b.onclick = () => setUiLang(b.dataset.ui); });
 }
 
-const W_STEPS = 5;
+const W_STEPS = 1;   // just the hello: key, sync and install are offered later, where they matter
 function buildWelcome(){
   $("#welcome").innerHTML = `
   <div class="wbox">
@@ -3227,62 +3310,10 @@ function buildWelcome(){
       <h2 style="margin-bottom:18px">${L("Học tiếng Hàn cùng PV 🌿", "Learn Korean with PV 🌿")}</h2>
       <ul class="feat">
         <li><span>🎯</span><div>${L("Flashcard nhắc từ đúng lúc sắp quên", "Flashcards that return right before you forget")}</div></li>
-        <li><span>🎙</span><div>${L("Luyện nói, AI chấm phát âm", "Speaking practice with AI feedback")}</div></li>
+        <li><span>🗣</span><div>${L("Luyện nói: đọc to được chấm phát âm, hội thoại với AI được chữa lỗi", "Speaking: read aloud with pronunciation feedback, talk with AI that corrects you")}</div></li>
         <li><span>💜</span><div>${L("Dịch trực tiếp khi xem BTS live hoặc giao tiếp hằng ngày", "Live translation for BTS lives or daily conversations")}</div></li>
       </ul>
       <div class="note" style="margin-top:18px">${L("Bangtanie bảo mình học tiếng Hàn đi nên mình học nè 💜", "Bangtanie told me to learn Korean, so here I am 💜")} <span lang="ko">보라해!</span><br>${L("Vì tương lai xem live không cần sub 💪", "For a future of watching lives without subs 💪")} <span class="muted">— PV</span></div>
-    </div>
-
-    <div class="wstep" data-s="1">
-      <div class="wemoji">🎙</div>
-      <h2>${L("Cho phép micro", "Allow the microphone")}</h2>
-      <p class="lead">${L("Cần micro để luyện nói. Khi trình duyệt hỏi, chọn <b>Cho phép</b>.", "Needed for speaking practice. When asked, choose <b>Allow</b>.")}</p>
-      <button class="btn2" style="width:100%" id="wMic">${L("🎙 Thử micro", "🎙 Test microphone")}</button>
-      <p class="res" id="wMicRes"></p>
-    </div>
-
-    <div class="wstep" data-s="2">
-      <div class="wemoji">🤖</div>
-      <h2>${L("Thêm Gemini key", "Add a Gemini key")}</h2>
-      <p class="lead">${L("Miễn phí. Giúp app tạo câu ví dụ, bài đọc và chấm phát âm chi tiết.", "Free. Lets the app write examples and passages, and coach your pronunciation.")}</p>
-      <ol>
-        <li>${L("Mở", "Open")} <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></li>
-        <li>${L("Bấm <b>Create API key</b> rồi copy key", "Tap <b>Create API key</b> and copy it")}</li>
-        <li>${L("Dán vào ô dưới đây", "Paste it below")}</li>
-      </ol>
-      <div class="row"><input id="wKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn2" style="flex:0 0 auto" id="wKeyTest">${L("Kiểm tra", "Test")}</button></div>
-      <p class="res" id="wKeyRes"></p>
-      <label for="wModel">${L("Model AI", "AI model")}</label>
-      <select id="wModel"></select>
-      <p class="small muted" style="margin:6px 0 0">${MODEL_HINT()}</p>
-      <div class="note">🔒 ${L("Key chỉ lưu trên máy bạn. Đừng dùng chung với người khác.", "Your key stays on your device. Don't share it.")}</div>
-    </div>
-
-    <div class="wstep" data-s="3">
-      <div class="wemoji">☁️</div>
-      <h2>${L("Đồng bộ Google Drive", "Google Drive sync")}</h2>
-      <p class="lead">${L("Không bắt buộc. Học trên nhiều máy mà tiến độ vẫn khớp. Dữ liệu nằm trong Drive của bạn.", "Optional. Keep progress in sync across devices, stored in your own Drive.")}</p>
-      <div id="wClientRow">
-        <ol>
-          <li>${L("Mở", "Open")} <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a> ${L("và tạo project mới", "and create a new project")}</li>
-          <li>${L("Bật", "Enable")} <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a></li>
-          <li>${L("Mở", "Open")} <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> → ${L("bấm <b>Get started</b>, chọn <b>External</b>", "tap <b>Get started</b>, choose <b>External</b>")}</li>
-          <li>${L("<b>Audience</b> → <b>Test users</b> → thêm Gmail của bạn", "<b>Audience</b> → <b>Test users</b> → add your Gmail")}</li>
-          <li>${L("<b>Clients</b> → <b>Create client</b> → <b>Web application</b>, thêm origin", "<b>Clients</b> → <b>Create client</b> → <b>Web application</b>, add the origin")} <code>${ORIGIN}</code></li>
-          <li>${L("Copy <b>Client ID</b> và dán vào ô dưới đây", "Copy the <b>Client ID</b> and paste it below")}</li>
-        </ol>
-        <input id="wClient" type="text" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off">
-      </div>
-      <button class="btn2" style="width:100%;margin-top:10px" id="wDrive">${L("Kết nối Google Drive", "Connect Google Drive")}</button>
-      <p class="res" id="wDriveRes"></p>
-      <div class="note">🔒 ${L("Miễn phí, mỗi người tự tạo Client ID riêng. Trên máy khác, dán lại <b>cùng Client ID</b>. Thấy <i>“Google hasn't verified this app”</i> thì bấm <b>Continue</b>. Chi tiết từng bước: <b>⚙️ Cài đặt → ☁️ Đồng bộ Google Drive</b>.", "Free, everyone creates their own Client ID. On other devices, paste the <b>same Client ID</b>. If you see <i>“Google hasn't verified this app”</i>, tap <b>Continue</b>. Step-by-step details: <b>⚙️ Settings → ☁️ Google Drive sync</b>.")}</div>
-    </div>
-
-    <div class="wstep" data-s="4">
-      <div class="wemoji">📲</div>
-      <h2>${L("Cuối cùng: cài app ra màn hình chính", "Last step: install the app")}</h2>
-      <p class="lead">${L("Toàn màn hình, chạy offline, nhận 🔔 nhắc ôn tập.", "Full screen, works offline, sends 🔔 review reminders.")}</p>
-      <div id="wInstall"></div>
     </div>
 
     <div class="wnav">
@@ -3292,20 +3323,11 @@ function buildWelcome(){
     </div>
   </div>`;
   bindLangSeg($("#welcome"));
-  $("#wNext").onclick = () => {
-    if (wStep === 2) keepWelcomeKey();
-    if (wStep === W_STEPS - 1){ closeWelcome(); show("add"); } else wShow(wStep + 1);
-  };
+  $("#wNext").onclick = () => { if (wStep === W_STEPS - 1){ closeWelcome(); show("study"); } else wShow(wStep + 1); };
   $("#wBack").onclick = () => wShow(wStep - 1);
   $("#wSkip").onclick = closeWelcome;
-  $("#wKeyTest").onclick = testWelcomeKey;
-  $("#wModel").onchange = e => { S.settings.model = e.target.value; save(); };
-  $("#wKey").onchange = () => { keepWelcomeKey(); refreshModels($("#wModel")); };
-  $("#wMic").onclick = () => micTest($("#wMicRes"));
-  $("#wDrive").onclick = connectFromWelcome;
-  $("#wClient").onchange = e => { SY.clientId = e.target.value.trim(); saveSY(); if (clientId()) loadGIS().catch(()=>{}); };
 }
-function renderInstall(){
+function renderInstall(box){
   let h;
   const ios = `<ol><li>${L("Mở", "Open")} ${appLink()} ${L("bằng <b>Safari</b>", "in <b>Safari</b>")}</li>
     <li>${L("<b>Chia sẻ</b> ⬆️ → <b>Thêm vào MH chính</b>", "<b>Share</b> ⬆️ → <b>Add to Home Screen</b>")}</li></ol>
@@ -3320,9 +3342,9 @@ function renderInstall(){
   else if (isIOS) h = ios;
   else if (isAndroid) h = android;
   else h = desktop;
-  $("#wInstall").innerHTML = h;
-  const b = $("#wInstallBtn");
-  if (b) b.onclick = async () => { installEvt.prompt(); try { if ((await installEvt.userChoice).outcome === "accepted") installed = true; } catch(e){} installEvt = null; renderInstall(); };
+  box.innerHTML = h;
+  const b = box.querySelector("#wInstallBtn");
+  if (b) b.onclick = async () => { installEvt.prompt(); try { if ((await installEvt.userChoice).outcome === "accepted") installed = true; } catch(e){} installEvt = null; renderInstall(box); };
 }
 function wShow(i){
   wStep = Math.max(0, Math.min(W_STEPS - 1, i));
@@ -3330,42 +3352,18 @@ function wShow(i){
   $$("#wDots i").forEach((d, k) => d.classList.toggle("on", k === wStep));
   $("#wBack").classList.toggle("hidden", wStep === 0);
   $("#wSkip").classList.toggle("hidden", wStep === W_STEPS - 1);
-  $("#wNext").textContent = wStep === 0 ? L("Bắt đầu", "Get started") : wStep === W_STEPS - 1 ? L("Vào học thôi", "Start learning") : L("Tiếp tục", "Continue");
-  if (wStep === 2){ $("#wKey").value = S.settings.apiKey || ""; refreshModels($("#wModel")); }
-  if (wStep === 4) renderInstall();
-  if (wStep === 3){
-    $("#wClientRow").classList.toggle("hidden", !!GOOGLE_CLIENT_ID);
-    $("#wClient").value = SY.clientId || "";
-    if (clientId()) loadGIS().catch(()=>{});
-    if (SY.on) $("#wDrive").textContent = L("✅ Đã kết nối · Đồng bộ ngay", "✅ Connected · Sync now");
-  }
+  $("#wNext").textContent = wStep === W_STEPS - 1 ? L("Vào học thôi", "Start learning") : wStep === 0 ? L("Bắt đầu", "Get started") : L("Tiếp tục", "Continue");
+  $("#wDots").classList.toggle("hidden", W_STEPS < 2);
   $("#welcome").scrollTop = 0;
 }
-function keepWelcomeKey(){ const k = $("#wKey").value.trim(); if (k !== (S.settings.apiKey || "")){ S.settings.apiKey = k; save(); } }
 function openWelcome(){ buildWelcome(); $("#welcome").classList.remove("hidden"); document.body.style.overflow = "hidden";
   let s = 0; try { s = +sessionStorage.getItem("wStep") || 0; sessionStorage.removeItem("wStep"); } catch(e){}
   wShow(s);
 }
 function closeWelcome(){
-  keepWelcomeKey();
   $("#welcome").classList.add("hidden"); document.body.style.overflow = "";
   try { localStorage.setItem(WEL_KEY, "1"); } catch(e){}
   if (!$("#v-set").classList.contains("hidden")) renderSettings();
-}
-async function testWelcomeKey(){
-  const k = $("#wKey").value.trim(), r = $("#wKeyRes");
-  if (!k){ r.textContent = L("Dán key vào trước nhé.", "Paste your key first."); return; }
-  S.settings.apiKey = k; save();
-  const b = $("#wKeyTest"); busy(b, true, "…"); r.textContent = L("Đang kiểm tra…", "Testing…");
-  await refreshModels($("#wModel"));
-  try { await gemini('Translate 안녕하세요 to English. Return JSON {"t":""}'); r.textContent = L("✅ Kết nối thành công! · ", "✅ Connected! · ") + modelLabel(curModel()); }
-  catch(e){ r.textContent = "⚠️ " + e.message + (/^AIza/.test(k) ? "" : L(" · Key thường bắt đầu bằng AIza…", " · Keys usually start with AIza…")); }
-  busy(b, false);
-}
-function connectFromWelcome(){
-  if (!GOOGLE_CLIENT_ID){ SY.clientId = $("#wClient").value.trim(); saveSY(); }
-  if (!/\.apps\.googleusercontent\.com$/.test(clientId())){ $("#wDriveRes").textContent = L("⚠️ Client ID chưa đúng. Nó phải kết thúc bằng .apps.googleusercontent.com — xem mục tự tạo ở trên.", "⚠️ That Client ID doesn't look right. It should end in .apps.googleusercontent.com — see the steps above."); return; }
-  syncNow(true).then(() => { if (SY.on){ $("#wDrive").textContent = L("✅ Đã kết nối", "✅ Connected"); $("#wDriveRes").textContent = L("Dữ liệu sẽ tự đồng bộ giữa các máy.", "Your data will now sync across devices."); } });
 }
 async function micTest(out){
   out.textContent = L("Đang xin quyền…", "Asking for permission…");
@@ -3387,12 +3385,10 @@ async function micTest(out){
 
 const GUIDE = [
   ["g-start", L("Bắt đầu nhanh", "Quick start"), L(`
-    <ol>    <li><b>🎯 Học</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý.</li>
-    <li><b>📖 Đọc</b>: bài đọc theo trình độ. 🔊 để nghe, 🎙 để đọc to và được chấm.</li>
-    <li><b>📚 Từ vựng</b>: xem, sửa, xoá từ. Bấm <b>+ Thêm từ</b> để thêm từ mới, dán cả danh sách hoặc chụp ảnh.</li></ol>`, `
-    <ol>    <li><b>🎯 Study</b>: review flashcards daily. Answer honestly so the schedule fits you.</li>
-    <li><b>📖 Read</b>: passages at your level. 🔊 to listen, 🎙 to read aloud and get scored.</li>
-    <li><b>📚 Words</b>: view, edit and delete words. Tap <b>+ Add words</b> to add more, paste a whole list or use a screenshot.</li></ol>`)],
+    <ol>    <li><b>🎯 Học từ vựng</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý. Chạm ô <b>Cần học / Đang học / Đã thuộc</b> hoặc <b>📚 Từ của tôi</b> để xem, sửa, xoá từ; <b>+ Thêm từ</b> để thêm từ mới, dán cả danh sách hoặc chụp ảnh.</li>
+    <li><b>🗣 Luyện nói</b>: <b>Đọc</b> — bài đọc theo trình độ, 🔊 để nghe, 🎙 để đọc to và được chấm; <b>Hội thoại</b> — nói chuyện với AI, được chữa lỗi từng câu.</li></ol>`, `
+    <ol>    <li><b>🎯 Vocabulary</b>: review flashcards daily. Answer honestly so the schedule fits you. Tap <b>Due today / Learning / Mastered</b> or <b>📚 My words</b> to view, edit and delete words; <b>+ Add words</b> to add more, paste a whole list or use a screenshot.</li>
+    <li><b>🗣 Speak</b>: <b>Read</b> — passages at your level, 🔊 to listen, 🎙 to read aloud and get scored; <b>Talk</b> — a spoken conversation with AI that corrects each line.</li></ol>`)],
   ["g-install", L("Cài app", "Install the app"), L(`
     <ul><li><b>Android</b>: Chrome → <b>⋮</b> → <b>Cài đặt ứng dụng</b></li>
     <li><b>iPhone / iPad</b>: Safari → <b>Chia sẻ</b> ⬆️ → <b>Thêm vào MH chính</b></li>
@@ -3623,7 +3619,8 @@ const TALK_SCENES = [
 ];
 const talkScene = t => { const x = TALK_SCENES.find(s => s[0] === t.scene) || TALK_SCENES[TALK_SCENES.length - 1];
   return { icon: x[1], name: t.topic && t.scene === "custom" ? t.topic : x[2], role: x[3] }; };
-const TK = { rec: null, stream: null, chunks: [], t0: 0, busy: false, autoStop: null, urls: {}, hints: null, open: {}, status: "" };
+const TK = { view: "", showAll: false, rec: null, stream: null, chunks: [], t0: 0, busy: false, autoStop: null, urls: {}, hints: null, open: {}, status: "" };
+function talkDropUrls(){ Object.values(TK.urls).forEach(u => URL.revokeObjectURL(u)); TK.urls = {}; }   // free the recorded blobs — they sit in RAM until revoked
 const talkVisible = () => !$("#v-read").classList.contains("hidden") && !$("#talk").classList.contains("hidden");
 const talkTts = () => S.settings.talkTts !== false;
 
@@ -3638,7 +3635,7 @@ function talkStop(){
 function talkStatus(html){
   TK.status = html || "";
   const el = $("#tkStatus"); if (!el) return;
-  el.innerHTML = TK.status || (S.talk && S.talk.turns.some(x => x.pending) ? "" : L("Chạm 🎙 để nói, chạm lại để gửi.", "Tap 🎙 to speak, tap again to send."));
+  el.innerHTML = TK.status || (S.talk && S.talk.turns.some(x => x.pending) ? "" : L("Chạm 🎙 để nói, chạm lại để gửi. Bí thì chạm 💡", "Tap 🎙 to speak, tap again to send. Stuck? Tap 💡"));
 }
 function talkHead(title, right){
   return `<div class="sub-head">
@@ -3646,10 +3643,23 @@ function talkHead(title, right){
     <div class="c"><h2>${title}</h2></div><div class="r">${right || ""}</div></div>`;
 }
 function renderTalk(){
-  const t = S.talk;
-  if (!t) renderTalkSetup(); else if (t.done) renderTalkSummary(); else renderTalkChat();
-  if ($("#tkBack")) $("#tkBack").onclick = () => { spShow(""); scrollTo(0, 0); };
+  const t = S.talk, h = TK.view && (S.talks || []).find(x => x.id === TK.view);
+  if (h) renderTalkSummary(h, true);
+  else { TK.view = ""; if (!t) renderTalkSetup(); else if (t.done) renderTalkSummary(t); else renderTalkChat(); }
+  if ($("#tkBack")) $("#tkBack").onclick = h ? () => { TK.view = ""; renderTalk(); scrollTo(0, 0); } : () => { spShow(""); scrollTo(0, 0); };
 }
+// a finished conversation is copied into S.talks (same id → "keep talking" + finish again just updates it)
+function talkArchive(t){
+  const copy = JSON.parse(JSON.stringify({ id: t.id, created: t.created, scene: t.scene, topic: t.topic, savedPid: t.savedPid || "", turns: t.turns.filter(x => !x.pending) }));
+  if (!copy.turns.some(x => x.who === "me")) return;
+  const i = S.talks.findIndex(x => x.id === t.id);
+  if (i >= 0) S.talks[i] = Object.assign(S.talks[i], copy); else S.talks.push(copy);
+  if (S.talks.length > 60) S.talks.sort((a, b) => b.created - a.created).splice(60);   // keep the latest 60
+}
+const talkStats = t => {
+  const mine = t.turns.filter(x => x.who === "me"), fixes = mine.filter(x => !x.ok && x.fix);
+  return { mine, fixes, avg: mine.length ? Math.round(mine.reduce((a, x) => a + (x.score || 0), 0) / mine.length) : 0 };
+};
 
 /* ---- setup: pick a situation or type a topic ---- */
 function renderTalkSetup(){
@@ -3672,16 +3682,29 @@ function renderTalkSetup(){
       <label for="tkTopic" style="margin-top:0">${L("Hoặc tự chọn chủ đề", "Or pick your own topic")}</label>
       <input id="tkTopic" type="text" placeholder="${L("vd. Đặt phòng khách sạn ở Busan", "e.g. Booking a hotel room in Busan")}">
       <button class="btn" id="tkGo" style="margin-top:10px">💬 ${L("Bắt đầu", "Start")}</button>
-    </div>`;
+    </div>
+    ${talkHistory()}`;
+  $$("#tkHist li[data-id]").forEach(li => li.onclick = () => { TK.view = li.dataset.id; TK.showAll = false; renderTalk(); scrollTo(0, 0); });
   fillLevels($("#tkLevel"));
   if (UI === "vi") $$("#tkLevel option").forEach(o => o.textContent = trLevels(o.textContent));   // #talk skips the page-wide auto-translation
   $$("#talk .tk-scene").forEach(b => b.onclick = () => talkBegin(b.dataset.k, ""));
   $("#tkGo").onclick = () => { const v = $("#tkTopic").value.trim(); if (!v) { $("#tkTopic").focus(); return toast(L("Nhập chủ đề trước", "Type a topic first")); } talkBegin("custom", v); };
   $("#tkTopic").onkeydown = e => { if (e.key === "Enter") $("#tkGo").click(); };
 }
+function talkHistory(){
+  const list = (S.talks || []).slice().sort((a, b) => b.created - a.created);
+  if (!list.length) return "";
+  return `<h2 style="margin:22px 2px 8px">🕘 ${L("Hội thoại đã luyện", "Past conversations")} (${list.length})</h2>
+    <div class="card flat"><ul class="wl" id="tkHist">${list.map(x => {
+      const sc = talkScene(x), st = talkStats(x);
+      const meta = [arDate(x.created), L(`${st.mine.length} lượt`, `${st.mine.length} turn${st.mine.length === 1 ? "" : "s"}`),
+        st.fixes.length ? `✏️ ${st.fixes.length}` : "✅", `🗣 ${st.avg}`].join(" · ");
+      return `<li data-id="${x.id}" style="cursor:pointer"><span style="font-size:22px">${sc.icon}</span><div class="t"><b>${esc(sc.name)}</b><div class="small muted">${meta}</div></div><span class="muted">›</span></li>`;
+    }).join("")}</ul></div>`;
+}
 async function talkBegin(scene, topic){
   S.talk = { id: uid(), created: Date.now(), scene, topic, turns: [] };
-  TK.urls = {}; TK.hints = null; TK.open = {}; TK.status = "";
+  talkDropUrls(); TK.hints = null; TK.open = {}; TK.status = "";
   save(); renderTalk(); scrollTo(0, 0);
   await talkOpening();
 }
@@ -3748,7 +3771,9 @@ Return JSON exactly like: {"heard":"","ok":true,"fix":"","why":"","mean":"","sco
       issues: (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 2).map(x => ({ part: String(x.part || ""), tip: String(x.tip) })) };
     if (turn.fix) turn.ok = false;
     t.turns.push(turn);
-    TK.urls[t.turns.length - 1] = URL.createObjectURL(blob);
+    const ti = t.turns.length - 1;
+    if (TK.urls[ti]) URL.revokeObjectURL(TK.urls[ti]);
+    TK.urls[ti] = URL.createObjectURL(blob);
     const reply = String(j.ko || "").trim();
     if (reply) t.turns.push({ who: "ai", ko: reply, mean: String(j.koMean || "").trim() });
     save(); TK.busy = false; TK.status = ""; renderTalkChat();
@@ -3764,12 +3789,15 @@ async function talkHint(){
   const b = $("#tkHint"); b.disabled = true; b.innerHTML = `<span class="spinner" style="margin:0"></span>`;
   try {
     const j = extractJSON(await gemini(`${talkContext(t)}
-The learner doesn't know what to say next. Suggest 2 different short, natural answers THE LEARNER could say now, at their level.
-"mean" = translation in ${uiLangName()}.
-Return JSON exactly like: {"hints":[{"ko":"","mean":""}]}`, null, { temperature: 0.8 }));
+The learner is stuck and doesn't know what to say next. Help them answer:
+- "ask": in ${uiLangName()}, one short sentence explaining what YOU just asked or what they could talk about now, plus a useful Korean pattern for answering (e.g. "저는 ___예요/이에요").
+- "hints": 3 different natural answers THE LEARNER could say now, from very simple to a bit richer, all at their level. "mean" = translation in ${uiLangName()}.
+Return JSON exactly like: {"ask":"","hints":[{"ko":"","mean":""}]}`, null, { temperature: 0.8 }));
     if (S.talk !== t) return;
     TK.hints = (j.hints || []).filter(h => h && h.ko).slice(0, 3);
+    TK.hintAsk = String(j.ask || "").trim();
     renderTalkChat();
+    if (talkVisible()) requestAnimationFrame(() => scrollTo(0, document.body.scrollHeight));
   } catch(e){ talkStatus("⚠️ " + esc(e.message)); }
   const hb = $("#tkHint"); if (hb){ hb.disabled = false; hb.textContent = "💡"; }
 }
@@ -3782,7 +3810,7 @@ function talkSay(i){
 function talkMsg(x, i){
   if (x.pending) return `<div class="tk-msg ${x.who}"><div class="tk-b"><span class="spinner"></span></div></div>`;
   if (x.who === "ai") return `<div class="tk-msg ai" data-i="${i}">
-      <div class="tk-b" data-a="tr"><div class="ko" lang="ko">${esc(x.ko)}</div>${x.mean ? `<div class="mean ${TK.open["t" + i] ? "" : "hidden"}">${esc(x.mean)}</div>` : ""}</div>
+      <div class="tk-b"><div class="ko" lang="ko">${esc(x.ko)}</div>${x.mean ? `<div class="mean">${esc(x.mean)}</div>` : ""}</div>
       <button class="icon-btn" data-a="say" title="${L("Nghe", "Listen")}" aria-label="${L("Nghe", "Listen")}">🔊</button></div>`;
   const open = !!TK.open["d" + i], sc = x.score >= 80 ? "s-hi" : x.score >= 60 ? "s-mid" : "s-lo";
   return `<div class="tk-msg me" data-i="${i}">
@@ -3803,20 +3831,21 @@ function renderTalkChat(){
   const t = S.talk; if (!t) return;
   const sc = talkScene(t), wasBottom = innerHeight + scrollY >= document.body.scrollHeight - 80;
   $("#talk").innerHTML = talkHead(`${sc.icon} ${esc(sc.name)}`, `<button class="btn2 tk-end" id="tkEnd">${L("Kết thúc", "Finish")}</button>`) + `
-    <p class="small muted tk-tip">${L("Chạm vào câu của AI để xem nghĩa.", "Tap the AI's line to see its meaning.")}</p>
     <div class="tk-list" id="tkList">${t.turns.map(talkMsg).join("")}</div>
     ${TK.hints ? `<div class="card tk-hints"><div class="row"><b class="small">💡 ${L("Bạn có thể nói", "You could say")}</b><button class="icon-btn" style="flex:0 0 auto" id="tkHintX" aria-label="${L("Đóng", "Close")}">✕</button></div>
-      ${TK.hints.map((h, k) => `<button class="tk-hint" data-k="${k}"><span lang="ko">${esc(h.ko)}</span><span class="small muted">${esc(h.mean || "")}</span></button>`).join("")}</div>` : ""}
+      ${TK.hintAsk ? `<p class="small tk-ask">${esc(TK.hintAsk)}</p>` : ""}
+      ${TK.hints.map((h, k) => `<button class="tk-hint" data-k="${k}" title="${L("Nghe câu này", "Hear this")}"><span class="tx"><span lang="ko">${esc(h.ko)}</span><span class="small muted">${esc(h.mean || "")}</span></span><span class="sp" aria-hidden="true">🔊</span></button>`).join("")}
+      <p class="small muted" style="margin:2px 0 0">${L("Chạm để nghe, rồi chạm 🎙 và nói theo cách của bạn.", "Tap to hear it, then tap 🎙 and say it your way.")}</p></div>` : ""}
     <div class="tk-ctl">
       <div class="turn" id="tkStatus"></div>
-      <div class="pctl">
-        <button id="tkHint" title="${L("Gợi ý câu trả lời", "Suggest an answer")}" aria-label="${L("Gợi ý", "Hint")}">💡</button>
-        <button id="tkRec" class="main rec" title="${L("Nói", "Speak")}" aria-label="${L("Nói", "Speak")}">🎙</button>
-        <button id="tkTts" title="" aria-label=""></button>
+      <div class="pctl tk-btns">
+        <div><button id="tkHint" title="${L("Không biết nói gì? Xem câu gợi ý", "Stuck? See suggested answers")}">💡</button><span>${L("Gợi ý", "Hint")}</span></div>
+        <div><button id="tkRec" class="main rec" title="${L("Nói", "Speak")}">🎙</button><span>${L("Nói", "Speak")}</span></div>
+        <div><button id="tkTts" title=""></button><span id="tkTtsL"></span></div>
       </div>
     </div>`;
   talkStatus(TK.status);
-  const ttsBtn = () => { const b = $("#tkTts"); b.textContent = talkTts() ? "🔊" : "🔇"; b.title = b.ariaLabel = talkTts() ? L("AI đang đọc to — chạm để tắt", "AI reads aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); };
+  const ttsBtn = () => { const b = $("#tkTts"); b.textContent = talkTts() ? "🔊" : "🔇"; $("#tkTtsL").textContent = talkTts() ? L("Đọc to", "Read aloud") : L("Tắt tiếng", "Muted"); b.title = talkTts() ? L("AI đang đọc to — chạm để tắt", "AI reads aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); };
   ttsBtn();
   $("#tkTts").onclick = () => { S.settings.talkTts = !talkTts(); save(); ttsBtn(); if (!talkTts() && "speechSynthesis" in window) speechSynthesis.cancel(); };
   $("#tkHint").onclick = talkHint;
@@ -3826,15 +3855,14 @@ function renderTalkChat(){
     if (TK.busy || t.turns.some(x => x.pending)) return toast(L("Đợi AI trả lời xong đã", "Wait for the AI to answer first"));
     talkStop(); TK.status = "";
     if (!t.turns.some(x => x.who === "me")) { S.talk = null; save(); return renderTalk(); }   // nothing said yet → just back to the topics
-    t.done = true; save(); renderTalk(); scrollTo(0, 0);
+    t.done = true; talkArchive(t); save(); renderTalk(); scrollTo(0, 0);
   };
   $("#tkBack").onclick = () => { spShow(""); scrollTo(0, 0); };
-  if ($("#tkHintX")) $("#tkHintX").onclick = () => { TK.hints = null; renderTalkChat(); };
+  if ($("#tkHintX")) $("#tkHintX").onclick = () => { TK.hints = null; TK.hintAsk = ""; renderTalkChat(); };
   $$("#talk .tk-hint").forEach(b => b.onclick = () => speak(TK.hints[+b.dataset.k].ko));
   $("#tkList").onclick = e => {
     const a = e.target.closest("[data-a]"), m = e.target.closest(".tk-msg[data-i]"); if (!a || !m) return;
     const i = +m.dataset.i, x = t.turns[i];
-    if (a.dataset.a === "tr") { TK.open["t" + i] = !TK.open["t" + i]; const el = m.querySelector(".mean"); if (el) el.classList.toggle("hidden", !TK.open["t" + i]); }
     if (a.dataset.a === "say") speak(x.ko);
     if (a.dataset.a === "sayfix") speak(x.fix);
     if (a.dataset.a === "sayme") speak(x.fix || x.heard);
@@ -3883,11 +3911,20 @@ function talkRecStop(){
 }
 
 /* ---- summary: corrections to review + save as a reading passage ---- */
-function renderTalkSummary(){
-  const t = S.talk, sc = talkScene(t), mine = t.turns.filter(x => x.who === "me");
-  const fixes = mine.filter(x => !x.ok && x.fix), avg = mine.length ? Math.round(mine.reduce((a, x) => a + (x.score || 0), 0) / mine.length) : 0;
+function talkTranscript(t){
+  return `<div class="tk-list tk-read">${t.turns.filter(x => !x.pending).map(x => x.who === "ai"
+    ? `<div class="tk-msg ai"><div class="tk-b" data-say="${esc(x.ko)}"><div class="ko" lang="ko">${esc(x.ko)}</div>${x.mean ? `<div class="mean">${esc(x.mean)}</div>` : ""}</div></div>`
+    : `<div class="tk-msg me"><div class="tk-b"><div class="ko" lang="ko">${esc(x.heard)}</div></div><div class="tk-fb">
+        ${x.ok ? `<div class="ok">✅ ${L("Câu đúng và tự nhiên!", "Correct and natural!")}</div>` : `<div class="fix" data-say="${esc(x.fix)}">✏️ <span lang="ko">${esc(x.fix)}</span> 🔊</div>${x.why ? `<div class="why">${esc(x.why)}</div>` : ""}`}
+        ${x.mean ? `<div class="why muted">${esc(x.mean)}</div>` : ""}
+        <div class="why muted">🗣 ${L("Phát âm", "Pronunciation")} ${x.score}/100</div></div></div>`).join("")}</div>`;
+}
+function renderTalkSummary(t, hist){
+  const sc = talkScene(t), { mine, fixes, avg } = talkStats(t);
   const issues = mine.flatMap(x => x.issues || []);
+  const saved = t.savedPid && S.passages.some(p => p.id === t.savedPid);
   $("#talk").innerHTML = talkHead(`${sc.icon} ${esc(sc.name)}`) + `
+    ${hist ? `<p class="small muted" style="text-align:center;margin:-6px 0 12px">${arDate(t.created)}</p>` : ""}
     <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
       <div class="stat"><b>${mine.length}</b><span>${L("lượt nói", "turns")}</span></div>
       <div class="stat"><b>${mine.length - fixes.length}</b><span>${L("câu đúng", "correct")}</span></div>
@@ -3899,21 +3936,35 @@ function renderTalkSummary(){
         : `<p class="muted" style="margin:0">${L("Không có câu nào sai — tuyệt vời! 🎉", "Nothing to fix — great job! 🎉")}</p>`}
       ${issues.length ? `<h2 style="margin-top:16px">🗣 ${L("Lưu ý phát âm", "Pronunciation notes")}</h2>${issues.slice(0, 8).map(s => `<div class="tk-sum small">${s.part ? `<b lang="ko">${esc(s.part)}</b> · ` : ""}${esc(s.tip)}</div>`).join("")}` : ""}
     </div>
-    <button class="btn" id="tkSave" ${t.savedPid ? "disabled" : ""}>${t.savedPid ? "✓ " + L("Đã lưu thành bài đọc", "Saved as a passage") : "📖 " + L("Lưu thành bài đọc để luyện lại", "Save as a passage to practise")}</button>
-    <div class="row" style="margin-top:10px">
+    <button class="btn2" id="tkAll" style="width:100%;margin-bottom:10px">💬 ${TK.showAll ? L("Ẩn hội thoại", "Hide conversation") : L("Xem lại cả hội thoại", "Show the whole conversation")}</button>
+    ${TK.showAll ? talkTranscript(t) : ""}
+    <button class="btn" id="tkSave">${saved ? "📖 " + L("Mở bài đọc đã lưu", "Open the saved passage") : "📖 " + L("Lưu thành bài đọc để luyện lại", "Save as a passage to practise")}</button>
+    ${hist ? `<button class="btn-ghost" id="tkDel" style="width:100%;margin-top:10px">🗑 ${L("Xoá", "Delete")}</button>`
+      : `<div class="row" style="margin-top:10px">
       <button class="btn2" id="tkMore">← ${L("Nói tiếp", "Keep talking")}</button>
       <button class="btn2" id="tkNew">💬 ${L("Hội thoại mới", "New conversation")}</button>
-    </div>`;
+    </div>`}`;
+  $("#tkAll").onclick = () => { TK.showAll = !TK.showAll; renderTalk(); };
+  $$("#talk [data-say]").forEach(el => el.onclick = () => speak(el.dataset.say));
   $("#tkSave").onclick = () => {
+    if (saved) { spShow("read"); openReader(t.savedPid); return; }
     // the AI's lines + the learner's lines (corrected), in order — practised later with the Read coach
     const sentences = t.turns.filter(x => !x.pending).map(x => x.who === "ai" ? { ko: x.ko, meaning: x.mean || "" } : { ko: x.fix || x.heard, meaning: x.mean || "" }).filter(s => s.ko);
     const p = { id: uid(), created: Date.now(), title: `💬 ${sc.name}`, titleMean: "", level: S.settings.level, sentences, vocab: [] };
-    S.passages.push(p); t.savedPid = p.id; save();
+    S.passages.push(p); t.savedPid = p.id;
+    [S.talk, ...(S.talks || [])].forEach(x => { if (x && x.id === t.id) x.savedPid = p.id; });   // live copy + history copy
+    save();
     toast(L("Đã lưu vào Đọc", "Saved to Read"));
     spShow("read"); openReader(p.id);
   };
-  $("#tkMore").onclick = () => { t.done = false; save(); renderTalk(); };
-  $("#tkNew").onclick = () => { S.talk = null; TK.urls = {}; TK.hints = null; TK.open = {}; TK.status = ""; save(); renderTalk(); scrollTo(0, 0); };
+  if (hist){
+    $("#tkDel").onclick = e => confirmTap(e.currentTarget, `🗑 ${L("Xoá", "Delete")}`, () => {
+      S.talks = S.talks.filter(x => x !== t); TK.view = ""; save(); renderTalk(); scrollTo(0, 0); toast(L("Đã xoá hội thoại", "Conversation deleted"));
+    });
+    return;
+  }
+  $("#tkMore").onclick = () => { t.done = false; TK.showAll = false; save(); renderTalk(); };
+  $("#tkNew").onclick = () => { S.talk = null; talkDropUrls(); TK.hints = null; TK.open = {}; TK.status = ""; save(); renderTalk(); scrollTo(0, 0); };
 }
 
 // BTS logo: two trapezoid "doors", drawn inline so it follows the theme's purple
@@ -4418,6 +4469,8 @@ takeSnap();
 if (!S.settings.speakAuto && S.settings.apiKey && S.settings.apiKey.trim()) save();   // existing key → speaking questions on (once)
 if (!Array.isArray(S.passages)) S.passages = [];
 if (!Array.isArray(S.lives)) S.lives = [];
+if (!Array.isArray(S.talks)) S.talks = [];
+if (S.talk && S.talk.done) talkArchive(S.talk);   // finished before history existed → keep it reviewable
 if (S.settings.model === "gemini-flash-latest") { S.settings.model = ""; save(); }   // old default alias, often overloaded
 fillLevels($("#genLevel")); fillLevels($("#rdLevel"));
 if ("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
