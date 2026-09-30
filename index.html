@@ -225,19 +225,19 @@ nav button[data-v=army].on{color:var(--army)}
 .tk-more b{font-size:14px}
 .tk-det{border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font-size:13px;display:grid;gap:5px}
 .tk-det .btn2{flex:0 0 auto;padding:6px 10px;font-size:13px}
-.tk-ctl{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));z-index:5;background:var(--card);border-radius:var(--radius);padding:4px 8px 10px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
-.tk-ctl .turn{margin:4px 0 8px;font-size:13px}
+.tk-ctl{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));z-index:5;background:var(--card);border-radius:var(--radius);padding:6px 8px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
+.tk-ctl .turn{margin:4px 0 2px;font-size:13px;min-height:0}
+.tk-ctl .turn:empty{display:none}
 .tk-hints{display:grid;gap:6px}
 .tk-hint{display:flex;align-items:center;gap:10px;text-align:left;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:500}
 .tk-hint .tx{flex:1;min-width:0;display:grid;gap:2px}
 .tk-hint .sp{flex:0 0 auto;font-size:16px}
 .tk-hint:hover{border-color:var(--accent)}
 .tk-ask{margin:0;padding:8px 10px;border-radius:10px;background:var(--accent-soft);color:var(--text);line-height:1.45}
-.tk-btns{gap:22px;align-items:flex-end}
-.tk-btns > div{display:flex;flex-direction:column;align-items:center;gap:4px}
-.tk-btns > div > span{font-size:12px;color:var(--muted);font-weight:500}
+.tk-btns{gap:12px}
+.pctl.tk-btns button{width:40px;height:40px;font-size:15px}
+.pctl.tk-btns button.main{width:48px;height:48px;font-size:20px}
 .tk-hint [lang=ko]{font-size:16px}
-.tk-end{font-size:14px!important;padding:6px 12px!important}
 .tk-hist .n{font-size:13px;font-weight:700;color:var(--muted);margin-left:3px;vertical-align:.15em}
 .tk-hist{background:none;font-size:18px!important;padding:6px 8px!important}
 .tk-sum{padding:8px 0;border-bottom:1px solid var(--line)}
@@ -3634,11 +3634,11 @@ function talkStop(){
   TK.rec = TK.stream = null;
   const b = $("#tkRec"); if (b){ b.classList.remove("on"); b.textContent = "🎙"; }
 }
-// the status line survives re-renders; empty = the default "tap 🎙" hint (nothing while the AI is still writing)
+// the status line (errors, mic help) survives re-renders; empty = hidden
 function talkStatus(html){
   TK.status = html || "";
   const el = $("#tkStatus"); if (!el) return;
-  el.innerHTML = TK.status || (S.talk && S.talk.turns.some(x => x.pending) ? "" : L("Chạm 🎙 để nói, chạm lại để gửi. Bí thì chạm 💡", "Tap 🎙 to speak, tap again to send. Stuck? Tap 💡"));
+  el.innerHTML = TK.status;
 }
 // 🕘 + count, top right (mirrors ←): opens the past-conversations list
 function talkHistBtn(){
@@ -3853,28 +3853,28 @@ function talkMsg(x, i){
 function renderTalkChat(){
   const t = S.talk; if (!t) return;
   const sc = talkScene(t), wasBottom = innerHeight + scrollY >= document.body.scrollHeight - 80;
-  $("#talk").innerHTML = talkHead(`${sc.icon} ${esc(sc.name)}`, `<button class="btn-ghost tk-hist" id="tkHistBtn" title="${L("Hội thoại đã luyện", "Past conversations")}" aria-label="${L("Hội thoại đã luyện", "Past conversations")}">🕘</button><button class="btn2 tk-end" id="tkEnd">${L("Kết thúc", "Finish")}</button>`) + `
+  $("#talk").innerHTML = talkHead(`${sc.icon} ${esc(sc.name)}`) + `
     <div class="tk-list" id="tkList">${t.turns.map(talkMsg).join("")}</div>
     ${TK.hints ? `<div class="card tk-hints"><div class="row"><b class="small">💡 ${L("Bạn có thể nói", "You could say")}</b><button class="icon-btn" style="flex:0 0 auto" id="tkHintX" aria-label="${L("Đóng", "Close")}">✕</button></div>
       ${TK.hintAsk ? `<p class="small tk-ask">${esc(TK.hintAsk)}</p>` : ""}
       ${TK.hints.map((h, k) => `<button class="tk-hint" data-k="${k}" title="${L("Nghe câu này", "Hear this")}"><span class="tx"><span lang="ko">${esc(h.ko)}</span><span class="small muted">${esc(h.mean || "")}</span></span><span class="sp" aria-hidden="true">🔊</span></button>`).join("")}
       <p class="small muted" style="margin:2px 0 0">${L("Chạm để nghe, rồi chạm 🎙 và nói theo cách của bạn.", "Tap to hear it, then tap 🎙 and say it your way.")}</p></div>` : ""}
     <div class="tk-ctl">
-      <div class="turn" id="tkStatus"></div>
       <div class="pctl tk-btns">
-        <div><button id="tkHint" title="${L("Không biết nói gì? Xem câu gợi ý", "Stuck? See suggested answers")}">💡</button><span>${L("Gợi ý", "Hint")}</span></div>
-        <div><button id="tkRec" class="main rec" title="${L("Nói", "Speak")}">🎙</button><span>${L("Nói", "Speak")}</span></div>
-        <div><button id="tkTts" title=""></button><span id="tkTtsL"></span></div>
+        <button id="tkHint" title="${L("Không biết nói gì? Xem câu gợi ý", "Stuck? See suggested answers")}" aria-label="${L("Gợi ý", "Hint")}">💡</button>
+        <button id="tkRec" class="main rec" title="${L("Nói", "Speak")}" aria-label="${L("Nói", "Speak")}">🎙</button>
+        <button id="tkTts" title=""></button>
+        <button id="tkEnd" title="${L("Kết thúc hội thoại", "Finish the conversation")}" aria-label="${L("Kết thúc", "Finish")}">🏁</button>
       </div>
+      <div class="turn" id="tkStatus"></div>
     </div>`;
   talkStatus(TK.status);
-  const ttsBtn = () => { const b = $("#tkTts"); b.textContent = talkTts() ? "🔊" : "🔇"; $("#tkTtsL").textContent = talkTts() ? L("Đọc to", "Read aloud") : L("Tắt tiếng", "Muted"); b.title = talkTts() ? L("AI đang đọc to — chạm để tắt", "AI reads aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); };
+  const ttsBtn = () => { const b = $("#tkTts"); b.textContent = talkTts() ? "🔊" : "🔇"; b.setAttribute("aria-label", talkTts() ? L("Đọc to", "Read aloud") : L("Tắt tiếng", "Muted")); b.title = talkTts() ? L("AI đang đọc to — chạm để tắt", "AI reads aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); };
   ttsBtn();
   $("#tkTts").onclick = () => { S.settings.talkTts = !talkTts(); save(); ttsBtn(); if (!talkTts() && "speechSynthesis" in window) speechSynthesis.cancel(); };
   $("#tkHint").onclick = talkHint;
   if ($("#tkRetry")) $("#tkRetry").onclick = () => { TK.status = ""; talkOpening(); };
   $("#tkRec").onclick = () => { if (TK.busy || t.turns.some(x => x.pending)) return; TK.rec ? talkRecStop() : talkRecStart(); };
-  $("#tkHistBtn").onclick = () => { if (TK.busy) return; talkStop(); TK.histList = true; renderTalk(); scrollTo(0, 0); };   // ← on the list comes back to this chat
   $("#tkEnd").onclick = () => {
     if (TK.busy || t.turns.some(x => x.pending)) return toast(L("Đợi AI trả lời xong đã", "Wait for the AI to answer first"));
     talkStop(); TK.status = "";
