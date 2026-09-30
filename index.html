@@ -1435,7 +1435,7 @@ function endSession(summary){
   const s = session; session = null;
   $("#studySession").classList.add("hidden"); $("#studyHome").classList.remove("hidden");
   document.body.classList.remove("in-session", "auto-session");
-  if (summary && s && s.answered){ S.daily.result = { correct: s.correct, answered: s.answered, missed: [...s.missed] }; save(); }
+  if (summary && s && s.answered){ S.daily.result = { correct: s.correct, answered: s.answered, missed: [...s.missed] }; save(); perfectRun = !s.missed.size; }
   cheerTry = !!(summary && s && s.missed.size); refreshHome(); cheerTry = false;
   // streak went up this session → bump the tile; milestones get the big burst, a perfect run a normal one
   const streak = streakNow(), milestone = s && streak > s.streak0 && STREAK_MILESTONES.includes(streak);
@@ -1443,17 +1443,18 @@ function endSession(summary){
   if (milestone){ confetti(160); toast(L(`🔥 ${streak} ngày liên tiếp! 대박!`, `🔥 ${streak}-day streak! 대박!`)); }
   else if (summary && s && s.answered && !s.missed.size) confetti();
   if (summary && s && s.answered) {
-    const pct = Math.round(100*s.correct/s.answered);
     // not a perfect run → the result + retry stay on the home card for the rest of the day (see resultHTML)
     if (s.missed.size) setTimeout(() => $("#retryMissed") && $("#retryMissed").focus(), 30);
-    else $("#homeCard").insertAdjacentHTML("afterbegin", `<div class="feedback ok" style="margin:0 0 12px">✅ Session complete — ${s.correct}/${s.answered} correct (${pct}%).</div>`);
   }
 }
-/* today's last imperfect session: shown on top of the home card until a later session replaces it */
+/* today's last session result, shown on top of the home card until a later session replaces it:
+   imperfect → kept for the day (S.daily.result); perfect → kept in memory until the page is reloaded */
+let perfectRun = false;
 function resultHTML(){
   const r = S.daily.result, missed = r ? S.cards.filter(c => r.missed.includes(c.id)) : [];
-  if (!missed.length) return "";
+  if (!r || !r.answered) return "";
   const pct = Math.round(100*r.correct/r.answered);
+  if (!missed.length) return perfectRun ? `<div class="feedback ok" style="margin:0 0 12px">✅ Session complete — ${r.correct}/${r.answered} correct (${pct}%).</div>` : "";
   return `<div class="feedback bad" style="margin:0 0 12px">💪 Session complete — ${r.correct}/${r.answered} correct (${pct}%). Let's lock in the words you missed.</div>
     <button class="btn" id="retryMissed" style="margin-bottom:14px">🔁 Practice ${missed.length} missed word${missed.length===1?"":"s"}</button>`;
 }
