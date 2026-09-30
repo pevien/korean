@@ -1464,8 +1464,8 @@ function navSave(patch){ try { sessionStorage.setItem(NAV_KEY, JSON.stringify(Ob
 let navScrollT = null;
 addEventListener("scroll", () => { clearTimeout(navScrollT); navScrollT = setTimeout(() => navSave({ y: Math.round(scrollY) }), 200); }, { passive: true });
 addEventListener("pagehide", () => navSave({ y: Math.round(scrollY) }));
-// tapping the tab you're already on takes you back to its first page (Speak picker, ARMY menu, word list…)
-$$("nav button").forEach(b => b.onclick = () => { if (b.classList.contains("on")) navRoot(b.dataset.v); show(b.dataset.v); });
+// a tab always opens on its first page (Speak picker, ARMY menu, Study home…), never on a sub-page left open earlier
+$$("nav button").forEach(b => b.onclick = () => { navRoot(b.dataset.v); show(b.dataset.v); });
 function navRoot(v){
   if (v === "read"){ spScreen = ""; rdNewOpen = false; TK.view = ""; TK.list = false; TK.histList = false; TK.showAll = false; }   // show() → spShow("") also closes an open passage
   if (v === "army"){ arStop(); AR.view = ""; AR.screen = "home"; arPersist(); }
