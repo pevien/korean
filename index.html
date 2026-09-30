@@ -60,6 +60,39 @@ nav button{flex:1;background:none;color:var(--muted);border-radius:0;padding:10p
 nav button .ic{display:block;font-size:20px;line-height:1.2}
 nav button.on{color:var(--accent)}
 .hidden{display:none!important}
+/* ---- welcome / guide ---- */
+.toast{z-index:60}
+#welcome{position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto;
+  padding:calc(12px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))}
+#welcome .wbox{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+#welcome .wtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#welcome .dots{display:flex;gap:6px}
+#welcome .dots i{width:8px;height:8px;border-radius:9px;background:var(--line);transition:all .2s}
+#welcome .dots i.on{width:22px;background:var(--accent)}
+#welcome .wstep{flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 0}
+#welcome .hero{font-size:112px;line-height:1;font-weight:800;color:var(--accent);text-align:center;margin:10px 0 6px;letter-spacing:-.02em}
+#welcome h2{font-size:22px;margin:0 0 8px;line-height:1.25}
+#welcome .lead{font-size:15px;line-height:1.55;color:var(--muted);margin:0 0 14px}
+#welcome ol, .guide ol, .guide ul{padding-left:20px;margin:6px 0 10px;line-height:1.6;font-size:14px}
+#welcome .feat{display:grid;gap:8px;margin:6px 0 4px}
+#welcome .feat div{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;line-height:1.45}
+#welcome .feat b{display:block;font-size:15px}
+#welcome .feat span.e{font-size:24px;line-height:1}
+#welcome .wnav{display:flex;gap:8px;margin-top:14px}
+#welcome .wnav .btn{flex:1}
+#welcome .note{font-size:13px;background:var(--accent-soft);color:var(--text);border-radius:12px;padding:10px 12px;line-height:1.5;margin:10px 0}
+#welcome .res{font-size:14px;margin:10px 0 0;line-height:1.5}
+.linkbtn{background:none;color:var(--accent);padding:0;font-weight:600;font-size:13px}
+.guide details{border-top:1px solid var(--line);padding:4px 0}
+.guide details:first-of-type{border-top:none}
+.guide summary{cursor:pointer;padding:10px 0;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary::after{content:"＋";color:var(--muted)}
+.guide details[open] summary::after{content:"－"}
+.guide p{font-size:14px;line-height:1.6;margin:4px 0 10px}
+.guide code{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12.5px;word-break:break-all}
+.guide a, #welcome a{color:var(--accent)}
+
 /* study */
 .qwrap{text-align:center;padding:22px 16px}
 .qtype{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
@@ -375,6 +408,66 @@ nav button.on{color:var(--accent)}
 
   <!-- SETTINGS -->
   <section id="v-set" class="hidden">
+    <div class="card guide" id="guideCard">
+      <h2>📘 Hướng dẫn sử dụng</h2>
+      <details id="g-start"><summary>Bắt đầu nhanh</summary>
+        <ol>
+          <li><b>➕ Add</b>: thêm từ mới. Có thể dán cả danh sách, hoặc chụp ảnh chữ Hàn.</li>
+          <li><b>🎯 Study</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch ôn hợp lý.</li>
+          <li><b>📖 Read</b>: đọc bài theo trình độ. Bấm 🔊 để nghe, 🎙 để đọc to và được chấm điểm.</li>
+          <li><b>📚 Words</b>: xem, sửa, xoá từ.</li>
+        </ol>
+        <p>Chỉnh số từ mới mỗi ngày và kiểu câu hỏi ở khung <b>Study</b> bên dưới.</p>
+      </details>
+      <details id="g-install"><summary>Cài app ra màn hình chính</summary>
+        <ul>
+          <li><b>Android</b>: mở bằng Chrome → menu <b>⋮</b> → <b>Cài đặt ứng dụng</b> (hoặc <b>Thêm vào màn hình chính</b>).</li>
+          <li><b>iPhone / iPad</b>: mở bằng Safari → nút <b>Chia sẻ</b> ⬆️ → <b>Thêm vào MH chính</b>.</li>
+          <li><b>Máy tính</b>: trong Chrome, bấm biểu tượng cài đặt ở cuối thanh địa chỉ.</li>
+        </ul>
+        <p>App cài đặt và trang web dùng chung dữ liệu trên cùng một máy. Luôn mở từ link <code>https://pevien.github.io/korean/</code>, không mở file HTML tải về.</p>
+      </details>
+      <details id="g-key"><summary>Gemini API key</summary>
+        <ol>
+          <li>Mở <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, đăng nhập Gmail.</li>
+          <li>Bấm <b>Create API key</b> và copy key (bắt đầu bằng <code>AIza…</code>).</li>
+          <li>Dán vào ô <b>Gemini API key</b> ở khung AI bên dưới → <b>Test connection</b>.</li>
+        </ol>
+        <p><b>Có key:</b> app tự tạo câu ví dụ, bài đọc, chấm phát âm và ngữ điệu, và cho nghe lại giọng bạn. <b>Không có key:</b> app đưa sẵn câu lệnh để bạn dán vào chatbot miễn phí rồi dán kết quả lại.</p>
+        <p>🔒 Mỗi người nên dùng key riêng. Key không nằm trong file Export. Để an toàn hơn, trong Google Cloud Console hãy giới hạn key cho trang <code>https://pevien.github.io/*</code> và chỉ cho <b>Generative Language API</b>.</p>
+      </details>
+      <details id="g-sync"><summary>Đồng bộ Google Drive</summary>
+        <ol>
+          <li>Gửi <b>Gmail</b> của bạn cho người chia sẻ link app để được thêm vào danh sách <b>Test users</b>.</li>
+          <li>Ở khung <b>☁️ Google Drive sync</b>: dán Client ID (nếu có ô đó) → <b>Connect Google Drive</b> → chọn Gmail.</li>
+          <li>Thấy <i>"Google hasn't verified this app"</i> → <b>Continue</b>.</li>
+          <li>Làm lại trên máy thứ hai.</li>
+        </ol>
+        <p>App tự lưu lên Drive vài giây sau mỗi thay đổi và tải về khi mở app. Dữ liệu được gộp theo từng từ nên học trên nhiều máy không bị mất tiến độ.</p>
+        <p><b>☁️ Tap to sync</b> ở góc trên nghĩa là phiên đăng nhập Google (khoảng 1 giờ) đã hết. Chạm vào để tiếp tục. Quên chạm cũng không mất dữ liệu.</p>
+        <p><b>Lỗi 400 / access blocked</b>: Gmail chưa được thêm vào Test users, hoặc Client ID sai. Hỏi lại người chia sẻ link.</p>
+      </details>
+      <details id="g-mic"><summary>Micro &amp; luyện nói</summary>
+        <p>Lần đầu bấm 🎙, chọn <b>Cho phép</b>. Nếu bị báo <i>"Microphone permission denied"</i>:</p>
+        <ul>
+          <li><b>Android</b>: Cài đặt → Ứng dụng → <b>Chrome</b> → Quyền → <b>Micro</b> → Cho phép. Rồi trong Chrome chạm 🔒 cạnh địa chỉ → Quyền → Micro → Cho phép, tải lại trang.</li>
+          <li><b>iPhone / iPad</b>: Cài đặt → <b>Safari</b> → Micro → Cho phép.</li>
+          <li><b>Mac</b>: Cài đặt hệ thống → Quyền riêng tư &amp; Bảo mật → <b>Micro</b> → bật cho trình duyệt.</li>
+        </ul>
+        <p>Trên Android khi chưa có Gemini key, app chỉ nhận diện chữ nên nút nghe lại giọng mình (🎧) sẽ tắt. Thêm key để dùng đầy đủ.</p>
+        <p><button class="btn2" id="gMicTest">🎙 Thử micro ngay</button> <span class="small" id="gMicRes"></span></p>
+      </details>
+      <details id="g-backup"><summary>Sao lưu &amp; chuyển máy</summary>
+        <p><b>⬇️ Export</b> ở khung Backup để lưu file dự phòng. <b>⬆️ Import</b> để khôi phục hoặc chuyển sang máy khác (từ trùng sẽ được bỏ qua).</p>
+        <p>⚠️ Xoá dữ liệu trình duyệt sẽ xoá từ vựng nếu chưa bật đồng bộ Drive hoặc chưa Export.</p>
+      </details>
+      <details id="g-faq"><summary>Câu hỏi thường gặp</summary>
+        <p><b>Người khác có thấy dữ liệu hay key của mình không?</b> Không. Mỗi người có dữ liệu, key và Drive riêng.</p>
+        <p><b>Có tốn tiền không?</b> Không. Gemini bản miễn phí đủ học hằng ngày, Drive chỉ dùng vài MB.</p>
+        <p><b>App không lên bản mới?</b> Đóng hẳn app rồi mở lại khi có mạng. Trên máy tính bấm Ctrl/Cmd + Shift + R.</p>
+      </details>
+      <button class="btn-ghost" style="width:100%;margin-top:10px" id="gWelcome">↺ Xem lại màn hình chào mừng</button>
+    </div>
     <div class="card">
       <h2>Study</h2>
       <label for="setNew">New words per day</label>
@@ -407,7 +500,7 @@ nav button.on{color:var(--accent)}
         <li><b>With a free Google Gemini key</b> (recommended, one click each time): get one at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> and paste it below.</li>
         <li><b>Without a key:</b> the app shows a prompt you copy into any free chatbot (Gemini, ChatGPT…), then paste the answer back.</li>
       </ol>
-      <label for="setKey">Gemini API key</label>
+      <label for="setKey">Gemini API key · <button class="linkbtn" data-guide="g-key">Cách lấy key?</button></label>
       <div class="row"><input id="setKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn-ghost" style="flex:0 0 auto" id="keyShow">👁</button></div>
       <label for="setModel">Model</label>
       <input id="setModel" type="text" placeholder="gemini-flash-latest">
@@ -424,7 +517,7 @@ nav button.on{color:var(--accent)}
       </select>
     </div>
     <div class="card">
-      <h2>☁️ Google Drive sync</h2>
+      <h2>☁️ Google Drive sync <button class="linkbtn" data-guide="g-sync" style="float:right">Hướng dẫn</button></h2>
       <p class="small muted" style="margin-top:0">Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.</p>
       <div id="gdClientRow">
         <label for="gdClient">Google OAuth Client ID</label>
@@ -457,6 +550,73 @@ nav button.on{color:var(--accent)}
   <button data-v="words"><span class="ic">📚</span>Words</button>
   <button data-v="set"><span class="ic">⚙️</span>Settings</button>
 </div></nav>
+
+<div id="welcome" class="hidden" role="dialog" aria-modal="true" aria-label="Hướng dẫn bắt đầu">
+  <div class="wbox">
+    <div class="wtop"><div class="dots" id="wDots"></div><button class="btn-ghost" id="wSkip" style="padding:8px 14px">Bỏ qua</button></div>
+
+    <div class="wstep" data-s="0">
+      <div class="hero">한</div>
+      <h2 style="text-align:center">Chào mừng đến Hangul Cards</h2>
+      <p class="lead" style="text-align:center">Học từ vựng, luyện đọc và luyện nói tiếng Hàn. Thiết lập mất khoảng 2 phút.</p>
+      <div class="feat">
+        <div><span class="e">🎯</span><div><b>Flashcard thông minh</b>App nhắc lại từ đúng lúc bạn sắp quên.</div></div>
+        <div><span class="e">📖</span><div><b>Bài đọc theo trình độ</b>Nghe giọng bản xứ, tra từ ngay trong bài.</div></div>
+        <div><span class="e">🎙</span><div><b>Luyện nói có chấm điểm</b>Đọc to, AI nhận xét phát âm và ngữ điệu.</div></div>
+      </div>
+    </div>
+
+    <div class="wstep" data-s="1">
+      <h2>📲 Cài app ra màn hình chính</h2>
+      <p class="lead">Mở toàn màn hình như app thật, có icon riêng, vẫn ôn bài được khi mất mạng.</p>
+      <div id="wInstall"></div>
+    </div>
+
+    <div class="wstep" data-s="2">
+      <h2>🤖 Thêm Gemini key (miễn phí)</h2>
+      <p class="lead">Key giúp app tạo câu ví dụ, bài đọc và chấm phát âm chi tiết. Không có key app vẫn chạy, nhưng ít tính năng hơn.</p>
+      <ol>
+        <li>Mở <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> và đăng nhập Gmail.</li>
+        <li>Bấm <b>Create API key</b>, copy key (bắt đầu bằng <b>AIza…</b>).</li>
+        <li>Quay lại đây, dán vào ô bên dưới.</li>
+      </ol>
+      <div class="row"><input id="wKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn2" style="flex:0 0 auto" id="wKeyTest">Kiểm tra</button></div>
+      <p class="res" id="wKeyRes"></p>
+      <div class="note">🔒 Key chỉ lưu trên máy bạn (và Drive riêng của bạn nếu bật đồng bộ). Đừng dùng chung key với người khác.</div>
+    </div>
+
+    <div class="wstep" data-s="3">
+      <h2>🎙 Cho phép micro</h2>
+      <p class="lead">Cần micro để luyện nói ở tab Read. Bấm nút bên dưới, khi trình duyệt hỏi thì chọn <b>Cho phép</b>.</p>
+      <button class="btn2" style="width:100%" id="wMic">🎙 Thử micro</button>
+      <div class="res" id="wMicRes"></div>
+    </div>
+
+    <div class="wstep" data-s="4">
+      <h2>☁️ Đồng bộ Google Drive <span class="muted" style="font-weight:500;font-size:15px">(tuỳ chọn)</span></h2>
+      <p class="lead">Học trên cả điện thoại và máy tính mà tiến độ vẫn khớp nhau. Dữ liệu nằm trong thư mục ẩn trên Drive của chính bạn, chỉ vài MB.</p>
+      <div class="note">Trước tiên, gửi <b>địa chỉ Gmail</b> của bạn cho người đã chia sẻ link app để họ cho phép bạn đăng nhập. Nếu chưa, Google sẽ báo <i>"access blocked"</i>.</div>
+      <div id="wClientRow">
+        <label for="wClient">Google OAuth Client ID <span class="muted">(xin người chia sẻ link)</span></label>
+        <input id="wClient" type="text" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off">
+      </div>
+      <button class="btn2" style="width:100%;margin-top:10px" id="wDrive">Kết nối Google Drive</button>
+      <p class="res muted" id="wDriveRes">Nếu thấy cảnh báo <i>"Google hasn't verified this app"</i>, bấm <b>Continue</b>. Đây là app cá nhân nên cảnh báo này là bình thường.</p>
+    </div>
+
+    <div class="wstep" data-s="5">
+      <div class="hero" style="font-size:80px">🎉</div>
+      <h2 style="text-align:center">Xong rồi!</h2>
+      <p class="lead" style="text-align:center">Bắt đầu bằng việc thêm vài từ ở tab <b>➕ Add</b>, rồi ôn ở tab <b>🎯 Study</b> mỗi ngày.</p>
+      <div class="note" style="text-align:center">Cần xem lại? Vào <b>⚙️ Settings → 📘 Hướng dẫn sử dụng</b>.</div>
+    </div>
+
+    <div class="wnav">
+      <button class="btn-ghost" id="wBack" style="flex:0 0 auto">←</button>
+      <button class="btn" id="wNext">Tiếp tục</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <div class="modal hidden" id="aiModal"><div class="sheet">
@@ -788,7 +948,15 @@ function show(v){
   if (v === "words") renderWords();
   if (v === "set") renderSettings();
   window.scrollTo(0,0);
+  navSave({ v, p: v === "read" && curP ? curP.id : "", y: 0 });
 }
+/* remember the open tab / passage / scroll position so a reload lands on the same page */
+const NAV_KEY = "hangulCards.nav";
+function navGet(){ try { return JSON.parse(sessionStorage.getItem(NAV_KEY) || "{}"); } catch(e){ return {}; } }
+function navSave(patch){ try { sessionStorage.setItem(NAV_KEY, JSON.stringify(Object.assign(navGet(), patch))); } catch(e){} }
+let navScrollT = null;
+addEventListener("scroll", () => { clearTimeout(navScrollT); navScrollT = setTimeout(() => navSave({ y: Math.round(scrollY) }), 200); }, { passive: true });
+addEventListener("pagehide", () => navSave({ y: Math.round(scrollY) }));
 $$("nav button").forEach(b => b.onclick = () => show(b.dataset.v));
 
 /* ---------------- home ---------------- */
@@ -1252,6 +1420,7 @@ function openReader(id){
   $("#rdVocab").innerHTML = curP.vocab.map(v => `<li><button class="speak sm" data-say="${esc(v.ko)}">🔊</button><div class="t"><b lang="ko">${esc(v.ko)}</b><div>${esc(v.meaning)}</div></div>${have.has(v.ko) ? '<span class="badge b-master">In list</span>' : ""}</li>`).join("");
   bindSay($("#rdVocab"));
   window.scrollTo(0,0);
+  navSave({ v: "read", p: curP.id, y: 0 });
 }
 function renderSentences(){
   $("#sentList").innerHTML = curP.sentences.map((s,i) => `<div class="sent" data-i="${i}"><div class="row" style="align-items:flex-start">
@@ -1269,7 +1438,7 @@ function applyReaderView(){
   $("#sentList").classList.toggle("hidek", $("#pHideK").checked);
 }
 $("#pShowM").onchange = applyReaderView; $("#pHideK").onchange = applyReaderView;
-$("#rdBack").onclick = () => { stopPlayer(); closeCoach(); curP = null; $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
+$("#rdBack").onclick = () => { stopPlayer(); closeCoach(); curP = null; navSave({ p: "", y: 0 }); $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
 $("#rdDel").onclick = () => {
   const b = $("#rdDel");
   if (!b.dataset.confirm){ b.dataset.confirm = "1"; b.textContent = "Delete?"; setTimeout(()=>{ delete b.dataset.confirm; b.textContent = "🗑️"; }, 2500); return; }
@@ -1951,6 +2120,105 @@ document.addEventListener("visibilitychange", () => {
 });
 $$("nav button").forEach(b => b.addEventListener("click", () => { if (b.dataset.v === "set") setTimeout(renderSyncCard, 0); }));
 
+/* ---------------- welcome & guide ---------------- */
+const WEL_KEY = "hangulCards.welcomed";
+const UA = navigator.userAgent;
+const isIOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/i.test(UA);
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+let installEvt = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (wStep === 1) renderInstall(); });
+addEventListener("appinstalled", () => { installEvt = null; if (wStep === 1) renderInstall(); });
+
+const W_STEPS = 6;
+let wStep = 0;
+$("#wDots").innerHTML = "<i></i>".repeat(W_STEPS);
+function renderInstall(){
+  let h;
+  if (isStandalone()) h = `<div class="note">✅ Bạn đang dùng bản đã cài. Bấm <b>Tiếp tục</b>.</div>`;
+  else if (installEvt) h = `<button class="btn" id="wInstallBtn">📲 Cài app ngay</button>`;
+  else if (isIOS) h = `<ol><li>Mở trang này bằng <b>Safari</b>.</li><li>Bấm nút <b>Chia sẻ</b> ⬆️ ở thanh dưới hoặc trên.</li><li>Chọn <b>Thêm vào MH chính</b> → <b>Thêm</b>.</li></ol>`;
+  else if (isAndroid) h = `<ol><li>Mở trang này bằng <b>Chrome</b>.</li><li>Bấm menu <b>⋮</b> ở góc trên bên phải.</li><li>Chọn <b>Cài đặt ứng dụng</b> hoặc <b>Thêm vào màn hình chính</b>.</li></ol>`;
+  else h = `<ol><li>Trong <b>Chrome</b>, bấm biểu tượng cài đặt 🖥️⬇ ở cuối thanh địa chỉ (hoặc menu <b>⋮</b> → <b>Truyền, lưu và chia sẻ</b> → <b>Cài đặt trang</b>).</li><li>Hoặc cứ dùng trực tiếp trên web, không cần cài.</li></ol>`;
+  $("#wInstall").innerHTML = h + `<p class="small muted" style="margin-top:10px">Có thể làm sau. Luôn mở từ link <b>${esc(location.origin + location.pathname)}</b>.</p>`;
+  const b = $("#wInstallBtn");
+  if (b) b.onclick = async () => { installEvt.prompt(); try { await installEvt.userChoice; } catch(e){} installEvt = null; renderInstall(); };
+}
+function wShow(i){
+  wStep = Math.max(0, Math.min(W_STEPS - 1, i));
+  $$("#welcome .wstep").forEach(el => el.classList.toggle("hidden", +el.dataset.s !== wStep));
+  $$("#wDots i").forEach((d, k) => d.classList.toggle("on", k === wStep));
+  $("#wBack").classList.toggle("hidden", wStep === 0);
+  $("#wNext").textContent = wStep === 0 ? "Bắt đầu thiết lập" : wStep === W_STEPS - 1 ? "Vào học thôi 🚀" : "Tiếp tục";
+  $("#wSkip").classList.toggle("hidden", wStep === W_STEPS - 1);
+  if (wStep === 1) renderInstall();
+  if (wStep === 2) $("#wKey").value = S.settings.apiKey || "";
+  if (wStep === 4){
+    $("#wClientRow").classList.toggle("hidden", !!GOOGLE_CLIENT_ID);
+    $("#wClient").value = SY.clientId || "";
+    if (clientId()) loadGIS().catch(()=>{});
+    if (SY.on) $("#wDrive").textContent = "✅ Đã kết nối · Đồng bộ ngay";
+  }
+  $("#welcome").scrollTop = 0;
+}
+function openWelcome(){ $("#welcome").classList.remove("hidden"); document.body.style.overflow = "hidden"; wShow(0); }
+function closeWelcome(){
+  $("#welcome").classList.add("hidden"); document.body.style.overflow = "";
+  try { localStorage.setItem(WEL_KEY, "1"); } catch(e){}
+  const k = $("#wKey").value.trim();
+  if (k && k !== S.settings.apiKey){ S.settings.apiKey = k; save(); }
+  if (!$("#v-set").classList.contains("hidden")) renderSettings();
+}
+$("#wNext").onclick = () => {
+  if (wStep === 2){ const k = $("#wKey").value.trim(); if (k !== (S.settings.apiKey || "")){ S.settings.apiKey = k; save(); } }
+  if (wStep === W_STEPS - 1) closeWelcome(); else wShow(wStep + 1);
+};
+$("#wBack").onclick = () => wShow(wStep - 1);
+$("#wSkip").onclick = closeWelcome;
+
+$("#wKeyTest").onclick = async () => {
+  const k = $("#wKey").value.trim(), r = $("#wKeyRes");
+  if (!k){ r.textContent = "Dán key vào trước nhé."; return; }
+  if (!/^AIza/.test(k)){ r.textContent = "⚠️ Key Gemini thường bắt đầu bằng AIza… Kiểm tra lại xem đã copy đúng chưa."; }
+  S.settings.apiKey = k; save();
+  const b = $("#wKeyTest"); busy(b, true, "…"); r.textContent = "Đang kiểm tra…";
+  try { const j = extractJSON(await gemini('Translate 안녕하세요 to Vietnamese. Return JSON {"t":""}')); r.innerHTML = "✅ Kết nối thành công! " + esc(j.t || ""); }
+  catch(e){ r.textContent = "⚠️ " + e.message + " — kiểm tra lại key, hoặc thử lại sau ít phút."; }
+  busy(b, false);
+};
+
+async function micTest(out){
+  out.textContent = "Đang xin quyền…";
+  if (location.protocol === "file:" && isAndroid){ out.innerHTML = "⚠️ Bạn đang mở file tải về máy. Hãy mở từ link <b>https://pevien.github.io/korean/</b>."; return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ out.textContent = "⚠️ Trình duyệt này không hỗ trợ micro. Thử Chrome hoặc Safari bản mới."; return; }
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+    st.getTracks().forEach(t => t.stop());
+    out.innerHTML = "✅ Micro hoạt động tốt!";
+  } catch(e){
+    const how = isAndroid ? "Cài đặt → Ứng dụng → <b>Chrome</b> → Quyền → <b>Micro</b> → Cho phép. Rồi trong Chrome chạm 🔒 cạnh địa chỉ → Quyền → Micro → Cho phép, tải lại trang."
+      : isIOS ? "Cài đặt → <b>Safari</b> → Micro → Cho phép, rồi tải lại trang."
+      : "Bấm 🔒 cạnh thanh địa chỉ → cho phép Micro. Trên Mac: Cài đặt hệ thống → Quyền riêng tư &amp; Bảo mật → <b>Micro</b> → bật cho trình duyệt.";
+    out.innerHTML = (e.name === "NotFoundError" ? "⚠️ Không tìm thấy micro." : e.name === "NotReadableError" ? "⚠️ Micro đang bị app khác dùng. Đóng app đó rồi thử lại." : "⚠️ Micro bị chặn. ") + (e.name === "NotAllowedError" || e.name === "SecurityError" ? how : "");
+  }
+}
+$("#wMic").onclick = () => micTest($("#wMicRes"));
+$("#gMicTest").onclick = () => micTest($("#gMicRes"));
+
+$("#wDrive").onclick = () => {
+  if (!GOOGLE_CLIENT_ID){ SY.clientId = $("#wClient").value.trim(); saveSY(); }
+  if (!/\.apps\.googleusercontent\.com$/.test(clientId())){ $("#wDriveRes").innerHTML = "⚠️ Client ID chưa đúng. Nó có dạng <b>…apps.googleusercontent.com</b>. Xin lại người chia sẻ link nhé."; return; }
+  syncNow(true).then(() => { if (SY.on){ $("#wDrive").textContent = "✅ Đã kết nối"; $("#wDriveRes").textContent = "Dữ liệu sẽ tự đồng bộ giữa các máy."; } });
+};
+$("#wClient").onchange = e => { SY.clientId = e.target.value.trim(); saveSY(); if (clientId()) loadGIS().catch(()=>{}); };
+
+$("#gWelcome").onclick = openWelcome;
+$$("[data-guide]").forEach(b => b.onclick = e => {
+  e.preventDefault();
+  const d = document.getElementById(b.dataset.guide); if (!d) return;
+  d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
 /* ---------------- init ---------------- */
 load();
 takeSnap();
@@ -1962,6 +2230,15 @@ refreshHome();
 if (clientId()) loadGIS().catch(()=>{});
 setCloud(SY.on ? (tokValid() ? "ok" : "expired") : "off");
 if (SY.on) syncNow(false);
+try { if (!localStorage.getItem(WEL_KEY)) openWelcome(); } catch(e){}
+(() => {   // restore last page after a reload
+  const n = navGet();
+  if (!n.v || !document.getElementById("v-" + n.v)) return;
+  if (n.v !== "study") show(n.v);
+  if (n.v === "read" && n.p && S.passages.some(x => x.id === n.p)) openReader(n.p);
+  const y = n.y || 0;
+  if (y) requestAnimationFrame(() => setTimeout(() => { scrollTo(0, y); navSave({ y }); }, 60));
+})();
 setInterval(() => { if (!session && !$("#v-study").classList.contains("hidden")) refreshHome(); }, 60000);
 })();
 </script>
