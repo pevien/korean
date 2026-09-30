@@ -45,10 +45,6 @@ h2{font-size:16px;margin:0 0 10px}
 .stat.tone span{color:inherit}
 .stat.tone b .of{font-size:14px;font-weight:600;opacity:.75}
 .stat.tone small{display:block;font-size:10px;margin-top:2px;opacity:.9}
-.streak-cheer{background:var(--t-bg);color:var(--t-fg);border-radius:12px;padding:10px 14px;margin:-4px 0 14px;font-size:13px;line-height:1.45;display:flex;gap:10px;align-items:center}
-.streak-cheer .sc-e{font-size:22px;flex:0 0 auto}
-.streak-cheer b{font-weight:700}
-.streak-cheer .sc-ko{font-weight:600;margin-right:4px}
 .t-purple{--t-bg:var(--accent-soft);--t-fg:#4f46e5}
 .t-amber{--t-bg:#fff4e0;--t-fg:#9a5b0b}
 .t-master{--t-bg:var(--ok-soft);--t-fg:#0f7a4a}
@@ -143,7 +139,7 @@ nav button[data-v=army].on{color:var(--army)}
 .ar-pick b{display:block;font-size:17px;margin-bottom:3px}
 .ar-pick .d{display:block;font-size:13px;color:var(--muted);line-height:1.45}
 .ar-hero .h{font-size:34px;line-height:1}
-.ar-go{background:var(--accent);color:var(--on-accent);width:100%;padding:16px;font-size:17px;margin-top:14px}
+.ar-go{margin-top:12px}
 body.ar-listening header, body.ar-listening #arHistCard > p{display:none}
 #arStatus:empty{display:none}
 /* while listening (like Google Translate's conversation mode): subtitles fill the screen, controls float at the bottom within thumb reach */
@@ -361,7 +357,6 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
       <div class="stat tone t-master"><b id="sMaster">0</b><span>Mastered</span></div>
       <div class="stat tone t-streak"><b id="sStreak">🔥 0</b><span>Day streak</span></div>
     </div>
-    <div id="streakCheer" class="streak-cheer t-streak hidden" data-noi18n></div>
     <div id="studyHome">
       <div class="card" id="homeCard"></div>
     </div>
@@ -1253,7 +1248,6 @@ function refreshStats(){
   $("#sLearn").textContent = S.cards.filter(c=>status(c)==="learn").length;
   $("#sMaster").textContent = S.cards.filter(c=>status(c)==="master").length;
   $("#sStreak").textContent = "🔥 " + streakNow();
-  refreshStreakCheer();
   return { due, nl };
 }
 function refreshHome(){
@@ -1261,7 +1255,7 @@ function refreshHome(){
   if (homeAuto && due + nl > 0 && !session && !$("#v-study").classList.contains("hidden")) return startSession(false);
   const h = $("#homeCard");
   if (!S.cards.length){
-    h.innerHTML = `<div class="empty"><div class="cheer-m" style="margin-bottom:10px">${pickOne(BTS)}</div><h2>Welcome!</h2><p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">+ Add words</button></div>`;
+    h.innerHTML = `<div class="empty"><div data-noi18n><div class="cheer-m">${pickOne(BTS)}</div><div class="cheer-ko" lang="ko">환영해요!</div><div class="cheer-tr muted">${L("Chào mừng bạn!", "Welcome!")}</div></div><p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">+ Add words</button></div>`;
     $("#goAdd").onclick = () => show("add");
     return;
   }
@@ -1281,43 +1275,27 @@ const BTS = ["🐨","🐹","🐱","🐿️","🐣","🐯","🐰"]; // RM, Jin, S
 const CHEER_OK = [["잘했어요!","Làm tốt lắm!","Well done!"],["수고했어요!","Vất vả rồi!","Good work!"],["최고예요!","Bạn đỉnh nhất!","You're the best!"],
   ["대단해요!","Giỏi quá!","Amazing!"],["멋져요!","Ngầu quá!","So cool!"],["오늘도 잘했어요!","Hôm nay cũng làm tốt lắm!","Great job today too!"],["내일 또 만나요!","Mai gặp lại nhé!","See you tomorrow!"]];
 const CHEER_TRY = [["화이팅!","Cố lên!","Fighting!"],["포기하지 마요!","Đừng bỏ cuộc!","Don't give up!"],["천천히 해도 괜찮아요.","Từ từ cũng không sao.","It's okay to go slow."],["거의 다 왔어요!","Sắp tới rồi!","Almost there!"]];
-const STREAK_MILESTONES = [3, 7, 14, 30, 50, 100, 200, 365];
+const STREAK_MILESTONES = [7, 14, 30, 50, 100, 200, 365];
 let cheerTry = false;
-/* home banner: cheer when the streak just hit a milestone, is a few days away from one, or needs today's study to survive */
+/* streak cheer for the "all done" card — only on a milestone day or a day or two before one, so it stays special */
 function nextMilestone(n){ return STREAK_MILESTONES.find(m => m > n) || (Math.floor(n/100) + 1) * 100; }
-function refreshStreakCheer(){
-  const el = $("#streakCheer"), s = streakNow(), done = S.streak.last === todayStr();
-  const hit = n => STREAK_MILESTONES.includes(n) || (n > 365 && n % 100 === 0);
-  const near = m => Math.min(5, Math.max(1, Math.round(m/10)));   // "close" = 1 day for 3/7/14, 3 for 30, 5 for 50+
-  const by = arr => arr[s % arr.length];                            // stable per streak, no flicker on re-render
-  let e = "🔥", ko = "", msg = "";
-  if (!S.cards.length) msg = "";
-  else if (done && hit(s)){
-    const m = nextMilestone(s);
-    [e, ko] = by([["🎉","대박!"],["🏆","최고예요!"],["💜","보라해!"]]);
-    msg = L(`Đạt mốc <b>${s} ngày liên tiếp</b> rồi! Mốc tiếp theo: ${m} ngày.`, `You hit a <b>${s}-day streak</b>! Next milestone: ${m} days.`);
-  } else if (done && s > 0){
-    const m = nextMilestone(s), gap = m - s;
-    if (gap <= near(m)){
-      [e, ko] = by([["🔥","거의 다 왔어요!"],["💪","화이팅!"],["✨","조금만 더!"]]);
-      msg = gap === 1 ? L(`Mai học tiếp là chạm mốc <b>${m} ngày</b>!`, `Study tomorrow to reach <b>${m} days</b>!`)
-                      : L(`Còn <b>${gap} ngày</b> nữa là chạm mốc ${m} ngày!`, `Just <b>${gap} more days</b> to a ${m}-day streak!`);
-    }
-  } else if (s > 0){
-    const m = nextMilestone(s), gap = m - s;
-    if (gap === 1){ [e, ko] = ["🎯","오늘이에요!"]; msg = L(`Học hôm nay là đạt mốc <b>${m} ngày liên tiếp</b>!`, `Study today to hit a <b>${m}-day streak</b>!`); }
-    else if (gap <= near(m) + 1){ [e, ko] = ["🔥","화이팅!"]; msg = L(`Học hôm nay để giữ chuỗi ${s} ngày — còn <b>${gap} ngày</b> nữa tới mốc ${m}!`, `Study today to keep your ${s}-day streak — <b>${gap} days</b> to ${m}!`); }
-    else { [e, ko] = ["⏳","잊지 마요!"]; msg = L(`Đừng để mất chuỗi <b>${s} ngày</b> — học một chút hôm nay nhé!`, `Don't lose your <b>${s}-day streak</b> — study a little today!`); }
-  } else if (S.streak.count > 1){
-    [e, ko] = ["🌱","다시 시작해요!"];
-    msg = L(`Chuỗi cũ ${S.streak.count} ngày đã hết — hôm nay bắt đầu chuỗi mới nhé!`, `Your ${S.streak.count}-day streak ended — start a new one today!`);
-  }
-  el.classList.toggle("hidden", !msg);
-  if (msg) el.innerHTML = `<span class="sc-e">${e}</span><span><span class="sc-ko" lang="ko">${ko}</span>${msg}</span>`;
+function streakCheer(){
+  const s = streakNow();
+  if (!s || S.streak.last !== todayStr()) return null;
+  if (STREAK_MILESTONES.includes(s) || (s > 365 && s % 100 === 0))
+    return pickOne([[`${s}일 연속! 대박!`, `${s} ngày liên tiếp rồi! Đỉnh quá!`, `${s} days in a row! Amazing!`],
+                    [`${s}일 연속 성공! 최고예요!`, `Chuỗi ${s} ngày — bạn đỉnh nhất!`, `A ${s}-day streak — you're the best!`],
+                    [`${s}일 동안 매일 했어요! 보라해 💜`, `${s} ngày không nghỉ! Thương bạn 💜`, `${s} days without a break! Borahae 💜`]]);
+  const m = nextMilestone(s), gap = m - s;
+  if (gap > (m >= 100 ? 3 : m >= 30 ? 2 : 1)) return null;
+  return gap === 1
+    ? pickOne([[`내일이면 ${m}일이에요!`, `Mai là tròn ${m} ngày liên tiếp rồi!`, `Tomorrow makes ${m} days in a row!`],
+               [`거의 다 왔어요! 내일 또 만나요!`, `Sắp chạm mốc ${m} ngày — mai gặp lại nhé!`, `Almost at ${m} days — see you tomorrow!`]])
+    : [`${m}일까지 ${gap}일 남았어요! 화이팅!`, `Còn ${gap} ngày nữa là đạt mốc ${m} ngày! Cố lên!`, `${gap} more days to a ${m}-day streak! Fighting!`];
 }
 const pickOne = a => a[Math.floor(Math.random()*a.length)];
 function cheerHTML(){
-  const e = pickOne(BTS), [ko, vi, en] = pickOne(cheerTry ? CHEER_TRY : CHEER_OK);
+  const e = pickOne(BTS), [ko, vi, en] = streakCheer() || pickOne(cheerTry ? CHEER_TRY : CHEER_OK);
   return `<div data-noi18n><div class="cheer-m">${e}</div>
     <div class="cheer-ko" lang="ko">${ko}</div><div class="cheer-tr muted">${L(vi, en)}</div></div>`;
 }
@@ -3205,7 +3183,7 @@ function renderArmy(){
       </div>
       <label>${L("Cách nghe", "Listening mode")}</label>
       <div class="seg" id="arEng"><button data-e="free" ${SR ? "" : "disabled"}>⚡ ${L("Miễn phí", "Free")}</button><button data-e="ai">✨ AI Gemini${hasKey() ? "" : " 🔒"}</button></div>
-      ${aiAsk ? `<div class="note" style="margin-top:8px">🔒 ${L("AI Gemini cần <b>Gemini key</b> (miễn phí, tạo trong ~1 phút). Thêm xong quay lại đây là dùng được AI — hoặc chọn ⚡ Miễn phí để nghe ngay.", "AI Gemini needs a <b>Gemini key</b> (free, takes ~1 minute). Add it and come back to use AI — or pick ⚡ Free to start listening now.")}</div>` : ""}
+      ${aiAsk ? `<p class="small muted" style="margin:6px 0 0">${L("AI Gemini cần <b>Gemini key</b> (miễn phí, tạo trong ~1 phút). Thêm xong quay lại đây là dùng được AI — hoặc chọn ⚡ Miễn phí để nghe ngay.", "AI Gemini needs a <b>Gemini key</b> (free, takes ~1 minute). Add it and come back to use AI — or pick ⚡ Free to start listening now.")}</p>` : ""}
       ${aiAsk && eng ? "" : `<p class="small muted" style="margin:6px 0 0">${
         !eng ? L("⚠️ Trình duyệt này không nhận giọng nói. Thêm Gemini key trong Cài đặt, hoặc dùng Chrome/Safari.", "⚠️ This browser can't recognise speech. Add a Gemini key in Settings, or use Chrome/Safari.")
         : eng === "ai" ? L("AI nghe từng đoạn ~10 giây: chính xác hơn, nhưng phụ đề trễ ~10–15 giây. Dùng lượt Gemini miễn phí.", "AI listens in ~10 s chunks: more accurate, but subtitles lag ~10–15 s. Uses your free Gemini quota.")
@@ -3220,7 +3198,7 @@ function renderArmy(){
         ? `<span class="ar-dir">${AR_LANGS[arIn()][0]}<button class="btn2" id="arMiniSwap" title="${L("Đổi lượt nói", "Swap turns")}" aria-label="${L("Đổi lượt nói", "Swap turns")}">⇄</button>${AR_LANGS[arOut()][0]}</span>
           <span class="acts"><button class="btn-ghost" id="arMiniTts"></button></span>`
         : `<span>${BTS_LOGO} ${AR_LANGS[arIn()][0]} → ${AR_LANGS[arOut()][0]} · ${eng === "ai" ? "✨ AI" : "⚡ " + L("Miễn phí", "Free")}${src === "tab" ? " · 🖥" : ""}</span>`}</div>
-      <button class="ar-go" id="arGo" ${eng || aiAsk ? "" : "disabled"}></button>
+      <button class="btn ar-go" id="arGo" ${eng || aiAsk ? "" : "disabled"}></button>
       <div class="ar-lvl hidden" id="arLvlBar"><i id="arLvl"></i></div>
       <p class="small muted" id="arStatus" style="margin:8px 0 0"></p>
     </div>
