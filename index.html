@@ -15,13 +15,13 @@
 <style>
 :root{
   --bg:#f6f7fb; --card:#ffffff; --text:#1d2033; --muted:#6b7090; --line:#e3e5ef;
-  --accent:#4f46e5; --accent-soft:#eceafe; --ok:#15935b; --ok-soft:#e3f6ec;
+  --accent:#4f46e5; --accent-soft:#eceafe; --on-accent:#fff; --ok:#15935b; --ok-soft:#e3f6ec;
   --bad:#d93a3a; --bad-soft:#fdeaea; --warn:#b7791f; --radius:16px;
   --shadow:0 2px 10px rgba(20,24,60,.06);
 }
 @media (prefers-color-scheme: dark){
   :root{--bg:#12131a; --card:#1c1e28; --text:#eceef7; --muted:#9a9fbd; --line:#2c2f3d;
-    --accent:#8b83ff; --accent-soft:#2a2850; --ok:#3ecf8e; --ok-soft:#173327;
+    --accent:#8b83ff; --accent-soft:#2a2850; --on-accent:#16142e; --ok:#3ecf8e; --ok-soft:#173327;
     --bad:#ff6b6b; --bad-soft:#3a1d1f; --warn:#f0b35a; --shadow:none;}
 }
 *{box-sizing:border-box}
@@ -40,8 +40,26 @@ h2{font-size:16px;margin:0 0 10px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
 .stat b{display:block;font-size:20px}
 .stat span{font-size:11px;color:var(--muted)}
+/* home stats: each tile tinted; fg/bg pairs checked for ≥4.5:1 so the 11px labels pass too */
+.stat.tone{background:var(--t-bg);border-color:transparent;color:var(--t-fg)}
+.stat.tone span{color:inherit}
+.stat.tone b .of{font-size:14px;font-weight:600;opacity:.75}
+.stat.tone small{display:block;font-size:10px;margin-top:2px;opacity:.9}
+.streak-cheer{background:var(--t-bg);color:var(--t-fg);border-radius:12px;padding:10px 14px;margin:-4px 0 14px;font-size:13px;line-height:1.45;display:flex;gap:10px;align-items:center}
+.streak-cheer .sc-e{font-size:22px;flex:0 0 auto}
+.streak-cheer b{font-weight:700}
+.streak-cheer .sc-ko{font-weight:600;margin-right:4px}
+.t-purple{--t-bg:var(--accent-soft);--t-fg:#4f46e5}
+.t-amber{--t-bg:#fff4e0;--t-fg:#9a5b0b}
+.t-master{--t-bg:var(--ok-soft);--t-fg:#0f7a4a}
+.t-streak{--t-bg:#ffece2;--t-fg:#c2410c}
+@media (prefers-color-scheme: dark){
+  .t-purple{--t-fg:#a9a3ff} .t-amber{--t-bg:#3a2e17;--t-fg:#f0b35a}
+  .t-master{--t-fg:#3ecf8e} .t-streak{--t-bg:#3d2318;--t-fg:#ff9a5c}
+}
 button{font:inherit;cursor:pointer;border:none;border-radius:12px;padding:12px 16px;font-weight:600}
-.btn{background:var(--accent);color:#fff;width:100%}
+.btn{background:var(--accent);color:var(--on-accent);width:100%}
+.btn-cta{padding:16px;font-size:17px;margin-bottom:14px}
 .btn:disabled{opacity:.5;cursor:default}
 .btn2{background:var(--accent-soft);color:var(--accent)}
 .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
@@ -75,7 +93,7 @@ nav button.on{color:var(--accent)}
 #welcome .wlang{padding:2px}
 #welcome .wlang button{padding:4px 10px;font-size:12px}
 #welcome .wstep{flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 0}
-#welcome .wicon{width:64px;height:64px;border-radius:18px;background:var(--accent);color:#fff;font-size:34px;font-weight:800;
+#welcome .wicon{width:64px;height:64px;border-radius:18px;background:var(--accent);color:var(--on-accent);font-size:34px;font-weight:800;
   display:flex;align-items:center;justify-content:center;margin-bottom:18px}
 #welcome .wemoji{font-size:34px;line-height:1;margin-bottom:14px}
 #welcome h2{font-size:22px;margin:0 0 6px;line-height:1.25}
@@ -99,6 +117,9 @@ nav button.on{color:var(--accent)}
 .guide summary::after{content:"+";color:var(--muted);font-weight:400}
 .guide details[open] summary::after{content:"–"}
 .guide details > div{padding:0 0 10px}
+.card > .guide{margin-top:10px}
+#gMicRes:empty{display:none}
+.card > .guide details{border-bottom:1px solid var(--line)}   /* a how-to inside a settings card */
 .guide p, .guide li{font-size:14px;line-height:1.6}
 .guide p{margin:0 0 8px}
 .guide ol, .guide ul{padding-left:20px;margin:0 0 8px}
@@ -107,7 +128,7 @@ nav button.on{color:var(--accent)}
 
 
 /* ---- ARMY live translate ---- */
-:root{--army:#8b5cf6; --army-soft:#f1eafe}
+:root{--army:#7c3aed; --army-soft:#f1eafe}
 @media (prefers-color-scheme: dark){:root{--army:#b197fc; --army-soft:#2d2350}}
 nav button[data-v=army].on{color:var(--army)}
 #v-army .seg button.on{color:var(--army)}
@@ -122,11 +143,14 @@ nav button[data-v=army].on{color:var(--army)}
 .ar-pick b{display:block;font-size:17px;margin-bottom:3px}
 .ar-pick .d{display:block;font-size:13px;color:var(--muted);line-height:1.45}
 .ar-hero .h{font-size:34px;line-height:1}
-.ar-go{background:var(--army);color:#fff;width:100%;padding:16px;font-size:17px;margin-top:14px}
+.ar-go{background:var(--accent);color:var(--on-accent);width:100%;padding:16px;font-size:17px;margin-top:14px}
 body.ar-listening header, body.ar-listening #arHistCard > p{display:none}
 #arStatus:empty{display:none}
 /* while listening (like Google Translate's conversation mode): subtitles fill the screen, controls float at the bottom within thumb reach */
 body.ar-listening nav{display:none}
+/* during a study session the tab bar is just a mis-tap target — "End" is the way out */
+body.in-session nav{display:none}
+body.in-session{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
 body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 #arCtl.ar-on{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 14px;margin:0;
   position:fixed;z-index:15;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));
@@ -179,6 +203,20 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .speak{background:var(--accent-soft);color:var(--accent);border-radius:99px;width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
 .speak.big{width:96px;height:96px;font-size:40px}
 .speak.sm{width:40px;height:40px;font-size:17px;margin:0}
+/* phones, study session: the mic of speaking questions and the post-answer actions (Continue / Hard·Good·Easy)
+   sit in a bottom sheet within thumb reach; on wider screens .dock is just an inline block */
+.dock{margin-top:12px}
+.dock > .grades, .dock > .row{margin-top:0}
+@media (max-width:600px){
+  body.in-session{padding-bottom:calc(260px + env(safe-area-inset-bottom))}
+  body.in-session .toast{bottom:auto;top:calc(16px + env(safe-area-inset-top))}
+  .dock{margin:0;position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);
+    border-radius:20px 20px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.18);padding:16px 16px calc(36px + env(safe-area-inset-bottom))}
+  /* lifted off the very edge (home indicator / hard-to-reach corner) into the comfortable thumb arc */
+  .dock button:not(.speak){min-height:52px}
+  .dock > *{max-width:528px;margin-left:auto;margin-right:auto}
+  .dock .speak.big{margin-top:0}
+}
 .speak.rec.on{background:var(--bad);color:#fff;animation:pulse 1.2s infinite}
 .choices{display:grid;gap:8px;margin-top:16px}
 .choice{background:var(--bg);color:var(--text);border:1px solid var(--line);text-align:left;font-weight:500;display:flex;gap:10px;align-items:center}
@@ -208,7 +246,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .icon-btn{background:none;color:var(--muted);padding:6px 8px;font-size:16px}
 .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .tabs button{background:var(--card);border:1px solid var(--line);color:var(--muted);padding:8px 12px;font-size:14px;font-weight:500}
-.tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.tabs button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .prev{display:grid;grid-template-columns:24px 1fr 1fr 32px;gap:6px;align-items:center;margin-bottom:6px}
 .prev input[type=text]{padding:8px}
 .prev input[type=checkbox]{width:18px;height:18px}
@@ -217,12 +255,30 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .toast.show{opacity:1}
 .check{display:flex;align-items:center;gap:10px;padding:6px 0;color:var(--text);font-size:15px;margin:0}
 .check input{width:20px;height:20px}
+.set-inline{justify-content:space-between}
+.set-inline > label{flex:1;margin:0;font-size:15px;color:var(--text)}
+.set-inline > input{flex:0 0 84px;text-align:center}
+.qrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px}
+.qlab{flex:0 0 58px;font-size:12px;font-weight:600;color:var(--muted)}
+.qt{display:inline-flex;align-items:center;margin:0;padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--bg);
+  color:var(--muted);font-size:14px;cursor:pointer;user-select:none}
+.qt input{position:absolute;opacity:0;pointer-events:none}
+.qt:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.qt:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
 .drop{border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted);cursor:pointer}
 .drop img{max-width:100%;max-height:220px;border-radius:8px;margin-top:10px}
 .bar{height:8px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:10px}
 .bar i{display:block;height:100%;background:var(--accent);width:0}
 .empty{text-align:center;padding:26px 10px}
 .empty .big{font-size:44px}
+/* completion cheer: a random BTS member emoji + a short Korean phrase */
+.cheer-m{font-size:52px;line-height:1;display:inline-block;animation:bob 1.6s ease-in-out infinite}
+.cheer-ko{font-size:22px;font-weight:800;margin-top:10px}
+.cheer-tr{font-size:14px;margin:2px 0 14px}
+.stat.pop{animation:pop .6s ease}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(-4deg)}}
+@keyframes pop{40%{transform:scale(1.15)}}
+@media (prefers-reduced-motion: reduce){.cheer-m,.stat.pop{animation:none}}
 /* examples */
 .ex{margin-top:12px;padding:10px 12px;background:var(--bg);border-radius:12px;text-align:left;display:flex;gap:10px;align-items:flex-start}
 .ex .exk{font-size:17px;line-height:1.5} .ex .exm{font-size:14px;color:var(--muted)}
@@ -250,7 +306,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .player{position:sticky;top:0;z-index:5;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:12px;box-shadow:var(--shadow)}
 .pctl{display:flex;gap:8px;justify-content:center;align-items:center}
 .pctl button{background:var(--accent-soft);color:var(--accent);width:48px;height:48px;padding:0;border-radius:99px;font-size:18px}
-.pctl button.main{width:60px;height:60px;background:var(--accent);color:#fff;font-size:24px}
+.pctl button.main{width:60px;height:60px;background:var(--accent);color:var(--on-accent);font-size:24px}
 .popts{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin-top:10px;font-size:13px}
 .popts label{display:flex;align-items:center;gap:6px;margin:0;color:var(--text);font-size:13px}
 .popts input[type=checkbox]{width:16px;height:16px}
@@ -294,19 +350,19 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
     <h1>🇰🇷 Hangul with PV</h1>
     <div style="display:flex;gap:6px;align-items:center">
       <button class="pill hidden" id="cloudBtn" style="cursor:pointer;font-weight:500" title="Google Drive sync">☁️</button>
-      <span class="pill" id="streakPill">🔥 0 day streak</span>
     </div>
   </header>
 
   <!-- STUDY -->
   <section id="v-study">
+    <div class="stats" style="margin-bottom:14px">
+      <div class="stat tone t-amber"><b id="sToday">0</b><span>Due today</span><small id="sTodaySub" data-noi18n></small></div>
+      <div class="stat tone t-purple"><b id="sLearn">0</b><span>Learning</span></div>
+      <div class="stat tone t-master"><b id="sMaster">0</b><span>Mastered</span></div>
+      <div class="stat tone t-streak"><b id="sStreak">🔥 0</b><span>Day streak</span></div>
+    </div>
+    <div id="streakCheer" class="streak-cheer t-streak hidden" data-noi18n></div>
     <div id="studyHome">
-      <div class="stats" style="margin-bottom:14px">
-        <div class="stat"><b id="sDue">0</b><span>Due now</span></div>
-        <div class="stat"><b id="sNew">0</b><span>New today</span></div>
-        <div class="stat"><b id="sLearn">0</b><span>Learning</span></div>
-        <div class="stat"><b id="sMaster">0</b><span>Mastered</span></div>
-      </div>
       <div class="card" id="homeCard"></div>
     </div>
     <div id="studySession" class="hidden">
@@ -388,7 +444,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
   <!-- READ -->
   <section id="v-read" class="hidden">
     <div id="readHome">
-      <button class="btn2 hidden" id="rdNewOpen" data-noi18n style="width:100%;padding:14px;margin-bottom:14px"></button>
+      <button class="btn btn-cta hidden" id="rdNewOpen" data-noi18n></button>
       <div class="card" id="rdNewCard">
         <h2>New reading passage <button class="linkbtn hidden" id="rdNewClose" data-noi18n style="float:right"></button></h2>
         <div class="seg" id="readSrc" style="margin-bottom:6px">
@@ -476,7 +532,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 
   <!-- WORDS -->
   <section id="v-words" class="hidden">
-    <button class="btn" id="goAddBig" style="padding:16px;font-size:17px;margin-bottom:14px">+ Add words</button>
+    <button class="btn btn-cta" id="goAddBig">+ Add words</button>
     <div class="card hidden" id="exPrompt">
       <div class="row"><span class="small" id="exPromptTxt" style="flex:2"></span><button class="btn2" style="flex:0 0 auto" id="exGenBtn">✨ Add examples</button></div>
     </div>
@@ -501,19 +557,24 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
       <h2>🌐 Ngôn ngữ · Language</h2>
       <div class="seg" id="uiLangSeg"><button data-ui="vi">Tiếng Việt</button><button data-ui="en">English</button></div>
     </div>
-    <div class="card guide" id="guideCard" data-noi18n></div>
     <div class="card">
       <h2>Study</h2>
-      <label for="setNew">New words per day</label>
-      <input id="setNew" type="number" min="1" max="100">
+      <div class="row set-inline"><label for="setNew">New words per day</label><input id="setNew" type="number" min="1" max="100"></div>
+      <div class="row set-inline" style="margin-top:8px"><label for="setLang">Meaning language</label>
+        <select id="setLang" style="flex:0 0 140px"><option value="en">English</option><option value="vi">Vietnamese</option></select></div>
+      <p class="small muted" style="margin:4px 0 0">Used for meanings, example translations and passage translations.</p>
       <label>Question types</label>
-      <label class="check"><input type="checkbox" data-mode="ko2m"> Korean → choose meaning</label>
-      <label class="check"><input type="checkbox" data-mode="listen2m"> 🔊 Listen → choose meaning</label>
-      <label class="check"><input type="checkbox" data-mode="listen2kc"> 🔊 Listen → choose the Korean word</label>
-      <label class="check"><input type="checkbox" data-mode="m2ko"> Meaning → type Korean</label>
-      <label class="check"><input type="checkbox" data-mode="listen2ko"> 🔊 Listen → type Korean (dictation)</label>
-      <label class="check"><input type="checkbox" data-mode="ko2say"> 🎙 Korean → read it aloud</label>
-      <label class="check"><input type="checkbox" data-mode="m2say"> 🎙 Meaning → say it in Korean</label>
+      <!-- grouped by how you answer; each chip is a checkbox -->
+      <div class="qrow"><span class="qlab">Choose</span>
+        <label class="qt"><input type="checkbox" data-mode="ko2m">Korean → meaning</label>
+        <label class="qt"><input type="checkbox" data-mode="listen2m">🔊 → meaning</label>
+        <label class="qt"><input type="checkbox" data-mode="listen2kc">🔊 → Korean word</label></div>
+      <div class="qrow"><span class="qlab">Type</span>
+        <label class="qt"><input type="checkbox" data-mode="m2ko">Meaning → Korean</label>
+        <label class="qt"><input type="checkbox" data-mode="listen2ko">🔊 Dictation</label></div>
+      <div class="qrow"><span class="qlab">Speak</span>
+        <label class="qt"><input type="checkbox" data-mode="ko2say">🎙 Read aloud</label>
+        <label class="qt"><input type="checkbox" data-mode="m2say">🎙 From meaning</label></div>
       <label class="check"><input type="checkbox" id="setAuto"> Auto-play audio for Korean words</label>
     </div>
     <div class="card">
@@ -522,41 +583,34 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
       <select id="setVoice"></select>
       <p class="small muted" id="voiceInfo" style="margin:6px 0 0"></p>
       <p class="small muted" id="voiceWarn" style="margin:6px 0 0"></p>
-      <label class="check" style="margin-top:6px"><input type="checkbox" id="setAllVoices"> Show all Korean voices</label>
       <label for="setRate">Speed: <span id="rateVal"></span></label>
       <div class="seg" id="ratePresets" style="margin-bottom:8px">
         <button data-r="0.7">🐢 Slow</button><button data-r="0.85">Learner</button><button data-r="1">🇰🇷 Native</button>
       </div>
       <input id="setRate" type="range" min="0.5" max="1.2" step="0.05" style="padding:0">
-      <button class="btn2" style="margin-top:10px;width:100%" id="testVoice">🔊 Test: 안녕하세요</button>
+      <div class="row" style="margin-top:10px">
+        <button class="btn2" id="testVoice">🔊 Test: 안녕하세요</button>
+        <button class="btn2" id="gMicTest">🎙 Test microphone</button>
+      </div>
+      <p class="small" id="gMicRes" style="margin:8px 0 0" data-noi18n></p>
+      <div class="guide" data-g="g-mic" data-noi18n></div>
     </div>
-    <div class="card">
+    <div class="card" id="setAI" style="scroll-margin-top:12px">
       <h2>AI (free)</h2>
       <p class="small muted" style="margin-top:0">Used for generating words, example sentences and reading passages.</p>
-      <ol class="steps small">
-        <li><b>With a free Google Gemini key</b> (recommended, one click each time): get one at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> and paste it below.</li>
-        <li><b>Without a key:</b> the app shows a prompt you copy into any free chatbot (Gemini, ChatGPT…), then paste the answer back.</li>
-      </ol>
-      <label for="setKey">Gemini API key · <button class="linkbtn" data-guide="g-key">How to get a key?</button></label>
+      <div class="guide" data-g="g-key" data-noi18n></div>
+      <label for="setKey">Gemini API key</label>
       <div class="row"><input id="setKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn-ghost" style="flex:0 0 auto" id="keyShow">👁</button></div>
       <label for="setModel">Model</label>
       <select id="setModel"></select>
       <p class="small muted" style="margin:6px 0 0" data-noi18n id="setModelHint"></p>
       <button class="btn2" style="margin-top:10px;width:100%" id="testAI">Test connection</button>
       <label class="check" style="margin-top:10px"><input type="checkbox" id="setAutoEx"> Auto-add example sentences to new words (needs key)</label>
-      <p class="small muted" style="margin:6px 0 0">The key stays on your devices (and your Drive if sync is on) and is never included in exports.</p>
     </div>
     <div class="card">
-      <h2>Meaning language</h2>
-      <p class="small muted" style="margin-top:0">Used for meanings, example translations and passage translations.</p>
-      <select id="setLang">
-        <option value="en">English</option>
-        <option value="vi">Vietnamese</option>
-      </select>
-    </div>
-    <div class="card">
-      <h2>☁️ Google Drive sync <button class="linkbtn" data-guide="g-sync" style="float:right">Guide</button></h2>
+      <h2>☁️ Google Drive sync</h2>
       <p class="small muted" style="margin-top:0">Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.</p>
+      <div class="guide" data-g="g-sync" data-noi18n></div>
       <div id="gdClientRow">
         <label for="gdClient">Google OAuth Client ID</label>
         <input id="gdClient" type="text" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off">
@@ -577,7 +631,9 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
       </div>
       <input type="file" id="impFile" accept=".json,application/json" class="hidden">
       <button class="btn-danger" style="width:100%;margin-top:10px" id="resetBtn">Delete all data</button>
+      <div class="guide" data-g="g-backup" data-noi18n></div>
     </div>
+    <div class="card guide" id="guideCard" data-noi18n></div>
   </section>
 </div>
 
@@ -626,7 +682,7 @@ const L = (v, e) => UI === "vi" ? v : e;
 const uiLangName = () => UI === "vi" ? "Vietnamese" : "English";
 
 const VI = {
-"Due now":"Cần ôn","New today":"Mới hôm nay","Learning":"Đang học","Mastered":"Đã thuộc","End":"Kết thúc",
+"Due today":"Cần học hôm nay","Day streak":"Ngày liên tiếp","Learning":"Đang học","Mastered":"Đã thuộc","End":"Kết thúc",
 "✨ AI generate":"✨ AI tạo","✏️ Single":"✏️ Từng từ","📋 Paste list":"📋 Dán danh sách","📷 Screenshot":"📷 Ảnh chụp",
 "Generate words by topic":"Tạo từ theo chủ đề","Topic":"Chủ đề","Level":"Trình độ","How many":"Số lượng",
 "Each word comes with an example sentence. Words already in your list are skipped automatically.":"Mỗi từ kèm một câu ví dụ. Từ đã có sẽ tự bỏ qua.",
@@ -648,12 +704,12 @@ const VI = {
 "1× native":"1× bản xứ","Translation":"Bản dịch","Hide Korean":"Ẩn tiếng Hàn","🎙 Speaking coach":"🎙 Luyện nói",
 "Tap a sentence to play from there. Press space to play/pause.":"Chạm vào câu để phát từ đó. Phím cách để phát/dừng.",
 "Key words":"Từ khoá","+ Add new words to flashcards":"+ Thêm từ mới vào flashcard","✨ Add examples":"✨ Thêm câu ví dụ",
-"All":"Tất cả","New":"Mới","Study":"Học","New words per day":"Số từ mới mỗi ngày","Question types":"Dạng câu hỏi",
+"All":"Tất cả","New":"Mới","Study":"Học","New words per day":"Số từ mới mỗi ngày","Question types":"Dạng câu hỏi","Choose":"Chọn","Type":"Gõ","Speak":"Nói","Korean → meaning":"Hàn → nghĩa","🔊 → meaning":"🔊 → nghĩa","🔊 → Korean word":"🔊 → từ Hàn","Meaning → Korean":"Nghĩa → Hàn","🔊 Dictation":"🔊 Chính tả","🎙 Read aloud":"🎙 Đọc to","🎙 From meaning":"🎙 Nói từ nghĩa",
 "Korean → choose meaning":"Tiếng Hàn → chọn nghĩa","🔊 Listen → choose meaning":"🔊 Nghe → chọn nghĩa","🔊 Listen → choose the Korean word":"🔊 Nghe → chọn từ tiếng Hàn","Listen · choose what you hear":"Nghe · chọn từ bạn nghe thấy","Meaning → type Korean":"Nghĩa → gõ tiếng Hàn",
 "🔊 Listen → type Korean (dictation)":"🔊 Nghe → gõ tiếng Hàn (chính tả)","Auto-play audio for Korean words":"Tự phát âm từ tiếng Hàn",
 "Voice":"Giọng đọc","Korean voice":"Giọng tiếng Hàn","(young-adult voices, most natural first)":"(giọng trẻ, tự nhiên nhất ở trên)",
 "Show all Korean voices":"Hiện tất cả giọng","Speed:":"Tốc độ:","🐢 Slow":"🐢 Chậm","Learner":"Người học","🇰🇷 Native":"🇰🇷 Bản xứ",
-"🔊 Test: 안녕하세요":"🔊 Nghe thử: 안녕하세요","AI (free)":"AI (miễn phí)",
+"🔊 Test: 안녕하세요":"🔊 Nghe thử: 안녕하세요","🎙 Test microphone":"🎙 Thử micro","AI (free)":"AI (miễn phí)",
 "Used for generating words, example sentences and reading passages.":"Dùng để tạo từ, câu ví dụ và bài đọc.",
 "With a free Google Gemini key":"Có Gemini key miễn phí","(recommended, one click each time): get one at":"(nên dùng, chỉ một chạm): lấy tại",
 "and paste it below.":"rồi dán vào bên dưới.","Without a key:":"Không có key:",
@@ -727,7 +783,7 @@ const VI = {
 "Type it in Korean":"Gõ bằng tiếng Hàn","Upper-int. (TOPIK 4)":"Trung cấp 2 (TOPIK 4)","Weather and seasons":"Thời tiết & các mùa","Weather":"Thời tiết",
 "Work & office":"Công việc & văn phòng","✅ Correct!":"✅ Chính xác!","❌ Not quite":"❌ Chưa đúng","❌ Not quite.":"❌ Chưa đúng.","❌ Not quite — you wrote":"❌ Chưa đúng — bạn gõ","— you wrote":"— bạn gõ","❌ Not quite — we heard":"❌ Chưa đúng — app nghe được","— we heard":"— app nghe được",
 "🎙 Korean → read it aloud":"🎙 Tiếng Hàn → đọc to","🎙 Meaning → say it in Korean":"🎙 Nghĩa → nói tiếng Hàn","Read it aloud":"Đọc to từ này","Say it in Korean":"Nói bằng tiếng Hàn","Can't speak now":"Giờ không nói được","Tap 🎙 and say it":"Bấm 🎙 rồi nói","🔊 Test:":"🔊 Nghe thử:",
-"This word will come back soon.":"Từ này sẽ sớm quay lại.","Continue →":"Tiếp tục →","All done for now":"Xong bài hôm nay",
+"This word will come back soon.":"Từ này sẽ sớm quay lại.","Continue →":"Tiếp tục →",
 "🔁 Extra practice":"🔁 Luyện thêm","+5 new words":"+5 từ mới","🔁 Try again":"🔁 Thử lại","In list":"Đã có",
 "Add more words or practice without changing your schedule.":"Thêm từ hoặc luyện thêm mà không ảnh hưởng lịch ôn.",
 "Tap to reveal":"Chạm để xem","Show answer":"Xem đáp án","Hint":"Gợi ý","Check":"Kiểm tra","Got it":"Đã hiểu","Skip":"Bỏ qua","Next":"Tiếp",
@@ -762,6 +818,8 @@ const VI_RX = [
  [/^Added “(.*)”( \(no meaning\))?$/, (m, w, n) => "Đã thêm “" + w + "”" + (n ? " (chưa có nghĩa)" : "")],
  [/^Deleted “(.*)”$/, "Đã xoá “$1”"],
  [/^✅ Session complete — (\d+)\/(\d+) correct \((\d+)%\)\.$/, "✅ Xong lượt học — đúng $1/$2 ($3%)."],
+ [/^💪 Session complete — (\d+)\/(\d+) correct \((\d+)%\)\. Let's lock in the words you missed\.$/, "💪 Xong lượt học — đúng $1/$2 ($3%). Luyện lại các từ còn sai nhé."],
+ [/^🔁 Practice (\d+) missed words?$/, "🔁 Luyện lại $1 từ sai"],
  [/^🎙 best (\d+)\/100$/, "🎙 cao nhất $1/100"],
  [/^Using: (.*?)( \(online voice\))?$/, (m, v, o) => "Đang dùng: " + v + (o ? " (giọng online)" : "")],
  [/^(\d+) left$/, "còn $1"],
@@ -779,12 +837,12 @@ const VI_RX = [
 function trLevels(t){ return String(t).replace(/Absolute beginner|Beginner \(TOPIK 1\)|Elementary \(TOPIK 2\)|Intermediate \(TOPIK 3\)|Upper-int\. \(TOPIK 4\)/g, m => VI[m] || m); }
 function viTime(t){ return String(t).replace(/(\d+) (min|h|days?|mo)\b/, (m, n, u) => n + " " + ({ min:"phút", h:"giờ", day:"ngày", days:"ngày", mo:"tháng" })[u]); }
 // single words that could also be someone's word meaning: only translate inside UI controls
-const VI_UI_ONLY = new Set(["All","New","Add","Read","Study","Words","Settings","Auto","Easy","Good","Hard","Delete","Edit","Close","Extra","Missing","Sound","Stress","Pace","Accuracy","Fluency","Intonation","Family","Home","Hobbies","Feelings","Shopping","School","Travel","Transport","Weather","Level","Topic","Length","Speed","Repeat","Translation","Korean","Meaning","Voice","Backup","Preview","End","Default","English","Vietnamese","Learner","Next","Skip","Check","Hint","Record","Stop","Listen"]);
+const VI_UI_ONLY = new Set(["Choose","Type","Speak","All","New","Add","Read","Study","Words","Settings","Auto","Easy","Good","Hard","Delete","Edit","Close","Extra","Missing","Sound","Stress","Pace","Accuracy","Fluency","Intonation","Family","Home","Hobbies","Feelings","Shopping","School","Travel","Transport","Weather","Level","Topic","Length","Speed","Repeat","Translation","Korean","Meaning","Voice","Backup","Preview","End","Default","English","Vietnamese","Learner","Next","Skip","Check","Hint","Record","Stop","Listen"]);
 const UI_TAGS = /^(BUTTON|LABEL|H1|H2|H3|OPTION|SUMMARY|TH|NAV)$/;
 function trText(t, parent){
   if (VI.hasOwnProperty(t)){
     if (!VI_UI_ONLY.has(t) || !parent) return VI[t];
-    if (UI_TAGS.test(parent.tagName) || parent.closest("nav,.stat,.qtype,.chip,.tabs,.seg,.grades,label,button,h2,.badge")) return VI[t];
+    if (UI_TAGS.test(parent.tagName) || parent.closest("nav,.stat,.qtype,.chip,.qrow,.tabs,.seg,.grades,label,button,h2,.badge")) return VI[t];
     return t;
   }
   for (const [rx, to] of VI_RX){ if (rx.test(t)) return t.replace(rx, to); }
@@ -823,7 +881,7 @@ if (UI === "vi"){
 /* ---------------- state ---------------- */
 const defaults = () => ({
   cards: [],
-  settings: { newPerDay: 10, modes: { ko2m:true, listen2m:true, listen2kc:true, m2ko:true, listen2ko:false, ko2say:false, m2say:false }, autoPlay:true, rate:1, voice:"", allVoices:false, voiceV2:true, lang:"en",
+  settings: { newPerDay: 10, modes: { ko2m:true, listen2m:true, listen2kc:true, m2ko:true, listen2ko:false, ko2say:false, m2say:false }, autoPlay:true, rate:0.85, voice:"", lang:"en",
     apiKey:"", model:"", autoEx:true, level:"b1", uiLang:"vi" },
   passages: [],
   lives: [],   // saved ARMY live transcripts
@@ -843,7 +901,7 @@ function save(){ try { autoSpeakModes(); track(); localStorage.setItem(KEY, JSON
 /* ---- change tracking for sync: stamps edited items with .mod, keeps tombstones for deletions ---- */
 let SNAP = null;
 const fp = o => { const { mod, ...r } = o; return JSON.stringify(r); };
-const fpSettings = () => { const { _mod, voice, allVoices, ...r } = S.settings; return JSON.stringify(r); };
+const fpSettings = () => { const { _mod, voice, allVoices, ...r } = S.settings; return JSON.stringify(r); };   // allVoices: retired setting, may linger in old data
 function takeSnap(){
   SNAP = { cards: new Map(S.cards.map(c => [c.id, fp(c)])), passages: new Map((S.passages||[]).map(x => [x.id, fp(x)])), lives: new Map((S.lives||[]).map(x => [x.id, fp(x)])),
            settings: fpSettings(), deleted: Object.assign({}, S.deleted || {}) };
@@ -967,9 +1025,8 @@ let allKo = [];
 function loadVoices(){
   if (!("speechSynthesis" in window)) return;
   allKo = speechSynthesis.getVoices().filter(v => /^ko([-_]|$)/i.test(v.lang || "") || (!v.lang && /korean|한국|yuna|heami|sunhi|injoon/i.test(v.name)));
-  const showAll = !!S.settings.allVoices;
   const young = allKo.filter(v => voiceMeta(v).age === "young");
-  let usable = showAll || !young.length ? allKo : young;
+  let usable = young.length ? young : allKo;
   usable = usable.slice().sort((a, b) => voiceMeta(b).q - voiceMeta(a).q);
   voices = usable;
   const sel = $("#setVoice");
@@ -983,7 +1040,7 @@ function loadVoices(){
   if (S.settings.voice) sel.value = S.settings.voice;
   const cur = voices.find(v => v.name === S.settings.voice);
   $("#voiceInfo").textContent = cur ? `Using: ${cur.name}${cur.localService === false ? " (online voice)" : ""}` : "";
-  if (!showAll && allKo.length && !young.length) $("#voiceInfo").textContent += " · No known young voice on this device — showing all.";
+  if (allKo.length && !young.length) $("#voiceInfo").textContent += " · No known young voice on this device — showing all.";
   $("#voiceWarn").textContent = !("speechSynthesis" in window) ? "This browser can't speak. Try Chrome or Safari."
     : voices.length ? "" : "No Korean voice found yet. On iPhone: Settings → Accessibility → Spoken Content → Voices → Korean. On Android: install Korean in Google Text-to-Speech. Windows: add Korean speech in Settings → Time & language → Speech.";
 }
@@ -1161,7 +1218,8 @@ function show(v){
   $$("section[id^=v-]").forEach(s => s.classList.toggle("hidden", s.id !== "v-"+v));
   $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" ? "words" : v)));
   if (v === "add") $("#addBack").classList.toggle("hidden", !S.cards.length);
-  if (v === "study" && !session) refreshHome();
+  if (v === "study" && !session) { homeAuto = true; refreshHome(); }
+  document.body.classList.toggle("in-session", v === "study" && !!session);   // leaving via a link mid-session must bring the tab bar back
   if (v !== "read") { stopPlayer(); cancelRec(); }
   if (v !== "study") frCancel();
   if (v !== "army") arStop();
@@ -1184,17 +1242,26 @@ $("#goAddBig").onclick = () => show("add");
 $("#addBack").onclick = () => show("words");
 
 /* ---------------- home ---------------- */
-function refreshHome(){
+/* opening the Study tab drops straight into the first question; after "End" the home card waits for a tap */
+let homeAuto = true;
+function refreshStats(){
   const due = dueCards().length, nl = Math.min(newLeftToday(), newCards().length);
-  $("#sDue").textContent = due;
-  $("#sNew").textContent = nl;
+  // "left / total": total = still to do + cards already graded today (and not due again, e.g. a miss coming back in 10 min)
+  const t0 = new Date().setHours(0,0,0,0), doneToday = S.cards.filter(c => c.last >= t0 && c.due > Date.now()).length;
+  $("#sToday").innerHTML = (due + nl) + (due + nl + doneToday ? `<span class="of">/${due + nl + doneToday}</span>` : "");
+  $("#sTodaySub").textContent = (due + nl) ? L(`${due} ôn · ${nl} mới`, `${due} review · ${nl} new`) : "";
   $("#sLearn").textContent = S.cards.filter(c=>status(c)==="learn").length;
   $("#sMaster").textContent = S.cards.filter(c=>status(c)==="master").length;
-  const st = streakNow();
-  $("#streakPill").textContent = "🔥 " + st + " day streak";
+  $("#sStreak").textContent = "🔥 " + streakNow();
+  refreshStreakCheer();
+  return { due, nl };
+}
+function refreshHome(){
+  const { due, nl } = refreshStats();
+  if (homeAuto && due + nl > 0 && !session && !$("#v-study").classList.contains("hidden")) return startSession(false);
   const h = $("#homeCard");
   if (!S.cards.length){
-    h.innerHTML = `<div class="empty"><div class="big">👋</div><h2>Welcome!</h2><p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">+ Add words</button></div>`;
+    h.innerHTML = `<div class="empty"><div class="cheer-m" style="margin-bottom:10px">${pickOne(BTS)}</div><h2>Welcome!</h2><p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">+ Add words</button></div>`;
     $("#goAdd").onclick = () => show("add");
     return;
   }
@@ -1204,11 +1271,72 @@ function refreshHome(){
   } else {
     const next = S.cards.filter(c=>c.last).sort((a,b)=>a.due-b.due)[0];
     const when = next ? timeUntil(next.due) : "";
-    h.innerHTML = `<div class="empty"><div class="big">🎉</div><h2>All done for now</h2><p class="muted">${when ? "Next review in " + when + ". " : ""}Add more words or practice without changing your schedule.</p>
+    h.innerHTML = `<div class="empty">${cheerHTML()}<p class="muted" style="margin-top:0">${when ? "Next review in " + when + ". " : ""}Add more words or practice without changing your schedule.</p>
       <div class="row"><button class="btn2" id="pracBtn">🔁 Extra practice</button><button class="btn2" id="moreNew">+5 new words</button></div></div>`;
     $("#pracBtn").onclick = () => startSession(true);
     $("#moreNew").onclick = () => { if (!newCards().length) { toast("No new words left — add some!"); return; } S.daily.newCount = Math.max(0, S.daily.newCount - 5); save(); refreshHome(); };
   }
+}
+const BTS = ["🐨","🐹","🐱","🐿️","🐣","🐯","🐰"]; // RM, Jin, Suga, J-Hope, Jimin, V, Jungkook
+const CHEER_OK = [["잘했어요!","Làm tốt lắm!","Well done!"],["수고했어요!","Vất vả rồi!","Good work!"],["최고예요!","Bạn đỉnh nhất!","You're the best!"],
+  ["대단해요!","Giỏi quá!","Amazing!"],["멋져요!","Ngầu quá!","So cool!"],["오늘도 잘했어요!","Hôm nay cũng làm tốt lắm!","Great job today too!"],["내일 또 만나요!","Mai gặp lại nhé!","See you tomorrow!"]];
+const CHEER_TRY = [["화이팅!","Cố lên!","Fighting!"],["포기하지 마요!","Đừng bỏ cuộc!","Don't give up!"],["천천히 해도 괜찮아요.","Từ từ cũng không sao.","It's okay to go slow."],["거의 다 왔어요!","Sắp tới rồi!","Almost there!"]];
+const STREAK_MILESTONES = [3, 7, 14, 30, 50, 100, 200, 365];
+let cheerTry = false;
+/* home banner: cheer when the streak just hit a milestone, is a few days away from one, or needs today's study to survive */
+function nextMilestone(n){ return STREAK_MILESTONES.find(m => m > n) || (Math.floor(n/100) + 1) * 100; }
+function refreshStreakCheer(){
+  const el = $("#streakCheer"), s = streakNow(), done = S.streak.last === todayStr();
+  const hit = n => STREAK_MILESTONES.includes(n) || (n > 365 && n % 100 === 0);
+  const near = m => Math.min(5, Math.max(1, Math.round(m/10)));   // "close" = 1 day for 3/7/14, 3 for 30, 5 for 50+
+  const by = arr => arr[s % arr.length];                            // stable per streak, no flicker on re-render
+  let e = "🔥", ko = "", msg = "";
+  if (!S.cards.length) msg = "";
+  else if (done && hit(s)){
+    const m = nextMilestone(s);
+    [e, ko] = by([["🎉","대박!"],["🏆","최고예요!"],["💜","보라해!"]]);
+    msg = L(`Đạt mốc <b>${s} ngày liên tiếp</b> rồi! Mốc tiếp theo: ${m} ngày.`, `You hit a <b>${s}-day streak</b>! Next milestone: ${m} days.`);
+  } else if (done && s > 0){
+    const m = nextMilestone(s), gap = m - s;
+    if (gap <= near(m)){
+      [e, ko] = by([["🔥","거의 다 왔어요!"],["💪","화이팅!"],["✨","조금만 더!"]]);
+      msg = gap === 1 ? L(`Mai học tiếp là chạm mốc <b>${m} ngày</b>!`, `Study tomorrow to reach <b>${m} days</b>!`)
+                      : L(`Còn <b>${gap} ngày</b> nữa là chạm mốc ${m} ngày!`, `Just <b>${gap} more days</b> to a ${m}-day streak!`);
+    }
+  } else if (s > 0){
+    const m = nextMilestone(s), gap = m - s;
+    if (gap === 1){ [e, ko] = ["🎯","오늘이에요!"]; msg = L(`Học hôm nay là đạt mốc <b>${m} ngày liên tiếp</b>!`, `Study today to hit a <b>${m}-day streak</b>!`); }
+    else if (gap <= near(m) + 1){ [e, ko] = ["🔥","화이팅!"]; msg = L(`Học hôm nay để giữ chuỗi ${s} ngày — còn <b>${gap} ngày</b> nữa tới mốc ${m}!`, `Study today to keep your ${s}-day streak — <b>${gap} days</b> to ${m}!`); }
+    else { [e, ko] = ["⏳","잊지 마요!"]; msg = L(`Đừng để mất chuỗi <b>${s} ngày</b> — học một chút hôm nay nhé!`, `Don't lose your <b>${s}-day streak</b> — study a little today!`); }
+  } else if (S.streak.count > 1){
+    [e, ko] = ["🌱","다시 시작해요!"];
+    msg = L(`Chuỗi cũ ${S.streak.count} ngày đã hết — hôm nay bắt đầu chuỗi mới nhé!`, `Your ${S.streak.count}-day streak ended — start a new one today!`);
+  }
+  el.classList.toggle("hidden", !msg);
+  if (msg) el.innerHTML = `<span class="sc-e">${e}</span><span><span class="sc-ko" lang="ko">${ko}</span>${msg}</span>`;
+}
+const pickOne = a => a[Math.floor(Math.random()*a.length)];
+function cheerHTML(){
+  const e = pickOne(BTS), [ko, vi, en] = pickOne(cheerTry ? CHEER_TRY : CHEER_OK);
+  return `<div data-noi18n><div class="cheer-m">${e}</div>
+    <div class="cheer-ko" lang="ko">${ko}</div><div class="cheer-tr muted">${L(vi, en)}</div></div>`;
+}
+function confetti(n = 90){
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv = document.createElement("canvas"), W = innerWidth, H = innerHeight, dpr = devicePixelRatio || 1;
+  cv.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:999";
+  cv.width = W*dpr; cv.height = H*dpr; document.body.appendChild(cv);
+  const g = cv.getContext("2d"); g.scale(dpr, dpr);
+  const cols = ["#8b83ff","#b197fc","#f0b35a","#3ecf8e","#ff9a5c","#ff6b9a"];
+  const ps = Array.from({length:n}, () => ({ x:W/2 + (Math.random()-.5)*W*.3, y:H*.35, vx:(Math.random()-.5)*10, vy:-Math.random()*10-4,
+    r:Math.random()*6+5, c:pickOne(cols), a:Math.random()*6, va:(Math.random()-.5)*.3 }));
+  const t0 = performance.now();
+  (function frame(t){
+    const k = (t - t0) / 1800; g.clearRect(0, 0, W, H); g.globalAlpha = Math.max(0, 1 - k*k);
+    for (const p of ps){ p.vy += .3; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.a += p.va;
+      g.save(); g.translate(p.x, p.y); g.rotate(p.a); g.fillStyle = p.c; g.fillRect(-p.r/2, -p.r/4, p.r, p.r/2); g.restore(); }
+    if (k < 1) requestAnimationFrame(frame); else cv.remove();
+  })(t0);
 }
 function timeUntil(t){
   const d = t - Date.now(); if (d <= 0) return "";
@@ -1231,10 +1359,20 @@ function canSpeakQ(){
   return !!(ai || window.SpeechRecognition || window.webkitSpeechRecognition);
 }
 function enabledModes(){ const m = Object.keys(S.settings.modes).filter(k => S.settings.modes[k]); return m.length ? m : ["ko2m"]; }
-function startSession(practice){
+/* extra practice: weighted random pick that favours shaky words — often missed, low ease, short interval, due soon */
+function pickWeak(cards, n){
+  const now = Date.now();
+  const w = c => 1 + 2*Math.min(c.lapses||0, 5) + 4*Math.max(0, 2.5-(c.ease||2.5)) + (c.interval < 7 ? 2 : c.interval < 21 ? 1 : 0) + (c.due - now < DAY ? 2 : 0);
+  return cards.map(c => ({ c, k: Math.pow(Math.random(), 1/w(c)) })).sort((x,y) => y.k - x.k).slice(0, n).map(x => x.c);
+}
+function startSession(practice, only){
   let queue;
-  if (practice){
-    queue = shuffle(S.cards.filter(c=>c.last).slice()).slice(0, 15).map(c => ({ card:c, kind:"quiz" }));
+  if (only && only.length){
+    // retry just the words missed last session, each twice (spaced), without touching the schedule
+    const a = shuffle(only.slice()), b = shuffle(only.slice());
+    queue = a.concat(b).map(c => ({ card:c, kind:"quiz" }));
+  } else if (practice){
+    queue = shuffle(pickWeak(S.cards.filter(c=>c.last), 15)).map(c => ({ card:c, kind:"quiz" }));
     if (!queue.length) queue = shuffle(S.cards.slice()).slice(0,10).map(c => ({card:c, kind:"quiz"}));
   } else {
     const due = dueCards().map(c => ({ card:c, kind:"quiz" }));
@@ -1247,25 +1385,41 @@ function startSession(practice){
     });
   }
   if (!queue.length){ toast("Nothing to study"); return; }
-  session = { queue, practice, done:0, total:queue.length, correct:0, answered:0 };
+  session = { queue, practice, done:0, total:queue.length, correct:0, answered:0, missed:new Set(), streak0:streakNow() };
   $("#studyHome").classList.add("hidden"); $("#studySession").classList.remove("hidden");
+  document.body.classList.add("in-session");
   nextQ();
 }
 $("#endBtn").onclick = () => endSession();
 function endSession(summary){
   frCancel();
+  homeAuto = false;
   const s = session; session = null;
   $("#studySession").classList.add("hidden"); $("#studyHome").classList.remove("hidden");
-  refreshHome();
+  document.body.classList.remove("in-session");
+  cheerTry = !!(summary && s && s.missed.size); refreshHome(); cheerTry = false;
+  // streak went up this session → bump the tile; milestones get the big burst, a perfect run a normal one
+  const streak = streakNow(), milestone = s && streak > s.streak0 && STREAK_MILESTONES.includes(streak);
+  if (s && streak > s.streak0){ const tile = $("#sStreak").parentElement; tile.classList.remove("pop"); void tile.offsetWidth; tile.classList.add("pop"); }
+  if (milestone){ confetti(160); toast(L(`🔥 ${streak} ngày liên tiếp! 대박!`, `🔥 ${streak}-day streak! 대박!`)); }
+  else if (summary && s && s.answered && !s.missed.size) confetti();
   if (summary && s && s.answered) {
     const pct = Math.round(100*s.correct/s.answered);
-    $("#homeCard").insertAdjacentHTML("afterbegin", `<div class="feedback ok" style="margin:0 0 12px">✅ Session complete — ${s.correct}/${s.answered} correct (${pct}%).</div>`);
+    const missed = S.cards.filter(c => s.missed.has(c.id));
+    if (missed.length){
+      // not a perfect run → retrying the missed words is the main action
+      $("#homeCard").insertAdjacentHTML("afterbegin", `<div class="feedback bad" style="margin:0 0 12px">💪 Session complete — ${s.correct}/${s.answered} correct (${pct}%). Let's lock in the words you missed.</div>
+        <button class="btn" id="retryMissed" style="margin-bottom:14px">🔁 Practice ${missed.length} missed word${missed.length===1?"":"s"}</button>`);
+      $("#retryMissed").onclick = () => startSession(true, missed);
+      setTimeout(() => $("#retryMissed") && $("#retryMissed").focus(), 30);
+    } else $("#homeCard").insertAdjacentHTML("afterbegin", `<div class="feedback ok" style="margin:0 0 12px">✅ Session complete — ${s.correct}/${s.answered} correct (${pct}%).</div>`);
   }
 }
 function nextQ(){
   frCancel();
   if (!session) return;
   if (!session.queue.length) return endSession(true);
+  refreshStats();
   const item = session.queue[0];
   $("#sessCount").textContent = (session.practice ? "Practice · " : "") + session.queue.length + " left";
   $("#sessBar").style.width = Math.round(100*session.done/Math.max(session.total, session.done+session.queue.length)) + "%";
@@ -1321,12 +1475,12 @@ function renderQuiz(item){
     item.opts = opts;
     answer = `<div class="choices">${opts.map((o,i)=>`<button class="choice" data-i="${i}"><span class="k">${i+1}</span><span lang="ko" style="font-size:20px">${esc(o.ko)}</span></button>`).join("")}</div>`;
   } else if (SPEAK_MODES.includes(mode)){
-    answer = `<div style="margin-top:12px"><button class="speak big rec" id="sayRec" title="Record">🎙</button>
+    answer = `<p class="small muted" id="hintTxt" style="margin:8px 0 0"></p>
+      <div class="dock" id="sayDock"><button class="speak big rec" id="sayRec" title="Record">🎙</button>
       <p class="small muted" id="sayStatus" style="margin:0;text-align:center">Tap 🎙 and say it</p>
-      <div class="row" style="margin-top:12px">${mode === "m2say" ? `<button class="btn-ghost" id="hintBtn">Hint</button>` : ""}<button class="btn-ghost" id="saySkip" style="flex:2">Can't speak now</button></div>
-      <p class="small muted" id="hintTxt" style="margin:8px 0 0"></p></div>`;
+      <div class="row" style="margin-top:12px">${mode === "m2say" ? `<button class="btn-ghost" id="hintBtn">Hint</button>` : ""}<button class="btn-ghost" id="saySkip" style="flex:2">Can't speak now</button></div></div>`;
   } else {
-    answer = `<div style="margin-top:16px"><input id="typeIn" type="text" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="한글로 입력…">
+    answer = `<div style="margin-top:16px"><input id="typeIn" type="text" lang="ko" enterkeyhint="go" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="한글로 입력…">
       <div class="row" style="margin-top:8px"><button class="btn-ghost" id="hintBtn">Hint</button><button class="btn" id="checkBtn" style="flex:2">Check</button></div>
       <p class="small muted" id="hintTxt" style="margin:8px 0 0"></p></div>`;
   }
@@ -1420,7 +1574,7 @@ function answerTyped(item){
   finish(item, ok, v);
 }
 function finish(item, ok, typed, extra){
-  const c = item.card; session.answered++; if (ok) session.correct++;
+  const c = item.card; session.answered++; if (ok) session.correct++; else session.missed.add(c.id);
   const reveal = `<div style="margin-top:4px"><b lang="ko" style="font-size:20px">${esc(c.ko)}</b> — ${esc(c.meaning)}</div>`;
   const exBlock = exampleHTML(c);
   let html;
@@ -1428,15 +1582,15 @@ function finish(item, ok, typed, extra){
     html = `<div class="feedback ok">✅ Correct!${reveal}${extra || ""}</div>` + exBlock;
     if (!session.practice){
       const base = item.fresh || item.hinted || item.failed ? [3,4] : [3,4,5];
-      html += `<div class="grades" style="grid-template-columns:repeat(${base.length},1fr)">` + base.map(q => {
+      html += `<div class="dock"><div class="grades" style="grid-template-columns:repeat(${base.length},1fr)">` + base.map(q => {
         const name = {3:"Hard",4:"Good",5:"Easy"}[q];
         const cls = q===4 ? "btn" : "btn2";
         return `<button class="${cls}" data-q="${q}">${name}<small>${nextLabel(c,q)}</small></button>`;
-      }).join("") + `</div>`;
-    } else html += `<button class="btn" style="margin-top:12px" id="contBtn">Continue →</button>`;
+      }).join("") + `</div></div>`;
+    } else html += `<div class="dock"><button class="btn" id="contBtn">Continue →</button></div>`;
   } else {
     html = `<div class="feedback bad">❌ Not quite${typed ? ` ${item.spoken ? "— we heard" : "— you wrote"} <b lang="ko">${esc(typed)}</b>` : ""}.${reveal}${extra || ""}<div class="small" style="margin-top:6px">This word will come back soon.</div></div>${exBlock}
-      <div class="row" style="margin-top:12px"><button class="speak sm" style="flex:0 0 48px;height:48px;width:48px" id="fbSpeak">🔊</button>${typed ? `<button class="btn-ghost" id="typoBtn">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2">Continue →</button></div>`;
+      <div class="dock"><div class="row"><button class="speak sm" style="flex:0 0 48px;height:48px;width:48px" id="fbSpeak">🔊</button>${typed ? `<button class="btn-ghost" id="typoBtn">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2">Continue →</button></div></div>`;
   }
   $("#fb").innerHTML = html;
   bindSay($("#fb"));
@@ -1444,7 +1598,7 @@ function finish(item, ok, typed, extra){
   const fs = $("#fbSpeak"); if (fs) fs.onclick = () => speak(c.ko);
   $$("#fb .grades button").forEach(b => b.onclick = () => done(item, +b.dataset.q));
   const cb = $("#contBtn"); if (cb) { cb.onclick = () => done(item, ok ? 4 : 1); setTimeout(()=>cb.focus(), 30); }
-  const tb = $("#typoBtn"); if (tb) tb.onclick = () => { session.correct++; done(item, 3); };
+  const tb = $("#typoBtn"); if (tb) tb.onclick = () => { session.correct++; if (!item.failed) session.missed.delete(c.id); done(item, 3); };
   const g = $("#fb .grades .btn"); if (g) setTimeout(()=>g.focus(), 30);
 }
 function done(item, q){
@@ -1478,7 +1632,7 @@ function frCancel(){
 }
 function frBtn(on){ const b = $("#sayRec"); if (b){ b.classList.toggle("on", on); b.textContent = on ? "⏹" : "🎙"; } }
 function frSay(html){ const el = $("#sayStatus"); if (el) el.innerHTML = html; }
-const frBlocked = () => L("🎙 Micro bị chặn. Cho phép micro cho trang này rồi thử lại (xem Cài đặt → Hướng dẫn → Micro).", "🎙 Microphone blocked. Allow it for this site and try again (see Settings → Guide → Microphone).");
+const frBlocked = () => L("🎙 Micro bị chặn. Cho phép micro cho trang này rồi thử lại (xem Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked. Allow it for this site and try again (see Settings → Voice → Microphone & speaking).");
 async function sayStart(item){
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   const useAI = hasKey() && navigator.mediaDevices && window.MediaRecorder;
@@ -1561,6 +1715,7 @@ function sayResult(item, ok, heard, extra){
   item.answered = true; item.spoken = true;
   ["#sayRec", "#saySkip", "#hintBtn"].forEach(id => { const b = $(id); if (b) b.disabled = true; });
   frSay("");
+  const dock = $("#sayDock"); if (dock) dock.classList.add("hidden");   // answered → the feedback + Continue take over
   finish(item, ok, heard, extra);
 }
 
@@ -1795,7 +1950,7 @@ function renderPassList(){
   $("#rdNewClose").classList.toggle("hidden", !has);
   renderPassItems();
 }
-$("#rdNewOpen").textContent = L("➕ Tạo bài đọc mới", "➕ New reading passage");
+$("#rdNewOpen").textContent = L("+ Tạo bài đọc mới", "+ New reading passage");
 $("#rdNewClose").textContent = L("Thu gọn", "Collapse");
 $("#rdNewOpen").onclick = () => { rdNewOpen = true; renderPassList(); $("#rdPrompt").focus(); };
 $("#rdNewClose").onclick = () => { rdNewOpen = false; renderPassList(); };
@@ -2029,7 +2184,7 @@ function micHelp(kind){
   const blockedFile = location.protocol === "file:" && /Android/i.test(navigator.userAgent);
   let msg;
   if (kind === "insecure" || blockedFile)
-    msg = L("🎙 Android chặn micro khi mở file tải về. Hãy mở app từ link https:// (xem Cài đặt → Hướng dẫn).", "🎙 Android blocks the mic for downloaded files. Open the app from its https:// link (see Settings → Guide).");
+    msg = L("🎙 Android chặn micro khi mở file tải về. Hãy mở app từ link https:// (xem Cài đặt → Hướng dẫn chung → Cài app).", "🎙 Android blocks the mic for downloaded files. Open the app from its https:// link (see Settings → General guide → Install the app).");
   else if (kind === "site-denied")
     msg = L("🎙 Micro bị chặn cho trang này. Chạm 🔒 cạnh thanh địa chỉ → Quyền → Micro → Cho phép, rồi tải lại.", "🎙 Mic is blocked for this site. Tap 🔒 by the address bar → Permissions → Microphone → Allow, then reload.");
   else if (kind === "audio-capture")
@@ -2345,7 +2500,6 @@ function renderSettings(){
   $("#setAuto").checked = S.settings.autoPlay;
   $("#setRate").value = S.settings.rate; $("#rateVal").textContent = S.settings.rate + "×";
   $$("#ratePresets button").forEach(b => b.classList.toggle("on", Math.abs(+b.dataset.r - S.settings.rate) < 0.01));
-  $("#setAllVoices").checked = !!S.settings.allVoices;
   $("#setLang").value = S.settings.lang;
   $("#setKey").value = S.settings.apiKey || ""; fillModelSelect($("#setModel")); $("#setModelHint").textContent = MODEL_HINT(); if (!MODELS.length && hasKey()) refreshModels($("#setModel")); $("#setAutoEx").checked = S.settings.autoEx;
   loadVoices();
@@ -2360,7 +2514,6 @@ $$("[data-mode]").forEach(i => i.onchange = () => {
 $("#setAuto").onchange = e => { S.settings.autoPlay = e.target.checked; save(); };
 $("#setRate").oninput = e => { S.settings.rate = +e.target.value; $("#rateVal").textContent = S.settings.rate + "×"; $$("#ratePresets button").forEach(b => b.classList.toggle("on", Math.abs(+b.dataset.r - S.settings.rate) < 0.01)); save(); };
 $("#setVoice").onchange = e => { S.settings.voice = e.target.value; save(); loadVoices(); speak("안녕하세요. 만나서 반가워요!"); };
-$("#setAllVoices").onchange = e => { S.settings.allVoices = e.target.checked; save(); loadVoices(); };
 $$("#ratePresets button").forEach(b => b.onclick = () => { S.settings.rate = +b.dataset.r; save(); renderSettings(); speak("안녕하세요. 만나서 반가워요!"); });
 $("#setLang").onchange = e => { S.settings.lang = e.target.value; save(); };
 $("#testVoice").onclick = () => speak("안녕하세요");
@@ -2532,7 +2685,7 @@ function applyRemote(R){
     byKo.set(c.ko, keep); S.cards.splice(S.cards.indexOf(drop), 1); tomb[drop.id] = now;
   });
   if (R.settings && (R.settings._mod || 0) > (S.settings._mod || 0)){
-    const keep = { voice: S.settings.voice, allVoices: S.settings.allVoices, apiKey: R.settings.apiKey || S.settings.apiKey };
+    const keep = { voice: S.settings.voice, apiKey: R.settings.apiKey || S.settings.apiKey };
     Object.assign(S.settings, R.settings, keep);
     S.settings.modes = Object.assign({}, defaults().settings.modes, R.settings.modes || {});
   }
@@ -2547,7 +2700,7 @@ function applyRemote(R){
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){}
   if (window.__notifySnap) window.__notifySnap();
   if (!session && !$("#v-study").classList.contains("hidden")) refreshHome();
-  else $("#streakPill").textContent = "🔥 " + streakNow() + " day streak";
+  else refreshStats();
   if (!$("#v-words").classList.contains("hidden")) renderWords();
   if (!$("#v-read").classList.contains("hidden") && typeof renderPassList === "function") try { renderPassList(); } catch(e){}
 }
@@ -2646,7 +2799,7 @@ async function renderNotifyCard(){
     try { const st = await navigator.permissions.query({ name: "periodic-background-sync" }); if (st.state !== "granted") note = L("Trình duyệt chưa cho chạy nền — hãy cài app vào màn hình chính.", "Background runs not allowed yet — install the app to your home screen."); } catch(e){}
   }
   el.innerHTML = `<h2>🔔 ${L("Nhắc ôn tập", "Review reminders")}</h2>
-    <p class="small muted" style="margin-top:0">${L("Gửi thông báo khi có từ cần ôn. Trình duyệt tự chọn thời điểm kiểm tra (khoảng vài giờ một lần), không nhắc từ 22h đến 8h.", "Get a notification when words are due. The browser decides when to check (roughly every few hours); no reminders between 22:00 and 8:00.")}</p>
+    <p class="small muted" style="margin-top:0">${L("Gửi thông báo khi có từ cần ôn. Trình duyệt tự chọn thời điểm kiểm tra (khoảng vài giờ một lần), không nhắc từ 0h đến 5h.", "Get a notification when words are due. The browser decides when to check (roughly every few hours); no reminders between 00:00 and 5:00.")}</p>
     <label class="check"><input type="checkbox" id="setNotify" ${notifyOn() ? "checked" : ""}> ${L("Bật nhắc trên thiết bị này", "Remind me on this device")}</label>
     ${note ? `<p class="small muted" style="margin:6px 0 0">${note}</p>` : ""}`;
   $("#setNotify").onchange = e => setNotify(e.target.checked);
@@ -2664,21 +2817,6 @@ const isStandalone = () => matchMedia("(display-mode: standalone)").matches || n
 const APP_URL = "https://pevien.github.io/korean/";
 const ORIGIN = new URL(APP_URL).origin;
 const appLink = () => `<a href="${APP_URL}" target="_blank" rel="noopener">${APP_URL}</a>`;
-const clientIdSteps = () => L(`
-    <ol><li>Mở <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a>, đăng nhập Gmail, tạo project mới (tên tuỳ ý, ví dụ <i>Hangul with PV</i>) → <b>Create</b></li>
-    <li>Mở <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a> (chọn đúng project vừa tạo) → <b>Enable</b></li>
-    <li>Mở <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> → <b>Get started</b>: App name <i>Hangul with PV</i>, support email là Gmail của bạn → Audience: <b>External</b> → email liên hệ → đồng ý điều khoản → <b>Create</b></li>
-    <li>Mục <b>Audience</b> → <b>Test users</b> → <b>Add users</b>: thêm chính Gmail bạn sẽ dùng để đồng bộ</li>
-    <li>Mục <b>Clients</b> → <b>Create client</b> → Application type: <b>Web application</b> → <b>Authorized JavaScript origins</b> → <b>Add URI</b>: <code>${ORIGIN}</code> → <b>Create</b></li>
-    <li>Copy <b>Client ID</b> (dạng <code>xxxx.apps.googleusercontent.com</code>) và dán vào ô Client ID</li></ol>
-    <p>Không cần Client secret. Origin phải khớp đúng địa chỉ bạn mở app (có <code>https://</code>, không có <code>/</code> ở cuối). Thay đổi có thể mất vài phút mới có hiệu lực.</p>`, `
-    <ol><li>Open <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a>, sign in, and create a new project (any name, e.g. <i>Hangul with PV</i>) → <b>Create</b></li>
-    <li>Open <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a> (with that project selected) → <b>Enable</b></li>
-    <li>Open <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> → <b>Get started</b>: app name <i>Hangul with PV</i>, support email = your Gmail → Audience: <b>External</b> → contact email → accept the terms → <b>Create</b></li>
-    <li><b>Audience</b> → <b>Test users</b> → <b>Add users</b>: add the Gmail you will sync with</li>
-    <li><b>Clients</b> → <b>Create client</b> → Application type: <b>Web application</b> → <b>Authorized JavaScript origins</b> → <b>Add URI</b>: <code>${ORIGIN}</code> → <b>Create</b></li>
-    <li>Copy the <b>Client ID</b> (looks like <code>xxxx.apps.googleusercontent.com</code>) and paste it into the Client ID box</li></ol>
-    <p>No client secret needed. The origin must exactly match the address you open the app from (with <code>https://</code>, no trailing <code>/</code>). Changes can take a few minutes to apply.</p>`);
 let installEvt = null, wStep = 0;
 addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (wStep === 4) renderInstall(); });
 addEventListener("appinstalled", () => { installEvt = null; if (wStep === 4) renderInstall(); });
@@ -2755,7 +2893,7 @@ function buildWelcome(){
       </div>
       <button class="btn2" style="width:100%;margin-top:10px" id="wDrive">${L("Kết nối Google Drive", "Connect Google Drive")}</button>
       <p class="res" id="wDriveRes"></p>
-      <div class="note">🔒 ${L("Miễn phí, mỗi người tự tạo Client ID riêng. Trên máy khác, dán lại <b>cùng Client ID</b>. Thấy <i>“Google hasn't verified this app”</i> thì bấm <b>Continue</b>. Chi tiết từng bước: <b>⚙️ Cài đặt → 📘 Hướng dẫn</b>.", "Free, everyone creates their own Client ID. On other devices, paste the <b>same Client ID</b>. If you see <i>“Google hasn't verified this app”</i>, tap <b>Continue</b>. Step-by-step details: <b>⚙️ Settings → 📘 Guide</b>.")}</div>
+      <div class="note">🔒 ${L("Miễn phí, mỗi người tự tạo Client ID riêng. Trên máy khác, dán lại <b>cùng Client ID</b>. Thấy <i>“Google hasn't verified this app”</i> thì bấm <b>Continue</b>. Chi tiết từng bước: <b>⚙️ Cài đặt → ☁️ Đồng bộ Google Drive</b>.", "Free, everyone creates their own Client ID. On other devices, paste the <b>same Client ID</b>. If you see <i>“Google hasn't verified this app”</i>, tap <b>Continue</b>. Step-by-step details: <b>⚙️ Settings → ☁️ Google Drive sync</b>.")}</div>
     </div>
 
     <div class="wstep" data-s="4">
@@ -2879,34 +3017,46 @@ const GUIDE = [
     <li><b>iPhone / iPad</b>: Safari → <b>Share</b> ⬆️ → <b>Add to Home Screen</b></li>
     <li><b>Computer</b>: Chrome → install icon at the end of the address bar</li></ul>
     <p>Always open it from ${appLink()}, not from a downloaded HTML file.</p>`)],
-  ["g-key", L("Gemini key", "Gemini key"), L(`
+  ["g-key", L("Cách lấy Gemini key (miễn phí)", "How to get a free Gemini key"), L(`
     <ol><li>Mở <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, đăng nhập Gmail</li>
     <li>Bấm <b>Create API key</b>, copy key (bắt đầu bằng <code>AIza…</code>)</li>
-    <li>Dán vào ô <b>Gemini API key</b> bên dưới → <b>Kiểm tra kết nối</b></li></ol>
+    <li>Dán vào ô <b>Gemini API key</b> ngay bên dưới → <b>Kiểm tra kết nối</b></li></ol>
     <p><b>Có key</b>: tự tạo câu ví dụ, bài đọc, chấm phát âm chi tiết. <b>Không có key</b>: app đưa câu lệnh để bạn dán vào chatbot miễn phí.</p>
-    <p>🔒 Mỗi người dùng key riêng. Key không có trong file xuất.</p>`, `
+    <p>🔒 Mỗi người dùng key riêng. Key chỉ lưu trên máy bạn (và Drive nếu bật đồng bộ), không có trong file xuất.</p>`, `
     <ol><li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> and sign in</li>
     <li>Tap <b>Create API key</b> and copy it (starts with <code>AIza…</code>)</li>
-    <li>Paste it into <b>Gemini API key</b> below → <b>Test connection</b></li></ol>
+    <li>Paste it into <b>Gemini API key</b> just below → <b>Test connection</b></li></ol>
     <p><b>With a key</b>: examples, passages and detailed pronunciation feedback. <b>Without</b>: the app gives you a prompt to paste into a free chatbot.</p>
-    <p>🔒 Everyone should use their own key. It's never included in exports.</p>`)],
-  ["g-sync", L("Đồng bộ Google Drive", "Google Drive sync"), L(`
-    <ol><li>Tự tạo Client ID riêng (các bước ở cuối mục này, miễn phí, ~5 phút)</li>
-    <li>Khung <b>☁️ Đồng bộ Google Drive</b> → dán Client ID → <b>Kết nối</b></li>
-    <li>Thấy <i>“Google hasn't verified this app”</i> → <b>Continue</b> (đây là app do chính bạn tạo)</li>
-    <li>Trên máy thứ hai: dán lại <b>cùng Client ID</b> đó → <b>Kết nối</b> bằng cùng Gmail</li></ol>
-    <p>App tự lưu sau mỗi thay đổi và tải về khi mở. Dữ liệu gộp theo từng từ nên không mất tiến độ.</p>
-    <p><b>☁️ Chạm để đồng bộ</b> ở góc trên: phiên đăng nhập (~1 giờ) đã hết, chạm để tiếp tục.</p>
-    <p><b>Lỗi 400 / access blocked</b>: Gmail chưa có trong <b>Test users</b> (bước 4), Client ID sai, hoặc origin (bước 5) không khớp link app.</p>
-    <p><b>Cách tạo Client ID:</b></p>`, `
-    <ol><li>Create your own Client ID (steps at the end of this section, free, ~5 min)</li>
-    <li>In <b>☁️ Google Drive sync</b> → paste the Client ID → <b>Connect</b></li>
-    <li>If you see <i>“Google hasn't verified this app”</i> → <b>Continue</b> (it's the app you created)</li>
-    <li>On your other device: paste the <b>same Client ID</b> → <b>Connect</b> with the same Gmail</li></ol>
-    <p>Changes save automatically and download when you open the app. Data merges word by word, so no progress is lost.</p>
-    <p><b>☁️ Tap to sync</b> at the top means the ~1 hour sign-in expired. Tap it to continue.</p>
-    <p><b>Error 400 / access blocked</b>: your Gmail isn't in <b>Test users</b> (step 4), the Client ID is wrong, or the origin (step 5) doesn't match the app's link.</p>
-    <p><b>How to create a Client ID:</b></p>`) + clientIdSteps()],
+    <p>🔒 Everyone should use their own key. It stays on your devices (and your Drive if sync is on) and is never included in exports.</p>`)],
+  ["g-sync", L("Cách thiết lập", "How to set it up"), L(`
+    <p><b>🔑 Tạo Client ID</b> <span class="muted">— làm một lần, miễn phí, ~5 phút</span></p>
+    <ol><li><b>Tạo project</b>: mở <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> → đặt tên tuỳ ý → <b>Create</b></li>
+    <li><b>Bật Drive API</b>: mở <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a> → <b>Enable</b></li>
+    <li><b>Khai báo app</b>: mở <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> → <b>Get started</b> → nhập tên app và Gmail của bạn → chọn <b>External</b> → <b>Create</b></li>
+    <li><b>Thêm Gmail của bạn</b>: <b>Audience</b> → <b>Test users</b> → <b>Add users</b></li>
+    <li><b>Tạo client</b>: <b>Clients</b> → <b>Create client</b> → <b>Web application</b> → <b>Authorized JavaScript origins</b> → <b>Add URI</b>, dán <code style="white-space:nowrap">${ORIGIN}</code> <button class="linkbtn" data-copy="${ORIGIN}">📋 Chép</button> → <b>Create</b></li>
+    <li><b>Copy Client ID</b> vừa hiện ra (đuôi <code>.apps.googleusercontent.com</code>)</li></ol>
+    <p><b>🔗 Kết nối</b></p>
+    <ol><li>Dán Client ID vào ô bên dưới → <b>Kết nối Google Drive</b></li>
+    <li>Google báo <i>“hasn't verified this app”</i> → <b>Continue</b> (đây là app của chính bạn)</li>
+    <li>Máy khác: dán <b>cùng Client ID</b>, đăng nhập <b>cùng Gmail</b></li></ol>
+    <p><b>🛠 Gặp lỗi?</b></p>
+    <ul><li><b>Error 400 / access blocked</b>: xem lại 🔑 bước 4 (đã thêm Gmail chưa) và bước 5 (địa chỉ phải khớp, không có <code>/</code> ở cuối). Sửa xong đợi vài phút.</li>
+    <li><b>☁️ Chạm để đồng bộ</b> ở trên cùng: phiên đăng nhập (~1 giờ) đã hết, chạm để tiếp tục.</li></ul>`, `
+    <p><b>🔑 Create a Client ID</b> <span class="muted">— once, free, ~5 min</span></p>
+    <ol><li><b>Create a project</b>: open <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> → any name → <b>Create</b></li>
+    <li><b>Turn on the Drive API</b>: open <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a> → <b>Enable</b></li>
+    <li><b>Set up the app</b>: open <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> → <b>Get started</b> → enter an app name and your Gmail → pick <b>External</b> → <b>Create</b></li>
+    <li><b>Add your Gmail</b>: <b>Audience</b> → <b>Test users</b> → <b>Add users</b></li>
+    <li><b>Create the client</b>: <b>Clients</b> → <b>Create client</b> → <b>Web application</b> → <b>Authorized JavaScript origins</b> → <b>Add URI</b>, paste <code style="white-space:nowrap">${ORIGIN}</code> <button class="linkbtn" data-copy="${ORIGIN}">📋 Copy</button> → <b>Create</b></li>
+    <li><b>Copy the Client ID</b> it shows (ends in <code>.apps.googleusercontent.com</code>)</li></ol>
+    <p><b>🔗 Connect</b></p>
+    <ol><li>Paste the Client ID into the box below → <b>Connect Google Drive</b></li>
+    <li>Google says <i>“hasn't verified this app”</i> → <b>Continue</b> (it's your own app)</li>
+    <li>Other devices: paste the <b>same Client ID</b>, sign in with the <b>same Gmail</b></li></ol>
+    <p><b>🛠 Something wrong?</b></p>
+    <ul><li><b>Error 400 / access blocked</b>: check 🔑 step 4 (Gmail added) and step 5 (the address must match, no trailing <code>/</code>). After fixing, wait a few minutes.</li>
+    <li><b>☁️ Tap to sync</b> at the top: the ~1 hour sign-in expired, tap it to continue.</li></ul>`)],
   ["g-mic", L("Micro & luyện nói", "Microphone & speaking"), L(`
     <p>Lần đầu bấm 🎙, chọn <b>Cho phép</b>. Nếu bị chặn:</p>
     <ul><li><b>Android</b>: Cài đặt → Ứng dụng → Chrome → Quyền → Micro → Cho phép</li>
@@ -2917,8 +3067,7 @@ const GUIDE = [
     <ul><li><b>Android</b>: Settings → Apps → Chrome → Permissions → Microphone → Allow</li>
     <li><b>iPhone / iPad</b>: Settings → Safari → Microphone → Allow</li>
     <li><b>Mac</b>: System Settings → Privacy & Security → Microphone</li></ul>
-    <p>On Android without a key, only text is checked and playback of your voice is off.</p>`)
-    + `<p><button class="btn2" id="gMicTest">${L("🎙 Thử micro", "🎙 Test microphone")}</button> <span class="small" id="gMicRes"></span></p>`],
+    <p>On Android without a key, only text is checked and playback of your voice is off.</p>`)],
   ["g-backup", L("Sao lưu & chuyển máy", "Backup & moving devices"), L(`
     <p><b>⬇️ Xuất file</b> để lưu dự phòng, <b>⬆️ Nhập file</b> để khôi phục hoặc chuyển máy.</p>
     <p>⚠️ Xoá dữ liệu trình duyệt sẽ mất từ vựng nếu chưa đồng bộ Drive hoặc xuất file.</p>`, `
@@ -2933,19 +3082,20 @@ const GUIDE = [
     <p><b>Not seeing the latest version?</b> Fully close the app and reopen it while online.</p>`)]
 ];
 function buildGuide(){
-  $("#guideCard").innerHTML = `<h2>📘 ${L("Hướng dẫn", "Guide")}</h2>` +
-    GUIDE.map(([id, t, body]) => `<details id="${id}"><summary>${t}</summary><div>${body}</div></details>`).join("") +
+  // topic guides sit inside the settings card they explain; the rest form the general guide at the bottom
+  const box = ([id, t, body]) => `<details id="${id}"><summary>ℹ️ ${t}</summary><div>${body}</div></details>`;
+  GUIDE.forEach(g => { const slot = $(`[data-g="${g[0]}"]`); if (slot) slot.innerHTML = box(g); });
+  $("#guideCard").innerHTML = `<h2>📘 ${L("Hướng dẫn chung", "General guide")}</h2>` +
+    GUIDE.filter(g => !$(`[data-g="${g[0]}"]`)).map(box).join("") +
     `<button class="btn-ghost" style="width:100%;margin-top:12px" id="gWelcome">${L("↺ Xem lại màn hình chào mừng", "↺ Show the welcome screen again")}</button>`;
   $("#gWelcome").onclick = openWelcome;
   $("#gMicTest").onclick = () => micTest($("#gMicRes"));
+  $$("[data-copy]").forEach(b => b.onclick = async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copy); toast(L("Đã chép", "Copied")); } catch(e){ toast(L("Không chép được", "Couldn't copy")); }
+  });
 }
 buildGuide();
 bindLangSeg($("#uiLangSeg"));
-$$("[data-guide]").forEach(b => b.onclick = e => {
-  e.preventDefault();
-  const d = document.getElementById(b.dataset.guide); if (!d) return;
-  d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" });
-});
 
 /* ---------------- ARMY: live subtitles for BTS lives ---------------- */
 // Listens to speech (mic, or a browser tab's audio with a Gemini key) and shows running translated subtitles.
@@ -2955,7 +3105,8 @@ const AR = { on: false, engine: "", recog: null, stream: null, rec: null, lines:
   savedId: "",   // once the live is saved, that saved copy keeps growing with new lines
   view: "" };    // id of the saved conversation being reviewed
 const AR_KEY = "hangulCards.army", AR_CHUNK = 10000;
-const AR_LANGS = { ko: ["🇰🇷", "Tiếng Hàn", "Korean", "ko-KR"], vi: ["🇻🇳", "Tiếng Việt", "Vietnamese", "vi-VN"], en: ["🇬🇧", "Tiếng Anh", "English", "en-US"] };
+const AR_LANGS = { ko: ["🇰🇷", "Tiếng Hàn", "Korean", "ko-KR"], vi: ["🇻🇳", "Tiếng Việt", "Vietnamese", "vi-VN"], en: ["🇬🇧", "Tiếng Anh", "English", "en-US"],
+  zh: ["🇨🇳", "Tiếng Trung", "Chinese", "zh-CN"], ja: ["🇯🇵", "Tiếng Nhật", "Japanese", "ja-JP"], th: ["🇹🇭", "Tiếng Thái", "Thai", "th-TH"] };
 const BTS_GLOSSARY = `Context: a BTS livestream (Weverse Live / YouTube). Members — always write their stage names: RM (김남준, 남준, 알엠), Jin (김석진, 석진, 진), SUGA (민윤기, 윤기, 슈가), j-hope (정호석, 호석, 제이홉), Jimin (박지민, 지민), V (김태형, 태형, 뷔), Jung Kook (전정국, 정국, 꾹).
 Fandom terms: 방탄/방탄소년단 = BTS, 아미 = ARMY, 보라해 = "I purple you" (keep it), 형 = hyung, 막내 = maknae, 위버스 = Weverse, 컴백 = comeback, 무대 = stage.`;
 AR.mode = "bts";     // last mode entered: "bts" or "talk"
@@ -2978,6 +3129,7 @@ const arName = k => AR_LANGS[k][2];
 const arCanTab = () => !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 // Free by default; AI only when picked (and a key exists)
 const arEngine = () => { const e = S.settings.armyEngine || "free"; return e === "ai" && hasKey() ? "ai" : SR ? "free" : hasKey() ? "ai" : ""; };
+const arAiAsk = () => S.settings.armyEngine === "ai" && !hasKey();   // picked AI without a key: guide to Settings instead of a dead button
 const arSrc = () => !arTalk() && arEngine() === "ai" && arCanTab() && S.settings.armySrc === "tab" ? "tab" : "mic";
 function arPersist(){
   AR.sess[AR.mode] = { lines: AR.lines, savedId: AR.savedId };
@@ -3039,6 +3191,7 @@ function renderArmy(){
   if (AR.view) return renderArmyView();
   if (AR.screen !== "mode") return renderArmyHome();
   const sec = $("#v-army"), eng = arEngine(), src = arSrc(), [icon, title, desc] = AR_MODES[arMode()];
+  const aiAsk = arAiAsk();
   sec.innerHTML = `
     <button class="btn-ghost" id="arHome" style="margin-bottom:10px">← ARMY</button>
     <div class="card" id="arCtl">
@@ -3051,12 +3204,13 @@ function renderArmy(){
         <div><label style="margin-top:0">${L("Dịch sang", "Translate to")}</label><select id="arOut">${Object.keys(AR_LANGS).filter(k => k !== arIn()).map(k => `<option value="${k}">${AR_LANGS[k][0]} ${L(AR_LANGS[k][1], AR_LANGS[k][2])}</option>`).join("")}</select></div>
       </div>
       <label>${L("Cách nghe", "Listening mode")}</label>
-      <div class="seg" id="arEng"><button data-e="ai" ${hasKey() ? "" : "disabled"}>✨ AI Gemini</button><button data-e="free" ${SR ? "" : "disabled"}>⚡ ${L("Miễn phí", "Free")}</button></div>
-      <p class="small muted" style="margin:6px 0 0">${
+      <div class="seg" id="arEng"><button data-e="free" ${SR ? "" : "disabled"}>⚡ ${L("Miễn phí", "Free")}</button><button data-e="ai">✨ AI Gemini${hasKey() ? "" : " 🔒"}</button></div>
+      ${aiAsk ? `<div class="note" style="margin-top:8px">🔒 ${L("AI Gemini cần <b>Gemini key</b> (miễn phí, tạo trong ~1 phút). Thêm xong quay lại đây là dùng được AI — hoặc chọn ⚡ Miễn phí để nghe ngay.", "AI Gemini needs a <b>Gemini key</b> (free, takes ~1 minute). Add it and come back to use AI — or pick ⚡ Free to start listening now.")}</div>` : ""}
+      ${aiAsk && eng ? "" : `<p class="small muted" style="margin:6px 0 0">${
         !eng ? L("⚠️ Trình duyệt này không nhận giọng nói. Thêm Gemini key trong Cài đặt, hoặc dùng Chrome/Safari.", "⚠️ This browser can't recognise speech. Add a Gemini key in Settings, or use Chrome/Safari.")
         : eng === "ai" ? L("AI nghe từng đoạn ~10 giây: chính xác hơn, nhưng phụ đề trễ ~10–15 giây. Dùng lượt Gemini miễn phí.", "AI listens in ~10 s chunks: more accurate, but subtitles lag ~10–15 s. Uses your free Gemini quota.")
         : L("Nhận giọng nói của trình duyệt: gần như tức thì, nhưng dễ nghe nhầm khi nói nhanh/ồn." + (hasKey() ? "" : " Dịch miễn phí có giới hạn mỗi ngày — thêm Gemini key để dịch tốt hơn."), "Browser speech recognition: near-instant, but mishears fast or noisy talk." + (hasKey() ? "" : " Free translation has a daily cap — add a Gemini key for better translations."))
-      }${hasKey() ? "" : ` <button class="linkbtn" id="arKeyLink">${L("Thêm key", "Add a key")}</button>`}</p>
+      }${hasKey() || aiAsk ? "" : ` <button class="linkbtn" id="arKeyLink">${L("Thêm key", "Add a key")}</button>`}</p>`}
       ${eng === "ai" && arCanTab() && !arTalk() ? `<label>${L("Nguồn âm thanh", "Audio source")}</label>
       <div class="seg" id="arSrc"><button data-s="mic">🎙 ${L("Micro", "Microphone")}</button><button data-s="tab">🖥 ${L("Âm thanh tab", "Tab audio")}</button></div>
       <p class="small muted" style="margin:6px 0 0">${src === "tab" ? L("Chọn tab đang phát live và bật <b>“Chia sẻ âm thanh tab”</b>. Không cần bật loa.", "Pick the tab playing the live and turn on <b>“Share tab audio”</b>. No speakers needed.") : L("Micro nghe tiếng từ loa.", "The mic listens to your speakers.")}</p>` : ""}
@@ -3066,7 +3220,7 @@ function renderArmy(){
         ? `<span class="ar-dir">${AR_LANGS[arIn()][0]}<button class="btn2" id="arMiniSwap" title="${L("Đổi lượt nói", "Swap turns")}" aria-label="${L("Đổi lượt nói", "Swap turns")}">⇄</button>${AR_LANGS[arOut()][0]}</span>
           <span class="acts"><button class="btn-ghost" id="arMiniTts"></button></span>`
         : `<span>${BTS_LOGO} ${AR_LANGS[arIn()][0]} → ${AR_LANGS[arOut()][0]} · ${eng === "ai" ? "✨ AI" : "⚡ " + L("Miễn phí", "Free")}${src === "tab" ? " · 🖥" : ""}</span>`}</div>
-      <button class="ar-go" id="arGo" ${eng ? "" : "disabled"}></button>
+      <button class="ar-go" id="arGo" ${eng || aiAsk ? "" : "disabled"}></button>
       <div class="ar-lvl hidden" id="arLvlBar"><i id="arLvl"></i></div>
       <p class="small muted" id="arStatus" style="margin:8px 0 0"></p>
     </div>
@@ -3103,10 +3257,11 @@ function renderArmy(){
     if (!arTts() && "speechSynthesis" in window){ speechSynthesis.cancel(); AR.saying = 0; arResumeEars(); }
   };
   ttsBtn();
-  $$("#arEng button").forEach(b => { b.classList.toggle("on", b.dataset.e === eng); b.onclick = () => { S.settings.armyEngine = b.dataset.e; save(); arRestart(); }; });
+  $$("#arEng button").forEach(b => { b.classList.toggle("on", b.dataset.e === (aiAsk ? "ai" : eng)); b.onclick = () => { S.settings.armyEngine = b.dataset.e; save(); arRestart(); }; });
   $$("#arSrc button").forEach(b => { b.classList.toggle("on", b.dataset.s === src); b.onclick = () => { S.settings.armySrc = b.dataset.s; save(); arRestart(); }; });
-  if ($("#arKeyLink")) $("#arKeyLink").onclick = () => { show("set"); const d = document.getElementById("g-key"); if (d){ d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); } };
-  $("#arGo").onclick = () => AR.on ? arStop() : arStart();
+  const goKey = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
+  if ($("#arKeyLink")) $("#arKeyLink").onclick = goKey;
+  $("#arGo").onclick = () => AR.on ? arStop() : aiAsk ? goKey() : arStart();
   const fs = (d) => { S.settings.armyFs = Math.max(0.8, Math.min(1.8, Math.round(((S.settings.armyFs || 1) + d) * 10) / 10)); save(); arStyle(); };
   $("#arFsDown").onclick = () => fs(-0.1); $("#arFsUp").onclick = () => fs(0.1);
   $("#arOrig").onclick = () => { S.settings.armyHideOrig = !S.settings.armyHideOrig; save(); arStyle(); };
@@ -3183,7 +3338,7 @@ function arUI(msg){
   $("#arCtl").classList.toggle("ar-on", AR.on); $("#arHome").classList.toggle("hidden", AR.on);
   $("#arLiveCard").classList.toggle("hidden", !AR.on);   // when stopped, the newest line is already at the top of the list
   $("#arSetup").classList.toggle("hidden", AR.on); $("#arMini").classList.toggle("hidden", !AR.on);
-  b.textContent = AR.on ? L("⏹ Dừng", "⏹ Stop") : L("▶ Bắt đầu nghe", "▶ Start listening");
+  b.textContent = AR.on ? L("⏹ Dừng", "⏹ Stop") : arAiAsk() ? L("🔑 Thêm Gemini key", "🔑 Add a Gemini key") : L("▶ Bắt đầu nghe", "▶ Start listening");
   $("#arLvlBar").classList.toggle("hidden", !(AR.on && AR.ac));
   if (msg !== undefined) $("#arStatus").innerHTML = msg;
   else $("#arStatus").innerHTML = AR.on ? (AR.engine === "ai" ? `<span class="spinner"></span>${L("Đoạn đầu tiên hiện sau ~10 giây", "The first chunk shows in ~10 s")}` : "") : "";
@@ -3255,8 +3410,9 @@ function arInterimTr(){   // translate the sentence while it's still being spoke
     if (t && AR.interim === src){ AR.interimTr = t; arRenderLive(); }
   }, 150);
 }
+const arMM = k => k === "zh" ? "zh-CN" : k;   // MyMemory wants a region for Chinese
 async function arFreeTr(text, from, to){
-  const r = await fetch("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=" + from + "|" + to);
+  const r = await fetch("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=" + arMM(from) + "|" + arMM(to));
   if (!r.ok) throw new Error("HTTP " + r.status);
   const t = ((await r.json()).responseData || {}).translatedText || "";
   if (!t || /MYMEMORY WARNING|QUERY LENGTH/i.test(t)) throw new Error("limit");
@@ -3324,7 +3480,7 @@ function arStartFree(){
     AR.interim = interim.trim(); arInterimTr(); arRenderLive();
   };
   r.onerror = ev => {
-    if (ev.error === "not-allowed" || ev.error === "service-not-allowed"){ arStop(); arUI(L("🎙 Micro bị chặn — cho phép micro cho trang này rồi thử lại (Cài đặt → Hướng dẫn → Micro).", "🎙 Microphone blocked — allow it for this site and try again (Settings → Guide → Microphone).")); }
+    if (ev.error === "not-allowed" || ev.error === "service-not-allowed"){ arStop(); arUI(L("🎙 Micro bị chặn — cho phép micro cho trang này rồi thử lại (Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked — allow it for this site and try again (Settings → Voice → Microphone & speaking).")); }
     else if (ev.error === "audio-capture"){ arStop(); arUI(L("🎙 Không tìm thấy micro hoặc app khác đang dùng.", "🎙 No microphone found, or another app is using it.")); }
     else if (ev.error === "network") arUI(L("⚠️ Cần có mạng để nhận giọng nói", "⚠️ Speech recognition needs internet"));
   };
@@ -3461,10 +3617,8 @@ if (!S.settings.speakAuto && S.settings.apiKey && S.settings.apiKey.trim()) save
 if (!Array.isArray(S.passages)) S.passages = [];
 if (!Array.isArray(S.lives)) S.lives = [];
 if (S.settings.model === "gemini-flash-latest") { S.settings.model = ""; save(); }   // old default alias, often overloaded
-if (!S.settings.voiceV2) { if (S.settings.rate === 0.85) S.settings.rate = 1; S.settings.voiceV2 = true; save(); }  // native speed by default
 fillLevels($("#genLevel")); fillLevels($("#rdLevel"));
 if ("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
-refreshHome();
 if (clientId()) loadGIS().catch(()=>{});
 setCloud(SY.on ? (tokValid() ? "ok" : "expired") : "off");
 if (SY.on) syncNow(false);
@@ -3477,6 +3631,7 @@ try { if (!localStorage.getItem(WEL_KEY)) openWelcome(); } catch(e){}
   const y = v === n.v && !n.p && v !== "army" ? n.y || 0 : 0;   // a sub-page's scroll means nothing on the main screen
   if (y) requestAnimationFrame(() => setTimeout(() => { scrollTo(0, y); navSave({ y }); }, 60));
 })();
+refreshHome();
 setInterval(() => { if (!session && !$("#v-study").classList.contains("hidden")) refreshHome(); }, 60000);
 })();
 </script>
