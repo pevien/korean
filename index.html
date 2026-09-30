@@ -55,7 +55,7 @@ h2{font-size:16px;margin:0 0 10px}
 }
 button{font:inherit;cursor:pointer;border:none;border-radius:12px;padding:12px 16px;font-weight:600}
 .btn{background:var(--accent);color:var(--on-accent);width:100%}
-.btn-cta{padding:16px;font-size:17px;margin-bottom:14px}
+.btn-cta{padding:12px 16px;font-size:16px;margin-bottom:14px}
 .btn:disabled{opacity:.5;cursor:default}
 .btn2{background:var(--accent-soft);color:var(--accent)}
 .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
@@ -352,7 +352,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
   <!-- STUDY -->
   <section id="v-study">
     <div class="stats" style="margin-bottom:14px">
-      <div class="stat tone t-amber"><b id="sToday">0</b><span>Due today</span><small id="sTodaySub" data-noi18n></small></div>
+      <div class="stat tone t-amber"><b id="sToday">0</b><span>Due today</span></div>
       <div class="stat tone t-purple"><b id="sLearn">0</b><span>Learning</span></div>
       <div class="stat tone t-master"><b id="sMaster">0</b><span>Mastered</span></div>
       <div class="stat tone t-streak"><b id="sStreak">🔥 0</b><span>Day streak</span></div>
@@ -1244,7 +1244,6 @@ function refreshStats(){
   // "left / total": total = still to do + cards already graded today (and not due again, e.g. a miss coming back in 10 min)
   const t0 = new Date().setHours(0,0,0,0), doneToday = S.cards.filter(c => c.last >= t0 && c.due > Date.now()).length;
   $("#sToday").innerHTML = (due + nl) + (due + nl + doneToday ? `<span class="of">/${due + nl + doneToday}</span>` : "");
-  $("#sTodaySub").textContent = (due + nl) ? L(`${due} ôn · ${nl} mới`, `${due} review · ${nl} new`) : "";
   $("#sLearn").textContent = S.cards.filter(c=>status(c)==="learn").length;
   $("#sMaster").textContent = S.cards.filter(c=>status(c)==="master").length;
   $("#sStreak").textContent = "🔥 " + streakNow();
@@ -1260,7 +1259,7 @@ function refreshHome(){
     return;
   }
   if (due + nl > 0){
-    h.innerHTML = `<h2>Ready to study</h2><p class="muted" style="margin-top:0">${due} review${due===1?"":"s"} and ${nl} new word${nl===1?"":"s"}. Reviewed today: ${S.daily.reviews}.</p><button class="btn" id="startBtn">▶ Start</button>`;
+    h.innerHTML = `<div class="empty" style="padding:4px 0 14px">${cheerHTML(CHEER_START)}</div><h2>Ready to study</h2><p class="muted" style="margin-top:0">${due} review${due===1?"":"s"} and ${nl} new word${nl===1?"":"s"}. Reviewed today: ${S.daily.reviews}.</p><button class="btn" id="startBtn">▶ Start</button>`;
     $("#startBtn").onclick = () => startSession(false);
   } else {
     const next = S.cards.filter(c=>c.last).sort((a,b)=>a.due-b.due)[0];
@@ -1275,6 +1274,8 @@ const BTS = ["🐨","🐹","🐱","🐿️","🐣","🐯","🐰"]; // RM, Jin, S
 const CHEER_OK = [["잘했어요!","Làm tốt lắm!","Well done!"],["수고했어요!","Vất vả rồi!","Good work!"],["최고예요!","Bạn đỉnh nhất!","You're the best!"],
   ["대단해요!","Giỏi quá!","Amazing!"],["멋져요!","Ngầu quá!","So cool!"],["오늘도 잘했어요!","Hôm nay cũng làm tốt lắm!","Great job today too!"],["내일 또 만나요!","Mai gặp lại nhé!","See you tomorrow!"]];
 const CHEER_TRY = [["화이팅!","Cố lên!","Fighting!"],["포기하지 마요!","Đừng bỏ cuộc!","Don't give up!"],["천천히 해도 괜찮아요.","Từ từ cũng không sao.","It's okay to go slow."],["거의 다 왔어요!","Sắp tới rồi!","Almost there!"]];
+const CHEER_START = [["오늘도 화이팅!","Hôm nay cũng cố lên nhé!","Fighting today too!"],["같이 공부해요!","Cùng học nào!","Let's study together!"],["시작해 볼까요?","Mình bắt đầu nhé?","Shall we start?"],
+  ["보라해 💜","Thương bạn 💜","Borahae 💜"],["할 수 있어요!","Bạn làm được mà!","You can do it!"],["오늘도 한 걸음!","Hôm nay thêm một bước nữa!","One more step today!"]];
 const STREAK_MILESTONES = [7, 14, 30, 50, 100, 200, 365];
 let cheerTry = false;
 /* streak cheer for the "all done" card — only on a milestone day or a day or two before one, so it stays special */
@@ -1294,8 +1295,8 @@ function streakCheer(){
     : [`${m}일까지 ${gap}일 남았어요! 화이팅!`, `Còn ${gap} ngày nữa là đạt mốc ${m} ngày! Cố lên!`, `${gap} more days to a ${m}-day streak! Fighting!`];
 }
 const pickOne = a => a[Math.floor(Math.random()*a.length)];
-function cheerHTML(){
-  const e = pickOne(BTS), [ko, vi, en] = streakCheer() || pickOne(cheerTry ? CHEER_TRY : CHEER_OK);
+function cheerHTML(list){
+  const e = pickOne(BTS), [ko, vi, en] = list ? pickOne(list) : streakCheer() || pickOne(cheerTry ? CHEER_TRY : CHEER_OK);
   return `<div data-noi18n><div class="cheer-m">${e}</div>
     <div class="cheer-ko" lang="ko">${ko}</div><div class="cheer-tr muted">${L(vi, en)}</div></div>`;
 }
