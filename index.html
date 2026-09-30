@@ -78,7 +78,7 @@ h2{font-size:16px;margin:0 0 10px}
 .muted{color:var(--muted)} .small{font-size:13px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .stat{background:var(--card);border:1px solid transparent;border-radius:12px;padding:10px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0}
-.stat b{display:flex;align-items:baseline;justify-content:center;gap:2px;font-size:20px;line-height:24px;height:24px;white-space:nowrap}
+.stat b{display:flex;align-items:baseline;justify-content:center;gap:2px;font-size:clamp(15px,5vw,20px);line-height:24px;height:24px;white-space:nowrap}
 .stat span{display:block;font-size:11px;line-height:1.25;color:var(--muted)}
 /* home stats: each tile tinted; fg/bg pairs checked for ≥4.5:1 so the 11px labels pass too */
 .stat.tone{background:var(--t-bg);border-color:transparent;color:var(--t-fg)}
@@ -285,7 +285,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .ar-go.on{background:var(--bad)}
 .ar-lvl{height:4px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:10px}
 .ar-lvl i{display:block;height:100%;width:0;background:var(--army);transition:width .1s}
-.ar-live{position:sticky;top:calc(8px + env(safe-area-inset-top));z-index:5;max-height:60vh;overflow:auto;min-height:clamp(190px, 34vh, 340px);
+.ar-live{position:sticky;top:calc(8px + env(safe-area-inset-top));z-index:5;max-height:60vh;max-height:60dvh;overflow:auto;min-height:clamp(190px, 34vh, 340px);
   display:flex;flex-direction:column;justify-content:flex-end;padding:18px;border:2px solid var(--army);
   background:linear-gradient(165deg, var(--army-soft), var(--card) 75%);
   box-shadow:0 10px 30px -12px color-mix(in srgb, var(--army) 60%, transparent)}
@@ -329,6 +329,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 /* word + 🔊 on one row, so the prompt stays short and the dock never covers the speaker */
 .ko-line{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
 .ko-line .speak.sm{flex:0 0 auto}
+.ko-line .ko{min-width:0;max-width:100%;overflow-wrap:anywhere;font-size:clamp(30px,11vw,44px)}
 .mean{font-size:22px;font-weight:600}
 .speak{background:var(--accent-soft);color:var(--accent);border-radius:99px;width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
 .speak.big{width:96px;height:96px;font-size:40px}
@@ -445,7 +446,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .chip:hover{border-color:var(--accent)}
 /* modal */
 .modal{position:fixed;inset:0;background:rgba(10,12,30,.55);z-index:30;display:flex;align-items:flex-end;justify-content:center}
-.modal .sheet{background:var(--card);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.modal .sheet{background:var(--card);width:100%;max-width:560px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
 @media (min-width:600px){.modal{align-items:center}.modal .sheet{border-radius:18px}}
 .modal textarea{min-height:90px;font-size:13px}
 .steps{margin:0 0 6px;padding-left:20px;font-size:14px}
@@ -908,6 +909,18 @@ const L = (v, e) => UI === "vi" ? v : e;
 const uiLangName = () => ({ vi: "Vietnamese", en: "English" }[UI] || "English");   // unknown/unset → English
 // Keeps AI feedback in the interface language — Korean-heavy prompts otherwise make Gemini answer in Korean.
 const feedbackLangRule = () => `Write every explanation (tips, "good", "overall") in ${uiLangName()}, NOT in Korean. Use Hangul only for the Korean words/syllables being discussed and for pronunciations in brackets. If for any reason you cannot write in ${uiLangName()}, you MUST answer in English. Never write explanations in Korean.`;
+// …and it still sometimes does: an explanation that is mostly Hangul (ignoring [pron] and quoted words) gets re-translated
+const mostlyKo = s => { const t = String(s || "").replace(/\[[^\]]*\]|"[^"]*"|“[^”]*”|'[^']*'/g, ""); const ko = (t.match(/[가-힣]/g) || []).length; return ko > 3 && ko > (t.match(/[A-Za-zÀ-ỹ]/g) || []).length; };
+async function fixFeedbackLang(fields){   // fields: [[obj, key], …] — fixed in place
+  const bad = fields.filter(([o, k]) => o && mostlyKo(o[k]));
+  if (!bad.length) return;
+  try {
+    const r = extractJSON(await gemini(`Translate each explanation below into ${uiLangName()}. Keep the Korean words/syllables being discussed and pronunciations in [brackets] in Hangul; everything else must be ${uiLangName()}.
+Return JSON exactly like: {"t":[""]} — same number of items, same order.
+${JSON.stringify(bad.map(([o, k]) => String(o[k])))}`, null, { temperature: 0.2 }));
+    (r.t || []).forEach((s, i) => { if (bad[i] && s) bad[i][0][bad[i][1]] = String(s); });
+  } catch(e){}   // keep the Korean text rather than fail the grading
+}
 
 const VI = {
 "Due today":"Cần học","See these words":"Xem các từ này","Day streak":"Chuỗi ngày","Learning":"Đang học","Mastered":"Đã thuộc","End":"Kết thúc",
@@ -1011,7 +1024,7 @@ const VI = {
 "Type it in Korean":"Gõ bằng tiếng Hàn","Upper-int. (TOPIK 4)":"Trung cấp 2 (TOPIK 4)","Weather and seasons":"Thời tiết & các mùa","Weather":"Thời tiết",
 "Work & office":"Công việc & văn phòng","✅ Correct!":"✅ Chính xác!","❌ Not quite":"❌ Chưa đúng","❌ Not quite.":"❌ Chưa đúng.","❌ Not quite — you wrote":"❌ Chưa đúng — bạn gõ","— you wrote":"— bạn gõ","❌ Not quite — we heard":"❌ Chưa đúng — app nghe được","— we heard":"— app nghe được",
 "🎙 Korean → read it aloud":"🎙 Tiếng Hàn → đọc to","🎙 Meaning → say it in Korean":"🎙 Nghĩa → nói tiếng Hàn","Read it aloud":"Đọc to từ này","Say it in Korean":"Nói bằng tiếng Hàn","Can't speak now":"Giờ không nói được","Tap 🎙 and say it":"Bấm 🎙 rồi nói","🔊 Test:":"🔊 Nghe thử:",
-"Continue →":"Tiếp tục →",
+"Continue":"Tiếp tục",
 "Extra practice":"Luyện thêm","+5 new words":"+5 từ mới","🔁 Try again":"🔁 Thử lại","In list":"Đã có",
 "Add more words or practice without changing your schedule.":"Thêm từ hoặc luyện thêm mà không ảnh hưởng lịch ôn.",
 "Tap to reveal":"Chạm để xem","Show answer":"Xem đáp án","Hint":"Gợi ý","Check":"Kiểm tra","Got it":"Đã hiểu","Skip":"Bỏ qua","Next":"Tiếp",
@@ -1420,7 +1433,7 @@ Return JSON exactly like: {"items":[{"ko":"<the word exactly as given>","ex":"<K
     if (c && it.ex && !c.ex){ c.ex = String(it.ex).trim(); c.exMean = String(it.exMean||"").trim(); if (!c.meaning && it.meaning) c.meaning = it.meaning; n++; }
   }
   save();
-  if (!$("#v-words").classList.contains("hidden")) renderWords();
+  renderWordsSoft();
   if (n) toast(`Added ${n} example sentence${n===1?"":"s"}`);
   if (cards.length > 30) return genExamples(cards.slice(30), silent);
   return n;
@@ -1445,9 +1458,9 @@ function show(v){
   if (v === "add" && curView !== "add") addFrom = curView === "words" && S.cards.length ? "words" : "study";
   curView = v;
   if (v === "add") syncAddKeyHint();
-  if (v === "study" && !session) { homeAuto = true; refreshHome(); }
+  if (v === "study" && !session) refreshHome();
   document.body.classList.toggle("in-session", v === "study" && !!session);   // leaving via a link mid-session must bring the tab bar back
-  if (v !== "read") { stopPlayer(); cancelRec(); talkStop(); }
+  if (v !== "read") { stopPlayer(); cancelRec(); talkStop(); if ("speechSynthesis" in window) speechSynthesis.cancel(); }
   if (v !== "study") frCancel();
   if (v !== "army") arStop();
   if (v === "army") renderArmy();
@@ -1467,6 +1480,7 @@ addEventListener("pagehide", () => navSave({ y: Math.round(scrollY) }));
 // a tab always opens on its first page (Speak picker, ARMY menu, Study home…), never on a sub-page left open earlier
 $$("nav button").forEach(b => b.onclick = () => { navRoot(b.dataset.v); show(b.dataset.v); });
 function navRoot(v){
+  if (v === "study") homeAuto = true;   // after "End", Back / links return to the home card; only the tab starts a new round
   if (v === "read"){ spScreen = ""; rdNewOpen = false; TK.view = ""; TK.list = false; TK.histList = false; TK.showAll = false; }   // show() → spShow("") also closes an open passage
   if (v === "army"){ arStop(); AR.view = ""; AR.screen = "home"; arPersist(); }
 }
@@ -1525,10 +1539,10 @@ function renderNudge(){
   }
   $("#nuLater").onclick = () => { nudgeLater(kind); renderNudge(); };
 }
-function refreshHome(){
+function refreshHome(noAuto){
   const { due, nl } = refreshStats();
   renderNudge();
-  if (homeAuto && due + nl > 0 && !session && !$("#v-study").classList.contains("hidden")) return startSession(false, null, true);
+  if (!noAuto && homeAuto && due + nl > 0 && !session && !$("#v-study").classList.contains("hidden")) return startSession(false, null, true);
   const h = $("#homeCard");
   if (!S.cards.length){
     h.innerHTML = `<div class="empty">${cheerHTML([["환영해요!", "Chào mừng bạn!", "Welcome!"]])}<p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">+ Add words</button></div>`;
@@ -1760,8 +1774,9 @@ function renderQuiz(item){
   if (item.opts){
     $$("#qBox .choice").forEach(b => b.onclick = () => answerChoice(item, +b.dataset.i));
   } else if (SPEAK_MODES.includes(mode)){
-    $("#sayRec").onclick = () => { if (item.busy || item.answered) return; FR.rec || FR.recog ? sayStop() : sayStart(item); };
-    $("#saySkip").onclick = () => { frCancel(); item.mode = pickMode(c, true); renderQuiz(item); };
+    $("#sayRec").onclick = () => { if (item.busy || item.answered || FR.starting) return; FR.rec || FR.recog ? sayStop() : sayStart(item); };
+    // not while AI is grading: its answer would land on the typed question
+    $("#saySkip").onclick = () => { if (item.busy) return; frCancel(); item.mode = pickMode(c, true); renderQuiz(item); };
     // same Basic / AI choice as the reader's speaking coach (one setting for both)
     const syncSay = ask => {
       $$("#sayGrade button").forEach(b => b.classList.toggle("on", b.dataset.g === (coachAI() ? "ai" : "basic")));
@@ -1871,10 +1886,10 @@ function finish(item, ok, typed, extra){
         const cls = q===4 ? "btn" : "btn2";
         return `<button class="${cls}" data-q="${q}">${name}<small>${nextLabel(c,q)}</small></button>`;
       }).join("") + `</div></div>`;
-    } else html += `<div class="dock"><button class="btn" id="contBtn">Continue →</button></div>`;
+    } else html += `<div class="dock"><button class="btn" id="contBtn">Continue</button></div>`;
   } else {
     html = `<div class="feedback bad">❌ Not quite${typed ? ` ${item.spoken ? "— we heard" : "— you wrote"} <b lang="ko">${esc(typed)}</b>` : ""}.${reveal}${extra || ""}</div>${exBlock}
-      <div class="dock"><div class="row">${$("#qSpeak") ? "" : `<button class="speak sm" style="flex:0 0 48px;height:48px;width:48px" id="fbSpeak">🔊</button>`}${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn" style="flex:0 0 auto;white-space:nowrap">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2">Continue →</button></div></div>`;
+      <div class="dock"><div class="row">${$("#qSpeak") ? "" : `<button class="speak sm" style="flex:0 0 48px;height:48px;width:48px" id="fbSpeak">🔊</button>`}${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn" style="flex:0 0 auto;white-space:nowrap">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2;white-space:nowrap">Continue</button></div></div>`;
   }
   $("#fb").innerHTML = html;
   bindSay($("#fb"));
@@ -1905,9 +1920,9 @@ function done(item, q){
   nextQ();
 }
 /* ---- speaking questions: record → check (Gemini listens to the audio; otherwise browser speech recognition) ---- */
-const FR = { rec: null, stream: null, chunks: [], recog: null, heard: "", alts: [], t0: 0, timer: null };
+const FR = { rec: null, stream: null, chunks: [], recog: null, heard: "", alts: [], t0: 0, timer: null, gen: 0, starting: false };
 function frCancel(){
-  clearTimeout(FR.timer);
+  clearTimeout(FR.timer); FR.gen++; FR.starting = false;   // a mic still being opened is closed as soon as it arrives
   try { if (FR.rec && FR.rec.state === "recording") { FR.rec.onstop = null; FR.rec.stop(); } } catch(e){}
   try { if (FR.recog) { FR.recog.onend = null; FR.recog.abort(); } } catch(e){}
   if (FR.stream) FR.stream.getTracks().forEach(t => t.stop());
@@ -1921,29 +1936,43 @@ async function sayStart(item){
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   // the picked grading mode; Basic falls back to AI only when this browser has no speech recognition
   const useAI = hasKey() && navigator.mediaDevices && window.MediaRecorder && (coachAI() || !SR);
-  FR.heard = ""; FR.alts = []; FR.spoke = false;
+  FR.heard = ""; FR.alts = []; FR.spoke = false; FR.stopping = false;
   try {
     if (useAI){
-      FR.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-      FR.chunks = [];
+      const g = FR.gen; FR.starting = true;
+      const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      FR.starting = false;
+      if (g !== FR.gen){ st.getTracks().forEach(t => t.stop()); return; }   // left the question / tab while the mic was opening
+      FR.stream = st; FR.chunks = [];
       FR.rec = new MediaRecorder(FR.stream);
       FR.rec.ondataavailable = e => { if (e.data.size) FR.chunks.push(e.data); };
       FR.rec.onstop = () => sayRecorded(item);
       FR.rec.start();
     } else {
-      const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = false; r.maxAlternatives = 5;
+      // like AI: keep listening until ⏹ (or the 8 s limit). The recogniser ends by itself after a short pause —
+      // and often before a one-syllable word registers — so it's restarted and what it heard is added up.
+      const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = !/Android/i.test(navigator.userAgent); r.maxAlternatives = 5;
+      let base = "", baseAlts = [];
       // the recogniser returns nothing at all for speech it can't match to a word — so note that they *did* speak
       r.onspeechstart = r.onsoundstart = () => { FR.spoke = true; };
       r.onresult = ev => {
-        let t = ""; FR.alts = [];
-        for (const res of ev.results){ t += res[0].transcript; for (let k = 0; k < res.length; k++) FR.alts.push(res[k].transcript); }
-        FR.heard = t; frSay(L("Đang nghe: ", "Hearing: ") + `<b lang="ko">${esc(t)}</b>`);
+        let t = ""; const alts = [];
+        for (const res of ev.results){ t += res[0].transcript; for (let k = 0; k < res.length; k++) alts.push(res[k].transcript); }
+        FR.heard = (base + " " + t).trim(); FR.alts = baseAlts.concat(alts, base ? [FR.heard] : []);
+        frSay(L("Đang nghe: ", "Hearing: ") + `<b lang="ko">${esc(FR.heard)}</b>`);
       };
       r.onerror = ev => {
         if (ev.error === "not-allowed" || ev.error === "service-not-allowed"){ FR.recog = null; frCancel(); frSay(frBlocked()); }
-        else if (ev.error === "network") toast(L("⚠️ Cần có mạng để nhận giọng nói", "⚠️ Speech check needs internet"));
+        else if (ev.error === "network"){ FR.stopping = true; toast(L("⚠️ Cần có mạng để nhận giọng nói", "⚠️ Speech check needs internet")); }
+        else if (ev.error === "audio-capture") FR.stopping = true;
       };
-      r.onend = () => { if (FR.recog === r){ FR.recog = null; clearTimeout(FR.timer); frBtn(false); sayCheckLocal(item); } };
+      const finish = () => { FR.recog = null; clearTimeout(FR.timer); frBtn(false); sayCheckLocal(item); };
+      r.onend = () => {
+        if (FR.recog !== r) return;
+        if (FR.stopping) return finish();
+        base = FR.heard; baseAlts = FR.alts.slice();
+        try { r.start(); } catch(e){ setTimeout(() => { if (FR.recog !== r) return; if (FR.stopping) return finish(); try { r.start(); } catch(e){ finish(); } }, 250); }
+      };
       r.start(); FR.recog = r;
     }
   } catch(e){
@@ -1958,7 +1987,7 @@ async function sayStart(item){
 function sayStop(){
   clearTimeout(FR.timer); frBtn(false);
   if (FR.rec && FR.rec.state === "recording") FR.rec.stop();          // → sayRecorded
-  else if (FR.recog){ try { FR.recog.stop(); } catch(e){} }            // → onend → sayCheckLocal
+  else if (FR.recog){ FR.stopping = true; try { FR.recog.stop(); } catch(e){} }   // → onend → sayCheckLocal
 }
 async function sayRecorded(item){
   if (FR.stream) FR.stream.getTracks().forEach(t => t.stop());
@@ -1983,6 +2012,7 @@ Listen to the attached recording.
 ${feedbackLangRule()}
 Return JSON exactly like: {"heard":"","correct":false,"score":0,"tip":""}`;
     const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule() }));
+    await fixFeedbackLang([[j, "tip"]]);
     item.busy = false;
     if (!session || session.queue[0] !== item) return;
     const extra = ((j.score != null || j.tip) ? `<div class="small" style="margin-top:6px">🎙 ${j.score != null ? `<b>${Math.round(j.score)}/100</b>` : ""}${j.tip ? " · " + esc(j.tip) : ""}</div>` : "")
@@ -2039,7 +2069,7 @@ document.addEventListener("keydown", e => {
 $$("#addTabs button").forEach(b => b.onclick = () => {
   $$("#addTabs button").forEach(x => x.classList.toggle("on", x === b));
   ["ai","one","bulk","shot"].forEach(t => $("#add-"+t).classList.toggle("hidden", t !== b.dataset.t));
-  $("#previewCard").classList.add("hidden");
+  const pc = $("#previewCard"); pc.classList.toggle("hidden", !$("#prevList").children.length || pc.dataset.t !== b.dataset.t);   // the preview belongs to the tab that made it
 });
 $("#inKoSpeak").onclick = () => speak($("#inKo").value.trim());
 $("#autoTr").onclick = async () => {
@@ -2052,10 +2082,12 @@ $("#addOneBtn").onclick = async () => {
   const ko = $("#inKo").value.trim(); let m = $("#inMean").value.trim();
   if (!ko) { toast("Korean word is required"); return; }
   if (!HANGUL.test(ko)) { toast("That doesn't look like Korean"); return; }
-  if (!m) { try { m = await translate(ko); } catch(e){} }
+  const b = $("#addOneBtn"); if (b.disabled) return;
+  if (!m) { busy(b, true); try { m = await Promise.race([translate(ko), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 6000))]); } catch(e){ m = ""; } busy(b, false); }
   const r = addCards([{ko, meaning:m}]);
   toast(r.added ? `Added “${ko}”${m ? "" : " (no meaning)"}` : "Already in your list");
-  $("#inKo").value = ""; $("#inMean").value = ""; $("#inKo").focus();
+  if ($("#inKo").value.trim() === ko){ $("#inKo").value = ""; $("#inMean").value = ""; }   // they may have typed the next word meanwhile
+  $("#inKo").focus();
 };
 $("#inKo").onkeydown = e => { if (e.key === "Enter" && !e.isComposing) $("#inMean").focus(); };
 $("#inMean").onkeydown = e => { if (e.key === "Enter" && !e.isComposing) $("#addOneBtn").click(); };
@@ -2093,7 +2125,7 @@ function showPreview(items){
       <input type="hidden" class="pe" value="${esc(it.ex||"")}"><input type="hidden" class="pem" value="${esc(it.exMean||"")}">
       ${it.ex ? `<div></div><div class="prev-ex" lang="ko">${esc(it.ex)}<br>${esc(it.exMean||"")}</div>` : ""}</div>`).join("");
   $$("#prevList .ps").forEach(b => b.onclick = () => speak(b.parentNode.querySelector(".pk").value));
-  $("#previewCard").classList.remove("hidden");
+  $("#previewCard").classList.remove("hidden"); $("#previewCard").dataset.t = ($("#addTabs button.on") || {}).dataset?.t || "";
   $("#previewCard").scrollIntoView({behavior:"smooth", block:"start"});
 }
 $("#bulkParse").onclick = () => showPreview(parseLines($("#bulkIn").value));
@@ -2110,13 +2142,19 @@ $("#prevTr").onclick = async () => {
   b.disabled = false; b.textContent = "Auto-fill empty meanings";
   if (fail) toast(`${fail} couldn't be translated — fill them in manually`);
 };
-$("#prevAdd").onclick = () => {
-  const list = $$("#prevList .prev").filter(r => r.querySelector("input[type=checkbox]").checked)
-    .map(r => ({ ko: r.querySelector(".pk").value, meaning: r.querySelector(".pm").value, ex: r.querySelector(".pe").value, exMean: r.querySelector(".pem").value }));
-  if (!list.length) { toast("Nothing selected"); return; }
+$("#prevAdd").onclick = async () => {
+  const rows = $$("#prevList .prev").filter(r => r.querySelector("input[type=checkbox]").checked);
+  if (!rows.length) { toast("Nothing selected"); return; }
+  const empty = rows.filter(r => !r.querySelector(".pm").value.trim()), b = $("#prevAdd");
+  if (empty.length){   // "lines without a meaning get auto-translated"
+    busy(b, true);
+    for (const r of empty){ try { r.querySelector(".pm").value = await translate(r.querySelector(".pk").value); } catch(e){} await new Promise(res => setTimeout(res, 150)); }
+    busy(b, false);
+  }
+  const list = rows.map(r => ({ ko: r.querySelector(".pk").value, meaning: r.querySelector(".pm").value, ex: r.querySelector(".pe").value, exMean: r.querySelector(".pem").value }));
   const r = addCards(list);
   toast(`Added ${r.added} word${r.added===1?"":"s"}${r.dup ? ` · ${r.dup} duplicate skipped` : ""}`);
-  $("#previewCard").classList.add("hidden"); $("#bulkIn").value = ""; $("#shotImg").innerHTML = "";
+  $("#previewCard").classList.add("hidden"); $("#previewCard").dataset.t = ""; $("#bulkIn").value = ""; $("#shotImg").innerHTML = "";
   $("#ocrStatus").classList.add("hidden");
 };
 
@@ -2137,6 +2175,7 @@ $("#drop").onclick = () => $("#shotFile").click();
 $("#shotFile").onchange = e => { const f = e.target.files[0]; if (f) runOCR(f); e.target.value = ""; };
 document.addEventListener("paste", e => {
   if ($("#v-add").classList.contains("hidden")) return;
+  if (e.target.closest && e.target.closest("input, textarea") && e.clipboardData?.types.includes("text/plain")) return;
   const item = Array.from(e.clipboardData?.items || []).find(i => i.type.startsWith("image/"));
   if (item){ e.preventDefault(); $("#addTabs button[data-t=shot]").click(); runOCR(item.getAsFile()); }
 });
@@ -2300,7 +2339,7 @@ Return JSON exactly like: {"title":"<short Korean title>","titleMean":"<${langNa
     if (!sentences.length) throw new Error("The answer had no sentences");
     const p = { id: uid(), created: Date.now(), title: String(j.title || topic).trim(), titleMean: String(j.titleMean||"").trim(), level, prompt: topic,
       sentences, vocab: (j.vocab || []).map(v => ({ ko: String(v.ko||"").trim(), meaning: String(v.meaning||"").trim() })).filter(v => v.ko) };
-    S.passages.push(p); save(); openReader(p.id);
+    S.passages.push(p); save(); openNewPassage(p.id);
   } catch(e){ if (e.message !== "cancelled") toast("⚠️ " + e.message); }
   busy(b, false);
 };
@@ -2342,8 +2381,12 @@ $("#rdOwnBtn").onclick = async () => {
   const p = { id: uid(), created: Date.now(), title: $("#rdOwnTitle").value.trim() || sents[0].slice(0, 24), titleMean: "", level: "", sentences, vocab: [] };
   S.passages.push(p); save(); busy(b, false);
   $("#rdOwn").value = ""; $("#rdOwnTitle").value = "";
-  openReader(p.id);
+  openNewPassage(p.id);
 };
+function openNewPassage(id){
+  if (!$("#v-read").classList.contains("hidden") && spScreen === "read" && !curP) return openReader(id);
+  toast(L("✅ Đã tạo bài đọc — xem ở Luyện nói › Đọc", "✅ Passage ready — find it in Speak › Read"));
+}
 
 let curP = null;
 const P = { idx: 0, single: false, playing: false, rep: 0, token: 0, timer: null, tick: null };
@@ -2438,7 +2481,7 @@ function applyReaderView(){
   $("#sentList").classList.toggle("hidek", $("#pHideK").checked);
 }
 $("#pHideM").onchange = applyReaderView; $("#pHideK").onchange = applyReaderView;
-$("#rdBack").onclick = () => { closeRdEditor(); stopPlayer(); closeCoach(); curP = null; navSave({ p: "", y: 0 }); $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
+$("#rdBack").onclick = () => { closeRdEditor(); stopPlayer(); if ("speechSynthesis" in window) speechSynthesis.cancel(); closeCoach(); curP = null; navSave({ p: "", y: 0 }); $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
 $("#rdDel").onclick = () => {
   const b = $("#rdDel");
   if (!b.dataset.confirm){ b.dataset.confirm = "1"; b.textContent = "Delete?"; setTimeout(()=>{ delete b.dataset.confirm; b.textContent = "🗑️"; }, 2500); return; }
@@ -2556,7 +2599,7 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------------- speaking coach (record → evaluate → highlight) ---------------- */
-const C = { i: -1, rec: null, stream: null, chunks: [], blob: null, url: null, recog: null, heard: "", t0: 0, dur: 0, autoStop: null, busy: false };
+const C = { tok: 0, i: -1, rec: null, stream: null, chunks: [], blob: null, url: null, recog: null, heard: "", t0: 0, dur: 0, autoStop: null, busy: false };
 const hasKey = () => !!(S.settings.apiKey && S.settings.apiKey.trim());
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 // speaking coach grading: AI (Gemini, needs a key) or basic (browser speech recognition), picked in the reader's ⚙ panel
@@ -2574,15 +2617,14 @@ $$("#cGrade button").forEach(b => b.onclick = () => {
 $("#cKeyLink").onclick = () => { closeCoach(); show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
 function openCoach(i){
   if (!curP) return;
-  pausePlayer(); cancelRec();
+  pausePlayer(); cancelRec(); C.tok++; C.busy = false;
   C.i = i; const s = curP.sentences[i];
   $("#coach").classList.remove("hidden"); $("#rdHint").classList.add("hidden");
   $$("#sentList .sent.cur").forEach(x => x.classList.remove("cur"));   // playback is paused → drop its highlight, the coached row is the active one
   const el = placeCoach();
   $("#cTarget").textContent = s.ko; $("#cTargetM").textContent = s.meaning || "";
   $("#cResult").innerHTML = ""; $("#cMine").disabled = true;
-  $("#cStatus").textContent = coachAI() ? "Tap 🎙 and read aloud. Tap again to stop."
-    : SR ? "Tap 🎙 and read aloud."
+  $("#cStatus").textContent = coachAI() || SR ? "Tap 🎙 and read aloud. Tap again to stop."
     : "⚠️ This browser can't check speech without AI. Add a Gemini key in Settings, or use Chrome/Safari.";
   syncGrade();
   // the sticky player sits on top of whatever scrolls to the top edge → stop just below it so 🔊/🎙 stay tappable
@@ -2590,7 +2632,7 @@ function openCoach(i){
 }
 // the row's 🎙 turns into the coach's close button while it's open
 function setMic(row, open){ const b = row.querySelector(".smic"); if (!b) return; b.textContent = open ? "✕" : "🎙"; b.title = open ? L("Đóng", "Close") : L("Luyện nói câu này", "Practice speaking this sentence"); }
-function closeCoach(){ cancelRec(); $("#coach").classList.add("hidden"); $("#rdHint").classList.remove("hidden"); $$("#sentList .sent.coaching").forEach(x => { x.classList.remove("coaching"); setMic(x, false); }); C.i = -1; }
+function closeCoach(){ cancelRec(); C.tok++; C.busy = false; $("#coach").classList.add("hidden"); $("#rdHint").classList.remove("hidden"); $$("#sentList .sent.coaching").forEach(x => { x.classList.remove("coaching"); setMic(x, false); }); C.i = -1; }
 $("#cClose").onclick = closeCoach;
 $("#cListen").onclick = () => { if (curP && C.i >= 0) speak(curP.sentences[C.i].ko); };
 $("#cMine").onclick = () => { if (C.url) new Audio(C.url).play(); };
@@ -2624,6 +2666,7 @@ async function micPermissionState(){
   return "unknown";
 }
 async function startRec(){
+  if (C.starting) return;
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   if ((location.protocol === "file:" && /Android/i.test(navigator.userAgent)) || (location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { micHelp("insecure"); return; }
   if (await micPermissionState() === "denied") { micHelp("site-denied"); return; }
@@ -2637,8 +2680,10 @@ async function startRec(){
     const srOnly = !useAI && SR && /Android/i.test(navigator.userAgent);
     if (srOnly) { $("#cMine").disabled = true; }
     else if (navigator.mediaDevices && window.MediaRecorder){
-      C.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-      C.chunks = [];
+      const tok = C.tok; C.starting = true;
+      const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).finally(() => { C.starting = false; });
+      if (tok !== C.tok){ st.getTracks().forEach(t => t.stop()); return; }   // coach closed / moved while the mic was opening
+      C.stream = st; C.chunks = [];
       C.rec = new MediaRecorder(C.stream);
       C.rec.ondataavailable = e => { if (e.data.size) C.chunks.push(e.data); };
       C.rec.onstop = onRecStop;
@@ -2654,7 +2699,8 @@ async function startRec(){
   if (!useAI && SR){
     try {
       const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = !/Android/i.test(navigator.userAgent); r.maxAlternatives = 1;
-      r.onresult = ev => { let t = ""; for (const res of ev.results) t += res[0].transcript; C.heard = t; $("#cStatus").textContent = "Hearing: " + t; };
+      let base = "";   // text from earlier runs: the recogniser ends after a pause and is restarted until ⏹, like AI
+      r.onresult = ev => { let t = ""; for (const res of ev.results) t += res[0].transcript; C.heard = (base + " " + t).trim(); $("#cStatus").textContent = "Hearing: " + C.heard; };
       r.onerror = ev => {
         // Android Chrome often can't share the mic between the recorder and speech recognition:
         // keep the recording going instead of failing, and just skip live transcription.
@@ -2672,7 +2718,9 @@ async function startRec(){
         if (C.rec && C.rec.state === "recording" && !C.heard && Date.now() - C.t0 < 1500) {
           C.recog = null; $("#cStatus").textContent = "🔴 Recording… (live check unavailable — tap ⏹ when done)"; return;
         }
-        stopRec();
+        if (["not-allowed", "service-not-allowed", "audio-capture", "network"].includes(C.srErr)) return stopRec();
+        base = C.heard;
+        try { r.start(); } catch(e){ setTimeout(() => { if (C.recog === r) try { r.start(); } catch(e){ stopRec(); } }, 250); }
       };
       r.start(); C.recog = r;
     } catch(e){ C.recog = null; }
@@ -2689,7 +2737,7 @@ function stopRec(){
   const recog = C.recog; C.recog = null;
   if (recog){ try { recog.onend = null; recog.stop(); } catch(e){} }
   if (C.rec && C.rec.state === "recording") C.rec.stop();   // → onRecStop
-  else { if (C.stream) C.stream.getTracks().forEach(t => t.stop()); setTimeout(() => evaluateLocal(), 400); }
+  else { if (C.stream) C.stream.getTracks().forEach(t => t.stop()); const tok = C.tok; setTimeout(() => { if (tok === C.tok) evaluateLocal(); }, 400); }
 }
 async function onRecStop(){
   if (C.stream) C.stream.getTracks().forEach(t => t.stop());
@@ -2699,7 +2747,8 @@ async function onRecStop(){
   if (C.url) URL.revokeObjectURL(C.url);
   C.url = URL.createObjectURL(C.blob); $("#cMine").disabled = false;
   if (C.dur < 500) { $("#cStatus").textContent = "That was too short — try again."; return; }
-  if (coachAI()) evaluateAI(); else setTimeout(() => evaluateLocal(), 500); // let final speech results arrive
+  const tok = C.tok;
+  if (coachAI()) evaluateAI(); else setTimeout(() => { if (tok === C.tok) evaluateLocal(); }, 500); // let final speech results arrive
 }
 
 /* audio → 16 kHz mono WAV (base64) so any AI model accepts it */
@@ -2726,7 +2775,7 @@ async function blobToWavB64(blob, stats){
 }
 
 async function evaluateAI(){
-  const s = curP.sentences[C.i];
+  const s = curP.sentences[C.i], tok = C.tok;
   C.busy = true; $("#cStatus").innerHTML = `<span class="spinner"></span>Coach is listening to your recording…`;
   try {
     const b64 = await blobToWavB64(C.blob);
@@ -2745,11 +2794,12 @@ If the audio is silent or unrelated to the target, return heard "" and all score
 ${feedbackLangRule()}
 Return JSON exactly like: {"heard":"","pron":"","scores":{"accuracy":0,"fluency":0,"intonation":0,"native":0},"issues":[{"part":"","type":"sound|batchim|sound-rule|intonation|stress|pace|missing|extra","heard":"","tip":""}],"good":"","overall":""}`;
     const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule() }));
-    renderCoachResult(s, j, true);
+    await fixFeedbackLang([[j, "good"], [j, "overall"], ...(Array.isArray(j.issues) ? j.issues : []).map(x => [x, "tip"])]);
+    if (tok === C.tok) renderCoachResult(s, j, true);   // moved to another sentence meanwhile: drop it
   } catch(e){
-    $("#cStatus").textContent = "⚠️ " + e.message;
+    if (tok === C.tok) $("#cStatus").textContent = "⚠️ " + e.message;
   }
-  C.busy = false;
+  if (tok === C.tok) C.busy = false;
 }
 
 /* ---- free local check (browser speech recognition + Korean sound-rule hints) ---- */
@@ -2895,6 +2945,8 @@ function todayIds(){
 // no "All" tab: nothing selected shows every word; tapping the selected tab again clears it
 $$("#filterTabs button").forEach(b => b.onclick = () => { setFilter(filter === b.dataset.f ? "all" : b.dataset.f); renderWords(); });
 $("#search").oninput = () => renderWords();
+// background refreshes (sync, example sentences) must not wipe a row being edited
+function renderWordsSoft(){ if (!$("#v-words").classList.contains("hidden") && !$("#wordList .ek")) renderWords(); }
 function renderWords(){
   const q = $("#search").value.trim().toLowerCase();
   const hits = S.cards.filter(c => !q || c.ko.includes(q) || c.meaning.toLowerCase().includes(q));
@@ -2911,7 +2963,7 @@ function renderWords(){
       <div class="t"><div class="wh"><button class="speak sm" data-a="say" title="${L("Nghe", "Listen")}">🔊</button><b lang="ko">${esc(c.ko)}</b><span class="badge ${cls}" title="${esc(due)}">${t}<span class="iv">${iv}</span></span></div>
         <div>${esc(c.meaning) || "<i>no meaning</i>"}</div>${c.ex ? `<div class="exl" lang="ko">${esc(c.ex)} <span>· ${esc(c.exMean)}</span></div>` : ""}</div>
       <button class="icon-btn more-btn" data-a="more" title="${L("Thêm", "More")}" aria-haspopup="menu" aria-expanded="false">⋯</button></li>`;
-  }).join("") : `<li class="muted" style="justify-content:center">${!S.cards.length ? "No words yet" : today ? L("Hôm nay học xong rồi 🎉", "All done for today 🎉") : "No matches"}</li>`;
+  }).join("") : `<li class="muted" style="justify-content:center">${!S.cards.length ? "No words yet" : today && !q ? L("Hôm nay học xong rồi 🎉", "All done for today 🎉") : "No matches"}</li>`;
   const noEx = S.cards.filter(c => !c.ex).length;
   $("#exPrompt").classList.toggle("hidden", !noEx);
   $("#exPromptTxt").textContent = `${noEx} word${noEx===1?"":"s"} without an example sentence.`;
@@ -2930,7 +2982,14 @@ function wordMenu(li, btn, c){
   const m = li.querySelector(".menu");
   m.onclick = e => e.stopPropagation();
   m.querySelector("[data-m=edit]").onclick = () => { closeWordMenu(); editRow(li, c); };
-  m.querySelector("[data-m=del]").onclick = () => { closeWordMenu(); S.cards = S.cards.filter(x => x.id !== c.id); save(); renderWords(); toast("Deleted “" + c.ko + "”"); };
+  m.querySelector("[data-m=del]").onclick = () => {
+    closeWordMenu(); S.cards = S.cards.filter(x => x.id !== c.id); save(); renderWords(); toast("Deleted “" + c.ko + "”");
+    if (session){   // the running round must not ask it again
+      const cur = session.queue[0];
+      session.queue = session.queue.filter(q => q.card.id !== c.id);
+      if (cur && cur.card.id === c.id) nextQ();
+    }
+  };
 }
 document.addEventListener("click", closeWordMenu);
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeWordMenu(); });
@@ -2943,7 +3002,9 @@ $("#exGenBtn").onclick = async () => {
 };
 function editRow(li, c){
   li.innerHTML = `<div class="t" style="display:grid;gap:6px"><input class="ek" lang="ko" value="${esc(c.ko)}"><input class="em" value="${esc(c.meaning)}"><input class="ee" lang="ko" value="${esc(c.ex||"")}" placeholder="Example sentence"><input class="eem" value="${esc(c.exMean||"")}" placeholder="Example translation"></div>
-    <div style="display:grid;gap:6px"><button class="btn2 small" data-a="ok">Save</button><button class="btn-ghost small" data-a="rs" title="Reset progress">Reset</button></div>`;
+    <div style="display:grid;gap:6px"><button class="btn2 small" data-a="ok">Save</button><button class="btn-ghost small" data-a="no">Cancel</button><button class="btn-ghost small" data-a="rs" title="Reset progress">Reset</button></div>`;
+  li.querySelector("[data-a=no]").onclick = () => renderWords();
+  li.querySelectorAll("input").forEach(i => i.onkeydown = e => { if (e.key === "Enter" && !e.isComposing) li.querySelector("[data-a=ok]").click(); });
   li.querySelector("[data-a=ok]").onclick = () => { c.ko = li.querySelector(".ek").value.trim() || c.ko; c.meaning = li.querySelector(".em").value.trim(); c.ex = li.querySelector(".ee").value.trim(); c.exMean = li.querySelector(".eem").value.trim(); save(); renderWords(); };
   li.querySelector("[data-a=rs]").onclick = () => { Object.assign(c, { ease:2.5, interval:0, reps:0, lapses:0, due:0, last:0 }); save(); renderWords(); toast("Progress reset"); };
 }
@@ -2960,7 +3021,7 @@ function renderSettings(){
   loadVoices();
   if (typeof renderSyncCard === "function") renderSyncCard();
 }
-$("#setNew").onchange = e => { S.settings.newPerDay = Math.max(1, Math.min(100, +e.target.value || 10)); save(); };
+$("#setNew").onchange = e => { S.settings.newPerDay = e.target.value = Math.max(1, Math.min(100, +e.target.value || 10)); save(); };
 $$("[data-mode]").forEach(i => i.onchange = () => {
   S.settings.modes[i.dataset.mode] = i.checked;
   if (!Object.values(S.settings.modes).some(Boolean)) { S.settings.modes.ko2m = true; renderSettings(); toast("Keep at least one type on"); }
@@ -3009,7 +3070,8 @@ $("#impFile").onchange = async e => {
     if (!Array.isArray(S.talks)) S.talks = [];
     const tids = new Set(S.talks.map(x => x.id));
     (d.talks || []).forEach(x => { if (x && x.id && Array.isArray(x.turns) && !tids.has(x.id)) S.talks.push(x); });
-    save(); toast(`Imported ${n} word${n===1?"":"s"}${np ? ` and ${np} passage${np===1?"":"s"}` : ""}`); refreshHome();
+    save(); toast(`Imported ${n} word${n===1?"":"s"}${np ? ` and ${np} passage${np===1?"":"s"}` : ""}`); refreshHome(); renderSettings();
+    if ((S.settings.uiLang || "vi") !== UI) setTimeout(() => location.reload(), 800);
   } catch(err){ toast("Invalid backup file"); }
   e.target.value = "";
 };
@@ -3042,7 +3104,7 @@ function setCloud(st){
   // needs-action states turn red with a ⚠️ (fits next to the logo on a phone); the full reason lives in the tooltip
   // ⚠️ is always a yellow emoji → draw the warning triangle so it follows the button's red
   const warn = `☁️ <svg class="warn-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 1.5 21h21z" fill="currentColor"/><path d="M12 9.5v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="18.2" r="1.35" fill="#fff"/></svg>`;
-  b.innerHTML = { ok: "☁️ ✓", busy: "☁️ …", expired: warn, error: warn, off: "☁️" }[st] || "☁️";
+  b.innerHTML = { ok: "☁️ ✓", busy: "☁️ …", expired: warn, error: warn }[st] || "☁️";   // idle: signed out, nothing waiting
   b.dataset.st = st;
   b.title = b.ariaLabel = { expired: L("Phiên đăng nhập Google đã hết hạn — chạm để đồng bộ tiếp", "Google sign-in expired — tap to keep syncing"), error: L("Đồng bộ lỗi — chạm để thử lại", "Sync failed — tap to retry") }[st] || "Google Drive sync";
   renderSyncCard();
@@ -3060,7 +3122,7 @@ function renderSyncCard(){
   $("#gdStatus").textContent = !SY.on ? L("Chưa kết nối", "Not connected") :
     cloudState === "busy" ? L("Đang đồng bộ…", "Syncing…") :
     cloudState === "error" ? L("⚠️ Đồng bộ lỗi — bấm Đồng bộ ngay", "⚠️ Last sync failed — tap Sync now") :
-    cloudState === "expired" ? L(`Đã kết nối · lần cuối ${ago(SY.last)} · bấm Đồng bộ ngay để tiếp tục`, `Connected · last sync ${ago(SY.last)} · tap Sync now to continue`) :
+    cloudState === "expired" || cloudState === "idle" ? L(`Đã kết nối · lần cuối ${ago(SY.last)} · bấm Đồng bộ ngay để tiếp tục`, `Connected · last sync ${ago(SY.last)} · tap Sync now to continue`) :
     L(`✅ Đã kết nối · lần cuối ${ago(SY.last)}`, `✅ Connected · last sync ${ago(SY.last)}`);
 }
 
@@ -3149,8 +3211,9 @@ function applyRemote(R){
     const [keep, drop] = ((c.reps||0) > (o.reps||0) || ((c.reps||0) === (o.reps||0) && (c.last||0) > (o.last||0))) ? [c, o] : [o, c];
     byKo.set(c.ko, keep); S.cards.splice(S.cards.indexOf(drop), 1); tomb[drop.id] = now;
   });
-  if (R.settings && (R.settings._mod || 0) > (S.settings._mod || 0)){
+  if (R.settings && (!SY.last || (R.settings._mod || 0) > (S.settings._mod || 0))){
     const keep = { voice: S.settings.voice, apiKey: R.settings.apiKey || S.settings.apiKey };
+    if ((S.settings._mod || 0) > (R.settings._mod || 0)) keep.uiLang = S.settings.uiLang;   // first sync: the language just picked here is the latest choice
     Object.assign(S.settings, R.settings, keep);
     S.settings.modes = Object.assign({}, defaults().settings.modes, R.settings.modes || {});
   }
@@ -3166,16 +3229,16 @@ function applyRemote(R){
   if (window.__notifySnap) window.__notifySnap();
   if (!session && !$("#v-study").classList.contains("hidden")) refreshHome();
   else refreshStats();
-  if (!$("#v-words").classList.contains("hidden")) renderWords();
+  renderWordsSoft();
   if (!$("#v-read").classList.contains("hidden") && typeof renderPassList === "function") try { renderPassList(); } catch(e){}
 }
 function payload(){ const d = JSON.parse(JSON.stringify(S)); d.syncedAt = Date.now(); return d; }
 
-let syncing = false, again = false, pushT = null;
+let syncing = false, again = false, pushT = null, renewTried = false;
 async function syncNow(interactive){
   if (!clientId()){ if (interactive) toast("Paste your Google Client ID first"); return; }
   if (!tokValid()){
-    if (!interactive){ if (SY.on) setCloud("expired"); return; }
+    if (!interactive) return;
     setCloud("busy");
     try { await getToken(); }
     catch(e){ setCloud(SY.on ? "expired" : "off"); toast("⚠️ " + e.message); return; }
@@ -3191,6 +3254,7 @@ async function syncNow(interactive){
     }
     SY.fileId = await uploadFile(SY.fileId, payload());
     SY.last = Date.now(); saveSY(); setCloud("ok");
+    if ((S.settings.uiLang || "vi") !== UI) return location.reload();   // another device switched the interface language
     if (interactive) toast("☁️ Synced");
   } catch(e){
     setCloud(e.auth ? "expired" : "error");
@@ -3243,7 +3307,7 @@ async function setNotify(on){
     if (!canPeriodic()){ toast(L("Trình duyệt này không hỗ trợ nhắc nền", "This browser doesn't support background reminders")); return renderNotifyCard(); }
     if (await Notification.requestPermission() !== "granted"){ toast(L("Bạn chưa cho phép thông báo", "Notifications are not allowed")); return renderNotifyCard(); }
     try {
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await Promise.race([navigator.serviceWorker.ready, new Promise((_, no) => setTimeout(no, 4000))]);
       await reg.periodicSync.register(NOTIFY_TAG, { minInterval: 4 * 60 * 60 * 1000 });
     } catch(e){ toast(L("Chưa bật được — hãy cài app vào màn hình chính trước", "Couldn't enable — install the app to your home screen first")); return renderNotifyCard(); }
     try { localStorage.setItem(NOTIFY_KEY, "1"); } catch(e){}
@@ -3287,7 +3351,7 @@ addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = 
 addEventListener("appinstalled", () => { installEvt = null; installed = true; renderNudge(); });
 
 function setUiLang(v){
-  if (v === UI) return;
+  if (v === UI && v === (S.settings.uiLang || "vi")) return;
   S.settings.uiLang = v; save();
   // remember the onboarding step so the reload lands back on it
   if (!$("#welcome").classList.contains("hidden")) try { sessionStorage.setItem("wStep", wStep); } catch(e){}
@@ -3424,7 +3488,7 @@ const GUIDE = [
     <li>Máy khác: dán <b>cùng Client ID</b>, đăng nhập <b>cùng Gmail</b></li></ol>
     <p><b>🛠 Gặp lỗi?</b></p>
     <ul><li><b>Error 400 / access blocked</b>: xem lại 🔑 bước 4 (đã thêm Gmail chưa) và bước 5 (địa chỉ phải khớp, không có <code>/</code> ở cuối). Sửa xong đợi vài phút.</li>
-    <li><b>☁️ Đồng bộ</b> (màu cam) ở trên cùng: phiên đăng nhập (~1 giờ) đã hết, chạm để tiếp tục.</li></ul>`, `
+    <li><b>☁️ Đồng bộ</b> (màu đỏ ⚠️) ở trên cùng: phiên đăng nhập (~1 giờ) đã hết, chạm để tiếp tục.</li></ul>`, `
     <p><b>🔑 Create a Client ID</b> <span class="muted">— once, free, ~5 min</span></p>
     <ol><li><b>Create a project</b>: open <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> → any name → <b>Create</b></li>
     <li><b>Turn on the Drive API</b>: open <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a> → <b>Enable</b></li>
@@ -3438,7 +3502,7 @@ const GUIDE = [
     <li>Other devices: paste the <b>same Client ID</b>, sign in with the <b>same Gmail</b></li></ol>
     <p><b>🛠 Something wrong?</b></p>
     <ul><li><b>Error 400 / access blocked</b>: check 🔑 step 4 (Gmail added) and step 5 (the address must match, no trailing <code>/</code>). After fixing, wait a few minutes.</li>
-    <li><b>☁️ Sync</b> (orange) at the top: the ~1 hour sign-in expired, tap it to continue.</li></ul>`)],
+    <li><b>☁️ Sync</b> (red ⚠️) at the top: the ~1 hour sign-in expired, tap it to continue.</li></ul>`)],
   ["g-mic", L("Micro & luyện nói", "Microphone & speaking"), L(`
     <p>Lần đầu bấm 🎙, chọn <b>Cho phép</b>. Nếu bị chặn:</p>
     <ul><li><b>Android</b>: Cài đặt → Ứng dụng → Chrome → Quyền → Micro → Cho phép</li>
@@ -3503,8 +3567,8 @@ AR.sess = { bts: { lines: [], savedId: "" }, talk: { lines: [], savedId: "" } };
 const arMode = () => AR.mode;
 const arTalk = () => arMode() === "talk";
 const arTts = () => arTalk() && S.settings.armyTts !== false;
-const arCtx = () => arTalk() ? `Context: a face-to-face everyday conversation between someone speaking ${arName(arIn())} and someone speaking ${arName(arOut())}.` : BTS_GLOSSARY;
-const arHow = to => arTalk() ? `natural, clear ${arName(to)} that a native speaker would actually say in conversation, polite and friendly`
+const arCtxFor = (m, from, to) => m === "talk" ? `Context: a face-to-face everyday conversation between someone speaking ${arName(from)} and someone speaking ${arName(to)}.` : BTS_GLOSSARY;
+const arHow = (to, m = arMode()) => m === "talk" ? `natural, clear ${arName(to)} that a native speaker would actually say in conversation, polite and friendly`
   : `natural, casual ${arName(to)}, like good fan subs, keeping the warm, playful tone`;
 const arTitle = t => (arTalk() ? "🌐 " + L("Phiên dịch", "Interpreter") : "💜 BTS Live") + " · " + arDate(t);
 // languages are remembered per mode: a live is usually 🇰🇷→you, a conversation you⇄🇰🇷
@@ -3532,6 +3596,9 @@ try {
 } catch(e){}
 Object.values(AR.sess).forEach(x => x.lines.forEach(l => { if (!l.tr) l.fail = true; }));   // translations still in flight when the page closed
 arUseSess();
+// mode + direction at the moment speech was captured: a line heard before ⇄ / a mode switch keeps them
+const arSnap = () => ({ m: AR.mode, from: arIn(), to: arOut() });
+const arLinesOf = m => m === AR.mode ? AR.lines : AR.sess[m].lines;
 const arSaved = () => AR.savedId && (S.lives || []).find(x => x.id === AR.savedId);
 const arCopyLine = l => ({ t: l.t, ko: l.ko, tr: l.tr || "", from: l.from, to: l.to });
 const arDate = t => { const d = new Date(t); return `${d.getDate()}/${d.getMonth()+1} ${arTime(t)}`; };
@@ -3544,16 +3611,21 @@ function arSyncSaved(){   // debounced: a busy live adds lines every few seconds
 // save = file the transcript under "Saved conversations", clear this screen and go back there
 async function arSaveNow(){
   if (arSaveNow.busy) return;
+  const mode = AR.mode, was = AR.on;
+  arSaveNow.busy = true; arLock();
   if (AR.on) arStop();
-  // the last audio chunk / translations can still be in flight: let them land so the saved copy is complete
-  const busy = () => AR.queued || AR.trBusy || AR.trq.length || AR.lines.some(l => !l.tr && !l.fail);
+  // the recorder's last chunk / the recogniser's last final result arrive just after stop
+  if (was) await new Promise(r => setTimeout(r, 800));
+  // …and translations can still be in flight: let them land so the saved copy is complete
+  const busy = () => AR.queued || AR.trBusy || AR.trq.length || arLinesOf(mode).some(l => !l.tr && !l.fail);
   if (busy()){
-    arSaveNow.busy = true; toast(L("⏳ Đang dịch nốt…", "⏳ Finishing translations…"));
+    toast(L("⏳ Đang dịch nốt…", "⏳ Finishing translations…"));
     const t0 = Date.now();
     while (busy() && Date.now() - t0 < 20000) await new Promise(r => setTimeout(r, 300));
-    arSaveNow.busy = false;
   }
-  if (!AR.lines.length) { toast(L("Chưa có câu nào để lưu", "Nothing to save yet")); return; }
+  arSaveNow.busy = false;
+  if (AR.mode !== mode){ arPersist(); AR.mode = mode; arUseSess(); }   // left for the other mode meanwhile: save the one Save was tapped in
+  if (!AR.lines.length) { toast(L("Chưa có câu nào để lưu", "Nothing to save yet")); if (!$("#v-army").classList.contains("hidden")) renderArmy(); return; }
   let x = arSaved();   // older sessions could already be linked to a saved copy: update it instead of duplicating
   if (!x){
     x = { id: uid(), created: AR.lines[0].t || Date.now(), title: arTitle(AR.lines[0].t || Date.now()), mode: arMode(), from: arIn(), to: arOut(), lines: [] };
@@ -3561,7 +3633,7 @@ async function arSaveNow(){
   }
   clearTimeout(arSyncT);
   x.lines = AR.lines.map(arCopyLine); save();
-  AR.lines = []; AR.trq = []; AR.savedId = ""; AR.screen = "saved"; AR.savedTab = arLiveMode(x); AR.justSaved = x.id; arPersist();
+  AR.lines = []; AR.trq = []; AR.savedId = ""; AR.screen = "saved"; AR.savedFrom = "mode"; AR.savedTab = arLiveMode(x); AR.justSaved = x.id; arPersist();
   toast(L("💾 Đã lưu hội thoại", "💾 Conversation saved"));
   if (!$("#v-army").classList.contains("hidden")) renderArmy();
 }
@@ -3570,8 +3642,10 @@ function arToPassage(lines, title){
   const hasKo = t => /[가-힣]/.test(t || "");
   const ko = lines.map(l => hasKo(l.ko) ? { ko: l.ko, meaning: l.tr || "" } : hasKo(l.tr) ? { ko: l.tr, meaning: l.ko || "" } : null).filter(Boolean);
   if (!ko.length) { toast(L("Chưa có câu tiếng Hàn nào", "No Korean lines yet")); return; }
-  S.passages.push({ id: uid(), created: Date.now(), title, titleMean: "", level: "", sentences: ko, vocab: [] });
+  const id = uid();
+  S.passages.push({ id, created: Date.now(), title, titleMean: "", level: "", sentences: ko, vocab: [] });
   save(); toast(L(`Đã lưu ${ko.length} câu vào mục Đọc`, `Saved ${ko.length} lines to Read`));
+  return id;
 }
 function confirmTap(b, label, fn){
   if (!b.dataset.confirm){ b.dataset.confirm = 1; b.textContent = L("Chạm lần nữa để xoá", "Tap again to delete"); setTimeout(() => { delete b.dataset.confirm; b.textContent = label; }, 3000); return; }
@@ -3583,6 +3657,7 @@ let spScreen = navGet().sp || "";   // "" = the picker, "read", "talk" — survi
 const BACK_SVG = `<svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>`;
 function spShow(scr){
   spScreen = scr;
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
   if (scr !== "read" && curP){ closeRdEditor(); stopPlayer(); closeCoach(); curP = null; }
   if (scr !== "talk") talkStop();
   if (scr === "talk" && S.talk && S.talk.done){ S.talk = null; talkDropUrls(); save(); }   // it's in 🕘 history already
@@ -3628,7 +3703,7 @@ const talkVisible = () => !$("#v-read").classList.contains("hidden") && !$("#tal
 const talkTts = () => S.settings.talkTts !== false;
 
 function talkStop(){
-  clearTimeout(TK.autoStop);
+  clearTimeout(TK.autoStop); TK.gen = (TK.gen || 0) + 1; TK.starting = false;
   try { if (TK.rec && TK.rec.state === "recording"){ TK.rec.onstop = null; TK.rec.stop(); } } catch(e){}
   if (TK.stream) TK.stream.getTracks().forEach(t => t.stop());
   TK.rec = TK.stream = null;
@@ -3679,7 +3754,7 @@ function renderTalkSetup(){
   const key = hasKey();
   const goKey = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
   if (!key){   // nothing below works without AI → just the way to get a key
-    $("#talk").innerHTML = talkHead(`💬 ${L("Luyện nói giao tiếp", "Conversation practice")}`) + `<div class="card tk-key"><b>🔑 ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${L("Hội thoại dùng AI để nghe, trả lời và chữa lỗi. Tạo key miễn phí trong ~1 phút.", "Talk uses AI to listen, answer and correct you. A free key takes ~1 minute to create.")}</p><button class="btn" id="tkKey">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button></div>`;
+    $("#talk").innerHTML = talkHead(`💬 ${L("Luyện nói giao tiếp", "Conversation practice")}`, talkHistBtn()) + `<div class="card tk-key"><b>🔑 ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${L("Hội thoại dùng AI để nghe, trả lời và chữa lỗi. Tạo key miễn phí trong ~1 phút.", "Talk uses AI to listen, answer and correct you. A free key takes ~1 minute to create.")}</p><button class="btn" id="tkKey">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button></div>`;
     $("#tkKey").onclick = goKey;
     return;
   }
@@ -3751,6 +3826,7 @@ async function talkOpening(){
 Start the conversation now with your first line in character (a greeting plus a question).
 "mean" = translation of your line in ${uiLangName()}.
 Return JSON exactly like: {"ko":"","mean":""}`, null, { temperature: 0.8 }));
+    await fixFeedbackLang([[j, "mean"]]);
     if (S.talk !== t) return;
     t.turns = t.turns.filter(x => !x.pending);
     t.turns.push({ who: "ai", ko: String(j.ko || "").trim(), mean: String(j.mean || "").trim() });
@@ -3784,6 +3860,7 @@ The attached recording is the learner's next turn (${(dur / 1000).toFixed(1)} s)
 ${feedbackLangRule()}
 Return JSON exactly like: {"heard":"","ok":true,"fix":"","why":"","mean":"","score":0,"pron":"","issues":[{"part":"","tip":""}],"ko":"","koMean":""}`;
     const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule() }));
+    await fixFeedbackLang([[j, "why"], [j, "mean"], [j, "koMean"], ...(Array.isArray(j.issues) ? j.issues : []).map(x => [x, "tip"])]);
     if (S.talk !== t) return;
     const heard = String(j.heard || "").trim();
     t.turns = t.turns.filter(x => x !== me);
@@ -3816,7 +3893,8 @@ The learner is stuck and doesn't know what to say next. Help them answer:
 - "ask": in ${uiLangName()}, one short sentence explaining what YOU just asked or what they could talk about now, plus a useful Korean pattern for answering (e.g. "저는 ___예요/이에요").
 - "hints": 3 different natural answers THE LEARNER could say now, from very simple to a bit richer, all at their level. "mean" = translation in ${uiLangName()}.
 Return JSON exactly like: {"ask":"","hints":[{"ko":"","mean":""}]}`, null, { temperature: 0.8 }));
-    if (S.talk !== t) return;
+    await fixFeedbackLang([[j, "ask"], ...(Array.isArray(j.hints) ? j.hints : []).map(h => [h, "mean"])]);
+    if (S.talk !== t || t.done || !talkVisible()) return;
     TK.hints = (j.hints || []).filter(h => h && h.ko).slice(0, 3);
     TK.hintAsk = String(j.ask || "").trim();
     renderTalkChat();
@@ -3850,6 +3928,9 @@ function talkMsg(x, i){
       </div>` : ""}
     </div></div>`;
 }
+$("#talk").addEventListener("click", e => {
+  if (TK.rec && e.target.closest("button") && !e.target.closest("#tkRec")){ talkStop(); talkStatus(""); }
+}, true);
 function renderTalkChat(){
   const t = S.talk; if (!t) return;
   const sc = talkScene(t), wasBottom = innerHeight + scrollY >= document.body.scrollHeight - 80;
@@ -3877,7 +3958,7 @@ function renderTalkChat(){
   $("#tkRec").onclick = () => { if (TK.busy || t.turns.some(x => x.pending)) return; TK.rec ? talkRecStop() : talkRecStart(); };
   $("#tkEnd").onclick = () => {
     if (TK.busy || t.turns.some(x => x.pending)) return toast(L("Đợi AI trả lời xong đã", "Wait for the AI to answer first"));
-    talkStop(); TK.status = "";
+    talkStop(); TK.status = ""; TK.hints = null; TK.hintAsk = "";
     if (!t.turns.some(x => x.who === "me")) { S.talk = null; save(); return renderTalk(); }   // nothing said yet → just back to the topics
     t.done = true; talkArchive(t); save(); renderTalk(); scrollTo(0, 0);
   };
@@ -3900,10 +3981,13 @@ async function talkRecStart(){
   if ("speechSynthesis" in window) speechSynthesis.cancel();   // don't record the AI's own voice
   const st = $("#tkStatus");
   if ((location.protocol === "file:" && /Android/i.test(navigator.userAgent)) || (location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices || !window.MediaRecorder) return micHelp("insecure", st);
-  if (await micPermissionState() === "denied") return micHelp("site-denied", st);
+  if (TK.starting) return;
+  const g = TK.gen; TK.starting = true;
+  if (await micPermissionState() === "denied"){ TK.starting = false; return micHelp("site-denied", st); }
   try {
-    TK.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-    TK.chunks = [];
+    const ms = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).finally(() => { TK.starting = false; });
+    if (g !== TK.gen || !talkVisible()){ ms.getTracks().forEach(t => t.stop()); return; }   // left Talk while the mic was opening
+    TK.stream = ms; TK.chunks = [];
     TK.rec = new MediaRecorder(TK.stream);
     TK.rec.ondataavailable = e => { if (e.data.size) TK.chunks.push(e.data); };
     TK.rec.onstop = () => {
@@ -3975,7 +4059,7 @@ function renderTalkSummary(t, hist){
       save(); renderTalk();
     };
     $("#tkDel").onclick = e => confirmTap(e.currentTarget, `🗑 ${L("Xoá", "Delete")}`, () => {
-      S.talks = S.talks.filter(x => x !== t); TK.view = ""; save(); renderTalk(); scrollTo(0, 0); toast(L("Đã xoá hội thoại", "Conversation deleted"));
+      S.talks = S.talks.filter(x => x !== t); if (S.talk && S.talk.id === t.id){ S.talk = null; talkDropUrls(); } TK.view = ""; save(); renderTalk(); scrollTo(0, 0); toast(L("Đã xoá hội thoại", "Conversation deleted"));
     });
     return;
   }
@@ -4074,12 +4158,16 @@ function renderArmy(){
     if (!AR.lines.length || arSaved()) go(); else confirmTap(e.currentTarget, `🗑 ${L("Xoá", "Clear")}`, go);
   };
   arStyle(); arUI(); arRender();
+  if (arSaveNow.busy) arLock();
 }
+function arLock(){ $$("#arCtl button, #arCtl select, #arHistCard button, #arHome").forEach(b => b.disabled = true); }
 function renderArmyHome(){
   const n = (S.lives || []).length;
   const pick = m => {
-    const [icon, title, desc] = AR_MODES[m];
-    return `<button class="ar-pick" data-m="${m}"><span class="i">${icon}</span><span class="tx"><b>${title()}</b><span class="d">${desc()}</span></span><span class="muted">›</span></button>`;
+    const [icon, title, desc] = AR_MODES[m], x = AR.sess[m];
+    const open = x.lines.length && !(x.savedId && (S.lives || []).some(v => v.id === x.savedId)) ? x.lines.length : 0;   // unsaved transcript waiting inside
+    return `<button class="ar-pick" data-m="${m}"><span class="i">${icon}</span><span class="tx"><b>${title()}</b><span class="d">${desc()}</span>${open
+      ? `<span class="d" style="color:var(--army);font-weight:600">📝 ${L(`${open} câu chưa lưu`, `${open} unsaved line${open === 1 ? "" : "s"}`)}</span>` : ""}</span><span class="muted">›</span></button>`;
   };
   $("#v-army").innerHTML = `
     <div class="ar-hero" style="margin:2px 2px 14px"><span class="h">💜</span><div><h2 style="margin:0">ARMY Borahae</h2></div></div>
@@ -4088,7 +4176,7 @@ function renderArmyHome(){
       ? L("Xem lại hoặc lưu thành bài đọc.", "Review or turn into a reading passage.")
       : L("Chưa có — bấm 💾 Lưu sau khi nghe dịch.", "None yet — tap 💾 Save after listening.")}</span></span><span class="muted">›</span></button>`;
   $$("#v-army .ar-pick[data-m]").forEach(b => b.onclick = () => { AR.mode = b.dataset.m; AR.screen = "mode"; arUseSess(); arPersist(); renderArmy(); scrollTo(0, 0); });
-  $("#arSavedOpen").onclick = () => { AR.screen = "saved"; renderArmy(); scrollTo(0, 0); };
+  $("#arSavedOpen").onclick = () => { AR.screen = "saved"; AR.savedFrom = ""; renderArmy(); scrollTo(0, 0); };
 }
 // saved conversations get their own screen: ARMY → 💾 card → this list → one conversation
 // older saved copies have no mode: the default title tells them apart ("🌐 Phiên dịch · …" vs "💜 BTS Live · …")
@@ -4103,7 +4191,9 @@ function arSavedRow(x){
   return `<div class="t"><b style="font-size:15px">${esc(arShownTitle(x))}</b><div>${meta}</div></div>`;
 }
 function renderArmySaved(){
-  const tab = AR.savedTab || arMode();
+  const cnt = m => (S.lives || []).filter(x => arLiveMode(x) === m).length;
+  let tab = AR.savedTab || arMode();
+  if (!cnt(tab) && cnt(tab === "bts" ? "talk" : "bts")) tab = tab === "bts" ? "talk" : "bts";   // don't open on an empty tab when the other has some
   const saved = (S.lives || []).filter(x => arLiveMode(x) === tab).sort((a, b) => b.created - a.created);
   $("#v-army").innerHTML = `
     <div class="sub-head">
@@ -4111,11 +4201,11 @@ function renderArmySaved(){
       <div class="c"><h2>💾 ${L("Hội thoại đã lưu", "Saved conversations")}</h2></div><div class="r"></div>
     </div>
     <div class="card flat">
-    <div class="seg" id="asTabs" style="margin-bottom:6px"><button data-m="bts">💜 BTS Live</button><button data-m="talk">🌐 ${L("Phiên dịch", "Interpreter")}</button></div>${saved.length ? `<ul class="wl" id="arSavedList">${saved.map(x =>
+    <div class="seg" id="asTabs" style="margin-bottom:6px"><button data-m="bts">💜 BTS Live${cnt("bts") ? ` (${cnt("bts")})` : ""}</button><button data-m="talk">🌐 ${L("Phiên dịch", "Interpreter")}${cnt("talk") ? ` (${cnt("talk")})` : ""}</button></div>${saved.length ? `<ul class="wl" id="arSavedList">${saved.map(x =>
       `<li data-id="${x.id}" class="${x.id === AR.justSaved ? "just" : ""}" style="cursor:pointer">${arSavedRow(x)}<span class="muted">›</span></li>`).join("")}</ul>`
       : `<p class="muted" style="text-align:center">${L("Chưa có hội thoại nào.", "No saved conversations yet.")}</p>`}</div>`;
   $$("#asTabs button").forEach(b => { b.classList.toggle("on", b.dataset.m === tab); b.onclick = () => { AR.savedTab = b.dataset.m; renderArmy(); }; });
-  $("#asBack").onclick = () => { AR.screen = "home"; renderArmy(); scrollTo(0, 0); };
+  $("#asBack").onclick = () => { AR.screen = AR.savedFrom === "mode" ? "mode" : "home"; AR.savedFrom = ""; renderArmy(); scrollTo(0, 0); };   // after 💾 Save: back to the live screen
   $$("#arSavedList li").forEach(li => li.onclick = () => { AR.view = li.dataset.id; renderArmy(); scrollTo(0, 0); });
   // just saved: let its highlight fade
   const hl = $("#arSavedList li.just");
@@ -4124,13 +4214,14 @@ function renderArmySaved(){
 function arFlushSaved(){ const x = arSaved(); if (x){ clearTimeout(arSyncT); x.lines = AR.lines.map(arCopyLine); save(); } }
 function renderArmyView(){
   const x = S.lives.find(v => v.id === AR.view), sec = $("#v-army");
+  const inRead = x.passageId && S.passages.some(p => p.id === x.passageId);
   sec.innerHTML = `
     <div class="sub-head">
       <div class="l"><button class="btn-ghost back" id="avBack" title="${L("Hội thoại đã lưu", "Saved conversations")}" aria-label="${L("Quay lại Hội thoại đã lưu", "Back to Saved conversations")}"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
       <div class="c"><input id="avTitle" class="av-title" type="text" value="${esc(arShownTitle(x))}" aria-label="${L("Tên hội thoại", "Conversation name")}" title="${L("Chạm để đổi tên", "Tap to rename")}"></div><div class="r"></div>
     </div>
     <div class="ar-tools" style="margin-bottom:14px">
-      <button class="btn-ghost" id="avRead">📖 ${L("Lưu bài đọc", "Save to Read")}</button>
+      <button class="btn-ghost" id="avRead" ${inRead ? "disabled" : ""}>${inRead ? "✓ " + L("Đã lưu vào Đọc", "Saved to Read") : "📖 " + L("Lưu bài đọc", "Save to Read")}</button>
       <button class="btn-danger" id="avDel">🗑 ${L("Xoá", "Delete")}</button>
     </div>
     <div class="card flat"><div class="ar-disp">
@@ -4144,7 +4235,7 @@ function renderArmyView(){
   const fs = (d) => { S.settings.armyFs = Math.max(0.8, Math.min(1.8, Math.round(((S.settings.armyFs || 1) + d) * 10) / 10)); save(); arStyle(); };
   $("#arFsDown").onclick = () => fs(-0.1); $("#arFsUp").onclick = () => fs(0.1);
   $("#arOrig").onclick = () => { S.settings.armyHideOrig = !S.settings.armyHideOrig; save(); arStyle(); };
-  $("#avRead").onclick = () => arToPassage(x.lines, x.title);
+  $("#avRead").onclick = () => { const id = arToPassage(x.lines, x.title); if (id){ x.passageId = id; save(); renderArmyView(); } };
   $("#avDel").onclick = e => confirmTap(e.currentTarget, `🗑 ${L("Xoá", "Delete")}`, () => {
     S.lives = S.lives.filter(v => v !== x);
     if (AR.savedId === x.id) { AR.savedId = ""; arPersist(); }   // the live keeps its lines, just no longer saved
@@ -4193,9 +4284,11 @@ function arRender(){
   $("#arHistCard").classList.toggle("hidden", !AR.lines.length);
   h.innerHTML = all.map(l => `<li>${arLine(l, true)}</li>`).join("");
 }
-function arAdd(ko, tr){
-  const l = { t: Date.now(), ko, tr: tr || "", from: arIn(), to: arOut() };
-  AR.lines.push(l); if (AR.lines.length > 500) AR.lines.shift();
+const AR_MAX = 3000;
+function arAdd(ko, tr, snap = arSnap()){
+  const l = { t: Date.now(), ko, tr: tr || "", from: snap.from, to: snap.to, m: snap.m }, lines = arLinesOf(snap.m);
+  lines.push(l);
+  if (lines.length > AR_MAX){ lines.shift(); if (!AR.trimWarned){ AR.trimWarned = true; toast(L("📝 Hội thoại rất dài — câu cũ nhất đang bị bỏ. Bấm 💾 Lưu để giữ lại.", "📝 Very long transcript — the oldest lines are being dropped. Tap 💾 Save to keep it.")); } }
   if (!tr){
     const hit = arCacheGet(ko, l.from, l.to);
     if (hit){ l.tr = hit; arSayLine(l); }   // said before: no need to wait for a translator
@@ -4246,7 +4339,7 @@ function arCachePut(ko, from, to, tr){
   const ks = Object.keys(AR_TRC); if (ks.length > 400) ks.slice(0, ks.length - 400).forEach(x => delete AR_TRC[x]);
   try { localStorage.setItem(AR_TRC_KEY, JSON.stringify(AR_TRC)); } catch(e){}
 }
-function arSayLine(l){ if (l.tr && !l.spoken){ l.spoken = true; arSay(l.tr, l.to); } }
+function arSayLine(l){ if (l.tr && !l.spoken && (!l.m || l.m === AR.mode)){ l.spoken = true; arSay(l.tr, l.to); } }
 async function arDraft(l){
   const t = await arQuickTr(l.ko, l.from, l.to);
   if (t && !l.tr){ l.tr = t; l.draft = true; arSayLine(l); arRender(); arPersist(); arSyncSaved(); }
@@ -4271,13 +4364,16 @@ async function arFreeTr(text, from, to){
 async function arFlushTr(){
   if (AR.trBusy || !AR.trq.length) return;
   AR.trBusy = true;
-  const batch = AR.trq.splice(0, 6), from = arIn(), to = arOut();
+  // one batch = one direction: lines queued before ⇄ keep theirs
+  const key = l => l.from + ">" + l.to + ">" + (l.m || AR.mode), first = AR.trq[0], batch = [];
+  for (let i = 0; i < AR.trq.length && batch.length < 6;) key(AR.trq[i]) === key(first) ? batch.push(AR.trq.splice(i, 1)[0]) : i++;
+  const { from, to } = first, m = first.m || AR.mode;
   if (hasKey()){
     try {
-      const ctx = AR.lines.filter(l => l.tr).slice(-4).map(l => l.ko).join("\n");
-      const prompt = `You are a live interpreter. ${arCtx()}
-The lines below come from automatic ${arName(from)} speech recognition, so they may contain recognition mistakes — fix obvious ones from context${arTalk() ? "" : " (e.g. misheard member names)"}.
-Translate each line into ${arHow(to)}.
+      const ctx = arLinesOf(m).filter(l => l.tr).slice(-4).map(l => l.ko).join("\n");
+      const prompt = `You are a live interpreter. ${arCtxFor(m, from, to)}
+The lines below come from automatic ${arName(from)} speech recognition, so they may contain recognition mistakes — fix obvious ones from context${m === "talk" ? "" : " (e.g. misheard member names)"}.
+Translate each line into ${arHow(to, m)}.
 Earlier lines for context (don't translate): ${ctx || "(none)"}
 Lines: ${JSON.stringify(batch.map(l => l.ko))}
 Return JSON exactly like: {"t":["<translation of line 1>", "..."]} with the same number of items, in order.`;
@@ -4329,7 +4425,7 @@ function arCommitSoon(){
     const r = AR.recog; AR.recog = null;
     try { r.onresult = r.onend = r.onerror = null; r.abort(); } catch(e){}   // drop its late "final" copy of this sentence
     AR.interim = "";
-    arAdd(src);
+    arAdd(src, null, r.snap);
     setTimeout(arResumeEars, 0);   // keep listening; reading the translation pauses the ears again
   }, 800);
 }
@@ -4337,13 +4433,13 @@ function arCommitSoon(){
 /* ---- free engine: browser speech recognition, restarted whenever it stops on its own ---- */
 function arStartFree(){
   const android = /Android/i.test(navigator.userAgent);
-  const r = new SR(); r.lang = AR_LANGS[arIn()][3]; r.interimResults = true; r.maxAlternatives = 1;
+  const r = new SR(), snap = r.snap = arSnap(); r.lang = AR_LANGS[snap.from][3]; r.interimResults = true; r.maxAlternatives = 1;
   r.continuous = !android;   // Android repeats earlier results in continuous mode
   r.onresult = ev => {
     let interim = "";
     for (let i = ev.resultIndex; i < ev.results.length; i++){
       const res = ev.results[i];
-      if (res.isFinal){ const t = res[0].transcript.trim(); if (t) arAdd(t); }
+      if (res.isFinal){ const t = res[0].transcript.trim(); if (t) arAdd(t, null, snap); }   // also the late final one after Stop / ⇄
       else interim += res[0].transcript;
     }
     AR.interim = interim.trim(); arInterimTr(); arRenderLive(); arCommitSoon();
@@ -4364,6 +4460,7 @@ function arStartFree(){
 async function arStartAI(){
   if (arSrc() === "tab"){
     const ds = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    if (!AR.on){ ds.getTracks().forEach(t => t.stop()); return; }   // stopped while the picker was open
     if (!ds.getAudioTracks().length){
       ds.getTracks().forEach(t => t.stop());
       throw new Error(L("Chưa chia sẻ âm thanh — chọn tab live và bật “Chia sẻ âm thanh tab”.", "No audio shared — pick the live tab and turn on “Share tab audio”."));
@@ -4372,14 +4469,16 @@ async function arStartAI(){
     AR.stream = ds;
   } else {
     // echo cancellation would erase the very speaker audio we want to hear
-    AR.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } });
+    const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } });
+    if (!AR.on){ st.getTracks().forEach(t => t.stop()); return; }   // stopped while asking for the mic
+    AR.stream = st;
   }
   arMeter();
   arRecChunk();
 }
 function arRecChunk(){
   if (!AR.on || !AR.stream) return;
-  const rec = new MediaRecorder(new MediaStream(AR.stream.getAudioTracks())), parts = [];
+  const rec = new MediaRecorder(new MediaStream(AR.stream.getAudioTracks())), parts = [], snap = arSnap();
   let self = AR.saying > 0;   // talk mode: drop chunks that caught the app reading a translation aloud
   // the recorder's own timeslice drives the cycle: timers get throttled while the live plays in another tab
   rec.ondataavailable = e => {
@@ -4387,31 +4486,31 @@ function arRecChunk(){
     self = self || AR.taint;
     if (rec.state === "recording"){ AR.taint = AR.saying > 0; arRecChunk(); rec.stop(); }
   };
-  rec.onstop = () => { if (parts.length && !self) arQueueChunk(new Blob(parts, { type: rec.mimeType || "audio/webm" })); };
+  rec.onstop = () => { if (parts.length && !self) arQueueChunk(new Blob(parts, { type: rec.mimeType || "audio/webm" }), snap); };
   rec.start(AR_CHUNK);
   AR.rec = rec;
 }
-function arQueueChunk(blob){
+function arQueueChunk(blob, snap){
   if (AR.queued >= 3){ arUI(L("⚠️ Mạng chậm — bỏ qua một đoạn", "⚠️ Slow connection — skipped a chunk")); return; }
   AR.queued++;
-  AR.chain = AR.chain.then(() => arChunk(blob)).catch(() => {}).then(() => { AR.queued--; });
+  AR.chain = AR.chain.then(() => arChunk(blob, snap)).catch(() => {}).then(() => { AR.queued--; });
 }
-async function arChunk(blob){
+async function arChunk(blob, snap){
   const stats = {};
   const b64 = await blobToWavB64(blob, stats);
   if (stats.peak < 0.01) return;   // silence: don't spend quota
-  const from = arIn(), to = arOut();
-  const ctx = AR.lines.slice(-4).map(l => l.ko).join("\n");
-  const prompt = `You are a live interpreter. ${arCtx()}
-The attached audio is the next ~10 seconds. Transcribe only the ${arName(from)} speech (ignore music, singing, noise and laughter${arTalk() ? "; ignore any synthetic voice reading a translation aloud" : ""}). The clip may start or end mid-word — drop cut-off fragments. Keep any words spoken in other languages as they are.
-Split it into short subtitle lines (about one sentence each) and translate each into ${arHow(to)}. Don't guess who is speaking.
+  const { m, from, to } = snap;
+  const ctx = arLinesOf(m).slice(-4).map(l => l.ko).join("\n");
+  const prompt = `You are a live interpreter. ${arCtxFor(m, from, to)}
+The attached audio is the next ~10 seconds. Transcribe only the ${arName(from)} speech (ignore music, singing, noise and laughter${m === "talk" ? "; ignore any synthetic voice reading a translation aloud" : ""}). The clip may start or end mid-word — drop cut-off fragments. Keep any words spoken in other languages as they are.
+Split it into short subtitle lines (about one sentence each) and translate each into ${arHow(to, m)}. Don't guess who is speaking.
 Earlier lines for context (don't repeat them): ${ctx || "(none)"}
 If there is no clear speech, return {"lines":[]}.
 Return JSON exactly like: {"lines":[{"src":"<transcription>","tr":"<translation>"}]}`;
   try {
     const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }]));
     AR.quota = 0;
-    (j.lines || []).forEach(l => { const src = String(l.src || l.ko || "").trim(); if (src) arAdd(src, String(l.tr || "").trim() || null); });
+    (j.lines || []).forEach(l => { const src = String(l.src || l.ko || "").trim(); if (src) arAdd(src, String(l.tr || "").trim() || null, snap); });
     if (AR.on) arUI("");
   } catch(e){
     if (e.status === 429 && ++AR.quota >= 3 && AR.on){
@@ -4448,7 +4547,7 @@ async function arWake(on){
 document.addEventListener("visibilitychange", () => { if (AR.on && document.visibilityState === "visible") arWake(true); });
 
 async function arStart(){
-  const eng = arEngine(); if (!eng) return;
+  const eng = arEngine(); if (!eng || arSaveNow.busy) return;
   if ((location.protocol === "file:" && /Android/i.test(navigator.userAgent)) || (location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { arUI(L("🎙 Cần mở app từ link https:// để dùng micro.", "🎙 Open the app from its https:// link to use the mic.")); return; }
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   AR.on = true; AR.engine = eng; AR.quota = 0;
@@ -4462,6 +4561,7 @@ async function arStart(){
       : "⚠️ " + esc(e.message || e));
     return;
   }
+  if (!AR.on) return;   // Stop was tapped while the mic / screen share was being set up
   arWake(true); arUI(); scrollTo(0, 0);
 }
 function arStop(){
@@ -4491,7 +4591,12 @@ if (S.settings.model === "gemini-flash-latest") { S.settings.model = ""; save();
 fillLevels($("#genLevel")); fillLevels($("#rdLevel"));
 if ("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
 if (clientId()) loadGIS().catch(()=>{});
-setCloud(SY.on ? (tokValid() ? "ok" : "expired") : "off");
+setCloud(SY.on ? (tokValid() ? "ok" : "idle") : "off");
+// the ~1 h Google token ran out: renew it on the first tap (GIS needs a tap for its no-prompt popup), then sync
+document.addEventListener("click", e => {
+  if (!SY.on || tokValid() || syncing || renewTried || e.target.closest("#cloudBtn, #gdConnect")) return;
+  renewTried = true; getToken().then(() => syncNow(false), () => {});
+}, true);
 if (SY.on) syncNow(false);
 // also reopen it after a language switch made from a guide re-opened in Settings
 try { if (!localStorage.getItem(WEL_KEY) || sessionStorage.getItem("wStep") != null) openWelcome(); } catch(e){}
@@ -4504,7 +4609,7 @@ try { if (!localStorage.getItem(WEL_KEY) || sessionStorage.getItem("wStep") != n
   if (y) requestAnimationFrame(() => setTimeout(() => { scrollTo(0, y); navSave({ y }); }, 60));
 })();
 refreshHome();
-setInterval(() => { if (!session && !$("#v-study").classList.contains("hidden")) refreshHome(); }, 60000);
+setInterval(() => { if (!session && !$("#v-study").classList.contains("hidden")) refreshHome(true); }, 60000);   // a card coming due updates the card, never starts a round by itself
 })();
 </script>
 <script>

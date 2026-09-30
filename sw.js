@@ -1,8 +1,11 @@
 // Hangul with PV service worker: works offline, but always tries the network first
 // so updates you push to GitHub show up on the next open.
-const CACHE = "hangul-v9", NOTIFY_CACHE = "hangul-notify";
+const CACHE = "hangul-v10", NOTIFY_CACHE = "hangul-notify";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
-self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {}))))); // one missing file must not break install self.skipWaiting(); });
+self.addEventListener("install", e => {
+  e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {})))));   // one missing file must not break install
+  self.skipWaiting();
+});
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== NOTIFY_CACHE).map(k => caches.delete(k)))));
   self.clients.claim();
