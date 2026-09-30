@@ -1112,7 +1112,7 @@ function speak(text, opts){
   const clean = String(text).replace(/^[^\s:：]{1,12}[:：]\s*/, "")      // dialogue speaker label "민수: "
     .replace(/[~*_#"“”'‘’()\[\]{}<>…·•\/\\|@^=+]/g, " ").replace(/\s+/g, " ").trim();
   const u = new SpeechSynthesisUtterance(clean || text);
-  u.lang = v.lang || "ko-KR"; u.rate = opts.rate || S.settings.rate;
+  u.lang = v.lang || "ko-KR"; u.rate = S.settings.rate;   // every 🔊 follows Settings → Speed
   u.voice = v;
   if (opts.onend) { u.onend = opts.onend; u.onerror = opts.onend; }
   if (opts.onstart) u.onstart = opts.onstart;
@@ -2091,7 +2091,7 @@ function openReader(id){
   $("#readHome").classList.add("hidden"); $("#reader").classList.remove("hidden");
   $("#rdTitle").innerHTML = `<span lang="ko">${esc(curP.title)}</span>`;
   $("#rdSub").textContent = curP.titleMean || "";
-  $("#pRate").value = String([0.6,0.75,0.85,1].reduce((a,b)=>Math.abs(b-S.settings.rate)<Math.abs(a-S.settings.rate)?b:a));
+  syncPRate();
   renderSentences();
   renderRdVocab();
   window.scrollTo(0,0);
@@ -2185,7 +2185,7 @@ function playCurrent(){
   markSentence(P.idx);
   $("#pTurn").textContent = "";
   let started = Date.now();
-  speak(s.ko, { keepPlayer: true, rate: +$("#pRate").value, onstart: () => { started = Date.now(); },
+  speak(s.ko, { keepPlayer: true, onstart: () => { started = Date.now(); },
     onend: () => { if (tok !== P.token || !P.playing) return; afterSentence(Date.now() - started); } });
 }
 function afterSentence(dur){
@@ -2219,7 +2219,18 @@ document.addEventListener("click", e => { if (!$("#pOpts").classList.contains("h
 const coachStep = d => { const j = C.i + d; if (j >= 0 && j < curP.sentences.length) openCoach(j); };
 $("#pPrev").onclick = () => C.i >= 0 ? coachStep(-1) : playFrom(P.idx - 1);
 $("#pNext").onclick = () => C.i >= 0 ? coachStep(1) : playFrom(P.idx + 1);
-$("#pRate").onchange = () => { if (P.playing) { P.rep = 0; pausePlayer(); P.playing = true; setPlayIcon(); playCurrent(); } };
+// the reader's speed box is a shortcut to Settings → Speed: it shows the exact setting and writes back to it
+function syncPRate(){
+  const sel = $("#pRate"), r = S.settings.rate;
+  sel.querySelectorAll("option[data-custom]").forEach(o => o.remove());
+  let o = [...sel.options].find(o => Math.abs(+o.value - r) < 0.001);
+  if (!o){
+    o = document.createElement("option"); o.value = String(r); o.textContent = r + "×"; o.dataset.custom = "1";
+    const after = [...sel.options].find(x => +x.value > r); sel.insertBefore(o, after || null);
+  }
+  sel.value = o.value;
+}
+$("#pRate").onchange = () => { S.settings.rate = +$("#pRate").value; save(); if (P.playing) { P.rep = 0; pausePlayer(); P.playing = true; setPlayIcon(); playCurrent(); } };
 document.addEventListener("keydown", e => {
   if ($("#reader").classList.contains("hidden") || $("#v-read").classList.contains("hidden")) return;
   if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
@@ -2265,7 +2276,7 @@ function openCoach(i){
 function setMic(row, open){ const b = row.querySelector(".smic"); if (!b) return; b.textContent = open ? "✕" : "🎙"; b.title = open ? L("Đóng", "Close") : L("Luyện nói câu này", "Practice speaking this sentence"); }
 function closeCoach(){ cancelRec(); $("#coach").classList.add("hidden"); $("#rdHint").classList.remove("hidden"); $$("#sentList .sent.coaching").forEach(x => { x.classList.remove("coaching"); setMic(x, false); }); C.i = -1; }
 $("#cClose").onclick = closeCoach;
-$("#cListen").onclick = () => { if (curP && C.i >= 0) speak(curP.sentences[C.i].ko, { rate: +$("#pRate").value }); };
+$("#cListen").onclick = () => { if (curP && C.i >= 0) speak(curP.sentences[C.i].ko); };
 $("#cMine").onclick = () => { if (C.url) new Audio(C.url).play(); };
 $("#cRec").onclick = () => { if (C.busy) return; (C.rec && C.rec.state === "recording") || C.recog ? stopRec() : startRec(); };
 
@@ -2620,9 +2631,9 @@ $$("[data-mode]").forEach(i => i.onchange = () => {
   save();
 });
 $("#setAuto").onchange = e => { S.settings.autoPlay = e.target.checked; save(); };
-$("#setRate").oninput = e => { S.settings.rate = +e.target.value; $("#rateVal").textContent = S.settings.rate + "×"; $$("#ratePresets button").forEach(b => b.classList.toggle("on", Math.abs(+b.dataset.r - S.settings.rate) < 0.01)); save(); };
+$("#setRate").oninput = e => { S.settings.rate = +e.target.value; syncPRate(); $("#rateVal").textContent = S.settings.rate + "×"; $$("#ratePresets button").forEach(b => b.classList.toggle("on", Math.abs(+b.dataset.r - S.settings.rate) < 0.01)); save(); };
 $("#setVoice").onchange = e => { S.settings.voice = e.target.value; save(); loadVoices(); speak("안녕하세요. 만나서 반가워요!"); };
-$$("#ratePresets button").forEach(b => b.onclick = () => { S.settings.rate = +b.dataset.r; save(); renderSettings(); speak("안녕하세요. 만나서 반가워요!"); });
+$$("#ratePresets button").forEach(b => b.onclick = () => { S.settings.rate = +b.dataset.r; save(); renderSettings(); syncPRate(); speak("안녕하세요. 만나서 반가워요!"); });
 $("#setLang").onchange = e => { S.settings.lang = e.target.value; save(); };
 $("#testVoice").onclick = () => speak("안녕하세요");
 $("#setKey").onchange = e => { S.settings.apiKey = e.target.value.trim(); save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]); refreshModels($("#setModel")); };
@@ -3582,6 +3593,7 @@ function arSay(text, lang){
   const v = arVoiceFor(lang);
   if (!v){ if (!AR.noVoice){ AR.noVoice = true; toast(L("🔇 Máy chưa có giọng đọc cho ngôn ngữ này", "🔇 No voice for this language on this device")); } return; }
   const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang;
+  if (lang === "ko") u.rate = S.settings.rate;
   let done = false;
   u.onend = u.onerror = () => { if (done) return; done = true; if (--AR.saying <= 0){ AR.saying = 0; setTimeout(arResumeEars, 350); } };
   AR.saying = (AR.saying || 0) + 1; arPauseEars();
