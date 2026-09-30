@@ -111,6 +111,7 @@ nav button.on{color:var(--accent)}
 .speak{background:var(--accent-soft);color:var(--accent);border-radius:99px;width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
 .speak.big{width:96px;height:96px;font-size:40px}
 .speak.sm{width:40px;height:40px;font-size:17px;margin:0}
+.speak.rec.on{background:var(--bad);color:#fff;animation:pulse 1.2s infinite}
 .choices{display:grid;gap:8px;margin-top:16px}
 .choice{background:var(--bg);color:var(--text);border:1px solid var(--line);text-align:left;font-weight:500;display:flex;gap:10px;align-items:center}
 .choice .k{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
@@ -252,6 +253,7 @@ nav button.on{color:var(--accent)}
 
   <!-- ADD -->
   <section id="v-add" class="hidden">
+    <button class="btn-ghost" id="addBack" style="margin-bottom:10px">← My words</button>
     <div class="tabs" id="addTabs">
       <button data-t="ai" class="on">✨ AI generate</button>
       <button data-t="one">✏️ Single</button>
@@ -401,6 +403,7 @@ nav button.on{color:var(--accent)}
 
   <!-- WORDS -->
   <section id="v-words" class="hidden">
+    <button class="btn" id="goAddBig" style="padding:16px;font-size:17px;margin-bottom:14px">➕ Add words</button>
     <div class="card hidden" id="exPrompt">
       <div class="row"><span class="small" id="exPromptTxt" style="flex:2"></span><button class="btn2" style="flex:0 0 auto" id="exGenBtn">✨ Add examples</button></div>
     </div>
@@ -430,8 +433,11 @@ nav button.on{color:var(--accent)}
       <label>Question types</label>
       <label class="check"><input type="checkbox" data-mode="ko2m"> Korean → choose meaning</label>
       <label class="check"><input type="checkbox" data-mode="listen2m"> 🔊 Listen → choose meaning</label>
+      <label class="check"><input type="checkbox" data-mode="listen2kc"> 🔊 Listen → choose the Korean word</label>
       <label class="check"><input type="checkbox" data-mode="m2ko"> Meaning → type Korean</label>
       <label class="check"><input type="checkbox" data-mode="listen2ko"> 🔊 Listen → type Korean (dictation)</label>
+      <label class="check"><input type="checkbox" data-mode="ko2say"> 🎙 Korean → read it aloud</label>
+      <label class="check"><input type="checkbox" data-mode="m2say"> 🎙 Meaning → say it in Korean</label>
       <label class="check"><input type="checkbox" id="setAuto"> Auto-play audio for Korean words</label>
     </div>
     <div class="card">
@@ -501,7 +507,6 @@ nav button.on{color:var(--accent)}
 <nav><div class="in">
   <button data-v="study" class="on"><span class="ic">🎯</span>Study</button>
   <button data-v="read"><span class="ic">📖</span>Read</button>
-  <button data-v="add"><span class="ic">➕</span>Add</button>
   <button data-v="words"><span class="ic">📚</span>Words</button>
   <button data-v="set"><span class="ic">⚙️</span>Settings</button>
 </div></nav>
@@ -566,7 +571,7 @@ const VI = {
 "Tap a sentence to play from there. Press space to play/pause.":"Chạm vào câu để phát từ đó. Phím cách để phát/dừng.",
 "Key words":"Từ khoá","➕ Add new words to flashcards":"➕ Thêm từ mới vào flashcard","✨ Add examples":"✨ Thêm câu ví dụ",
 "All":"Tất cả","New":"Mới","Study":"Học","New words per day":"Số từ mới mỗi ngày","Question types":"Dạng câu hỏi",
-"Korean → choose meaning":"Tiếng Hàn → chọn nghĩa","🔊 Listen → choose meaning":"🔊 Nghe → chọn nghĩa","Meaning → type Korean":"Nghĩa → gõ tiếng Hàn",
+"Korean → choose meaning":"Tiếng Hàn → chọn nghĩa","🔊 Listen → choose meaning":"🔊 Nghe → chọn nghĩa","🔊 Listen → choose the Korean word":"🔊 Nghe → chọn từ tiếng Hàn","Listen · choose what you hear":"Nghe · chọn từ bạn nghe thấy","Meaning → type Korean":"Nghĩa → gõ tiếng Hàn",
 "🔊 Listen → type Korean (dictation)":"🔊 Nghe → gõ tiếng Hàn (chính tả)","Auto-play audio for Korean words":"Tự phát âm từ tiếng Hàn",
 "Voice":"Giọng đọc","Korean voice":"Giọng tiếng Hàn","(young-adult voices, most natural first)":"(giọng trẻ, tự nhiên nhất ở trên)",
 "Show all Korean voices":"Hiện tất cả giọng","Speed:":"Tốc độ:","🐢 Slow":"🐢 Chậm","Learner":"Người học","🇰🇷 Native":"🇰🇷 Bản xứ",
@@ -598,7 +603,7 @@ const VI = {
 "Record":"Ghi âm","Play my recording":"Nghe lại giọng mình","Search words…":"Tìm từ…","Paste the answer here…":"Dán câu trả lời vào đây…",
 "All these words are already in your list":"Các từ này đều đã có trong danh sách","→ you said":"→ bạn đọc","Next sentence →":"Câu tiếp →",
 "I was right":"Tôi đúng mà","Correct pronunciation":"Phát âm đúng","We heard":"App nghe được","Welcome!":"Chào bạn!",
-"Add some Korean words to start learning.":"Thêm vài từ tiếng Hàn để bắt đầu học.","➕ Add words":"➕ Thêm từ","Ready to study":"Sẵn sàng học",
+"Add some Korean words to start learning.":"Thêm vài từ tiếng Hàn để bắt đầu học.","➕ Add words":"➕ Thêm từ","← My words":"← Từ vựng của tôi","Ready to study":"Sẵn sàng học",
 "▶ Start":"▶ Bắt đầu","Default":"Mặc định","Working…":"Đang xử lý…","Coach is listening to your recording…":"Đang nghe bản ghi của bạn…",
 "All data deleted":"Đã xoá toàn bộ dữ liệu","Couldn't read that answer — paste the whole reply":"Không đọc được câu trả lời — hãy dán toàn bộ",
 "Delete?":"Xoá?","Describe what the passage should be about":"Hãy mô tả nội dung bài đọc",
@@ -642,7 +647,8 @@ const VI = {
 "Texting a friend to meet up":"Nhắn tin hẹn gặp bạn","The answer had no sentences":"Câu trả lời không có câu nào",
 "This browser can't speak. Try Chrome or Safari.":"Trình duyệt này không đọc được. Thử Chrome hoặc Safari.","Transport":"Giao thông","Travel":"Du lịch",
 "Type it in Korean":"Gõ bằng tiếng Hàn","Upper-int. (TOPIK 4)":"Trung cấp 2 (TOPIK 4)","Weather and seasons":"Thời tiết & các mùa","Weather":"Thời tiết",
-"Work & office":"Công việc & văn phòng","✅ Correct!":"✅ Chính xác!","❌ Not quite":"❌ Chưa đúng","❌ Not quite.":"❌ Chưa đúng.","❌ Not quite — you wrote":"❌ Chưa đúng — bạn gõ","— you wrote":"— bạn gõ","🔊 Test:":"🔊 Nghe thử:",
+"Work & office":"Công việc & văn phòng","✅ Correct!":"✅ Chính xác!","❌ Not quite":"❌ Chưa đúng","❌ Not quite.":"❌ Chưa đúng.","❌ Not quite — you wrote":"❌ Chưa đúng — bạn gõ","— you wrote":"— bạn gõ","❌ Not quite — we heard":"❌ Chưa đúng — app nghe được","— we heard":"— app nghe được",
+"🎙 Korean → read it aloud":"🎙 Tiếng Hàn → đọc to","🎙 Meaning → say it in Korean":"🎙 Nghĩa → nói tiếng Hàn","Read it aloud":"Đọc to từ này","Say it in Korean":"Nói bằng tiếng Hàn","Can't speak now":"Giờ không nói được","Tap 🎙 and say it":"Bấm 🎙 rồi nói","🔊 Test:":"🔊 Nghe thử:",
 "This word will come back soon.":"Từ này sẽ sớm quay lại.","Continue →":"Tiếp tục →","All done for now":"Xong bài hôm nay",
 "🔁 Extra practice":"🔁 Luyện thêm","+5 new words":"+5 từ mới","🔁 Try again":"🔁 Thử lại","In list":"Đã có",
 "Add more words or practice without changing your schedule.":"Thêm từ hoặc luyện thêm mà không ảnh hưởng lịch ôn.",
@@ -738,7 +744,7 @@ if (UI === "vi"){
 /* ---------------- state ---------------- */
 const defaults = () => ({
   cards: [],
-  settings: { newPerDay: 10, modes: { ko2m:true, listen2m:true, m2ko:true, listen2ko:false }, autoPlay:true, rate:1, voice:"", allVoices:false, voiceV2:true, lang:"en",
+  settings: { newPerDay: 10, modes: { ko2m:true, listen2m:true, listen2kc:true, m2ko:true, listen2ko:false, ko2say:false, m2say:false }, autoPlay:true, rate:1, voice:"", allVoices:false, voiceV2:true, lang:"en",
     apiKey:"", model:"gemini-flash-latest", autoEx:true, level:"b1", uiLang:"vi" },
   passages: [],
   daily: { date: todayStr(), newCount: 0, reviews: 0 },
@@ -752,7 +758,7 @@ function load(){
   } catch(e) { console.warn("load failed", e); }
   if (S.daily.date !== todayStr()) S.daily = { date: todayStr(), newCount: 0, reviews: 0 };
 }
-function save(){ try { track(); localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){ toast("⚠️ Could not save (storage blocked)"); } if (window.__syncChanged) window.__syncChanged(); if (window.__notifySnap) window.__notifySnap(); }
+function save(){ try { autoSpeakModes(); track(); localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){ toast("⚠️ Could not save (storage blocked)"); } if (window.__syncChanged) window.__syncChanged(); if (window.__notifySnap) window.__notifySnap(); }
 
 /* ---- change tracking for sync: stamps edited items with .mod, keeps tombstones for deletions ---- */
 let SNAP = null;
@@ -1028,10 +1034,13 @@ async function translate(ko){
 
 /* ---------------- navigation ---------------- */
 function show(v){
+  if (v === "words" && !S.cards.length) v = "add";   // nothing to list yet → straight to adding words
   $$("section[id^=v-]").forEach(s => s.classList.toggle("hidden", s.id !== "v-"+v));
-  $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" ? "words" : v)));
+  if (v === "add") $("#addBack").classList.toggle("hidden", !S.cards.length);
   if (v === "study" && !session) refreshHome();
   if (v !== "read") { stopPlayer(); cancelRec(); }
+  if (v !== "study") frCancel();
   if (v === "read" && !$("#readHome").classList.contains("hidden")) renderPassList();
   if (v === "words") renderWords();
   if (v === "set") renderSettings();
@@ -1046,6 +1055,8 @@ let navScrollT = null;
 addEventListener("scroll", () => { clearTimeout(navScrollT); navScrollT = setTimeout(() => navSave({ y: Math.round(scrollY) }), 200); }, { passive: true });
 addEventListener("pagehide", () => navSave({ y: Math.round(scrollY) }));
 $$("nav button").forEach(b => b.onclick = () => show(b.dataset.v));
+$("#goAddBig").onclick = () => show("add");
+$("#addBack").onclick = () => show("words");
 
 /* ---------------- home ---------------- */
 function refreshHome(){
@@ -1083,6 +1094,17 @@ function timeUntil(t){
 
 /* ---------------- study session ---------------- */
 let session = null;
+/* speaking questions: switched on automatically the first time a Gemini key is added (once — the user can turn them off) */
+const SPEAK_MODES = ["ko2say", "m2say"];
+function autoSpeakModes(){
+  if (S.settings.speakAuto || !(S.settings.apiKey && S.settings.apiKey.trim())) return;
+  S.settings.speakAuto = true; S.settings.modes.ko2say = true; S.settings.modes.m2say = true;
+}
+function canSpeakQ(){
+  if (!window.isSecureContext) return false;
+  const ai = S.settings.apiKey && S.settings.apiKey.trim() && navigator.mediaDevices && window.MediaRecorder;
+  return !!(ai || window.SpeechRecognition || window.webkitSpeechRecognition);
+}
 function enabledModes(){ const m = Object.keys(S.settings.modes).filter(k => S.settings.modes[k]); return m.length ? m : ["ko2m"]; }
 function startSession(practice){
   let queue;
@@ -1106,6 +1128,7 @@ function startSession(practice){
 }
 $("#endBtn").onclick = () => endSession();
 function endSession(summary){
+  frCancel();
   const s = session; session = null;
   $("#studySession").classList.add("hidden"); $("#studyHome").classList.remove("hidden");
   refreshHome();
@@ -1115,6 +1138,7 @@ function endSession(summary){
   }
 }
 function nextQ(){
+  frCancel();
   if (!session) return;
   if (!session.queue.length) return endSession(true);
   const item = session.queue[0];
@@ -1144,28 +1168,38 @@ function renderIntro(item){
   };
   $("#gotIt").focus();
 }
-function pickMode(c){
+function pickMode(c, noSpeak){
   let modes = enabledModes();
+  if (noSpeak || !canSpeakQ()) modes = modes.filter(m => !SPEAK_MODES.includes(m));
   // multiple choice needs other words with meanings
   const pool = S.cards.filter(x => x.id !== c.id && x.meaning);
-  if (pool.length < 1 || !c.meaning) modes = modes.filter(m => m === "m2ko" || m === "listen2ko");
-  if (!c.meaning) modes = modes.filter(m => m !== "m2ko");
+  if (pool.length < 1 || !c.meaning) modes = modes.filter(m => m === "m2ko" || m === "listen2ko" || m === "listen2kc" || SPEAK_MODES.includes(m));
+  if (!c.meaning) modes = modes.filter(m => m !== "m2ko" && m !== "m2say");
   if (!modes.length) modes = ["listen2ko"];
   return modes[Math.floor(Math.random()*modes.length)];
 }
 function renderQuiz(item){
   const c = item.card, mode = item.mode || (item.mode = pickMode(c));
-  const titles = { ko2m:"Choose the meaning", listen2m:"Listen · choose the meaning", m2ko:"Type it in Korean", listen2ko:"Listen · type what you hear" };
+  const titles = { ko2m:"Choose the meaning", listen2m:"Listen · choose the meaning", listen2kc:"Listen · choose what you hear", m2ko:"Type it in Korean", listen2ko:"Listen · type what you hear", ko2say:"Read it aloud", m2say:"Say it in Korean" };
   let prompt = "";
-  if (mode === "ko2m") prompt = `<div class="ko" lang="ko">${esc(c.ko)}</div><button class="speak" id="qSpeak">🔊</button>`;
-  if (mode === "listen2m" || mode === "listen2ko") prompt = `<button class="speak big" id="qSpeak">🔊</button><p class="small muted" style="margin:0">Tap to replay</p>`;
-  if (mode === "m2ko") prompt = `<div class="mean" style="font-size:28px">${esc(c.meaning)}</div>`;
+  if (mode === "ko2m" || mode === "ko2say") prompt = `<div class="ko" lang="ko">${esc(c.ko)}</div><button class="speak" id="qSpeak">🔊</button>`;
+  if (mode === "listen2m" || mode === "listen2ko" || mode === "listen2kc") prompt = `<button class="speak big" id="qSpeak">🔊</button><p class="small muted" style="margin:0">Tap to replay</p>`;
+  if (mode === "m2ko" || mode === "m2say") prompt = `<div class="mean" style="font-size:28px">${esc(c.meaning)}</div>`;
   let answer = "";
   if (mode === "ko2m" || mode === "listen2m"){
     const others = shuffle(S.cards.filter(x => x.id !== c.id && x.meaning && x.meaning !== c.meaning)).slice(0,3);
     const opts = shuffle([c, ...others]);
     item.opts = opts;
     answer = `<div class="choices">${opts.map((o,i)=>`<button class="choice" data-i="${i}"><span class="k">${i+1}</span><span>${esc(o.meaning)}</span></button>`).join("")}</div>`;
+  } else if (mode === "listen2kc"){
+    const opts = shuffle([c, ...soundAlikes(c, 3)]);
+    item.opts = opts;
+    answer = `<div class="choices">${opts.map((o,i)=>`<button class="choice" data-i="${i}"><span class="k">${i+1}</span><span lang="ko" style="font-size:20px">${esc(o.ko)}</span></button>`).join("")}</div>`;
+  } else if (SPEAK_MODES.includes(mode)){
+    answer = `<div style="margin-top:12px"><button class="speak big rec" id="sayRec" title="Record">🎙</button>
+      <p class="small muted" id="sayStatus" style="margin:0;text-align:center">Tap 🎙 and say it</p>
+      <div class="row" style="margin-top:12px">${mode === "m2say" ? `<button class="btn-ghost" id="hintBtn">Hint</button>` : ""}<button class="btn-ghost" id="saySkip" style="flex:2">Can't speak now</button></div>
+      <p class="small muted" id="hintTxt" style="margin:8px 0 0"></p></div>`;
   } else {
     answer = `<div style="margin-top:16px"><input id="typeIn" type="text" lang="ko" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="한글로 입력…">
       <div class="row" style="margin-top:8px"><button class="btn-ghost" id="hintBtn">Hint</button><button class="btn" id="checkBtn" style="flex:2">Check</button></div>
@@ -1173,9 +1207,14 @@ function renderQuiz(item){
   }
   $("#qBox").innerHTML = `<div class="qtype">${titles[mode]}</div>${prompt}${answer}<div id="fb"></div>`;
   const sp = $("#qSpeak"); if (sp) sp.onclick = () => speak(c.ko);
-  if (mode === "listen2m" || mode === "listen2ko" || (mode === "ko2m" && S.settings.autoPlay)) setTimeout(()=>speak(c.ko), 250);
+  if (mode === "listen2m" || mode === "listen2ko" || mode === "listen2kc" || (mode === "ko2m" && S.settings.autoPlay)) setTimeout(()=>speak(c.ko), 250);
   if (item.opts){
     $$("#qBox .choice").forEach(b => b.onclick = () => answerChoice(item, +b.dataset.i));
+  } else if (SPEAK_MODES.includes(mode)){
+    $("#sayRec").onclick = () => { if (item.busy || item.answered) return; FR.rec || FR.recog ? sayStop() : sayStart(item); };
+    $("#saySkip").onclick = () => { frCancel(); item.mode = pickMode(c, true); renderQuiz(item); };
+    const hb = $("#hintBtn"); let h = 0;
+    if (hb) hb.onclick = () => { h = Math.min(h+1, [...c.ko].length); item.hinted = true; $("#hintTxt").textContent = "Starts with: " + [...c.ko].slice(0,h).join("") + " · " + [...c.ko].length + " characters"; };
   } else {
     const inp = $("#typeIn");
     setTimeout(()=>inp.focus(), 50);
@@ -1184,6 +1223,60 @@ function renderQuiz(item){
     let h = 0;
     $("#hintBtn").onclick = () => { h = Math.min(h+1, [...c.ko].length); item.hinted = true; $("#hintTxt").textContent = "Starts with: " + [...c.ko].slice(0,h).join("") + " · " + [...c.ko].length + " characters"; };
   }
+}
+/* ---- sound-alike distractors for "listen → choose the Korean word" ----
+   Real deck words that differ by 1–2 jamo come first; the rest are minimal pairs made by swapping one
+   easily-confused sound (ㄱ/ㄲ/ㅋ, ㅓ/ㅗ, final ㄴ/ㅇ/ㅁ…). Swaps that Korean pronunciation rules would
+   make sound identical (tensing after a stop, nasal assimilation, 져=저, ㅐ=ㅔ) are skipped. */
+const HG = 0xAC00, isSyl = ch => { const k = ch.charCodeAt(0) - HG; return k >= 0 && k < 11172; };
+const splitSyl = ch => { const k = ch.charCodeAt(0) - HG; return [Math.floor(k/588), Math.floor(k%588/28), k%28]; };
+const joinSyl = (l, v, t) => String.fromCharCode(HG + l*588 + v*28 + t);
+const LEAD_ALIKE = [[0,1,15],[3,4,16],[7,8,17],[12,13,14],[9,10],[11,18]];
+const VOW_ALIKE = { 0:[4,2], 1:[0], 2:[0,6], 4:[8,0,6], 5:[4], 6:[12,4], 8:[4,13,12], 12:[6,8], 13:[18,8,17], 17:[13,12], 18:[13,20], 20:[18,16], 16:[20,13] };
+const TAIL_ALIKE = { 0:[4,21], 1:[17,21], 4:[21,16,0], 8:[0,4], 16:[4,21], 17:[1,16], 21:[4,16,0] };
+const Y_VOW = [2,3,6,7,12,17], SONORANT_TAIL = [0,4,8,16,21];
+function minimalPairs(ko){
+  const chs = [...ko], out = new Set();
+  chs.forEach((ch, i) => {
+    if (!isSyl(ch)) return;
+    const [l, v, t] = splitSyl(ch);
+    const prev = i && isSyl(chs[i-1]) ? splitSyl(chs[i-1]) : null, next = isSyl(chs[i+1] || "") ? splitSyl(chs[i+1]) : null;
+    const put = syl => { const w = chs.slice(); w[i] = syl; out.add(w.join("")); };
+    const g = LEAD_ALIKE.find(x => x.includes(l));
+    const leadOk = !prev || (SONORANT_TAIL.includes(prev[2]) && l !== 11 && l !== 18); // ㅎ goes silent mid-word
+    // after a final consonant plain/tense often merge (신발 = [신빨]), so only swap to/from the aspirated one there
+    const tensePair = x => Math.abs(x - l) === 1 && [0,3,7,9,12].includes(Math.min(x, l));
+    if (g && leadOk) g.filter(x => x !== l && !([12,13,14].includes(x) && Y_VOW.includes(v)) && !(prev && prev[2] && tensePair(x))).forEach(x => put(joinSyl(x, v, t)));
+    const yMerge = [12,13,14].includes(l);
+    (VOW_ALIKE[v] || []).filter(x => !(yMerge && (Y_VOW.includes(x) || Y_VOW.includes(v)))).forEach(x => put(joinSyl(l, x, t)));
+    // before ㄴ/ㄹ/ㅁ stops turn nasal; casual speech also blurs ㄴ→ㅇ before ㄱ and ㄴ→ㅁ before ㅂ
+    const blur = x => next && ((t + x === 25 && [0,1,15].includes(next[0])) || (t + x === 20 && [7,8,17].includes(next[0])));
+    if (!next || ![2,5,6].includes(next[0])) (TAIL_ALIKE[t] || []).filter(x => !blur(x)).forEach(x => put(joinSyl(l, v, x)));
+  });
+  out.delete(ko);
+  return [...out];
+}
+const jamo = s => [...s].flatMap(ch => isSyl(ch) ? splitSyl(ch).map((x, j) => j*100 + x) : [ch]);
+function editDist(a, b){
+  let row = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++){
+    const nr = [i];
+    for (let j = 1; j <= b.length; j++) nr[j] = Math.min(row[j] + 1, nr[j-1] + 1, row[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    row = nr;
+  }
+  return row[b.length];
+}
+function soundAlikes(c, n){
+  const target = norm(c.ko), seen = new Set([target]), picks = [];
+  const add = o => { const k = norm(o.ko); if (!k || seen.has(k) || picks.length >= n) return; seen.add(k); picks.push(o); };
+  const cj = jamo(c.ko);
+  const ranked = S.cards.filter(x => x.id !== c.id && x.ko)
+    .map(x => ({ x, d: editDist(cj, jamo(x.ko)) + Math.abs([...x.ko].length - [...c.ko].length) }))
+    .sort((a, b) => a.d - b.d || Math.random() - .5);
+  shuffle(ranked.filter(r => r.d <= 2)).slice(0, 2).forEach(r => add(r.x));
+  shuffle(minimalPairs(c.ko)).forEach((ko, i) => add({ id: "alike" + i, ko }));
+  ranked.forEach(r => add(r.x));
+  return picks;
 }
 const norm = s => String(s).normalize("NFC").replace(/[\s.,!?~·'"()\-]/g, "").toLowerCase();
 function answerChoice(item, i){
@@ -1201,13 +1294,13 @@ function answerTyped(item){
   $("#typeIn").disabled = true; $("#checkBtn").disabled = true; $("#hintBtn").disabled = true;
   finish(item, ok, v);
 }
-function finish(item, ok, typed){
+function finish(item, ok, typed, extra){
   const c = item.card; session.answered++; if (ok) session.correct++;
   const reveal = `<div style="margin-top:4px"><b lang="ko" style="font-size:20px">${esc(c.ko)}</b> — ${esc(c.meaning)}</div>`;
   const exBlock = exampleHTML(c);
   let html;
   if (ok){
-    html = `<div class="feedback ok">✅ Correct!${reveal}</div>` + exBlock;
+    html = `<div class="feedback ok">✅ Correct!${reveal}${extra || ""}</div>` + exBlock;
     if (!session.practice){
       const base = item.fresh || item.hinted || item.failed ? [3,4] : [3,4,5];
       html += `<div class="grades" style="grid-template-columns:repeat(${base.length},1fr)">` + base.map(q => {
@@ -1217,7 +1310,7 @@ function finish(item, ok, typed){
       }).join("") + `</div>`;
     } else html += `<button class="btn" style="margin-top:12px" id="contBtn">Continue →</button>`;
   } else {
-    html = `<div class="feedback bad">❌ Not quite${typed ? ` — you wrote <b lang="ko">${esc(typed)}</b>` : ""}.${reveal}<div class="small" style="margin-top:6px">This word will come back soon.</div></div>${exBlock}
+    html = `<div class="feedback bad">❌ Not quite${typed ? ` ${item.spoken ? "— we heard" : "— you wrote"} <b lang="ko">${esc(typed)}</b>` : ""}.${reveal}${extra || ""}<div class="small" style="margin-top:6px">This word will come back soon.</div></div>${exBlock}
       <div class="row" style="margin-top:12px"><button class="speak sm" style="flex:0 0 48px;height:48px;width:48px" id="fbSpeak">🔊</button>${typed ? `<button class="btn-ghost" id="typoBtn">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2">Continue →</button></div>`;
   }
   $("#fb").innerHTML = html;
@@ -1248,6 +1341,104 @@ function done(item, q){
   }
   nextQ();
 }
+/* ---- speaking questions: record → check (Gemini listens to the audio; otherwise browser speech recognition) ---- */
+const FR = { rec: null, stream: null, chunks: [], recog: null, heard: "", alts: [], t0: 0, timer: null };
+function frCancel(){
+  clearTimeout(FR.timer);
+  try { if (FR.rec && FR.rec.state === "recording") { FR.rec.onstop = null; FR.rec.stop(); } } catch(e){}
+  try { if (FR.recog) { FR.recog.onend = null; FR.recog.abort(); } } catch(e){}
+  if (FR.stream) FR.stream.getTracks().forEach(t => t.stop());
+  FR.rec = FR.recog = FR.stream = null;
+  frBtn(false);
+}
+function frBtn(on){ const b = $("#sayRec"); if (b){ b.classList.toggle("on", on); b.textContent = on ? "⏹" : "🎙"; } }
+function frSay(html){ const el = $("#sayStatus"); if (el) el.innerHTML = html; }
+const frBlocked = () => L("🎙 Micro bị chặn. Cho phép micro cho trang này rồi thử lại (xem Cài đặt → Hướng dẫn → Micro).", "🎙 Microphone blocked. Allow it for this site and try again (see Settings → Guide → Microphone).");
+async function sayStart(item){
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  const useAI = hasKey() && navigator.mediaDevices && window.MediaRecorder;
+  FR.heard = ""; FR.alts = [];
+  try {
+    if (useAI){
+      FR.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      FR.chunks = [];
+      FR.rec = new MediaRecorder(FR.stream);
+      FR.rec.ondataavailable = e => { if (e.data.size) FR.chunks.push(e.data); };
+      FR.rec.onstop = () => sayRecorded(item);
+      FR.rec.start();
+    } else {
+      const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = false; r.maxAlternatives = 3;
+      r.onresult = ev => {
+        let t = ""; FR.alts = [];
+        for (const res of ev.results){ t += res[0].transcript; for (let k = 0; k < res.length; k++) FR.alts.push(res[k].transcript); }
+        FR.heard = t; frSay(L("Đang nghe: ", "Hearing: ") + `<b lang="ko">${esc(t)}</b>`);
+      };
+      r.onerror = ev => {
+        if (ev.error === "not-allowed" || ev.error === "service-not-allowed"){ FR.recog = null; frCancel(); frSay(frBlocked()); }
+        else if (ev.error === "network") toast(L("⚠️ Cần có mạng để nhận giọng nói", "⚠️ Speech check needs internet"));
+      };
+      r.onend = () => { if (FR.recog === r){ FR.recog = null; clearTimeout(FR.timer); frBtn(false); sayCheckLocal(item); } };
+      r.start(); FR.recog = r;
+    }
+  } catch(e){
+    frCancel();
+    frSay(e.name === "NotAllowedError" || e.name === "SecurityError" ? frBlocked() : "⚠️ " + esc(e.message || "Can't access microphone"));
+    return;
+  }
+  FR.t0 = Date.now(); frBtn(true);
+  frSay(L("🔴 Đang ghi… nói xong bấm ⏹", "🔴 Recording… tap ⏹ when done"));
+  FR.timer = setTimeout(sayStop, 8000);
+}
+function sayStop(){
+  clearTimeout(FR.timer); frBtn(false);
+  if (FR.rec && FR.rec.state === "recording") FR.rec.stop();          // → sayRecorded
+  else if (FR.recog){ try { FR.recog.stop(); } catch(e){} }            // → onend → sayCheckLocal
+}
+async function sayRecorded(item){
+  if (FR.stream) FR.stream.getTracks().forEach(t => t.stop());
+  FR.stream = null;
+  const blob = new Blob(FR.chunks, { type: (FR.rec && FR.rec.mimeType) || "audio/webm" });
+  FR.rec = null;
+  if (Date.now() - FR.t0 < 400){ frSay(L("Ngắn quá — thử lại nhé.", "Too short — try again.")); return; }
+  const c = item.card, read = item.mode === "ko2say";
+  item.busy = true; frSay(`<span class="spinner"></span>` + L("Đang chấm…", "Checking…"));
+  try {
+    const b64 = await blobToWavB64(blob);
+    const prompt = `You are a friendly Korean teacher. A ${uiLangName()}-speaking learner was ${read
+      ? `shown the Korean word "${c.ko}" and asked to read it aloud`
+      : `shown the meaning "${c.meaning}" and asked to say the Korean word for it. Expected answer: "${c.ko}"`}.
+Listen to the attached recording.
+"heard" = what the learner said, in Hangul ("" if silent or unclear).
+"correct" = true if they said ${read ? "the word" : "the expected word (or an equally correct Korean word for that meaning)"} clearly enough that a Korean listener would understand it. Small accent issues are fine.
+"score" = pronunciation score 0–100, realistic.
+"tip" = one short, concrete pronunciation tip in ${uiLangName()}, or "" if none is needed.
+Return JSON exactly like: {"heard":"","correct":false,"score":0,"tip":""}`;
+    const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }]));
+    item.busy = false;
+    if (!session || session.queue[0] !== item) return;
+    const extra = (j.score != null || j.tip) ? `<div class="small" style="margin-top:6px">🎙 ${j.score != null ? `<b>${Math.round(j.score)}/100</b>` : ""}${j.tip ? " · " + esc(j.tip) : ""}</div>` : "";
+    sayResult(item, !!j.correct, String(j.heard || "").trim(), extra);
+  } catch(e){
+    item.busy = false;
+    frSay("⚠️ " + esc(e.message));
+  }
+}
+function sayCheckLocal(item){
+  if (!session || session.queue[0] !== item) return;
+  const heard = FR.heard.trim();
+  if (!heard){ frSay(L("Chưa nghe thấy gì — nói to và gần micro hơn rồi thử lại.", "Didn't catch that — speak louder and closer to the mic, then try again.")); return; }
+  const t = norm(item.card.ko);
+  const ok = (FR.alts.length ? FR.alts : [heard]).some(a => { const n = norm(a); return n === t || n.includes(t); });
+  sayResult(item, ok, heard, "");
+}
+function sayResult(item, ok, heard, extra){
+  if (item.answered) return;
+  item.answered = true; item.spoken = true;
+  ["#sayRec", "#saySkip", "#hintBtn"].forEach(id => { const b = $(id); if (b) b.disabled = true; });
+  frSay("");
+  finish(item, ok, heard, extra);
+}
+
 document.addEventListener("keydown", e => {
   if (!session || $("#v-study").classList.contains("hidden")) return;
   if (e.target.tagName === "INPUT") return;
@@ -1974,12 +2165,12 @@ $("#setAllVoices").onchange = e => { S.settings.allVoices = e.target.checked; sa
 $$("#ratePresets button").forEach(b => b.onclick = () => { S.settings.rate = +b.dataset.r; save(); renderSettings(); speak("안녕하세요. 만나서 반가워요!"); });
 $("#setLang").onchange = e => { S.settings.lang = e.target.value; save(); };
 $("#testVoice").onclick = () => speak("안녕하세요");
-$("#setKey").onchange = e => { S.settings.apiKey = e.target.value.trim(); save(); };
+$("#setKey").onchange = e => { S.settings.apiKey = e.target.value.trim(); save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]); };
 $("#setModel").onchange = e => { S.settings.model = e.target.value.trim() || "gemini-flash-latest"; save(); };
 $("#setAutoEx").onchange = e => { S.settings.autoEx = e.target.checked; save(); };
 $("#keyShow").onclick = () => { const i = $("#setKey"); i.type = i.type === "password" ? "text" : "password"; };
 $("#testAI").onclick = async () => {
-  S.settings.apiKey = $("#setKey").value.trim(); save();
+  S.settings.apiKey = $("#setKey").value.trim(); save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]);
   if (!S.settings.apiKey) { toast("Paste your Gemini key first"); return; }
   const b = $("#testAI"); busy(b, true, "Testing…");
   try { const j = extractJSON(await gemini('Translate 안녕하세요 to English. Return JSON {"t":""}')); toast("✅ Connected! " + (j.t || "")); }
@@ -2365,7 +2556,7 @@ function buildWelcome(){
       <h2>${L("Cuối cùng: cài app ra màn hình chính", "Last step: install the app")}</h2>
       <p class="lead">${L("Toàn màn hình, chạy offline, nhận 🔔 nhắc ôn tập.", "Full screen, works offline, sends 🔔 review reminders.")}</p>
       <div id="wInstall"></div>
-      <div class="note">🎉 ${L("Xong rồi! Thêm từ ở <b>➕ Thêm</b>, ôn mỗi ngày ở <b>🎯 Học</b>.", "All set! Add words in <b>➕ Add</b>, review daily in <b>🎯 Study</b>.")}</div>
+      <div class="note">🎉 ${L("Xong rồi! Thêm từ ở <b>📚 Từ vựng</b>, ôn mỗi ngày ở <b>🎯 Học</b>.", "All set! Add words in <b>📚 Words</b>, review daily in <b>🎯 Study</b>.")}</div>
     </div>
 
     <div class="wnav">
@@ -2463,14 +2654,12 @@ async function micTest(out){
 
 const GUIDE = [
   ["g-start", L("Bắt đầu nhanh", "Quick start"), L(`
-    <ol><li><b>➕ Thêm</b>: thêm từ mới. Có thể dán cả danh sách hoặc chụp ảnh.</li>
-    <li><b>🎯 Học</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý.</li>
+    <ol>    <li><b>🎯 Học</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý.</li>
     <li><b>📖 Đọc</b>: bài đọc theo trình độ. 🔊 để nghe, 🎙 để đọc to và được chấm.</li>
-    <li><b>📚 Từ vựng</b>: xem, sửa, xoá từ.</li></ol>`, `
-    <ol><li><b>➕ Add</b>: add words. Paste a whole list or use a screenshot.</li>
-    <li><b>🎯 Study</b>: review flashcards daily. Answer honestly so the schedule fits you.</li>
+    <li><b>📚 Từ vựng</b>: xem, sửa, xoá từ. Bấm <b>➕ Thêm từ</b> để thêm từ mới, dán cả danh sách hoặc chụp ảnh.</li></ol>`, `
+    <ol>    <li><b>🎯 Study</b>: review flashcards daily. Answer honestly so the schedule fits you.</li>
     <li><b>📖 Read</b>: passages at your level. 🔊 to listen, 🎙 to read aloud and get scored.</li>
-    <li><b>📚 Words</b>: view, edit and delete words.</li></ol>`)],
+    <li><b>📚 Words</b>: view, edit and delete words. Tap <b>➕ Add words</b> to add more, paste a whole list or use a screenshot.</li></ol>`)],
   ["g-install", L("Cài app", "Install the app"), L(`
     <ul><li><b>Android</b>: Chrome → <b>⋮</b> → <b>Cài đặt ứng dụng</b></li>
     <li><b>iPhone / iPad</b>: Safari → <b>Chia sẻ</b> ⬆️ → <b>Thêm vào MH chính</b></li>
@@ -2551,6 +2740,7 @@ $$("[data-guide]").forEach(b => b.onclick = e => {
 /* ---------------- init ---------------- */
 load();
 takeSnap();
+if (!S.settings.speakAuto && S.settings.apiKey && S.settings.apiKey.trim()) save();   // existing key → speaking questions on (once)
 if (!Array.isArray(S.passages)) S.passages = [];
 if (!S.settings.voiceV2) { if (S.settings.rate === 0.85) S.settings.rate = 1; S.settings.voiceV2 = true; save(); }  // native speed by default
 fillLevels($("#genLevel")); fillLevels($("#rdLevel"));
