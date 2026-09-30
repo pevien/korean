@@ -36,11 +36,14 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom));
   word-break:keep-all;overflow-wrap:break-word}   /* Korean wraps at spaces, not mid-word (안녕/하세요) */
 .wrap{max-width:560px;margin:0 auto;padding:16px}
 header{display:flex;align-items:center;justify-content:space-between;margin:4px 0 22px}   /* extra room: the script "g" hangs low */
-header h1{font-size:20px;margin:0}
+header h1{font-size:20px;margin:0;white-space:nowrap;min-width:0}
 header h1 .logo{font-family:"Satisfy",cursive;font-style:italic;font-weight:400;font-size:27px;line-height:1;letter-spacing:.01em}
 header h1 .leaf{font-size:26px;line-height:1;vertical-align:-.04em}   /* sized to the script name next to it */
 @supports (font-synthesis:none){ header h1 .logo{font-synthesis:none} }   /* the script face is already slanted: don't fake-italicise it again */
 .pill{font-size:12px;color:var(--muted);background:var(--card);border:1px solid transparent;padding:4px 10px;border-radius:99px}
+#cloudBtn{white-space:nowrap;flex:0 0 auto}
+#cloudBtn[data-st="expired"]{color:var(--warn);background:color-mix(in srgb, var(--warn) 14%, var(--card));border-color:color-mix(in srgb, var(--warn) 35%, transparent);font-weight:600}
+#cloudBtn[data-st="error"]{color:var(--bad);background:var(--bad-soft);border-color:color-mix(in srgb, var(--bad) 35%, transparent);font-weight:600}
 /* surfaces separate by fill (+ light-mode shadow), not outlines — borders stay transparent so hover/state colours can still use them */
 .card{background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
 /* flat = lists and long reading text sit straight on the page: no box, full width for the content */
@@ -2911,7 +2914,10 @@ function setCloud(st){
   cloudState = st;
   const b = $("#cloudBtn");
   b.classList.toggle("hidden", !SY.on);
-  b.textContent = { ok: "☁️ ✓", busy: "☁️ …", expired: L("☁️ Chạm để đồng bộ", "☁️ Tap to sync"), error: "☁️ ⚠️", off: "☁️" }[st] || "☁️";
+  // needs-action states get a short tinted label (fits next to the logo on a phone); the full reason lives in the tooltip
+  b.textContent = { ok: "☁️ ✓", busy: "☁️ …", expired: L("☁️ Đồng bộ", "☁️ Sync"), error: "☁️ ⚠️", off: "☁️" }[st] || "☁️";
+  b.dataset.st = st;
+  b.title = { expired: L("Phiên đăng nhập Google đã hết hạn — chạm để đồng bộ tiếp", "Google sign-in expired — tap to keep syncing"), error: L("Đồng bộ lỗi — chạm để thử lại", "Sync failed — tap to retry") }[st] || "Google Drive sync";
   renderSyncCard();
 }
 function ago(t){
@@ -3376,7 +3382,7 @@ const GUIDE = [
     <li>Máy khác: dán <b>cùng Client ID</b>, đăng nhập <b>cùng Gmail</b></li></ol>
     <p><b>🛠 Gặp lỗi?</b></p>
     <ul><li><b>Error 400 / access blocked</b>: xem lại 🔑 bước 4 (đã thêm Gmail chưa) và bước 5 (địa chỉ phải khớp, không có <code>/</code> ở cuối). Sửa xong đợi vài phút.</li>
-    <li><b>☁️ Chạm để đồng bộ</b> ở trên cùng: phiên đăng nhập (~1 giờ) đã hết, chạm để tiếp tục.</li></ul>`, `
+    <li><b>☁️ Đồng bộ</b> (màu cam) ở trên cùng: phiên đăng nhập (~1 giờ) đã hết, chạm để tiếp tục.</li></ul>`, `
     <p><b>🔑 Create a Client ID</b> <span class="muted">— once, free, ~5 min</span></p>
     <ol><li><b>Create a project</b>: open <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> → any name → <b>Create</b></li>
     <li><b>Turn on the Drive API</b>: open <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a> → <b>Enable</b></li>
@@ -3390,7 +3396,7 @@ const GUIDE = [
     <li>Other devices: paste the <b>same Client ID</b>, sign in with the <b>same Gmail</b></li></ol>
     <p><b>🛠 Something wrong?</b></p>
     <ul><li><b>Error 400 / access blocked</b>: check 🔑 step 4 (Gmail added) and step 5 (the address must match, no trailing <code>/</code>). After fixing, wait a few minutes.</li>
-    <li><b>☁️ Tap to sync</b> at the top: the ~1 hour sign-in expired, tap it to continue.</li></ul>`)],
+    <li><b>☁️ Sync</b> (orange) at the top: the ~1 hour sign-in expired, tap it to continue.</li></ul>`)],
   ["g-mic", L("Micro & luyện nói", "Microphone & speaking"), L(`
     <p>Lần đầu bấm 🎙, chọn <b>Cho phép</b>. Nếu bị chặn:</p>
     <ul><li><b>Android</b>: Cài đặt → Ứng dụng → Chrome → Quyền → Micro → Cho phép</li>
