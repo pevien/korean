@@ -484,8 +484,10 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .empty .big{font-size:44px}
 /* completion cheer: a random BTS member emoji + a short Korean phrase */
 .cheer-m{font-size:52px;line-height:1;display:inline-block;animation:bob 1.6s ease-in-out infinite}
-.cheer-ko{font-size:22px;font-weight:800;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
-.cheer-ko .speak.sm{width:34px;height:34px;font-size:15px;flex:0 0 34px}
+.cheer-ko{font-size:22px;font-weight:800;margin-top:10px;text-align:center}
+/* the phrase stays centred (lined up with the translation); the speaker hangs off its right edge */
+.cheer-ko>span{position:relative;display:inline-block}
+.cheer-ko .speak.sm{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:8px;width:34px;height:34px;font-size:15px}
 .cheer-tr{font-size:14px;margin:2px 0 14px}
 .stat.pop{animation:pop .6s ease}
 @keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(-4deg)}}
@@ -1825,7 +1827,7 @@ const pickOne = a => a[Math.floor(Math.random()*a.length)];
 function cheerHTML(list){
   const e = pickOne(BTS), [ko, vi, en] = list ? pickOne(list) : streakCheer() || pickOne(cheerTry || (S.daily.result && S.daily.result.missed.length) ? CHEER_TRY : CHEER_OK);
   return `<div data-noi18n><div class="cheer-m">${e}</div>
-    <div class="cheer-ko"><span lang="ko">${ko}</span><button class="speak sm cheer-say" data-say="${esc(ko.replace(/\p{Extended_Pictographic}/gu, "").trim())}" title="Listen">${ic("speaker-high")}</button></div><div class="cheer-tr muted">${L(vi, en)}</div></div>`;
+    <div class="cheer-ko"><span><span lang="ko">${ko}</span><button class="speak sm cheer-say" data-say="${esc(ko.replace(/\p{Extended_Pictographic}/gu, "").trim())}" title="Listen">${ic("speaker-high")}</button></span></div><div class="cheer-tr muted">${L(vi, en)}</div></div>`;
 }
 // the cheer card is rendered from many places, so one delegated listener covers them all
 document.addEventListener("click", e => { const b = e.target.closest(".cheer-say"); if (b){ e.stopPropagation(); speak(b.dataset.say); } });
