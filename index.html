@@ -151,6 +151,13 @@ button{font:inherit;cursor:pointer;border:none;border-radius:var(--r-pill);paddi
 .btn-danger.ico[data-confirm]{padding:8px 14px}
 .row{display:flex;gap:8px;align-items:center}
 .row > *{flex:1}
+/* button groups: each button starts at its label's width and the spare room is shared out, so a long label takes more and nothing wraps;
+   only when the labels can't all fit on one line does the text wrap (balanced) */
+.row > button,.ar-tools button,.prev-cta button{flex:1 1 auto;width:auto;text-wrap:balance}
+/* fitRow(): labels that don't fit side by side at full padding get tighter side padding first; only then does text wrap */
+.row.tight > button,.ar-tools.tight button,.prev-cta.tight button{padding-left:10px;padding-right:10px}
+.row.measure,.ar-tools.measure,.prev-cta.measure{flex-wrap:nowrap}
+.row.measure > button,.ar-tools.measure button,.prev-cta.measure button{white-space:nowrap;flex-shrink:0}
 input,textarea,select{font:inherit;font-size:14px;color:var(--text);background:var(--bg);border:1px solid var(--line);
   border-radius:var(--r-md);padding:12px;width:100%}
 textarea{min-height:120px;resize:vertical}
@@ -365,7 +372,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 /* sub-screen header: [←] title on one row */
 .av-title{width:100%;min-width:0;border-color:transparent;background:none;padding:2px 0;font-size:17px;font-weight:700;border-radius:var(--r-sm);text-align:center}
 .av-title:focus{padding:2px 8px;background:var(--bg)}
-.ar-tools button{flex:1;padding:10px;font-size:14px}
+.ar-tools button{padding:10px;font-size:14px}
 .ar-disp{display:flex;gap:4px;justify-content:flex-end;margin-bottom:auto;padding-bottom:8px}
 .ar-disp button{background:none;border:1px solid var(--line);color:var(--muted);padding:3px 10px;font-size:12px;border-radius:var(--r-pill);font-weight:600}
 .ar-disp button.on{color:var(--army);border-color:var(--army)}
@@ -520,7 +527,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 /* stays above the tab bar while scrolling a long review list */
 .prev-cta{position:sticky;bottom:calc(66px + env(safe-area-inset-bottom));z-index:5;display:flex;gap:8px;margin:10px -10px 0;padding:10px;
   background:var(--card);border-radius:var(--radius);box-shadow:0 -8px 16px -12px rgba(0,0,0,.35)}
-.prev-cta button{flex:1 1 0;min-width:0;padding:10px 18px}
+.prev-cta button{padding:10px 18px}
 .prev-cta button, #autoTr, #addOneBtn{white-space:nowrap}
 #prevTr{flex:0 0 auto;padding-left:16px;padding-right:16px}   /* "Fill meanings" keeps its width; Add takes the rest — no wrapping on phones */
 .prev-ex{grid-column:2 / 4;font-size:12px;color:var(--muted);margin:-2px 0 6px}
@@ -1265,6 +1272,27 @@ function iconize(n){
 }
 iconize(document.body);
 new MutationObserver(ms => ms.forEach(m => m.type === "characterData" ? iconize(m.target) : m.addedNodes.forEach(iconize)))
+  .observe(document.body, { subtree: true, childList: true, characterData: true });
+
+/* button rows: measure the labels on one line at full padding; if they overflow, tighten the padding (CSS .tight) — wrapping is the last resort */
+const FIT_ROWS = ".row, .ar-tools, .prev-cta";
+function fitRow(r){
+  if ([...r.querySelectorAll("button")].filter(b => b.closest(FIT_ROWS) === r).length < 2 || !r.clientWidth) return;
+  r.classList.remove("tight"); r.classList.add("measure");
+  const over = r.scrollWidth > r.clientWidth + 1;
+  r.classList.remove("measure"); r.classList.toggle("tight", over);
+}
+const fitRO = new ResizeObserver(es => es.forEach(e => fitRow(e.target)));   // also fires when a hidden row first shows up
+let fitQ = new Set(), fitRaf = 0;
+function fitLater(n){
+  const el = n.nodeType === 1 ? n : n.parentElement; if (!el) return;
+  const r = el.closest(FIT_ROWS); if (r) fitQ.add(r);
+  el.querySelectorAll && el.querySelectorAll(FIT_ROWS).forEach(x => { fitQ.add(x); fitRO.observe(x); });
+  if (r) fitRO.observe(r);
+  if (!fitRaf) fitRaf = requestAnimationFrame(() => { fitRaf = 0; const q = fitQ; fitQ = new Set(); q.forEach(fitRow); });
+}
+fitLater(document.body);
+new MutationObserver(ms => ms.forEach(m => m.type === "childList" ? (fitLater(m.target), m.addedNodes.forEach(fitLater)) : fitLater(m.target)))
   .observe(document.body, { subtree: true, childList: true, characterData: true });
 
 
@@ -2041,10 +2069,10 @@ function renderQuiz(item){
       <div class="cgrade-row"><span class="small muted">Grading</span><div class="seg cgrade" id="sayGrade"><button data-g="basic" title="${L("Nhận giọng nói của trình duyệt: chỉ xem máy có nhận ra đúng từ không", "Browser speech recognition: only checks whether the word was recognised")}">⚡ Basic</button><button data-g="ai" title="${L("Gemini nghe giọng bạn: chấm điểm phát âm và gợi ý cách sửa", "Gemini listens to you: pronunciation score and tips")}">✨ AI</button></div></div>
       <p class="small muted hidden" id="sayNote" style="text-align:center;margin:6px 0 0">AI grading needs a Gemini key. <button class="linkbtn" id="sayKeyLink">Add key</button></p>
       <p class="hint-box">${ic("lightbulb")}<span id="hintTxt"></span></p>
-      <div class="row" style="margin-top:12px">${mode === "m2say" ? `<button class="btn-ghost" id="hintBtn">Hint</button>` : ""}<button class="btn-ghost" id="saySkip" style="flex:2">Can't speak now</button></div></div>`;
+      <div class="row" style="margin-top:12px">${mode === "m2say" ? `<button class="btn-ghost" id="hintBtn">Hint</button>` : ""}<button class="btn-ghost" id="saySkip" style="flex:2 1 auto">Can't speak now</button></div></div>`;
   } else {
     answer = `<div style="margin-top:16px"><input id="typeIn" type="text" lang="ko" enterkeyhint="go" autocomplete="off" autocapitalize="off" placeholder="한글로 입력…">
-      <div class="row" id="typeCtl" style="margin-top:8px"><button class="btn-ghost" id="hintBtn">Hint</button><button class="btn" id="checkBtn" style="flex:2">Check</button></div>
+      <div class="row" id="typeCtl" style="margin-top:8px"><button class="btn-ghost" id="hintBtn">Hint</button><button class="btn" id="checkBtn" style="flex:2 1 auto">Check</button></div>
       <p class="hint-box" id="typeHint">${ic("lightbulb")}<span id="hintTxt"></span></p></div>`;
   }
   $("#qBox").innerHTML = `<div class="qtype">${titles[mode]}</div>${prompt}${answer}<div id="fb"></div>`;
@@ -2206,7 +2234,7 @@ function finish(item, ok, typed, extra){
     } else html += `<div class="dock"><button class="btn" id="contBtn">Continue</button></div>`;
   } else {
     html = box("bad", "❌ Not quite", typed ? `<span data-noi18n>${item.spoken ? L("App nghe được", "We heard") : L("Bạn gõ", "You wrote")}: <span lang="ko">${markWrong(typed, c.ko)}</span></span>` : "") + `
-      <div class="dock"><div class="row">${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn" style="flex:0 0 auto;white-space:nowrap">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2;white-space:nowrap">Continue</button></div></div>`;
+      <div class="dock"><div class="row">${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn" style="flex:0 0 auto;white-space:nowrap">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2 1 auto;white-space:nowrap">Continue</button></div></div>`;
   }
   $("#fb").innerHTML = html;
   bindSay($("#fb"));
