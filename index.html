@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+  // fields use 14px text: iOS Safari would zoom the page in on every tap into one (it does that below 16px).
+  // maximum-scale stops that auto-zoom on iOS only — pinch-zoom still works there; Android never auto-zooms
+  if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1))
+    document.querySelector('meta[name=viewport]').content += ", maximum-scale=1";
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Hangul with PV">
@@ -28,7 +34,8 @@
     --accent:#8b83ff; --accent-soft:#2a2850; --on-accent:#16142e; --ok:#3ecf8e; --ok-soft:#173327;
     --bad:#ff6b6b; --bad-soft:#3a1d1f; --warn:#f0b35a; --shadow:none;}
 }
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}   /* no blue/grey flash on tap: buttons have their own pressed look */
+:focus:not(:focus-visible){outline:none}   /* the focus ring stays for keyboard users, not after a tap or click */
 html,body{margin:0;background:var(--bg);color:var(--text);
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
   -webkit-text-size-adjust:100%}
@@ -68,12 +75,14 @@ header h1 .leaf{font-size:26px;line-height:1;vertical-align:-.04em}   /* sized t
 .rd-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .rd-top > button{flex:0 0 auto;padding:8px 12px;font-size:18px;line-height:1}
 .rd-top > .btn-ghost{background:none}   /* ✏️ 🗑 match the plain ← : no box at rest, a tint on hover/press */
+.rd-top > .btn-ghost:not(.back){padding:8px}
+.rd-top > .btn-ghost:not(.back) + .btn-ghost{margin-left:-6px}   /* ✏️ 🗑 read as one pair */
 .rd-top > .btn-ghost:hover,.rd-top > .btn-ghost:active{background:color-mix(in srgb, var(--muted) 14%, transparent)}
 .rd-top .tt{flex:1;min-width:0}
 .rd-top h2{margin:0;font-size:18px;line-height:1.3}
 .rd-top #rdSub{margin:2px 0 0}
 .rd-top #rdSub:empty{display:none}
-.card.flat .sent:hover{background:var(--card)}
+.card.flat .sent:not(.coaching):hover{background:var(--card)}   /* the sentence being coached keeps its tint: it is one block with the coach below */
 h2{font-size:16px;margin:0 0 10px}
 .muted{color:var(--muted)} .small{font-size:13px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -128,7 +137,7 @@ button{font:inherit;cursor:pointer;border:none;border-radius:12px;padding:12px 1
 .btn-danger{background:var(--bad-soft);color:var(--bad)}
 .row{display:flex;gap:8px;align-items:center}
 .row > *{flex:1}
-input,textarea,select{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);
+input,textarea,select{font:inherit;font-size:14px;color:var(--text);background:var(--bg);border:1px solid var(--line);
   border-radius:12px;padding:12px;width:100%}
 textarea{min-height:120px;resize:vertical}
 select{-webkit-appearance:none;appearance:none;padding-right:40px;cursor:pointer;
@@ -185,7 +194,9 @@ nav button.on{color:var(--accent)}
 .card > .guide{margin-top:10px}
 #gMicRes:empty,#voiceInfo:empty{display:none}
 .eye-btn{display:flex;align-items:center;justify-content:center;align-self:stretch}
-.eye-btn[aria-pressed="false"] .eye-off{display:none}   /* slashed eye while the key is visible */
+.eye-btn[aria-pressed="false"] .eye-off{display:none}
+.key-del{color:var(--bad)}
+.key-del[data-confirm]{background:var(--bad-soft)}   /* armed: the next tap removes the key */   /* slashed eye while the key is visible */
 .card > .guide details{border-bottom:1px solid var(--line)}   /* a how-to inside a settings card */
 .guide p, .guide li{font-size:14px;line-height:1.6}
 .guide p{margin:0 0 8px}
@@ -470,6 +481,9 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .abc-g:first-of-type{border-top:0;padding-top:0}
 .abc-g .chips{margin-top:6px;gap:5px}
 .abc-g .chip{font-size:18px;min-width:38px;padding:4px 8px}
+/* no card around the letters: they sit on the page, so the chips take the card colour to stand out */
+.abc-page .chip{background:var(--card)}
+.abc-page .prev-cta{margin:14px -16px 0;padding:10px 16px;border-radius:0}   /* full-width bar to the page gutters */
 /* modal */
 .modal{position:fixed;inset:0;background:rgba(10,12,30,.55);z-index:30;display:flex;align-items:flex-end;justify-content:center}
 .modal .sheet{background:var(--card);width:100%;max-width:560px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
@@ -486,7 +500,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .plist .t{flex:1;min-width:0}
 .plist .t b{display:block}
 /* reader: one slim pinned bar — ⏮ ▶ ⏭ · speed · ⚙; the rarely-changed options fold into the ⚙ panel */
-.player{position:sticky;top:calc(6px + env(safe-area-inset-top));z-index:5;background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:6px 8px;margin-bottom:12px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
+.player{position:sticky;top:calc(6px + env(safe-area-inset-top));z-index:5;background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:8px 8px 6px;margin-bottom:12px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
 .pctl{display:flex;gap:8px;justify-content:center;align-items:center}
 .pctl button{background:var(--accent-soft);color:var(--accent);width:48px;height:48px;padding:0;border-radius:99px;font-size:18px}
 .pctl button.main{width:60px;height:60px;background:var(--accent);color:var(--on-accent);font-size:24px}
@@ -499,7 +513,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .player .pctl .prate, .player .pctl .popt-btn{background-color:transparent;color:var(--text)}
 .prate{width:auto;border:0;padding:6px 20px 6px 6px;font-size:14px;font-weight:600;background-position:right 4px center;background-size:10px 7px}
 .popt-btn[aria-expanded=true]{background:var(--accent-soft)!important}
-.player .turn{font-size:13px;min-height:0;margin:4px 0 2px}
+.player .turn{font-size:13px;min-height:0;margin:6px 0 2px}
 .player .turn:empty{display:none}
 .popts{border-top:1px solid var(--line);margin:8px 4px 2px;padding-top:4px}
 .popts label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:8px 6px;color:var(--text);font-size:14px;font-weight:500;cursor:pointer}
@@ -512,7 +526,7 @@ input.sw:checked::after{transform:translateX(16px)}
 input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .turn{text-align:center;font-size:14px;font-weight:600;color:var(--ok);min-height:20px;margin-top:8px}
 .sent{padding:12px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:4px}
-.sent:hover{background:var(--bg)}
+.sent:not(.coaching):hover{background:var(--bg)}
 .sent.cur{background:var(--accent-soft);border-color:var(--accent)}
 .sent .sk{font-size:20px;line-height:1.6}
 .sent .sm{font-size:14px;color:var(--muted);margin-top:4px}
@@ -553,8 +567,8 @@ input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .rd-lite .tm,.rd-lite .es .em{margin-top:4px}
 .rd-lite .tt{font-size:18px;font-weight:700}
 .rd-lite .tm{font-size:14px;color:var(--muted);margin-bottom:8px}
-.rd-lite .es{display:grid;grid-template-columns:18px 1fr auto;gap:4px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
-.rd-lite .es .h{display:flex;justify-content:center;padding:9px 0;color:var(--muted);cursor:grab;touch-action:none}   /* drag handle */
+.rd-lite .es{display:grid;grid-template-columns:28px 1fr auto;gap:4px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
+.rd-lite .es .h{display:flex;justify-content:center;align-self:stretch;padding:9px 0;color:var(--muted);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}   /* drag handle */
 .rd-lite .es.drag{background:var(--accent-soft);border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.15);position:relative;z-index:1}
 .rd-lite .es.drag .h{cursor:grabbing}
 .rd-lite .es .ek{font-size:16px}
@@ -564,7 +578,7 @@ input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sent.coaching{background:var(--accent-soft);border-color:var(--accent);border-bottom-color:transparent;border-radius:12px 12px 0 0;margin-bottom:0}
 #sentList #coach{margin:0 0 8px;padding:12px;box-shadow:none;background:var(--accent-soft);border:1px solid var(--accent);border-top:0;border-radius:0 0 12px 12px}
 #sentList #coach > .row:first-child{display:none}
-.rd-hint{font-size:13px;font-weight:600;color:var(--ok);text-align:center;margin:8px 0 6px}
+.rd-hint{font-size:13px;font-weight:600;color:var(--ok);text-align:center;margin:6px 0 2px}   /* + the player's 6px = 8px, same as above the buttons */
 .player .turn:not(:empty) + .rd-hint{display:none}   /* "your turn…" / "finished" takes that line while it shows */
 #sentList #coach .pctl{margin-top:4px!important}
 .cgrade-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px}
@@ -725,12 +739,17 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
           <button class="btn" style="margin-top:18px" id="rdGen">✨ Generate passage</button>
         </div>
         <div id="rs-own" class="hidden">
-          <label for="rdOwnTitle">Title (optional)</label>
-          <input id="rdOwnTitle" type="text" placeholder="My text">
-          <label for="rdOwn">Korean text</label>
+          <!-- paste → split → the same review list as Screenshot → create -->
+          <label for="rdOwn" style="margin-top:0">Korean text</label>
           <textarea id="rdOwn" lang="ko" placeholder="Paste Korean text here. It will be split into sentences."></textarea>
-          <label class="check"><input type="checkbox" id="rdOwnTr" checked> Add translations (free auto-translate)</label>
-          <button class="btn" style="margin-top:10px" id="rdOwnBtn">Open in reader</button>
+          <button class="btn" style="margin-top:10px" id="rdOwnSplit">Split into sentences</button>
+          <button class="btn-ghost" style="width:100%;margin-top:6px" id="rdOwnManual">or type sentence by sentence</button>
+          <div id="rdOwnStatus" class="small muted hidden" style="margin-top:10px" data-noi18n></div>
+          <div id="rdOwnRes" class="hidden rd-lite" style="margin-top:12px" data-noi18n>
+            <input class="tt" lang="ko"><input class="tm">
+            <div class="lst"></div>
+            <div class="prev-cta"><button class="btn2 add"></button><button class="btn go"></button></div>
+          </div>
         </div>
         <div id="rs-shot" class="hidden">
           <p class="small muted" style="margin-top:0" id="rdShotDesc">AI reads the Korean text from a photo — printed or handwritten.</p>
@@ -739,10 +758,10 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
           <input type="file" id="rdShotFile" accept="image/*" class="hidden">
           <div id="rdOcrStatus" class="small muted hidden" style="margin-top:10px"></div>
           <div id="rdShotRes" class="hidden rd-lite" data-noi18n>
-            <input id="rdShotTitle" class="tt" lang="ko"><input id="rdShotTitleM" class="tm">
-            <div id="rdShotList"></div>
+            <input class="tt" lang="ko"><input class="tm">
+            <div class="lst"></div>
             <!-- same sticky pair as the word review: stays above the tab bar on a long list -->
-            <div class="prev-cta"><button class="btn2" id="rdShotAdd"></button><button class="btn" id="rdShotBtn"></button></div>
+            <div class="prev-cta"><button class="btn2 add"></button><button class="btn go"></button></div>
           </div>
         </div>
         </div>
@@ -872,7 +891,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <p class="small muted" style="margin-top:0">Used for generating words, example sentences and reading passages.</p>
       <div class="guide" data-g="g-key" data-noi18n></div>
       <label for="setKey">Gemini API key</label>
-      <div class="row"><input id="setKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn-ghost eye-btn" style="flex:0 0 auto" id="keyShow" aria-label="Show key" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="eye-off" d="M4 4l16 16"/></svg></button></div>
+      <div class="row"><input id="setKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn-ghost eye-btn" style="flex:0 0 auto" id="keyShow" aria-label="Show key" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="eye-off" d="M4 4l16 16"/></svg></button><button class="btn-ghost eye-btn key-del hidden" style="flex:0 0 auto" id="keyDel"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg></button></div>
       <label for="setModel">Model</label>
       <select id="setModel"></select>
       <p class="small muted" style="margin:6px 0 0" data-noi18n id="setModelHint"></p>
@@ -1015,7 +1034,7 @@ const VI = {
 "Chatbot answer":"Câu trả lời của chatbot","Cancel":"Huỷ","Use answer":"Dùng câu trả lời",
 "Google Drive sync":"Đồng bộ Google Drive","e.g. ordering food at a restaurant":"vd. gọi món ở nhà hàng","e.g. 사과":"vd. 사과","Listen":"Nghe","e.g. apple":"vd. apple",
 "e.g. A conversation ordering coffee at a café. Or: a short diary entry about my weekend in Seoul.":"vd. Hội thoại gọi cà phê. Hoặc: nhật ký ngắn về cuối tuần ở Seoul.",
-"My text":"Văn bản của tôi","Paste Korean text here. It will be split into sentences.":"Dán văn bản tiếng Hàn vào đây. App sẽ tự tách câu.",
+"My text":"Văn bản của tôi","Paste Korean text here. It will be split into sentences.":"Dán văn bản tiếng Hàn vào đây. App sẽ tự tách câu.","Split into sentences":"Tách câu","or type sentence by sentence":"hoặc nhập từng câu",
 "Previous sentence":"Câu trước","Play / pause":"Phát / dừng","Next sentence":"Câu sau","Stop":"Dừng",
 "Pause after each sentence so you can repeat it":"Dừng sau mỗi câu để bạn nói theo","Close":"Đóng","Listen to the native model":"Nghe mẫu bản xứ",
 "Record":"Ghi âm","Play my recording":"Nghe lại giọng mình","Search words…":"Tìm từ…","Paste the answer here…":"Dán câu trả lời vào đây…",
@@ -1273,11 +1292,11 @@ function renderAbc(){
   $("#v-abc").innerHTML = `<div class="sub-head">
       <div class="l"><button class="btn-ghost back" id="abcBack" title="${L("Thêm từ vựng", "Add words")}" aria-label="${L("Quay lại", "Back")}"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
       <div class="c"><span class="h" lang="ko">ㄱ</span><h2>${L("Bảng chữ cái", "Hangul alphabet")}</h2></div><div class="r"></div></div>
-    <div class="card">
+    <div class="abc-page">
       <p class="small muted" style="margin:0 0 14px">${L("Cả bảng chữ cái sẽ được thêm vào danh sách từ và ôn như từ vựng. Chạm vào chữ để nghe.", "The whole alphabet goes into your word list and is reviewed like words. Tap a letter to hear it.")}</p>
       ${ABC.map(([k, name, xs]) => `<div class="abc-g"><b>${name}</b> <span class="small muted">${xs.length}</span>
         <div class="chips">${xs.map(x => `<button class="chip" lang="ko" data-say="${x[0]}">${x[0]}</button>`).join("")}</div></div>`).join("")}
-      <button class="btn" id="abcAdd" style="margin-top:12px">${L(`Thêm ${n} chữ cái`, `Add ${n} letters`)}</button>
+      <div class="prev-cta"><button class="btn" id="abcAdd">${L(`Thêm ${n} chữ cái`, `Add ${n} letters`)}</button></div>
     </div>`;
   bindSay($("#v-abc"));
   $("#abcBack").onclick = () => show("add");
@@ -1371,6 +1390,7 @@ function voiceMeta(v){
   return Object.assign({}, m, { q: m.q + (online && m.q < 9 ? 1 : 0) + (v.localService === false ? 0.5 : 0) });
 }
 let allKo = [];
+const VOICE_MIG = "hangulCards.voiceGoogle";
 function loadVoices(){
   if (!("speechSynthesis" in window)) return;
   allKo = speechSynthesis.getVoices().filter(v => /^ko([-_]|$)/i.test(v.lang || "") || (!v.lang && /korean|한국|yuna|heami|sunhi|injoon/i.test(v.name)));
@@ -1381,10 +1401,15 @@ function loadVoices(){
   const sel = $("#setVoice");
   const label = v => { const m = voiceMeta(v); return `${m.g ? m.g + " " : ""}${m.name}${m.name !== v.name ? "" : ""}${m.age !== "young" && m.age !== "unknown" ? " · " + m.age : ""}${m.note ? " — " + m.note : ""}`; };
   sel.innerHTML = voices.length ? voices.map(v => `<option value="${esc(v.name)}">${esc(label(v))}</option>`).join("") : `<option value="">Default</option>`;
-  // prefer the saved voice; otherwise Yuna, otherwise the most natural young voice
+  // default: Google's voice (Chrome only) keeps its intonation when slowed down; otherwise Yuna, otherwise the most natural young voice
+  const goog = voices.find(v => /google/i.test(v.name));
+  // once per device (2026-10): everyone who already had a voice moves to Google's too, if this browser has it —
+  // a voice picked after that is kept. Per device on purpose: Safari/iOS never have it, and voices aren't synced
+  let moved = false; try { moved = localStorage.getItem(VOICE_MIG) === "1"; } catch(e){}
+  if (goog && !moved){ S.settings.voice = goog.name; save(); try { localStorage.setItem(VOICE_MIG, "1"); } catch(e){} }
   if (!S.settings.voice || !voices.some(v => v.name === S.settings.voice)){
     const yuna = voices.find(v => /yuna/i.test(v.name));
-    if (voices.length) S.settings.voice = (yuna || voices[0]).name;
+    if (voices.length) S.settings.voice = (goog || yuna || voices[0]).name;
   }
   if (S.settings.voice) sel.value = S.settings.voice;
   $("#voiceInfo").textContent = allKo.length && !young.length ? "No known young voice on this device — showing all." : "";
@@ -1623,7 +1648,7 @@ function navRoot(v){
   if (v === "army"){ arStop(); AR.view = ""; AR.screen = "home"; arPersist(); }
 }
 $("#navSpeak").textContent = L("Luyện nói", "Speak");
-$("#navStudy").textContent = L("Học từ vựng", "Vocabulary");   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
+$("#navStudy").textContent = L("Từ vựng", "Vocabulary");   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
 $("#goAddBig").onclick = () => show("add");
 let curView = "study", addFrom = "study";
 // Add words goes back to whichever page opened it
@@ -1679,7 +1704,7 @@ function refreshHome(noAuto){
   if (!S.cards.length){
     // a new learner may not read Hangul yet: the alphabet sits next to Add words
     h.innerHTML = `<div class="empty">${cheerHTML([["환영해요!", "Chào mừng bạn!", "Welcome!"]])}<p class="muted">Add some Korean words to start learning.</p>
-      <div class="row" style="align-items:stretch">${S.settings.abcHide ? "" : `<button class="btn2" id="goAbcHome" data-noi18n>${L("Học bảng chữ cái", "Learn the alphabet")}</button>`}<button class="btn" id="goAdd">+ Add words</button></div></div>`;
+      <div class="row" style="align-items:stretch">${S.settings.abcHide ? "" : `<button class="btn2" id="goAbcHome" style="white-space:nowrap" data-noi18n>${L("Bảng chữ cái", "Alphabet")}</button>`}<button class="btn" id="goAdd" style="white-space:nowrap">+ Add words</button></div></div>`;
     $("#goAdd").onclick = () => show("add");
     if (!S.settings.abcHide) $("#goAbcHome").onclick = () => show("abc");
     return;
@@ -2493,10 +2518,12 @@ function renderPassItems(){
     : `<li class="muted" style="justify-content:center;cursor:default">No passages yet — generate one above.</li>`;
   $$("#passList li[data-id]").forEach(li => li.onclick = () => openReader(li.dataset.id));
 }
-function splitSentences(text){
+function splitSentences(text, other){
   return (String(text).replace(/\r/g,"").match(/[^.!?。？！\n]+[.!?。？！]*["'”’)]*/g) || [])
-    .map(s => s.trim()).filter(s => s && HANGUL.test(s));
+    .map(s => s.trim()).filter(s => s && (other ? isOtherSent(s) : HANGUL.test(s)));
 }
+// a translation sentence pasted along with the Korean — not a label ("Bản dịch tiếng Việt:") or romanization ("/Appa gom/")
+const isOtherSent = s => !HANGUL.test(s) && /\p{L}{2}/u.test(s) && !/:$/.test(s) && !/^\/.*\/$/.test(s);
 $("#rdGen").onclick = async () => {
   const topic = $("#rdPrompt").value.trim();
   if (!topic) { toast("Describe what the passage should be about"); $("#rdPrompt").focus(); return; }
@@ -2535,18 +2562,37 @@ document.addEventListener("paste", e => {
   if (item){ e.preventDefault(); $("#readSrc button[data-s=shot]").click(); rdOCR(item.getAsFile()); }
 });
 // passage photos: one row per sentence with its meaning, romanization dropped — not one blob of mixed text
+// passage photos: one row per Korean sentence with ITS translation, romanization dropped — not one blob of mixed text
 async function geminiPassage(file){
   const prompt = `This image contains a Korean text (a song, story, dialogue, textbook passage, notes…), possibly with romanization and translations. Extract it sentence by sentence, in reading order.
-- "ko": the Korean sentence or line, copied character by character with correct spacing (띄어쓰기) — do not fix or rewrite it.
+- "ko": the Korean sentence or line, copied character by character with correct spacing (띄어쓰기) — do not fix or rewrite it. Only Korean that is actually written in the image: never add sentences, and never turn a translation into Korean.
 - "meaning": its translation shown in the image, in ${langName()} (translate it if it is in another language). If none is shown, give a natural ${langName()} translation. Never leave it empty.
 - Drop romanization entirely (e.g. "/Gomsemariga han jipe isseo/") — it is neither "ko" nor "meaning".
-- If the image has a heading, use it as "title" (Korean) with "titleMean"; it is not a sentence.
+- If the image has a heading, use it as "title" (Korean) with "titleMean"; it is not a sentence. Without one, write a short Korean title: a noun phrase of 2–5 words that names the topic (e.g. 나의 취미, 주말 아침, 세 마리 곰) — never a sentence, no verb ending like 입니다/해요, no final punctuation.
 - Skip page numbers, UI buttons, watermarks and usernames.
 Return JSON exactly like: {"title":"","titleMean":"","sentences":[{"ko":"","meaning":""}]}`;
   const parts = [{ inline_data: { mime_type: "image/jpeg", data: await imageB64(file) } }];
   const j = extractJSON(await gemini(prompt, parts, { temperature: 0 }));
   return { title: String(j.title || "").trim(), titleMean: String(j.titleMean || "").trim(),
     sentences: (j.sentences || []).map(x => ({ ko: String(x.ko || "").trim(), meaning: String(x.meaning || "").trim() })).filter(x => HANGUL.test(x.ko)) };
+}
+// pasted text: the sentences are already split here, so AI only gives each one its meaning (the translation in the text
+// if there is one) — it can't add or change Korean. Title only when asked.
+async function geminiMeanings(raw, sents, title){
+  const prompt = `Below is a Korean text the learner pasted, possibly with a translation (on the same line, the next line, or as a block after the Korean), and the list of its Korean sentences, numbered.
+For each numbered sentence give its meaning in ${langName()}: the translation of THAT sentence found in the text (translated into ${langName()} if it is in another language), otherwise a natural ${langName()} translation. Return exactly ${sents.length} meanings, in the same order — one per number, never more, never less.
+${title ? `The title is "${title}": give only its ${langName()} translation as "titleMean" (leave "title" as is).` : `Also write a short Korean title: a noun phrase of 2–5 words that names the topic (e.g. 나의 취미, 주말 아침, 세 마리 곰) — never a sentence, no verb ending like 입니다/해요, no final punctuation, as "title", with its short ${langName()} translation (also a phrase, no final period) as "titleMean".`}
+Return JSON exactly like: {"title":"","titleMean":"","meanings":[""]}
+
+Text:
+"""
+${raw}
+"""
+
+Sentences:
+${sents.map((k, i) => `${i + 1}. ${k}`).join("\n")}`;
+  const j = extractJSON(await gemini(prompt, undefined, { temperature: 0 }));
+  return { title: String(j.title || "").trim(), titleMean: String(j.titleMean || "").trim(), meanings: (j.meanings || []).map(m => String(m || "").trim()) };
 }
 function liteRow(list, x){
   const d = document.createElement("div"); d.className = "es";
@@ -2556,14 +2602,19 @@ function liteRow(list, x){
   d.querySelector(".x").onclick = () => d.remove();
   // drag by the handle (mouse or touch): the row slots in before the first row whose middle is below the pointer
   const h = d.querySelector(".h");
+  // listeners live on document: moving the row in the DOM drops pointer capture, which froze the drag before
   h.onpointerdown = e => {
-    e.preventDefault(); h.setPointerCapture(e.pointerId); d.classList.add("drag");
-    h.onpointermove = ev => {
+    if (e.button > 0) return;
+    e.preventDefault(); d.classList.add("drag");
+    const move = ev => {
+      ev.preventDefault();
       const next = [...list.children].find(r => r !== d && ev.clientY < r.getBoundingClientRect().top + r.offsetHeight / 2);
       if (next){ if (d.nextElementSibling !== next) next.before(d); } else if (list.lastElementChild !== d) list.append(d);
       if (ev.clientY > innerHeight - 150) scrollBy(0, 8); else if (ev.clientY < 60) scrollBy(0, -8);   // long lists: scroll while dragging near an edge
     };
-    h.onpointerup = h.onpointercancel = () => { h.onpointermove = h.onpointerup = h.onpointercancel = null; d.classList.remove("drag"); };
+    const end = () => { document.removeEventListener("pointermove", move); document.removeEventListener("pointerup", end); document.removeEventListener("pointercancel", end); d.classList.remove("drag"); };
+    document.addEventListener("pointermove", move, { passive: false });
+    document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
   };
   list.append(d);
   return d;
@@ -2573,58 +2624,116 @@ const rdGrow = t => { t.style.height = "auto"; t.style.height = t.scrollHeight +
 document.addEventListener("input", e => { if (e.target.matches?.(".rd-lite textarea")) rdGrow(e.target); });
 // ＋ add sentence: a fresh empty row, typing straight away
 function liteAdd(list){ const d = liteRow(list, {}); d.querySelectorAll("textarea").forEach(rdGrow); d.querySelector(".ek").focus(); }
+// review block shared by "Add my own" and "Screenshot": title, sentence rows, [＋ Add sentence] [Create passage]
+function liteShow(res){
+  res.querySelector(".tt").placeholder = L("Tiêu đề (tuỳ chọn)", "Title (optional)"); res.querySelector(".tm").placeholder = L("Nghĩa tiêu đề", "Title translation");
+  res.querySelector(".add").textContent = "＋ " + L("Thêm câu", "Add sentence"); res.querySelector(".go").textContent = L("Tạo bài đọc", "Create passage");
+  res.classList.remove("hidden"); res.querySelectorAll("textarea").forEach(rdGrow);   // measured once visible
+}
+function liteWire(res, done){
+  res.querySelector(".add").onclick = () => liteAdd(res.querySelector(".lst"));
+  res.querySelector(".go").onclick = async () => {
+    const b = res.querySelector(".go");
+    const sentences = [...res.querySelectorAll(".es")].map(el => ({ ko: el.querySelector(".ek").value.trim(), meaning: el.querySelector(".em").value.trim() })).filter(x => x.ko);
+    if (!sentences.length){ toast(L("Bài đọc cần ít nhất 1 câu", "A passage needs at least one sentence")); return; }
+    const empty = sentences.filter(x => !x.meaning);
+    if (empty.length){   // rows typed by hand, or translation still running / failed
+      busy(b, true, L("Đang dịch…", "Translating…"));
+      for (const x of empty){ try { x.meaning = await translate(x.ko); } catch(e){} await new Promise(r => setTimeout(r, 120)); }
+      busy(b, false);
+    }
+    const tt = res.querySelector(".tt"), tm = res.querySelector(".tm");
+    const p = { id: uid(), created: Date.now(), title: tt.value.trim() || sentences[0].ko.slice(0, 24), titleMean: tm.value.trim(), level: "", sentences, vocab: [] };
+    S.passages.push(p); save();
+    res.querySelector(".lst").innerHTML = ""; tt.value = ""; tm.value = ""; res.classList.add("hidden");
+    done();
+    openNewPassage(p.id);
+  };
+}
 async function rdOCR(file){
   if (!rdShotTip()){ toast(L("Cần Gemini key để đọc ảnh", "A Gemini key is needed to read photos")); return; }
   $("#rdShotImg").innerHTML = `<img src="${URL.createObjectURL(file)}" alt="photo">`;
-  const st = $("#rdOcrStatus");
+  const st = $("#rdOcrStatus"), res = $("#rdShotRes");
   st.classList.remove("hidden"); st.innerHTML = `<span class="spinner"></span>Reading text with AI…`;
   try {
     const r = await geminiPassage(file);
     if (!r.sentences.length){ st.textContent = "No Korean sentences found. Try a sharper or cropped photo."; return; }
     // several photos (pages) add up; the first heading names the passage
-    if (!$("#rdShotTitle").value.trim()){ $("#rdShotTitle").value = r.title; $("#rdShotTitleM").value = r.titleMean; }
-    r.sentences.forEach(x => liteRow($("#rdShotList"), x));
-    $("#rdShotTitle").placeholder = L("Tiêu đề (tuỳ chọn)", "Title (optional)"); $("#rdShotTitleM").placeholder = L("Nghĩa tiêu đề", "Title translation");
-    $("#rdShotAdd").textContent = "＋ " + L("Thêm câu", "Add sentence"); $("#rdShotBtn").textContent = L("Tạo bài đọc", "Create passage");
-    $("#rdShotRes").classList.remove("hidden"); $$("#rdShotList textarea").forEach(rdGrow);   // measured once visible
+    if (!res.querySelector(".tt").value.trim()){ res.querySelector(".tt").value = r.title; res.querySelector(".tm").value = r.titleMean; }
+    r.sentences.forEach(x => liteRow(res.querySelector(".lst"), x));
+    liteShow(res);
     st.textContent = "Text read. Please check it for mistakes before opening.";
   } catch(err){
     st.textContent = "⚠️ " + (err.message || "AI failed");
   }
 }
-$("#rdShotAdd").onclick = () => liteAdd($("#rdShotList"));
-$("#rdShotBtn").onclick = async () => {
-  const sentences = $$("#rdShotList .es").map(el => ({ ko: el.querySelector(".ek").value.trim(), meaning: el.querySelector(".em").value.trim() })).filter(x => x.ko);
-  if (!sentences.length){ toast(L("Bài đọc cần ít nhất 1 câu", "A passage needs at least one sentence")); return; }
-  const b = $("#rdShotBtn"), empty = sentences.filter(x => !x.meaning);
-  if (empty.length){   // rows added by hand
-    busy(b, true, L("Đang dịch…", "Translating…"));
-    for (const x of empty){ try { x.meaning = await translate(x.ko); } catch(e){} await new Promise(r => setTimeout(r, 120)); }
+liteWire($("#rdShotRes"), () => { $("#rdShotImg").innerHTML = ""; $("#rdOcrStatus").classList.add("hidden"); });
+
+// "Add my own": once there's a list, the split button steps back to secondary (splitting again redoes the list)
+function rdOwnMode(){
+  const has = !$("#rdOwnRes").classList.contains("hidden");
+  $("#rdOwnSplit").className = has ? "btn2" : "btn"; $("#rdOwnManual").classList.toggle("hidden", has);
+}
+let rdOwnTok = 0;   // a new split / create stops an older translation run
+$("#rdOwnSplit").onclick = async () => {
+  const raw = $("#rdOwn").value.trim();
+  let sents = splitSentences(raw);
+  if (!sents.length){ toast("Paste some Korean text first"); $("#rdOwn").focus(); return; }
+  const res = $("#rdOwnRes"), tt = res.querySelector(".tt"), tm = res.querySelector(".tm"), tok = ++rdOwnTok;
+  // splitting again starts over from the text in the box: fresh rows and title (the text stays, to fix and re-split)
+  res.querySelector(".lst").innerHTML = ""; tt.value = ""; tm.value = "";
+  // the Korean sentences always come from the text itself, split here — never from AI
+  let other = splitSentences(raw, true);
+  // a short first line without an ending mark, above more text, is the heading (곰 세 마리 over the lyrics)
+  const first = raw.split(/\n/)[0].trim();
+  if (sents.length > 2 && sents[0] === first && first.length <= 25 && !/[.!?。？！]$/.test(first)){
+    tt.value = first; sents = sents.slice(1);
+    if (other.length === sents.length + 1){ tm.value = other[0]; other = other.slice(1); }
+  }
+  // no key: Korean and other-language sentences separately; same count → the pasted translation, in order
+  const items = sents.map((ko, i) => ({ ko, meaning: other.length === sents.length ? other[i] : "" }));
+  // with a key, AI pairs each sentence with its translation in the text however it's laid out
+  if (hasKey()){
+    const b = $("#rdOwnSplit"); busy(b, true, L("AI đang ghép nghĩa…", "AI is matching meanings…"));
+    try {
+      const r = await geminiMeanings(raw, sents, tt.value.trim());
+      r.meanings.slice(0, items.length).forEach((m, i) => { if (m) items[i].meaning = m; });
+      if (!tt.value.trim()) tt.value = r.title;
+      if (r.titleMean) tm.value = r.titleMean;
+    } catch(e){ toast("⚠️ " + (e.message || "AI failed") + " — " + L("dùng cách ghép cơ bản", "used the basic matching")); }
     busy(b, false);
+    if (tok !== rdOwnTok) return;
   }
-  const p = { id: uid(), created: Date.now(), title: $("#rdShotTitle").value.trim() || sentences[0].ko.slice(0, 24), titleMean: $("#rdShotTitleM").value.trim(), level: "", sentences, vocab: [] };
-  S.passages.push(p); save();
-  $("#rdShotList").innerHTML = ""; $("#rdShotTitle").value = ""; $("#rdShotTitleM").value = ""; $("#rdShotImg").innerHTML = "";
-  $("#rdShotRes").classList.add("hidden"); $("#rdOcrStatus").classList.add("hidden");
-  openNewPassage(p.id);
-};
-$("#rdOwnBtn").onclick = async () => {
-  const sents = splitSentences($("#rdOwn").value);
-  if (!sents.length) { toast("Paste some Korean text first"); return; }
-  const b = $("#rdOwnBtn"); busy(b, true, "Preparing…");
-  const sentences = sents.map(ko => ({ ko, meaning: "" }));
-  if ($("#rdOwnTr").checked){
-    for (let i = 0; i < sentences.length; i++){
-      b.innerHTML = `<span class="spinner"></span>Translating ${i+1}/${sentences.length}…`;
-      try { sentences[i].meaning = await translate(sentences[i].ko); } catch(e){}
-      await new Promise(r => setTimeout(r, 120));
-    }
+  const rows = items.map(x => liteRow(res.querySelector(".lst"), x));
+  liteShow(res); rdOwnMode();
+  rows[0].scrollIntoView({ behavior: "smooth", block: "center" });
+  rdOwnTitle(res, items.map(x => x.ko), tok);
+  // fill the meanings still missing as they come; anything that fails stays empty to type in
+  const todo = rows.filter(r => !r.querySelector(".em").value.trim()), st = $("#rdOwnStatus");
+  if (!todo.length) return;
+  st.classList.remove("hidden");
+  for (let i = 0; i < todo.length; i++){
+    if (tok !== rdOwnTok || !todo[i].isConnected) continue;
+    st.innerHTML = `<span class="spinner"></span>${L(`Đang dịch ${i+1}/${todo.length}…`, `Translating ${i+1}/${todo.length}…`)}`;
+    const em = todo[i].querySelector(".em");
+    try { const m = await translate(todo[i].querySelector(".ek").value); if (!em.value.trim()){ em.value = m; rdGrow(em); } } catch(e){}
+    await new Promise(r => setTimeout(r, 120));
   }
-  const p = { id: uid(), created: Date.now(), title: $("#rdOwnTitle").value.trim() || sents[0].slice(0, 24), titleMean: "", level: "", sentences, vocab: [] };
-  S.passages.push(p); save(); busy(b, false);
-  $("#rdOwn").value = ""; $("#rdOwnTitle").value = "";
-  openNewPassage(p.id);
+  if (tok === rdOwnTok) st.classList.add("hidden");
 };
+// title still empty (no key, no heading, or AI left it blank): a short phrase, not the whole first sentence —
+// its topic ("제 취미는 …" → 제 취미), else its first three Korean words — with a free translation
+async function rdOwnTitle(res, sents, tok){
+  const tt = res.querySelector(".tt"), tm = res.querySelector(".tm"), live = () => tok === rdOwnTok;
+  if (!tt.value.trim()){
+    const w = sents[0].replace(/[\s.!?。？！…]+$/, "").split(/\s+/).filter(x => HANGUL.test(x));
+    const t = w.findIndex(x => /[가-힣](은|는)$/.test(x) && !/^(저|나|너|우리|저희|그|그녀)(는|은)$/.test(x));   // 저는… is about me, not a topic
+    tt.value = t >= 0 && t < 3 ? [...w.slice(0, t), w[t].slice(0, -1)].join(" ") : w.slice(0, 3).join(" ") + (w.length > 3 ? "…" : "");
+  }
+  if (!tm.value.trim()){ try { const m = (await translate(tt.value.replace(/…$/, ""))).replace(/[.。]+$/, ""); if (live() && !tm.value.trim()) tm.value = m; } catch(e){} }
+}
+$("#rdOwnManual").onclick = () => { liteShow($("#rdOwnRes")); rdOwnMode(); liteAdd($("#rdOwnRes .lst")); };
+liteWire($("#rdOwnRes"), () => { rdOwnTok++; $("#rdOwnStatus").classList.add("hidden"); rdOwnMode(); });
 function openNewPassage(id){
   if (!$("#v-read").classList.contains("hidden") && spScreen === "read" && !curP) return openReader(id);
   toast(L("✅ Đã tạo bài đọc — xem ở Luyện nói › Đọc", "✅ Passage ready — find it in Speak › Read"));
@@ -3246,7 +3355,7 @@ function renderSettings(){
   $("#setRate").value = S.settings.rate; $("#rateVal").textContent = S.settings.rate + "×";
   $$("#ratePresets button").forEach(b => b.classList.toggle("on", Math.abs(+b.dataset.r - S.settings.rate) < 0.01));
   $("#setLang").value = S.settings.lang;
-  $("#setKey").value = S.settings.apiKey || ""; fillModelSelect($("#setModel")); $("#setModelHint").textContent = MODEL_HINT(); if (!MODELS.length && hasKey()) refreshModels($("#setModel")); $("#setAutoEx").checked = S.settings.autoEx;
+  $("#setKey").value = S.settings.apiKey || ""; keyDelBtn(); if (hasKey() && !keyOk()) checkKey(); fillModelSelect($("#setModel")); $("#setModelHint").textContent = MODEL_HINT(); if (!MODELS.length && hasKey()) refreshModels($("#setModel")); $("#setAutoEx").checked = S.settings.autoEx;
   loadVoices();
   if (typeof renderSyncCard === "function") renderSyncCard();
 }
@@ -3262,7 +3371,24 @@ $("#setVoice").onchange = e => { S.settings.voice = e.target.value; save(); load
 $$("#ratePresets button").forEach(b => b.onclick = () => { S.settings.rate = +b.dataset.r; save(); renderSettings(); syncPRate(); speak("안녕하세요. 만나서 반가워요!"); });
 $("#setLang").onchange = e => { S.settings.lang = e.target.value; save(); };
 $("#testVoice").onclick = () => speak("안녕하세요");
-$("#setKey").onchange = e => { S.settings.apiKey = e.target.value.trim(); save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]); refreshModels($("#setModel")); };
+$("#setKey").onchange = e => { S.settings.apiKey = e.target.value.trim(); save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]); refreshModels($("#setModel")); keyDelBtn(); checkKey(); };
+// 🗑 remove key: only once the key is known to work (a typo'd key is simply cleared from the box), tap twice to confirm
+const KEYOK_KEY = "hangulCards.keyOk";
+const keyFp = () => { const k = (S.settings.apiKey || "").trim(); return k ? k.length + ":" + k.slice(-6) : ""; };   // which key was verified, without a second copy of it
+const keyOk = () => { try { return !!keyFp() && localStorage.getItem(KEYOK_KEY) === keyFp(); } catch(e){ return false; } };
+function keyDelBtn(){ const b = $("#keyDel"); delete b.dataset.confirm; b.title = b.ariaLabel = L("Gỡ key", "Remove key"); b.classList.toggle("hidden", !keyOk()); }
+// listing models is free (no quota) and fails with 400/403 for a bad key; offline leaves the last answer as it was
+async function checkKey(){
+  const fp = keyFp(); if (!fp) return keyDelBtn();
+  try { await loadModels(); if (fp === keyFp()) try { localStorage.setItem(KEYOK_KEY, fp); } catch(e){} }
+  catch(e){ if (/HTTP 4\d\d/.test(e.message) && fp === keyFp()) try { localStorage.removeItem(KEYOK_KEY); } catch(e){} }
+  keyDelBtn();
+}
+$("#keyDel").onclick = () => {
+  const b = $("#keyDel");
+  if (!b.dataset.confirm){ b.dataset.confirm = "1"; toast(L("Bấm 🗑 lần nữa để gỡ key", "Tap 🗑 again to remove the key")); setTimeout(() => { if (b.dataset.confirm) keyDelBtn(); }, 3000); return; }
+  S.settings.apiKey = ""; save(); $("#setKey").value = ""; try { localStorage.removeItem(KEYOK_KEY); } catch(e){} keyDelBtn(); toast(L("Đã gỡ Gemini key", "Gemini key removed"));
+};
 $("#setModel").onchange = e => { S.settings.model = e.target.value; save(); };
 $("#setAutoEx").onchange = e => { S.settings.autoEx = e.target.checked; save(); };
 $("#keyShow").onclick = e => { const i = $("#setKey"); i.type = i.type === "password" ? "text" : "password"; e.currentTarget.setAttribute("aria-pressed", i.type === "text"); };
@@ -3271,7 +3397,7 @@ $("#testAI").onclick = async () => {
   if (!S.settings.apiKey) { toast("Paste your Gemini key first"); return; }
   const b = $("#testAI"); busy(b, true, "Testing…");
   await refreshModels($("#setModel"));
-  try { const j = extractJSON(await gemini('Translate 안녕하세요 to English. Return JSON {"t":""}')); toast("✅ Connected! " + (j.t || "")); }
+  try { const j = extractJSON(await gemini('Translate 안녕하세요 to English. Return JSON {"t":""}')); toast("✅ Connected! " + (j.t || "")); try { localStorage.setItem(KEYOK_KEY, keyFp()); } catch(e){} keyDelBtn(); }
   catch(e){ toast("⚠️ " + e.message); }
   busy(b, false);
 };
@@ -3304,10 +3430,33 @@ $("#impFile").onchange = async e => {
   } catch(err){ toast("Invalid backup file"); }
   e.target.value = "";
 };
-$("#resetBtn").onclick = () => {
+// everything: this device, the Drive copy (else the next sync would bring it all back), sync settings and the Gemini key
+$("#resetBtn").onclick = async () => {
   const b = $("#resetBtn");
-  if (!b.dataset.confirm){ b.dataset.confirm = "1"; b.textContent = "Tap again to delete everything"; setTimeout(()=>{ delete b.dataset.confirm; b.textContent = "Delete all data"; }, 3000); return; }
-  const k = S.settings.apiKey; S = defaults(); S.settings.apiKey = k; save(); delete b.dataset.confirm; b.textContent = "Delete all data"; renderSettings(); toast("All data deleted");
+  if (!b.dataset.confirm){
+    b.dataset.confirm = "1"; b.textContent = SY.on ? L("Bấm lần nữa để xoá hết, cả bản trên Drive", "Tap again to delete everything, Drive copy too") : "Tap again to delete everything";
+    setTimeout(() => { if (b.dataset.confirm){ delete b.dataset.confirm; b.textContent = "Delete all data"; } }, 4000); return;
+  }
+  delete b.dataset.confirm;
+  if (SY.on){
+    busy(b, true, L("Đang xoá bản trên Drive…", "Deleting the Drive copy…"));
+    try {
+      clearTimeout(pushT);
+      if (!tokValid()) await getToken();   // still inside the tap, so the Google popup isn't blocked
+      const q = encodeURIComponent(`name='${DRIVE_FILE}' and trashed=false`);
+      const j = await (await gfetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id)`)).json();
+      for (const f of j.files || []) await gfetch(`https://www.googleapis.com/drive/v3/files/${f.id}`, { method: "DELETE" });
+    } catch(e){
+      busy(b, false); b.textContent = "Delete all data";
+      toast("⚠️ " + L("Chưa xoá được bản trên Drive (" + e.message + ") — chưa xoá gì cả", "Couldn't delete the Drive copy (" + e.message + ") — nothing was deleted"));
+      return;
+    }
+    try { if (tok && gisReady()) google.accounts.oauth2.revoke(tok.t, () => {}); } catch(e){}
+    busy(b, false);
+  }
+  tok = null; saveTok();
+  SY = { clientId: "", on: false, last: 0, fileId: "" }; try { localStorage.removeItem(SYNC_KEY); } catch(e){}
+  S = defaults(); save(); b.textContent = "Delete all data"; setCloud("off"); renderSettings(); toast(L("Đã xoá toàn bộ dữ liệu, đồng bộ Drive và key", "All data, Drive sync and key deleted"));
 };
 
 
@@ -3679,7 +3828,7 @@ async function micTest(out){
 
 const GUIDE = [
   ["g-start", L("Bắt đầu nhanh", "Quick start"), L(`
-    <ol>    <li><b>🎯 Học từ vựng</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý. Chạm ô <b>Cần học / Đang học / Đã thuộc</b> hoặc <b>📚 Từ của tôi</b> để xem, sửa, xoá từ; <b>+ Thêm từ</b> để thêm từ mới, dán cả danh sách, chụp ảnh, hoặc thêm <b>bảng chữ cái</b> để ôn như từ vựng.</li>
+    <ol>    <li><b>🎯 Từ vựng</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý. Chạm ô <b>Cần học / Đang học / Đã thuộc</b> hoặc <b>📚 Từ của tôi</b> để xem, sửa, xoá từ; <b>+ Thêm từ</b> để thêm từ mới, dán cả danh sách, chụp ảnh, hoặc thêm <b>bảng chữ cái</b> để ôn như từ vựng.</li>
     <li><b>🗣 Luyện nói</b>: <b>Luyện đọc</b> — bài đọc theo trình độ, 🔊 để nghe, 🎙 để đọc to và được chấm; <b>Luyện nói giao tiếp</b> — nói chuyện với AI, được chữa lỗi từng câu.</li></ol>`, `
     <ol>    <li><b>🎯 Vocabulary</b>: review flashcards daily. Answer honestly so the schedule fits you. Tap <b>Due today / Learning / Mastered</b> or <b>📚 My words</b> to view, edit and delete words; <b>+ Add words</b> to add more, paste a whole list, use a screenshot, or add the <b>Hangul alphabet</b> to review like words.</li>
     <li><b>🗣 Speak</b>: <b>Reading practice</b> — passages at your level, 🔊 to listen, 🎙 to read aloud and get scored; <b>Conversation practice</b> — a spoken conversation with AI that corrects each line.</li></ol>`)],
