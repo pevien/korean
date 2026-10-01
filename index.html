@@ -277,6 +277,15 @@ nav button[data-v=army].on{color:var(--army)}
 /* the chat fills the screen so the controls rest at the bottom even when there are only a few messages */
 #talk.tk-chat{display:flex;flex-direction:column;min-height:calc(100vh - 108px - env(safe-area-inset-bottom));min-height:calc(100dvh - 108px - env(safe-area-inset-bottom))}
 #talk.tk-chat .tk-ctl,#talk.tk-chat .tk-foot{margin-top:auto}
+/* mid-conversation the tab bar steps aside (back / Finish live in the header), so the mic sits right at the bottom */
+body.talking nav{display:none}
+body.talking{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+body.talking .tk-ctl{bottom:calc(12px + env(safe-area-inset-bottom))}
+body.talking #talk.tk-chat{min-height:calc(100vh - 48px - env(safe-area-inset-bottom));min-height:calc(100dvh - 48px - env(safe-area-inset-bottom))}
+/* the chat header (back · topic · Finish) stays on top while the chat scrolls, so Finish is always reachable;
+   at rest it looks like any sub-head (the padding is cancelled by the margin) — the glass shows only once it's stuck */
+body.talking #talk > .sub-head{position:sticky;top:0;z-index:5;margin:calc(-8px - env(safe-area-inset-top)) -16px 4px;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;border-bottom:1px solid transparent}
+body.talking #talk > .sub-head.stuck{background:var(--bg);border-bottom-color:var(--line)}
 /* summary: "keep talking" / "new conversation" stay pinned right above the bottom bar */
 .tk-foot{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));z-index:5;background:var(--card);border-radius:var(--radius);padding:8px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
 /* speed on the left · 💡 🎙 🔊 in the centre (the empty last column keeps them centred); "finish" sits top right in the header; while recording only ⏹ stays */
@@ -671,13 +680,13 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(60vmax 45vmax at 90% -12%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%),
     radial-gradient(55vmax 40vmax at -12% 108%, color-mix(in srgb, var(--army, #b197fc) 11%, transparent), transparent 70%)}
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
-  nav, .player{background:color-mix(in srgb, var(--card) 68%, transparent)}
-  .wbar{background:color-mix(in srgb, var(--bg) 66%, transparent)}
-  nav, .player, .wbar{-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6)}
+  /* one glass everywhere (the chat header's): tab bar, top bars, floating controls, the study sheet on phones */
+  nav, .player, .wbar, body.talking #talk > .sub-head.stuck, .tk-ctl, .tk-foot, .prev-cta, #arCtl.ar-on{background:color-mix(in srgb, var(--bg) 66%, transparent);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6)}
+  @media (max-width:600px){ .dock{background:color-mix(in srgb, var(--bg) 66%, transparent);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6)} }
 }
 @media (prefers-reduced-transparency: reduce){
-  nav, .player{background:var(--card)} .wbar{background:var(--bg)}
-  nav, .player, .wbar{-webkit-backdrop-filter:none;backdrop-filter:none}
+  nav, .player, .tk-ctl, .tk-foot, .prev-cta, #arCtl.ar-on{background:var(--card)} .wbar, body.talking #talk > .sub-head.stuck{background:var(--bg)}
+  nav, .player, .wbar, body.talking #talk > .sub-head.stuck, .tk-ctl, .tk-foot, .prev-cta, #arCtl.ar-on, .dock{-webkit-backdrop-filter:none;backdrop-filter:none}
   body::before{display:none}
 }
 </style>
@@ -1760,7 +1769,7 @@ function show(v){
   if (v === "abc") renderAbc();
   if (v === "study" && !session) refreshHome();
   document.body.classList.toggle("in-session", v === "study" && !!session);   // leaving via a link mid-session must bring the tab bar back
-  if (v !== "read") { stopPlayer(); cancelRec(); talkStop(); if ("speechSynthesis" in window) speechSynthesis.cancel(); }
+  if (v !== "read") { document.body.classList.remove("talking"); stopPlayer(); cancelRec(); talkStop(); if ("speechSynthesis" in window) speechSynthesis.cancel(); }
   if (v !== "study") frCancel();
   if (v !== "army") arStop();
   if (v === "army") renderArmy();
@@ -4260,7 +4269,7 @@ function spShow(scr){
   spScreen = scr;
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   if (scr !== "read" && curP){ closeRdEditor(); stopPlayer(); closeCoach(); curP = null; }
-  if (scr !== "talk") talkStop();
+  if (scr !== "talk"){ talkStop(); document.body.classList.remove("talking"); }
   if (scr === "talk" && S.talk && S.talk.done){ S.talk = null; talkDropUrls(); save(); }   // it's in 🕘 history already
   if (scr === "talk"){ TK.view = ""; TK.list = false; TK.histList = false; }
   $("#spHome").classList.toggle("hidden", scr !== "");
@@ -4333,7 +4342,7 @@ function talkHead(title, right){
     <div class="c"><h2>${title}</h2></div><div class="r">${right || ""}</div></div>`;
 }
 function renderTalk(){
-  $("#talk").classList.remove("tk-chat");   // only the chat and its summary pin their controls to the bottom
+  $("#talk").classList.remove("tk-chat"); document.body.classList.remove("talking");   // only the chat and its summary pin their controls to the bottom
   const t = S.talk, h = TK.view && (S.talks || []).find(x => x.id === TK.view);
   if (h) renderTalkSummary(h, true);
   else if (TK.histList) renderTalkHistList();
@@ -4536,6 +4545,12 @@ function talkMsg(x, i){
       </div>` : ""}
     </div></div>`;
 }
+// the chat header gets its glass only once content scrolls under it
+function talkHeadStuck(){
+  const h = document.body.classList.contains("talking") && $("#talk > .sub-head");
+  if (h) h.classList.toggle("stuck", h.getBoundingClientRect().top <= 0 && scrollY > 0);
+}
+addEventListener("scroll", talkHeadStuck, { passive: true });
 $("#talk").addEventListener("click", e => {
   if (TK.rec && e.target.closest("button") && !e.target.closest("#tkRec")){ talkStop(); talkStatus(""); }
 }, true);
@@ -4557,7 +4572,8 @@ function renderTalkChat(){
         <button id="tkTts" title=""></button>
       </div>
     </div>`;
-  $("#talk").classList.add("tk-chat");
+  $("#talk").classList.add("tk-chat"); document.body.classList.add("talking");   // hides the tab bar
+  talkHeadStuck();
   const rs = $("#tkRate"); rs.innerHTML = $("#pRate").innerHTML; rs.value = $("#pRate").value; fitPRate(rs);
   rs.onchange = () => { $("#pRate").value = rs.value; $("#pRate").onchange(); fitPRate(rs); };
   if (TK.rec) talkRecUI(true);
