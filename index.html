@@ -404,7 +404,8 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .prev input[type=text]{padding:8px}
 .prev input[type=checkbox]{width:18px;height:18px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));background:var(--text);color:var(--bg);
-  padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%}
+  padding:12px 16px;border-radius:12px;font-size:14px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none;
+  width:max-content;max-width:min(528px, calc(100% - 32px));text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.2)}   /* hugs the text; only wraps past the content width */
 .toast.show{opacity:1}
 .check{display:flex;align-items:center;gap:10px;padding:6px 0;color:var(--text);font-size:15px;margin:0}
 .check input{width:20px;height:20px}
@@ -442,6 +443,10 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 #rdVocab .t b{display:block;font-size:17px}
 #rdVocab .badge{flex:0 0 auto}
 .wl .exl{font-size:13px;color:var(--muted);white-space:normal!important;margin-top:2px}
+/* stays above the tab bar while scrolling a long review list */
+.prev-cta{position:sticky;bottom:calc(66px + env(safe-area-inset-bottom));z-index:5;display:flex;gap:8px;margin:10px -10px 0;padding:10px;
+  background:var(--card);border-radius:var(--radius);box-shadow:0 -8px 16px -12px rgba(0,0,0,.35)}
+.prev-cta button{flex:1 1 0;min-width:0;padding:10px 14px}
 .prev-ex{grid-column:2 / 4;font-size:12px;color:var(--muted);margin:-2px 0 6px}
 /* chips */
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
@@ -661,20 +666,19 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 
     <div class="card hidden" id="add-shot">
       <h2>From a screenshot</h2>
-      <p class="small muted" style="margin-top:0">Works best with a clear vocabulary list. Text is read on your device (free). The first run downloads the Korean reading model (~10 MB).</p>
+      <p class="small muted" style="margin-top:0" id="shotDesc">AI reads the words and their meanings from a photo — printed or handwritten.</p>
+      <div class="hidden" id="shotTip" data-noi18n></div>
       <div class="drop" id="drop">Tap to choose or take a photo<br><span class="small">or paste an image (Ctrl/Cmd+V)</span><div id="shotImg"></div></div>
       <input type="file" id="shotFile" accept="image/*" class="hidden">
       <div id="ocrStatus" class="small muted hidden" style="margin-top:10px"></div>
-      <div class="bar hidden" id="ocrBarWrap"><i id="ocrBar"></i></div>
     </div>
 
     <div class="card hidden" id="previewCard">
       <h2>Review before adding</h2>
-      <p class="small muted" style="margin-top:0">Edit anything that looks wrong. Unticked rows are skipped.</p>
       <div id="prevList"></div>
-      <div class="row" style="margin-top:10px">
-        <button class="btn2" id="prevTr">Auto-fill empty meanings</button>
-        <button class="btn" id="prevAdd">Add selected</button>
+      <div class="prev-cta" data-noi18n>
+        <button class="btn2" id="prevTr"></button>
+        <button class="btn" id="prevAdd"></button>
       </div>
     </div>
   </section>
@@ -956,9 +960,9 @@ const VI = {
 "One word per line. Separate Korean and meaning with":"Mỗi dòng một từ. Ngăn tiếng Hàn và nghĩa bằng",
 "or a tab. Lines without a meaning get auto-translated.":"hoặc Tab. Dòng thiếu nghĩa sẽ được tự dịch.",
 "Preview":"Xem trước","From a screenshot":"Từ ảnh chụp màn hình",
-"Works best with a clear vocabulary list. Text is read on your device (free). The first run downloads the Korean reading model (~10 MB).":"Hợp nhất với ảnh danh sách từ rõ nét. Chữ được đọc ngay trên máy, miễn phí. Lần đầu sẽ tải bộ đọc tiếng Hàn (~10 MB).",
+"AI reads the words and their meanings from a photo — printed or handwritten.":"AI đọc từ và nghĩa trong ảnh — chữ in hay chữ viết tay đều được.","Works best with a clear vocabulary list. Text is read on your device (free). The first run downloads the Korean reading model (~10 MB).":"Hợp nhất với ảnh danh sách từ rõ nét. Chữ được đọc ngay trên máy, miễn phí. Lần đầu sẽ tải bộ đọc tiếng Hàn (~10 MB).",
 "Tap to choose or take a photo":"Chạm để chọn hoặc chụp ảnh","or paste an image (Ctrl/Cmd+V)":"hoặc dán ảnh (Ctrl/Cmd+V)",
-"Review before adding":"Kiểm tra trước khi thêm","Edit anything that looks wrong. Unticked rows are skipped.":"Sửa chỗ sai. Dòng bỏ tích sẽ không được thêm.",
+"Review before adding":"Kiểm tra trước khi thêm",
 "Auto-fill empty meanings":"Tự điền nghĩa trống","Add selected":"Thêm từ đã chọn",
 "New reading passage":"Bài đọc mới","AI writes":"AI viết","Add my own":"Tự thêm","What should it be about?":"Bài đọc về chủ đề gì?",
 "Length":"Độ dài","Short (~4 sentences)":"Ngắn (~4 câu)","Medium (~8)":"Vừa (~8 câu)","Long (~14)":"Dài (~14 câu)",
@@ -1573,7 +1577,7 @@ function show(v){
   $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" || v === "words" || v === "abc" ? "study" : v)));   // My words / Add words / Alphabet are pages of Study
   if (v === "add" && curView !== "add" && curView !== "abc") addFrom = curView === "words" && S.cards.length ? "words" : "study";
   curView = v;
-  if (v === "add") syncAbcPick();
+  if (v === "add"){ syncAbcPick(); shotTip(); }   // key may have been added in Settings meanwhile
   if (v === "abc") renderAbc();
   if (v === "study" && !session) refreshHome();
   document.body.classList.toggle("in-session", v === "study" && !!session);   // leaving via a link mid-session must bring the tab bar back
@@ -2208,7 +2212,16 @@ $$("#addTabs button").forEach(b => b.onclick = () => {
   $$("#addTabs button").forEach(x => x.classList.toggle("on", x === b));
   ["ai","one","bulk","shot"].forEach(t => $("#add-"+t).classList.toggle("hidden", t !== b.dataset.t));
   const pc = $("#previewCard"); pc.classList.toggle("hidden", !$("#prevList").children.length || pc.dataset.t !== b.dataset.t);   // the preview belongs to the tab that made it
+  if (b.dataset.t === "shot") shotTip();
 });
+// reading words from photos needs AI (the on-device reader got too much wrong): without a key, the same gate as Talk
+function shotTip(){
+  const t = $("#shotTip"), k = hasKey();
+  t.classList.toggle("hidden", k); $("#drop").classList.toggle("hidden", !k); $("#shotDesc").classList.toggle("hidden", !k);
+  if (k) return;
+  t.innerHTML = `<b>🔑 ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${L("AI đọc từ và nghĩa trong ảnh — chữ in hay chữ viết tay đều được. Tạo key miễn phí trong ~1 phút.", "AI reads the words and their meanings from a photo — printed or handwritten. A free key takes ~1 minute to create.")}</p><button class="btn" id="shotKeyGo">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button>`;
+  $("#shotKeyGo").onclick = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
+}
 $("#inKoSpeak").onclick = () => speak($("#inKo").value.trim());
 $("#autoTr").onclick = async () => {
   const ko = $("#inKo").value.trim(); if (!ko) { toast("Type a Korean word first"); return; }
@@ -2231,11 +2244,34 @@ $("#inKo").onkeydown = e => { if (e.key === "Enter" && !e.isComposing) $("#inMea
 $("#inMean").onkeydown = e => { if (e.key === "Enter" && !e.isComposing) $("#addOneBtn").click(); };
 
 /* ---------------- parsing (paste + OCR) ---------------- */
+// a single word or short phrase isn't a sentence: drop the trailing "." / "…" (대학교. → 대학교, lớp học. → lớp học)
+function noDot(it){
+  // 3+ Korean words, or a polite ending (…요. / …니다.): a real sentence, keep its period
+  if (it.ko.split(/\s+/).filter(w => /[가-힣]/.test(w)).length > 2 || /(요|니다)\s*\.$/.test(it.ko)) return it;
+  const strip = t => t.replace(/[\s.。…]+$/, "");
+  return { ...it, ko: strip(it.ko), meaning: strip(it.meaning) };
+}
+// tab-separated cells (spreadsheets, rebuilt photo rows): a Korean cell after a non-Korean one starts a new word,
+// so "가다 | to go | 오다 | to come" becomes two lines
+function splitCells(line){
+  const cells = line.split(/\t+/).map(c => c.trim()).filter(Boolean), out = [];
+  for (const c of cells){
+    if (out.length && !(HANGUL.test(c) && !HANGUL.test(out[out.length-1].at(-1)))) out[out.length-1].push(c);
+    else out.push([c]);
+  }
+  return out.map(g => g.join("\t"));
+}
 function parseLines(text){
   const out = [];
-  for (let line of text.split(/\r?\n/)){
-    line = line.replace(/^\s*(\d+[.)]|[-•*·▪︎●○])\s*/, "").trim();
-    if (!line || !HANGUL.test(line)) continue;
+  let last = null;   // previous word, still without a meaning
+  for (let line of text.split(/\r?\n/).flatMap(splitCells)){
+    line = line.replace(/^\s*(\d+[.)]?\t|\d+[.)]|[-•*·▪︎●○])\s*/, "").trim();
+    if (!line) continue;
+    if (!HANGUL.test(line)){
+      // meaning printed on the line below its word
+      if (last && /\p{L}{2}/u.test(line)){ last.meaning = line.replace(/^[\s\-–—:=|,.]+/, "").trim(); last = null; }
+      continue;
+    }
     let ko = "", meaning = "";
     const sep = line.match(/\s*(\t|\s[-–—:=]\s|[:=]|\s–\s|\s—\s)\s*/);
     if (sep && HANGUL.test(line.slice(0, sep.index))){
@@ -2248,24 +2284,39 @@ function parseLines(text){
     ko = ko.replace(/[^가-힣ᄀ-ᇿ㄰-㆏\s?!.~]/g, "").replace(/\s+/g," ").trim();
     meaning = meaning.replace(/^[\s\-–—:=|,.]+|[\s\-–—:=|,]+$/g, "").replace(/\s+/g," ").trim();
     if (HANGUL.test(meaning)) meaning = meaning.replace(/[가-힣]+/g,"").trim(); // drop stray Korean in meaning
-    if (ko) out.push({ ko, meaning });
+    if (!/\p{L}{2}/u.test(meaning)) meaning = "";   // misread junk like "~ --{" or "7 131": leave it for auto-translate
+    if (/[가-힣]/.test(ko)){ out.push({ ko, meaning }); last = meaning ? null : out[out.length-1]; }
   }
-  return out;
+  return out.map(noDot);
 }
 function showPreview(items){
   if (!items.length){ toast("No Korean words found"); return; }
   const have = new Set(S.cards.map(c=>c.ko));
   $("#prevList").innerHTML = items.map((it,i)=>`<div class="prev" data-i="${i}">
-      <input type="checkbox" ${have.has(it.ko) ? "" : "checked"} title="${have.has(it.ko) ? "Already added" : ""}">
+      <input type="checkbox" checked title="${have.has(it.ko) ? "Already added" : ""}">
       <input type="text" class="pk" lang="ko" value="${esc(it.ko)}">
       <input type="text" class="pm" value="${esc(it.meaning)}" placeholder="meaning">
       <button class="icon-btn ps" title="Listen">🔊</button>
       <input type="hidden" class="pe" value="${esc(it.ex||"")}"><input type="hidden" class="pem" value="${esc(it.exMean||"")}">
       ${it.ex ? `<div></div><div class="prev-ex" lang="ko">${esc(it.ex)}<br>${esc(it.exMean||"")}</div>` : ""}</div>`).join("");
   $$("#prevList .ps").forEach(b => b.onclick = () => speak(b.parentNode.querySelector(".pk").value));
+  prevCta();
   $("#previewCard").classList.remove("hidden"); $("#previewCard").dataset.t = ($("#addTabs button.on") || {}).dataset?.t || "";
   $("#previewCard").scrollIntoView({behavior:"smooth", block:"start"});
 }
+// "Add (12)"; the fill button only while some ticked row still has no meaning
+function prevCta(){
+  const on = $$("#prevList .prev").filter(r => r.querySelector("input[type=checkbox]").checked);
+  const empty = on.filter(r => !r.querySelector(".pm").value.trim()).length;
+  const tr = $("#prevTr"), add = $("#prevAdd");
+  tr.classList.toggle("hidden", !empty);
+  if (!tr.disabled) tr.textContent = L("Tự điền nghĩa", "Fill meanings");
+  if (add.querySelector(".spinner")) return;   // busy translating: busy() restores the label afterwards
+  add.textContent = L(`Thêm (${on.length})`, `Add (${on.length})`);
+  add.disabled = !on.length;
+}
+$("#prevList").addEventListener("input", prevCta);
+$("#prevList").addEventListener("change", prevCta);
 $("#bulkParse").onclick = () => showPreview(parseLines($("#bulkIn").value));
 $("#prevTr").onclick = async () => {
   const rows = $$("#prevList .prev").filter(r => r.querySelector("input[type=checkbox]").checked && !r.querySelector(".pm").value.trim());
@@ -2273,11 +2324,11 @@ $("#prevTr").onclick = async () => {
   const b = $("#prevTr"); b.disabled = true;
   let n = 0, fail = 0;
   for (const r of rows){
-    b.textContent = `Translating ${++n}/${rows.length}…`;
+    b.textContent = L(`Đang dịch ${++n}/${rows.length}…`, `Translating ${n}/${rows.length}…`);
     try { r.querySelector(".pm").value = await translate(r.querySelector(".pk").value); } catch(e){ fail++; }
     await new Promise(res => setTimeout(res, 150));
   }
-  b.disabled = false; b.textContent = "Auto-fill empty meanings";
+  b.disabled = false; prevCta();
   if (fail) toast(`${fail} couldn't be translated — fill them in manually`);
 };
 $("#prevAdd").onclick = async () => {
@@ -2285,7 +2336,7 @@ $("#prevAdd").onclick = async () => {
   if (!rows.length) { toast("Nothing selected"); return; }
   const empty = rows.filter(r => !r.querySelector(".pm").value.trim()), b = $("#prevAdd");
   if (empty.length){   // "lines without a meaning get auto-translated"
-    busy(b, true);
+    busy(b, true, L("Đang dịch…", "Translating…"));
     for (const r of empty){ try { r.querySelector(".pm").value = await translate(r.querySelector(".pk").value); } catch(e){} await new Promise(res => setTimeout(res, 150)); }
     busy(b, false);
   }
@@ -2333,11 +2384,43 @@ Return JSON exactly like: {"text":""}`;
   const j = extractJSON(await gemini(prompt, parts, { temperature: 0 }));
   return String(j.text || "");
 }
-// shared by word screenshots and reading passages: shows progress in st/bar, returns the raw text.
+// word screenshots: let the AI pair words with meanings from the layout instead of guessing line by line
+async function geminiWords(file){
+  const prompt = `This image is a Korean vocabulary list (a screenshot, textbook page, notes, flashcards…). Extract every Korean vocabulary item with its meaning.
+- Follow the layout: a meaning may be on the same line, in another column, or on the line below its word. Lists may have several columns side by side. Pair each word with ITS meaning.
+- Copy the Korean exactly as written (spelling and spacing), but a single word or short phrase is not a sentence: no trailing "." on it or its meaning. A word or phrase is ONE item, even when it is long or wraps onto the next line — never split it into several items.
+- "meaning": the meaning shown in the image, in ${langName()} (translate it if it is in another language). If no meaning is shown, give a short ${langName()} meaning (1–4 words). Never leave it empty.
+- "ex"/"exMean": only if the image shows an example sentence for that word (with a ${langName()} translation); otherwise "".
+- Skip headings, page numbers, UI buttons and watermarks.
+Return JSON exactly like: {"items":[{"ko":"","meaning":"","ex":"","exMean":""}]}`;
+  const parts = [{ inline_data: { mime_type: "image/jpeg", data: await imageB64(file) } }];
+  const j = extractJSON(await gemini(prompt, parts, { temperature: 0 }));
+  return (Array.isArray(j) ? j : j.items || [])
+    .map(it => ({ ko: String(it.ko || "").trim(), meaning: String(it.meaning || "").trim(), ex: String(it.ex || "").trim(), exMean: String(it.exMean || "").trim() }))
+    .filter(it => HANGUL.test(it.ko)).map(noDot);
+}
+// the basic reader wants dark text on a light background at a decent size:
+// grayscale, invert dark-mode screenshots, and upscale small ones
+async function tessImage(file){
+  const img = await createImageBitmap(file);
+  const k = Math.min(4, 4000 / Math.max(img.width, img.height), Math.max(1, 2000 / img.width));
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+  const d = g.getImageData(0, 0, c.width, c.height), px = d.data;
+  let sum = 0;
+  for (let i = 0; i < px.length; i += 4){ const y = px[i] * .299 + px[i+1] * .587 + px[i+2] * .114; px[i] = y; sum += y; }
+  const inv = sum / (px.length / 4) < 128;
+  for (let i = 0; i < px.length; i += 4){ const y = inv ? 255 - px[i] : px[i]; px[i] = px[i+1] = px[i+2] = y; }
+  g.putImageData(d, 0, 0);
+  return c;
+}
+// reading passages from a photo: shows progress in st/bar, returns the raw text.
 // Gemini reads Korean far better than Tesseract, so it's used whenever there's a key.
 let aiErr = "";   // why the last photo fell back to the basic reader
+let ocrConf = 100;   // basic reader's confidence in the last photo (0–100)
 async function ocrText(file, langs, st, bw, bar){
-  st.classList.remove("hidden"); aiErr = "";
+  st.classList.remove("hidden"); aiErr = ""; ocrConf = 100;
   if (hasKey()){
     st.innerHTML = `<span class="spinner"></span>Reading text with AI…`;
     try { return await geminiOCR(file); }
@@ -2350,31 +2433,34 @@ async function ocrText(file, langs, st, bw, bar){
   st.textContent = "Loading reader…";
   try {
     await loadTesseract();
-    const { data } = await Tesseract.recognize(file, langs, {
+    const { data } = await Tesseract.recognize(await tessImage(file), langs, {
       logger: m => {
         if (m.status === "recognizing text") { st.textContent = "Reading text… " + Math.round(m.progress*100) + "%"; bar.style.width = Math.round(m.progress*100) + "%"; }
         else if (/load|init/i.test(m.status)) st.textContent = m.status.replace(/^\w/, c=>c.toUpperCase()) + "…";
       }
     });
+    ocrConf = data.confidence ?? 100;
     return data.text || "";
   } finally { bw.classList.add("hidden"); }
 }
 function ocrHint(st){
-  if (aiErr) st.append(document.createElement("br"), "⚠️ AI couldn't read it (" + aiErr + ") — used the basic reader, expect mistakes.");
-  else if (!hasKey()) st.append(document.createElement("br"), "Tip: add a Gemini key in Settings to read photos much more accurately.");
+  // handwriting, tilted or blurry photos: the basic reader only knows printed text
+  if (ocrConf < 60) st.append(document.createElement("br"), "⚠️ " + L("Ảnh khó đọc (chữ viết tay, chụp nghiêng hoặc mờ) — bộ đọc cơ bản chỉ đọc tốt chữ in nên kết quả có thể sai nhiều. " + (hasKey() ? "" : "Thêm Gemini key miễn phí trong Cài đặt để AI đọc được cả chữ viết tay."), "Hard to read (handwriting, tilted or blurry) — the basic reader only handles printed text, so expect many mistakes. " + (hasKey() ? "" : "Add a free Gemini key in Settings and AI can read handwriting too.")));
+  else if (aiErr) st.append(document.createElement("br"), "⚠️ AI couldn't read it (" + aiErr + ") — used the basic reader, expect mistakes.");
 }
 async function runOCR(file){
+  shotTip();
+  if (!hasKey()){ toast(L("Cần Gemini key để đọc ảnh", "A Gemini key is needed to read photos")); return; }
   const url = URL.createObjectURL(file);
   $("#shotImg").innerHTML = `<img src="${url}" alt="screenshot">`;
   const st = $("#ocrStatus");
+  st.classList.remove("hidden"); st.innerHTML = `<span class="spinner"></span>Reading text with AI…`;
   try {
-    const text = await ocrText(file, S.settings.lang === "vi" ? "kor+vie+eng" : "kor+eng", st, $("#ocrBarWrap"), $("#ocrBar"));
-    const items = parseLines(text);
+    const items = await geminiWords(file);
     st.textContent = items.length ? `Found ${items.length} word${items.length===1?"":"s"}. Please check them below.` : "No Korean text found. Try a sharper or cropped screenshot.";
-    ocrHint(st);
     if (items.length) showPreview(items);
   } catch(err){
-    st.textContent = "⚠️ " + (err.message || "OCR failed");
+    st.textContent = "⚠️ " + (err.message || "AI failed");
   }
 }
 
@@ -3760,7 +3846,7 @@ async function arSaveNow(){
   // …and translations can still be in flight: let them land so the saved copy is complete
   const busy = () => AR.queued || AR.trBusy || AR.trq.length || arLinesOf(mode).some(l => !l.tr && !l.fail);
   if (busy()){
-    toast(L("⏳ Đang dịch nốt…", "⏳ Finishing translations…"));
+    toast(L("⏳ Đang dịch…", "⏳ Finishing translations…"));
     const t0 = Date.now();
     while (busy() && Date.now() - t0 < 20000) await new Promise(r => setTimeout(r, 300));
   }
