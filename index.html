@@ -5047,55 +5047,65 @@ function arPauseEars(){
 }
 function arResumeEars(){ if (AR.on && !AR.saying && AR.engine === "free" && !AR.recog) try { arStartFree(); } catch(e){} }
 
-/* talk mode: the recogniser waits 1–2 s of silence before it calls a sentence final. When the words stop changing
-   for a moment, take the sentence ourselves so its translation is read out sooner. */
+/* the recogniser waits 1–2 s of silence before it calls a sentence final, and while someone talks on it may never do so.
+   When the words stop changing for a moment, add the sentence ourselves; the recogniser keeps running and what it
+   says next has that part cut off the front, so nothing is lost between sentences. */
 let arStableT = null;
-function arCommitSoon(){
+function arCommitSoon(r){
   clearTimeout(arStableT);
-  if (!AR.interim || !arTts() || AR.engine !== "free") return;
-  const src = AR.interim;
+  if (!AR.interim || AR.engine !== "free" || !r) return;
+  const seg = r.seg;
   arStableT = setTimeout(() => {
-    if (!AR.on || AR.interim !== src || !AR.recog) return;
-    const r = AR.recog; AR.recog = null;
-    try { r.onresult = r.onend = r.onerror = null; r.abort(); } catch(e){}   // drop its late "final" copy of this sentence
-    AR.interim = "";
-    arAdd(src, null, r.snap);
-    setTimeout(arResumeEars, 0);   // keep listening; reading the translation pauses the ears again
-  }, 800);
+    if (!AR.on || AR.recog !== r || r.seg !== seg) return;
+    if (r.pending && arNorm(seg).startsWith(arNorm(r.pending))) r.pending = "";
+    AR.interim = ""; arTake(r, seg); arRenderLive();
+  }, arTts() ? 800 : 700);
 }
 
 /* ---- free engine: browser speech recognition, restarted whenever it stops on its own ---- */
+const arWords = t => String(t || "").trim().split(/\s+/).filter(Boolean);
+function arRest(r, full){   // the part of `full` not added yet, or null when it's a new sentence
+  const w = arWords(full), d = r.done, n = Math.min(w.length, d.length);
+  if (!n) return null;
+  let miss = 0; for (let i = 0; i < n; i++) if (arNorm(w[i]) !== arNorm(d[i])) miss++;
+  return miss <= n / 4 ? w.slice(d.length).join(" ") : null;   // a word or two may be re-heard differently
+}
+function arTake(r, full){   // add a sentence, minus what was already added from it
+  full = String(full || "").trim(); if (!full) return;
+  const rest = arRest(r, full);
+  if (rest === null || arWords(full).length > r.done.length) r.done = arWords(full);
+  const t = rest === null ? full : rest;
+  if (t) arAdd(t, null, r.snap);
+}
 function arFlushPending(r){
   const t = r && r.pending; if (!t) return;
-  r.pending = ""; clearTimeout(r.pendT);
-  if (AR.interim === t) AR.interim = "";
-  else if (AR.interim.startsWith(t + " ")) AR.interim = AR.interim.slice(t.length + 1);
-  arAdd(t, null, r.snap); arRenderLive();
+  r.pending = "";
+  if (r.seg === t) AR.interim = "";
+  arTake(r, t); arRenderLive();
 }
 function arStartFree(){
   const r = new SR(), snap = r.snap = arSnap(); r.lang = AR_LANGS[snap.from][3]; r.interimResults = true; r.maxAlternatives = 1;
   r.continuous = !isAndroid;   // Android repeats earlier results in continuous mode
   // Android can also mark every step of a sentence as final ("Rất", "Rất vui", "Rất vui được gặp bạn"):
   // hold the final one; a longer version replaces it, and it's added once the recogniser ends, a new sentence starts, or it goes quiet
-  r.pending = "";
+  r.pending = ""; r.done = []; r.seg = "";
   r.onresult = ev => {
     let interim = "";
     for (let i = ev.resultIndex; i < ev.results.length; i++){
       const res = ev.results[i];
       if (res.isFinal){
         const t = res[0].transcript.trim(); if (!t) continue;
-        if (AR.recog !== r) arAdd(t, null, snap);   // the late final one after Stop / ⇄
-        else {
-          if (r.pending && !arNorm(t).startsWith(arNorm(r.pending))) arFlushPending(r);
-          r.pending = t; clearTimeout(r.pendT); r.pendT = setTimeout(() => arFlushPending(r), 1200);
-        }
+        if (AR.recog !== r) arTake(r, t);   // the late final one after Stop / ⇄
+        else { if (r.pending && !arNorm(t).startsWith(arNorm(r.pending))) arFlushPending(r); r.pending = t; }
       }
       else interim += res[0].transcript;
     }
+    if (AR.recog !== r) return;
     interim = interim.trim();
-    const p = r.pending;   // live box: the held sentence plus what's being said after it (unless that already repeats it)
-    AR.interim = !p ? interim : !interim || arNorm(interim).startsWith(arNorm(p)) ? interim || p : p + " " + interim;
-    arInterimTr(); arRenderLive(); arCommitSoon();
+    if (r.pending && interim && !arNorm(interim).startsWith(arNorm(r.pending))) arFlushPending(r);   // the next sentence began
+    const seg = r.seg = interim || r.pending, rest = arRest(r, seg);
+    AR.interim = rest === null ? seg : rest;
+    arInterimTr(); arRenderLive(); arCommitSoon(r);
   };
   r.onerror = ev => {
     if (ev.error === "not-allowed" || ev.error === "service-not-allowed"){ arStop(); arUI(L("🎙 Micro bị chặn — cho phép micro cho trang này rồi thử lại (Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked — allow it for this site and try again (Settings → Voice → Microphone & speaking).")); }
