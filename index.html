@@ -174,6 +174,8 @@ nav button.on{color:var(--accent)}
 #welcome code{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12.5px;word-break:break-all}
 .ai-hint{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);line-height:1.45}
 .linkbtn{background:none;color:var(--accent);padding:0;font-weight:600;font-size:13px}
+.m-tip{margin:12px 0 0;border:1px solid var(--accent)}
+.m-tip .linkbtn{font-size:inherit;text-decoration:underline}
 .guide details{border-top:1px solid var(--line)}
 .guide summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;gap:8px}
 .guide summary::-webkit-details-marker{display:none}
@@ -623,7 +625,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     </div>
 
     <div class="card" id="add-ai">
-      <p class="small ai-hint hidden" id="addKeyHint" data-noi18n></p>
       <label for="genTopic" style="margin-top:0">Generate words by topic</label>
       <input id="genTopic" type="text" placeholder="e.g. ordering food at a restaurant">
       <div class="chips" id="genChips"></div>
@@ -897,7 +898,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 <div class="toast" id="toast"></div>
 
 <div class="modal hidden" id="aiModal"><div class="sheet">
-  <h2>Use a free chatbot</h2>
+  <div class="row"><h2 style="margin:0">Use a free chatbot</h2><button class="icon-btn" style="flex:0 0 auto" id="mCancel" title="Close" aria-label="Close">✕</button></div>
   <ol class="steps">
     <li>Copy the prompt below.</li>
     <li>Paste it into <a href="https://gemini.google.com/app" target="_blank" rel="noopener">Gemini</a>, <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a> or any chatbot.</li>
@@ -907,8 +908,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   <button class="btn2" style="width:100%;margin-top:8px" id="mCopy">📋 Copy prompt</button>
   <label for="mResp">Chatbot answer</label>
   <textarea id="mResp" placeholder="Paste the answer here…"></textarea>
-  <div class="row" style="margin-top:10px"><button class="btn-ghost" id="mCancel">Cancel</button><button class="btn" id="mOk" style="flex:2">Use answer</button></div>
-  <p class="small muted" style="margin:10px 0 0">Tip: add a Gemini key in Settings to skip this step.</p>
+  <button class="btn" id="mOk" style="width:100%;margin-top:10px">Use answer</button>
+  <p class="small ai-hint m-tip" id="mTip" data-noi18n></p>
 </div></div>
 
 <script>
@@ -991,7 +992,6 @@ const VI = {
 "Use a free chatbot":"Dùng chatbot miễn phí","Copy the prompt below.":"Copy câu lệnh bên dưới.","Paste it into":"Dán vào","or any chatbot.":"hoặc chatbot bất kỳ.",
 "Copy its whole answer and paste it in the second box.":"Copy toàn bộ câu trả lời, dán vào ô thứ hai.","📋 Copy prompt":"📋 Copy câu lệnh",
 "Chatbot answer":"Câu trả lời của chatbot","Cancel":"Huỷ","Use answer":"Dùng câu trả lời",
-"Tip: add a Gemini key in Settings to skip this step.":"Mẹo: thêm Gemini key trong Cài đặt để bỏ qua bước này.",
 "Google Drive sync":"Đồng bộ Google Drive","e.g. ordering food at a restaurant":"vd. gọi món ở nhà hàng","e.g. 사과":"vd. 사과","Listen":"Nghe","e.g. apple":"vd. apple",
 "e.g. A conversation ordering coffee at a café. Or: a short diary entry about my weekend in Seoul.":"vd. Hội thoại gọi cà phê. Hoặc: nhật ký ngắn về cuối tuần ở Seoul.",
 "My text":"Văn bản của tôi","Paste Korean text here. It will be split into sentences.":"Dán văn bản tiếng Hàn vào đây. App sẽ tự tách câu.",
@@ -1315,6 +1315,9 @@ function streakNow(){
 }
 const dueCards = () => S.cards.filter(c => c.last && c.due <= Date.now()).sort((a,b)=>a.due-b.due);
 const newCards = () => S.cards.filter(c => !c.last);
+// the next new cards to learn: alphabet letters first (in table order: basic vowels → consonants → …), then words oldest first
+const newPick = n => { const nw = newCards(), ord = Object.keys(ABC_SAY);
+  return nw.filter(isLetter).sort((a, b) => ord.indexOf(a.ko) - ord.indexOf(b.ko)).concat(nw.filter(c => !isLetter(c)).sort((a, b) => a.created - b.created)).slice(0, n); };
 const newLeftToday = () => Math.max(0, S.settings.newPerDay - S.daily.newCount);
 
 /* ---------------- speech ---------------- */
@@ -1485,7 +1488,13 @@ function manualAI(prompt){
     const m = $("#aiModal");
     $("#mPrompt").value = prompt; $("#mResp").value = "";
     m.classList.remove("hidden");
-    const close = () => { m.classList.add("hidden"); $("#mOk").onclick = $("#mCancel").onclick = null; };
+    const close = () => { m.classList.add("hidden"); $("#mOk").onclick = $("#mCancel").onclick = m.onclick = null; document.removeEventListener("keydown", onKey); };
+    const onKey = e => { if (e.key === "Escape") $("#mCancel").click(); };
+    document.addEventListener("keydown", onKey);
+    m.onclick = e => { if (e.target === m) $("#mCancel").click(); };   // tap on the dimmed backdrop = ✕
+    // the copy/paste detour is exactly when a key pays off — offer it right here
+    $("#mTip").innerHTML = `💡 ${L("<b>Bỏ qua bước copy/dán:</b> thêm Gemini key miễn phí (~1 phút) để AI làm ngay trong app.", "<b>Skip the copy/paste:</b> add a free Gemini key (~1 minute) and AI does it right in the app.")} <button class="linkbtn" id="mKeyGo">${L("Thêm key", "Add key")}</button>`;
+    $("#mKeyGo").onclick = () => { close(); reject(new Error("cancelled")); show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
     $("#mCopy").onclick = async () => {
       try { await navigator.clipboard.writeText(prompt); toast("Prompt copied"); }
       catch(e){ $("#mPrompt").select(); document.execCommand && document.execCommand("copy"); toast("Prompt selected — copy it"); }
@@ -1564,7 +1573,7 @@ function show(v){
   $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" || v === "words" || v === "abc" ? "study" : v)));   // My words / Add words / Alphabet are pages of Study
   if (v === "add" && curView !== "add" && curView !== "abc") addFrom = curView === "words" && S.cards.length ? "words" : "study";
   curView = v;
-  if (v === "add") { syncAddKeyHint(); syncAbcPick(); }
+  if (v === "add") syncAbcPick();
   if (v === "abc") renderAbc();
   if (v === "study" && !session) refreshHome();
   document.body.classList.toggle("in-session", v === "study" && !!session);   // leaving via a link mid-session must bring the tab bar back
@@ -1596,13 +1605,7 @@ $("#navSpeak").textContent = L("Luyện nói", "Speak");
 $("#navStudy").textContent = L("Học từ vựng", "Vocabulary");   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
 $("#goAddBig").onclick = () => show("add");
 let curView = "study", addFrom = "study";
-// without a key, AI still works by copy/paste into another chatbot — say so, and offer the 1-minute key
-function syncAddKeyHint(){
-  const el = $("#addKeyHint"); el.classList.toggle("hidden", hasKey());
-  if (hasKey()) return;
-  el.innerHTML = `💡 ${L("Thêm <b>Gemini key</b> miễn phí (~1 phút) để AI tạo từ ngay trong app. Chưa có key thì app sẽ đưa bạn câu lệnh để dán vào ChatGPT/Gemini.", "Add a free <b>Gemini key</b> (~1 minute) and AI makes the words right here. Without one, the app gives you a prompt to paste into ChatGPT/Gemini.")} <button class="linkbtn" id="addKeyGo">${L("Thêm key", "Add key")}</button>`;
-  $("#addKeyGo").onclick = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
-}   // Add words goes back to whichever page opened it
+// Add words goes back to whichever page opened it
 $("#addBack").onclick = () => show(addFrom);
 $("#wordsBack").onclick = () => show("study");
 $("#goWords").onclick = () => { setFilter("all"); show("words"); };
@@ -1759,7 +1762,7 @@ function startSession(practice, only, auto){
     if (!queue.length) queue = shuffle(S.cards.slice()).slice(0,10).map(c => ({card:c, kind:"quiz"}));
   } else {
     const due = dueCards().map(c => ({ card:c, kind:"quiz" }));
-    const nw = shuffle(newCards()).slice(0, newLeftToday());
+    const nw = newPick(newLeftToday());
     queue = due.slice();
     // interleave new words: intro now, quiz a few steps later
     nw.forEach((c, i) => {
@@ -3074,8 +3077,7 @@ function setFilter(f){ filter = f; $("#search").value = ""; $$("#filterTabs butt
 // "due today" = what today's study covers: the words left in the running session, else reviews due + today's new words
 function todayIds(){
   if (session && !session.practice) return new Set(session.queue.map(q => q.card.id));
-  const nl = Math.min(newLeftToday(), newCards().length);
-  return new Set(dueCards().concat(newCards().sort((a, b) => a.created - b.created).slice(0, nl)).map(c => c.id));
+  return new Set(dueCards().concat(newPick(newLeftToday())).map(c => c.id));
 }
 // no "All" tab: nothing selected shows every word; tapping the selected tab again clears it
 $$("#filterTabs button").forEach(b => b.onclick = () => { setFilter(filter === b.dataset.f ? "all" : b.dataset.f); renderWords(); });
