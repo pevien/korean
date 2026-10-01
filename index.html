@@ -2309,7 +2309,7 @@ async function sayStart(item){
     } else {
       // like AI: keep listening until ⏹ (or the 8 s limit). The recogniser ends by itself after a short pause —
       // and often before a one-syllable word registers — so it's restarted and what it heard is added up.
-      const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = !/Android/i.test(navigator.userAgent); r.maxAlternatives = 5;
+      const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = !isAndroid; r.maxAlternatives = 5;
       let base = "", baseAlts = [];
       // the recogniser returns nothing at all for speech it can't match to a word — so note that they *did* speak
       r.onspeechstart = r.onsoundstart = () => { FR.spoke = true; };
@@ -3214,7 +3214,7 @@ async function startRec(){
   try {
     // Android Chrome can't feed the mic to MediaRecorder and SpeechRecognition at the same time:
     // the recorder wins and recognition hears silence. Without an AI key, use recognition only there.
-    const srOnly = !useAI && SR && /Android/i.test(navigator.userAgent);
+    const srOnly = !useAI && SR && isAndroid;
     if (srOnly) { $("#cMine").disabled = true; }
     else if (navigator.mediaDevices && window.MediaRecorder){
       const tok = C.tok; C.starting = true;
@@ -3236,7 +3236,7 @@ async function startRec(){
   C.sp0 = C.sp1 = 0;   // first / last moment speech was heard: the pace counts talking time, not the wait before and after
   if (!useAI && SR){
     try {
-      const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = !/Android/i.test(navigator.userAgent); r.maxAlternatives = 1;
+      const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = !isAndroid; r.maxAlternatives = 1;
       let base = "";   // text from earlier runs: the recogniser ends after a pause and is restarted until ⏹, like AI
       r.onspeechstart = () => { if (!C.sp0) C.sp0 = Date.now(); };
       r.onresult = ev => { let t = ""; for (const res of ev.results) t += res[0].transcript; C.heard = (base + " " + t).trim(); $("#cStatus").textContent = "Hearing: " + C.heard;
@@ -3953,7 +3953,8 @@ window.__notifySnap();
 const WEL_KEY = "hangulCards.welcomed";
 const UA = navigator.userAgent;
 const isIOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-const isAndroid = /Android/i.test(UA);
+// Chrome on Android tablets asks for the desktop site by default and then says "Linux x86_64" instead of Android
+const isAndroid = /Android/i.test(UA) || (/Linux/.test(UA) && !/CrOS/.test(UA) && navigator.maxTouchPoints > 0);
 const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 const APP_URL = "https://pevien.github.io/korean/";
 const ORIGIN = new URL(APP_URL).origin;
@@ -5066,16 +5067,16 @@ function arCommitSoon(){
 /* ---- free engine: browser speech recognition, restarted whenever it stops on its own ---- */
 function arFlushPending(r){
   const t = r && r.pending; if (!t) return;
-  r.pending = "";
+  r.pending = ""; clearTimeout(r.pendT);
   if (AR.interim === t) AR.interim = "";
+  else if (AR.interim.startsWith(t + " ")) AR.interim = AR.interim.slice(t.length + 1);
   arAdd(t, null, r.snap); arRenderLive();
 }
 function arStartFree(){
-  const android = /Android/i.test(navigator.userAgent);
   const r = new SR(), snap = r.snap = arSnap(); r.lang = AR_LANGS[snap.from][3]; r.interimResults = true; r.maxAlternatives = 1;
-  r.continuous = !android;   // Android repeats earlier results in continuous mode
-  // Android also marks every step of a sentence as final ("Rất", "Rất vui", "Rất vui được gặp bạn"):
-  // keep only the latest one and add it when the recogniser ends (or a new sentence starts)
+  r.continuous = !isAndroid;   // Android repeats earlier results in continuous mode
+  // Android can also mark every step of a sentence as final ("Rất", "Rất vui", "Rất vui được gặp bạn"):
+  // hold the final one; a longer version replaces it, and it's added once the recogniser ends, a new sentence starts, or it goes quiet
   r.pending = "";
   r.onresult = ev => {
     let interim = "";
@@ -5083,12 +5084,18 @@ function arStartFree(){
       const res = ev.results[i];
       if (res.isFinal){
         const t = res[0].transcript.trim(); if (!t) continue;
-        if (!android || AR.recog !== r) arAdd(t, null, snap);   // also the late final one after Stop / ⇄
-        else { if (r.pending && !arNorm(t).startsWith(arNorm(r.pending))) arFlushPending(r); r.pending = t; }
+        if (AR.recog !== r) arAdd(t, null, snap);   // the late final one after Stop / ⇄
+        else {
+          if (r.pending && !arNorm(t).startsWith(arNorm(r.pending))) arFlushPending(r);
+          r.pending = t; clearTimeout(r.pendT); r.pendT = setTimeout(() => arFlushPending(r), 1200);
+        }
       }
       else interim += res[0].transcript;
     }
-    AR.interim = interim.trim() || r.pending; arInterimTr(); arRenderLive(); arCommitSoon();
+    interim = interim.trim();
+    const p = r.pending;   // live box: the held sentence plus what's being said after it (unless that already repeats it)
+    AR.interim = !p ? interim : !interim || arNorm(interim).startsWith(arNorm(p)) ? interim || p : p + " " + interim;
+    arInterimTr(); arRenderLive(); arCommitSoon();
   };
   r.onerror = ev => {
     if (ev.error === "not-allowed" || ev.error === "service-not-allowed"){ arStop(); arUI(L("🎙 Micro bị chặn — cho phép micro cho trang này rồi thử lại (Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked — allow it for this site and try again (Settings → Voice → Microphone & speaking).")); }
