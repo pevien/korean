@@ -500,7 +500,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .plist .t{flex:1;min-width:0}
 .plist .t b{display:block}
 /* reader: one slim pinned bar — ⏮ ▶ ⏭ · speed · ⚙; the rarely-changed options fold into the ⚙ panel */
-.player{position:sticky;top:calc(6px + env(safe-area-inset-top));z-index:5;background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:8px 8px 6px;margin-bottom:12px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
+.player{position:sticky;top:calc(6px + env(safe-area-inset-top));z-index:5;background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:8px;margin-bottom:12px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
 .pctl{display:flex;gap:8px;justify-content:center;align-items:center}
 .pctl button{background:var(--accent-soft);color:var(--accent);width:48px;height:48px;padding:0;border-radius:99px;font-size:18px}
 .pctl button.main{width:60px;height:60px;background:var(--accent);color:var(--on-accent);font-size:24px}
@@ -513,7 +513,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .player .pctl .prate, .player .pctl .popt-btn{background-color:transparent;color:var(--text)}
 .prate{width:auto;border:0;padding:6px 20px 6px 6px;font-size:14px;font-weight:600;background-position:right 4px center;background-size:10px 7px}
 .popt-btn[aria-expanded=true]{background:var(--accent-soft)!important}
-.player .turn{font-size:13px;min-height:0;margin:6px 0 2px}
+.player .turn{font-size:13px;min-height:0;margin:6px 0 0}
 .player .turn:empty{display:none}
 .popts{border-top:1px solid var(--line);margin:8px 4px 2px;padding-top:4px}
 .popts label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:8px 6px;color:var(--text);font-size:14px;font-weight:500;cursor:pointer}
@@ -558,6 +558,10 @@ input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .issue .n{flex:0 0 22px;height:22px;border-radius:99px;background:var(--bad-soft);color:var(--bad);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .issue .ty{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .box{background:var(--bg);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px;text-align:left}
+.box .heard-ok{color:var(--ok);margin-top:6px}   /* "clear!" belongs with what was heard */
+.box .bsec + .bsec{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.box .bsec .issue:first-child{padding-top:0}
+.box .bsec .issue:last-child{padding-bottom:0}
 .sent .smic{flex:0 0 auto!important;font-size:18px;padding:4px 6px}
 .sent .best{font-size:11px;color:var(--ok);font-weight:600;margin-top:6px}
 /* passage editor + photo review: reads like the text itself, fields only show while you touch them */
@@ -578,7 +582,7 @@ input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sent.coaching{background:var(--accent-soft);border-color:var(--accent);border-bottom-color:transparent;border-radius:12px 12px 0 0;margin-bottom:0}
 #sentList #coach{margin:0 0 8px;padding:12px;box-shadow:none;background:var(--accent-soft);border:1px solid var(--accent);border-top:0;border-radius:0 0 12px 12px}
 #sentList #coach > .row:first-child{display:none}
-.rd-hint{font-size:13px;font-weight:600;color:var(--ok);text-align:center;margin:6px 0 2px}   /* + the player's 6px = 8px, same as above the buttons */
+.rd-hint{font-size:13px;font-weight:600;color:var(--ok);text-align:center;margin:6px 0 0}   /* no bottom margin: the player's 8px padding is the same with or without this line */
 .player .turn:not(:empty) + .rd-hint{display:none}   /* "your turn…" / "finished" takes that line while it shows */
 #sentList #coach .pctl{margin-top:4px!important}
 .cgrade-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px}
@@ -3031,11 +3035,14 @@ async function startRec(){
     else toast("⚠️ " + (e.message || "Can't access microphone"));
     return;
   }
+  C.sp0 = C.sp1 = 0;   // first / last moment speech was heard: the pace counts talking time, not the wait before and after
   if (!useAI && SR){
     try {
       const r = new SR(); r.lang = "ko-KR"; r.interimResults = true; r.continuous = !/Android/i.test(navigator.userAgent); r.maxAlternatives = 1;
       let base = "";   // text from earlier runs: the recogniser ends after a pause and is restarted until ⏹, like AI
-      r.onresult = ev => { let t = ""; for (const res of ev.results) t += res[0].transcript; C.heard = (base + " " + t).trim(); $("#cStatus").textContent = "Hearing: " + C.heard; };
+      r.onspeechstart = () => { if (!C.sp0) C.sp0 = Date.now(); };
+      r.onresult = ev => { let t = ""; for (const res of ev.results) t += res[0].transcript; C.heard = (base + " " + t).trim(); $("#cStatus").textContent = "Hearing: " + C.heard;
+        const now = Date.now(); if (!C.sp0) C.sp0 = now; C.sp1 = now; };
       r.onerror = ev => {
         // Android Chrome often can't share the mic between the recorder and speech recognition:
         // keep the recording going instead of failing, and just skip live transcription.
@@ -3204,14 +3211,22 @@ function evaluateLocal(){
   const tg = syls(s.ko), { map, extra } = align(tg, syls(heard));
   const ok = map.filter((h, i) => h === tg[i]).length;
   const accuracy = Math.max(0, Math.round(100 * (ok - extra*0.5) / Math.max(1, tg.length)));
-  const sps = tg.length / Math.max(0.5, C.dur / 1000);           // syllables per second
+  // syllables per second over the talking itself (+0.3 s: the last result lands a bit after the last syllable starts);
+  // without speech timestamps, the whole recording
+  const talk = C.sp0 && C.sp1 > C.sp0 ? Math.min(C.dur, C.sp1 - C.sp0 + 300) : C.dur;
+  const sps = tg.length / Math.max(0.5, talk / 1000);
   const fluency = Math.round(Math.max(20, Math.min(100, (sps / 4.5) * 100)));
   const issues = [];
-  tg.forEach((ch, i) => { if (map[i] !== ch && issues.length < 6) issues.push({ idx: i, part: ch, heard: map[i] || "", type: map[i] ? "sound" : "missing", tip: localTip(ch, tg[i-1], tg[i+1], map[i]) }); });
+  tg.forEach((ch, i) => {
+    if (map[i] === ch) return;
+    // syllables missing in a row (뚱뚱해 not heard) are one problem, not three identical tips
+    const last = issues[issues.length - 1];
+    if (!map[i] && last && last.type === "missing" && last.idx + last.len === i){ last.part += ch; last.len++; last.tip = localTip(last.part); return; }
+    if (issues.length < 6) issues.push({ idx: i, len: 1, part: ch, heard: map[i] || "", type: map[i] ? "sound" : "missing", tip: localTip(ch, tg[i-1], tg[i+1], map[i]) });
+  });
   const j = { heard, scores: { accuracy, fluency }, issues, local: true,
     good: accuracy >= 90 ? (vi() ? "Phát âm rõ ràng, máy nhận diện gần như chính xác!" : "Very clear — speech recognition understood almost everything!") : "",
-    overall: (vi() ? `Tốc độ: ${sps.toFixed(1)} âm tiết/giây (người bản xứ ~5–7). ` : `Pace: ${sps.toFixed(1)} syllables/sec (natives ~5–7). `) +
-      (vi() ? "Đây là kiểm tra cơ bản bằng nhận diện giọng nói. Thêm Gemini key để được chấm ngữ điệu, độ tự nhiên và hướng dẫn chi tiết hơn." : "This is a basic check using speech recognition. Add a Gemini key for intonation, native-likeness and more detailed coaching.") };
+    overall: vi() ? `Tốc độ: ${sps.toFixed(1)} âm tiết/giây (người bản xứ ~5–7).` : `Pace: ${sps.toFixed(1)} syllables/sec (natives ~5–7).` };
   renderCoachResult(s, j, false);
 }
 
@@ -3224,7 +3239,11 @@ function renderCoachResult(s, j, ai){
   const issues = (j.issues || []).filter(x => x && (x.part || x.idx != null));
   if (j.local){
     const pos = []; chars.forEach((ch, k) => { if (/[가-힣]/.test(ch)) pos.push(k); });
-    issues.forEach((x, n) => { const k = pos[x.idx]; if (k != null){ flag[k] = 2; num[k] = n + 1; } });
+    issues.forEach((x, n) => {
+      const len = x.len || 1;
+      for (let t = 0; t < len; t++){ const k = pos[x.idx + t]; if (k != null) flag[k] = 2; }
+      const k = pos[x.idx + len - 1]; if (k != null) num[k] = n + 1;
+    });
   } else {
     let from = 0;
     issues.forEach((x, n) => {
@@ -3253,15 +3272,19 @@ function renderCoachResult(s, j, ai){
   const overallScore = Math.round(["accuracy","fluency","intonation","native"].map(k => sc[k]).filter(v => v != null).reduce((a,b,_,arr) => a + b/arr.length, 0));
   const typeName = t => ({ sound:"Sound", batchim:"Final consonant", "sound-rule":"Sound rule", intonation:"Intonation", stress:"Stress", pace:"Pace", missing:"Missing", extra:"Extra" }[t] || t || "Tip");
   $("#cStatus").textContent = overallScore >= 85 ? "🌟 Excellent!" : overallScore >= 70 ? "👍 Good — a few things to polish" : overallScore >= 50 ? "💪 Getting there — see the tips" : "Keep practicing — listen 🔊 and try again";
-  $("#cResult").innerHTML = `
-    <div class="scores">${box("accuracy","Accuracy")}${box("fluency","Fluency")}${box("intonation","Intonation")}${box("native","Native-like")}</div>
-    ${j.heard ? `<div class="box"><span class="muted small">We heard</span><div lang="ko" style="font-size:17px">${esc(j.heard)}</div></div>` : ""}
-    ${j.pron ? `<div class="box"><span class="muted small">Correct pronunciation</span><div lang="ko" style="font-size:17px">${esc(j.pron)} <button class="icon-btn" data-say="${esc(s.ko)}">🔊</button></div></div>` : ""}
-    ${issues.length ? `<div class="box">${issues.map((x, n) => `<div class="issue"><span class="n">${n+1}</span><div>
+  // what was heard, how it should sound and what to fix: one block, split by thin lines
+  const secs = [
+    j.heard ? `<span class="muted small">We heard</span><div lang="ko" style="font-size:17px">${esc(j.heard)}</div>${j.good ? `<div class="heard-ok">✅ ${esc(j.good)}</div>` : ""}` : "",
+    j.pron ? `<span class="muted small">Correct pronunciation</span><div lang="ko" style="font-size:17px">${esc(j.pron)} <button class="icon-btn" data-say="${esc(s.ko)}">🔊</button></div>` : "",
+    issues.map((x, n) => `<div class="issue"><span class="n">${n+1}</span><div>
         <div class="ty">${esc(typeName(x.type))}</div>
         <div><b lang="ko">${esc(x.part)}</b>${x.heard ? ` <span class="muted">→ you said</span> <span lang="ko">${esc(x.heard)}</span>` : ""}</div>
-        <div class="small" style="margin-top:3px">${esc(x.tip)}</div></div></div>`).join("")}</div>` : ""}
-    ${j.good ? `<div class="feedback ok small">✅ ${esc(j.good)}</div>` : ""}
+        <div class="small" style="margin-top:3px">${esc(x.tip)}</div></div></div>`).join("")
+  ].filter(Boolean);
+  $("#cResult").innerHTML = `
+    <div class="scores">${box("accuracy","Accuracy")}${box("fluency","Fluency")}${box("intonation","Intonation")}${box("native","Native-like")}</div>
+    ${secs.length ? `<div class="box">${secs.map(x => `<div class="bsec">${x}</div>`).join("")}</div>` : ""}
+    ${j.good && !j.heard ? `<div class="feedback ok small">✅ ${esc(j.good)}</div>` : ""}
     ${j.overall ? `<div class="box small">💡 ${esc(j.overall)}</div>` : ""}
     `;
   bindSay($("#cResult"));
