@@ -950,17 +950,14 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <label class="check" style="margin-top:10px"><input type="checkbox" id="setAutoEx"> Auto-add example sentences to new words (needs key)</label>
     </div>
     <div class="card">
-      <div class="row" style="margin-bottom:10px"><h2 style="margin:0">Google Drive sync</h2><span class="pill hidden" id="gdStatus" style="flex:0 0 auto">☁️</span></div>
+      <div class="row" style="margin-bottom:10px"><h2 style="margin:0">Google Drive sync</h2><button class="pill hidden" id="gdStatus" style="flex:0 0 auto;cursor:pointer;font-weight:500">☁️</button></div>
       <p class="small muted" style="margin-top:0">Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.</p>
       <div class="guide" data-g="g-sync" data-noi18n></div>
       <div id="gdClientRow">
         <label for="gdClient">Google OAuth Client ID</label>
-        <input id="gdClient" class="secret" type="text" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <div class="row"><input id="gdClient" class="secret" type="text" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn-danger ico sq hidden" id="gdOff"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button></div>
       </div>
-      <div class="row">
-        <button class="btn2" id="gdConnect">Connect Google Drive</button>
-        <button class="btn-ghost hidden" id="gdOff" style="flex:0 0 auto">Disconnect</button>
-      </div>
+      <button class="btn2" id="gdConnect" style="width:100%;margin-top:10px">Connect Google Drive</button>
     </div>
     <div class="card" id="notifyCard" data-noi18n></div>
     <div class="card">
@@ -3611,15 +3608,15 @@ function renderSyncCard(){
   if (!$("#gdStatus")) return;
   $("#gdClientRow").classList.toggle("hidden", !!GOOGLE_CLIENT_ID);
   if ($("#gdClient") !== document.activeElement) showSecret($("#gdClient"), SY.clientId);
-  $("#gdOff").classList.toggle("hidden", !SY.on);
-  $("#gdConnect").innerHTML = SY.on ? ic("arrows-clockwise") + " " + L("Đồng bộ ngay", "Sync now") : L("Kết nối Google Drive", "Connect Google Drive");
+  gdOffBtn();
+  $("#gdConnect").classList.toggle("hidden", SY.on);   // once connected, the ☁️ badge above is the sync button
   const st = SY.on ? cloudState : "off", gs = $("#gdStatus");
   gs.textContent = CLOUD_BADGE[st] || "☁️"; gs.dataset.st = st; gs.classList.toggle("hidden", !SY.on);   // like Home: nothing to show until Drive is connected
   gs.title = gs.ariaLabel = !SY.on ? L("Chưa kết nối", "Not connected") :
     cloudState === "busy" ? L("Đang đồng bộ…", "Syncing…") :
-    cloudState === "error" ? L("Đồng bộ lỗi — bấm Đồng bộ ngay", "Last sync failed — tap Sync now") :
-    cloudState === "expired" || cloudState === "idle" ? L(`Đã kết nối · lần cuối ${ago(SY.last)} · bấm Đồng bộ ngay để tiếp tục`, `Connected · last sync ${ago(SY.last)} · tap Sync now to continue`) :
-    L(`Đã kết nối · lần cuối ${ago(SY.last)}`, `Connected · last sync ${ago(SY.last)}`);
+    cloudState === "error" ? L("Đồng bộ lỗi — bấm để thử lại", "Last sync failed — tap to retry") :
+    cloudState === "expired" || cloudState === "idle" ? L(`Đã kết nối · lần cuối ${ago(SY.last)} · bấm để đồng bộ tiếp`, `Connected · last sync ${ago(SY.last)} · tap to continue syncing`) :
+    L(`Đã kết nối · lần cuối ${ago(SY.last)} · bấm để đồng bộ`, `Connected · last sync ${ago(SY.last)} · tap to sync`);
 }
 
 function gisReady(){ return !!(window.google && google.accounts && google.accounts.oauth2); }
@@ -3764,7 +3761,7 @@ window.__syncChanged = () => {
   if (!tokValid()){ if (cloudState !== "expired") setCloud("expired"); return; }
   clearTimeout(pushT); pushT = setTimeout(() => syncNow(false), 4000);
 };
-$("#cloudBtn").onclick = () => syncNow(true);
+$("#cloudBtn").onclick = $("#gdStatus").onclick = () => syncNow(true);
 $("#gdConnect").onclick = () => {
   const v = $("#gdClient").value.trim();
   if (!GOOGLE_CLIENT_ID && v && !$("#gdClient").dataset.masked){ SY.clientId = v; saveSY(); }
@@ -3772,10 +3769,12 @@ $("#gdConnect").onclick = () => {
   syncNow(true);
 };
 $("#gdClient").onchange = e => { const v = e.target.value.trim(); if (!v || e.target.dataset.masked) return; SY.clientId = v; saveSY(); if (clientId()) loadGIS().catch(()=>{}); };
-$("#gdOff").onclick = () => {
+// 🗑 disconnect: same two-tap button as removing the Gemini key
+function gdOffBtn(){ const b = $("#gdOff"); delete b.dataset.confirm; b.innerHTML = ic("trash"); b.title = b.ariaLabel = L("Ngắt kết nối", "Disconnect"); b.classList.toggle("hidden", !SY.on); }
+$("#gdOff").onclick = e => confirmTap(e.currentTarget, ic("trash"), () => {
   try { if (tok && gisReady()) google.accounts.oauth2.revoke(tok.t, () => {}); } catch(e){}
   tok = null; saveTok(); SY.on = false; SY.fileId = ""; saveSY(); setCloud("off"); toast("Drive sync turned off (your data stays on this device)");
-};
+}, ic("trash") + " " + L("Ngắt?", "Disconnect?"));
 document.addEventListener("visibilitychange", () => {
   if (!SY.on) return;
   if (document.visibilityState === "visible") syncNow(false);
@@ -5105,7 +5104,7 @@ if (clientId()) loadGIS().catch(()=>{});
 setCloud(SY.on ? (tokValid() ? "ok" : "idle") : "off");
 // the ~1 h Google token ran out: renew it on the first tap (GIS needs a tap for its no-prompt popup), then sync
 document.addEventListener("click", e => {
-  if (!SY.on || tokValid() || syncing || renewTried || e.target.closest("#cloudBtn, #gdConnect")) return;
+  if (!SY.on || tokValid() || syncing || renewTried || e.target.closest("#cloudBtn, #gdStatus, #gdConnect")) return;
   renewTried = true; getToken().then(() => syncNow(false), () => {});
 }, true);
 if (SY.on) syncNow(false);
