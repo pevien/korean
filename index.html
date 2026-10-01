@@ -1935,8 +1935,7 @@ function startSession(practice, only, auto){
   nextQ();
 }
 $("#endBtn").onclick = () => endSession();
-// an auto-started session keeps the home chrome until the learner does something (tap, type) — the word being read out on its own doesn't count
-["pointerdown", "keydown"].forEach(t => $("#studySession").addEventListener(t, e => { if (e.target.closest("#endBtn")) return; document.body.classList.remove("auto-session"); }, true));
+// an auto-started session keeps the home chrome until the learner answers (finish) or moves past a new word (gotIt) — taps before that (speaker, hint, typing) don't count
 function endSession(summary){
   frCancel();
   homeAuto = false;
@@ -1952,7 +1951,6 @@ function endSession(summary){
   else if (summary && s && s.answered && !s.missed.size) confetti();
   if (summary && s && s.answered) {
     // not a perfect run → the result + retry stay on the home card for the rest of the day (see resultHTML)
-    if (s.missed.size) setTimeout(() => $("#retryMissed") && $("#retryMissed").focus(), 30);
   }
 }
 /* today's last session result, shown on top of the home card until a later session replaces it:
@@ -2007,7 +2005,6 @@ function renderIntro(item){
     session.total++;
     nextQ();
   };
-  $("#gotIt").focus();
 }
 function pickMode(c, noSpeak){
   let modes = enabledModes();
@@ -2215,9 +2212,8 @@ function finish(item, ok, typed, extra){
   bindSay($("#fb"));
   speak(c.ko);
   $$("#fb .grades button").forEach(b => b.onclick = () => done(item, +b.dataset.q));
-  const cb = $("#contBtn"); if (cb) { cb.onclick = () => done(item, ok ? 4 : 1); setTimeout(()=>cb.focus(), 30); }
+  const cb = $("#contBtn"); if (cb) cb.onclick = () => done(item, ok ? 4 : 1);
   const tb = $("#typoBtn"); if (tb) tb.onclick = () => { session.correct++; if (!item.failed) session.missed.delete(c.id); done(item, 3); };
-  const g = $("#fb .grades .btn"); if (g) setTimeout(()=>g.focus(), 30);
 }
 function done(item, q){
   const c = item.card;
@@ -2397,6 +2393,9 @@ document.addEventListener("keydown", e => {
   const item = session.queue[0];
   if (item && item.opts && !item.answered && /^[1-4]$/.test(e.key)) { const i = +e.key - 1; if (item.opts[i]) answerChoice(item, i); }
   if (e.key === " " && item) { e.preventDefault(); speak(item.card.ko); }
+  // Enter = the main button (Got it / Continue / Good) without it being focused — focusing it drew a ring on load
+  const main = $("#gotIt") || $("#contBtn") || $("#fb .grades .btn");
+  if (e.key === "Enter" && main && !e.target.closest("button")) { e.preventDefault(); main.click(); }
 });
 
 /* ---------------- add: single ---------------- */
