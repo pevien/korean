@@ -1154,6 +1154,7 @@ const VI_RX = [
  [/^in (\d+ (?:min|h|days?|mo))$/, (m, t) => "sau " + viTime(t)],
  [/^🔥 (\d+) day streak$/, "🔥 $1 ngày liên tiếp"],
  [/^(\d+) reviews? and (\d+) new words?\. Reviewed today: (\d+)\.$/, "$1 từ cần ôn và $2 từ mới. Hôm nay đã ôn: $3."],
+ [/^Next review in ([^.]+)\.$/, (m, t) => "Lần ôn tới sau " + viTime(t) + "."],
  [/^Next review in (.+?)\. Add more words or practice without changing your schedule\.$/, (m, t) => "Lần ôn tới sau " + viTime(t) + ". Thêm từ hoặc luyện thêm mà không ảnh hưởng lịch ôn."],
  [/^Added (\d+) example sentences?$/, "Đã thêm $1 câu ví dụ"],
  [/^Adding example sentences to (\d+) words?…$/, "Đang thêm câu ví dụ cho $1 từ…"],
@@ -1790,9 +1791,12 @@ function refreshHome(noAuto){
   } else {
     const next = S.cards.filter(c=>c.last).sort((a,b)=>a.due-b.due)[0];
     const when = next ? timeUntil(next.due) : "";
-    h.innerHTML = `${resultHTML()}<div class="empty">${cheerHTML()}<p class="muted" style="margin-top:0">${when ? "Next review in " + when + ". " : ""}Add more words or practice without changing your schedule.</p>
-      <div class="row" style="align-items:stretch"><button class="btn-ghost" id="pracBtn">Extra practice</button><button class="btn" id="moreNew">Learn 5 more</button></div></div>`;
-    $("#pracBtn").onclick = () => startSession(true); bindResult();
+    const res = resultHTML(), retry = res.includes("retryMissed");   // missed words left: "Practice N missed" is the one thing to do, the extras come back once it's clean
+    h.innerHTML = `${res}<div class="empty">${cheerHTML()}${retry ? (when ? `<p class="muted" style="margin:0">Next review in ${when}.</p>` : "") : `<p class="muted" style="margin-top:0">${when ? "Next review in " + when + ". " : ""}Add more words or practice without changing your schedule.</p>
+      <div class="row" style="align-items:stretch"><button class="btn-ghost" id="pracBtn">Extra practice</button><button class="btn" id="moreNew">Learn 5 more</button></div>`}</div>`;
+    bindResult();
+    if (retry) return;
+    $("#pracBtn").onclick = () => startSession(true);
     $("#moreNew").onclick = () => { if (!newCards().length) { toast("No new words left — add some!"); return; } S.daily.newCount = Math.max(0, S.daily.newCount - 5); save(); refreshHome(); };
   }
 }
