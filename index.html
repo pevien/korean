@@ -626,7 +626,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <button class="stat tone t-master st-go" data-f="master" title="See these words"><b id="sMaster">0</b><span>Mastered</span></button>
       <div class="stat tone t-streak"><b id="sStreak">🔥 0</b><span>Day streak</span></div>
     </div>
-    <div class="study-links"><button class="btn-ghost" id="goWords"><span>My words</span><span id="goWordsN"></span></button><button class="btn-ghost" id="goAddTop">+ Add words</button></div>
+    <div class="study-links"><button class="btn-ghost" id="goWords" data-noi18n><span id="goWordsL"></span><span id="goWordsN"></span></button><button class="btn-ghost" id="goAddTop">+ Add words</button></div>
     <div id="studyHome">
       <div class="card" id="homeCard"></div>
       <div class="card nudge hidden" id="nudge" data-noi18n></div>
@@ -1654,7 +1654,8 @@ function navRoot(v){
   if (v === "army"){ arStop(); AR.view = ""; AR.screen = "home"; arPersist(); }
 }
 $("#navSpeak").textContent = L("Luyện nói", "Speak");
-$("#navStudy").textContent = L("Từ vựng", "Vocabulary");   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
+$("#navStudy").textContent = L("Từ vựng", "Vocabulary");
+$("#goWordsL").textContent = L("Từ vựng", "Words");   // short next to "+ Add words"; the page itself is still "My words"   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
 $("#goAddBig").onclick = () => show("add");
 let curView = "study", addFrom = "study";
 // Add words goes back to whichever page opened it
