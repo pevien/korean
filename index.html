@@ -26,7 +26,9 @@
 :root{
   --bg:#f6f7fb; --card:#ffffff; --text:#1d2033; --muted:#6b7090; --line:#e3e5ef;
   --accent:#4f46e5; --accent-soft:#eceafe; --on-accent:#fff; --ok:#15935b; --ok-soft:#e3f6ec;
-  --bad:#d93a3a; --bad-soft:#fdeaea; --warn:#b7791f; --radius:16px;
+  --bad:#d93a3a; --bad-soft:#fdeaea; --warn:#b7791f;
+  /* four corner radii: surfaces · inner blocks & fields · small marks · tappable controls (pill) */
+  --radius:16px; --r-md:12px; --r-sm:8px; --r-pill:99px;
   --shadow:0 2px 10px rgba(20,24,60,.06);
 }
 @media (prefers-color-scheme: dark){
@@ -34,6 +36,14 @@
     --accent:#8b83ff; --accent-soft:#2a2850; --on-accent:#16142e; --ok:#3ecf8e; --ok-soft:#173327;
     --bad:#ff6b6b; --bad-soft:#3a1d1f; --warn:#f0b35a; --shadow:none;}
 }
+/* icons: Phosphor sprite (#i-*), sized by the surrounding text, coloured by currentColor */
+.i{width:1.2em;height:1.2em;fill:currentColor;flex:0 0 auto;vertical-align:-.25em}
+.hic{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--accent);flex:0 0 auto}   /* page-head icon: solid, no box — same weight as ARMY's sparkle heart; the cards below keep the boxed outline icons */
+.hic .i{width:40px;height:40px;vertical-align:0}
+.li-ic{display:flex;color:var(--accent);font-size:20px}
+#sStreak .i{width:.85em;height:.85em;align-self:center}
+.pctl button.rec.on{color:#fff}   /* white stop square on the red recording button */
+:root{accent-color:var(--accent)}   /* checkboxes, sliders: app purple instead of system blue */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}   /* no blue/grey flash on tap: buttons have their own pressed look */
 :focus:not(:focus-visible){outline:none}   /* the focus ring stays for keyboard users, not after a tap or click */
 html,body{margin:0;background:var(--bg);color:var(--text);
@@ -47,10 +57,10 @@ header h1{font-size:20px;margin:0;white-space:nowrap;min-width:0}
 header h1 .logo{font-family:"Satisfy",cursive;font-style:italic;font-weight:400;font-size:27px;line-height:1;letter-spacing:.01em}
 header h1 .leaf{font-size:26px;line-height:1;vertical-align:-.04em}   /* sized to the script name next to it */
 @supports (font-synthesis:none){ header h1 .logo{font-synthesis:none} }   /* the script face is already slanted: don't fake-italicise it again */
-.pill{font-size:12px;color:var(--muted);background:var(--card);border:1px solid transparent;padding:4px 10px;border-radius:99px}
+.pill{font-size:12px;color:var(--muted);background:var(--card);border:1px solid transparent;padding:4px 10px;border-radius:var(--r-pill)}
 #cloudBtn{white-space:nowrap;flex:0 0 auto}
-#cloudBtn .warn-ic{width:1.05em;height:1.05em;vertical-align:-.15em}
-#cloudBtn[data-st="expired"],#cloudBtn[data-st="error"]{color:var(--bad);background:var(--bad-soft);border-color:color-mix(in srgb, var(--bad) 35%, transparent);font-weight:600}
+#gdStatus{background:var(--bg)}
+#cloudBtn[data-st="expired"],#cloudBtn[data-st="error"],#gdStatus[data-st="expired"],#gdStatus[data-st="error"]{color:var(--bad);background:var(--bad-soft);border-color:color-mix(in srgb, var(--bad) 35%, transparent);font-weight:600}
 /* surfaces separate by fill (+ light-mode shadow), not outlines — borders stay transparent so hover/state colours can still use them */
 .card{background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
 /* flat = lists and long reading text sit straight on the page: no box, full width for the content */
@@ -69,30 +79,30 @@ header h1 .leaf{font-size:26px;line-height:1;vertical-align:-.04em}   /* sized t
 .sub-head.no-back > .l,.sub-head.no-back > .r{display:none}
 .sub-head.no-back > .c{display:flex;align-items:center;gap:12px;text-align:left}
 .sub-head.no-back > .c > .h{display:inline;font-size:34px;line-height:1}
-.sub-head.no-back h2{font-size:16px}
+.sub-head.no-back > .c > .h.hic{display:inline-flex}
+.sub-head.no-back h2{font-size:17px}
 .sub-head h2{margin:0;font-size:17px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.sub-head h2 svg{height:.9em;width:auto;vertical-align:-.05em}
+.sub-head h2 svg:not(.i){height:.9em;width:auto;vertical-align:-.05em}
 .rd-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .rd-top > button{flex:0 0 auto;padding:8px 12px;font-size:18px;line-height:1}
 .rd-top > .btn-ghost{background:none}   /* ✏️ 🗑 match the plain ← : no box at rest, a tint on hover/press */
 .rd-top > .btn-ghost:not(.back){padding:8px}
-.rd-top > .btn-ghost:not(.back) + .btn-ghost{margin-left:-6px}   /* ✏️ 🗑 read as one pair */
 .rd-top > .btn-ghost:hover,.rd-top > .btn-ghost:active{background:color-mix(in srgb, var(--muted) 14%, transparent)}
 .rd-top .tt{flex:1;min-width:0}
-.rd-top h2{margin:0;font-size:18px;line-height:1.3}
+.rd-top h2{margin:0;font-size:17px;line-height:1.3}
 .rd-top #rdSub{margin:2px 0 0}
 .rd-top #rdSub:empty{display:none}
 .card.flat .sent:not(.coaching):hover{background:var(--card)}   /* the sentence being coached keeps its tint: it is one block with the coach below */
 h2{font-size:16px;margin:0 0 10px}
 .muted{color:var(--muted)} .small{font-size:13px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.stat{background:var(--card);border:1px solid transparent;border-radius:12px;padding:10px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0}
+.stat{background:var(--card);border:1px solid transparent;border-radius:var(--r-md);padding:10px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0}
 .stat b{display:flex;align-items:baseline;justify-content:center;gap:2px;font-size:clamp(15px,5vw,20px);line-height:24px;height:24px;white-space:nowrap}
 .stat span{display:block;font-size:11px;line-height:1.25;color:var(--muted)}
 /* home stats: each tile tinted; fg/bg pairs checked for ≥4.5:1 so the 11px labels pass too */
 .stat.tone{background:var(--t-bg);border-color:transparent;color:var(--t-fg)}
 .stat.tone span{color:inherit}
-button.stat{font:inherit;cursor:pointer;width:auto;padding:10px 4px}
+button.stat{font:inherit;cursor:pointer;width:auto;padding:10px 4px;border-radius:var(--r-md)}
 button.stat:hover{border-color:color-mix(in srgb, var(--t-fg) 40%, transparent)}
 button.stat:active{transform:scale(.97)}
 .study-links{display:flex;gap:8px;margin-bottom:14px}
@@ -101,11 +111,11 @@ button.stat:active{transform:scale(.97)}
 .nudge .nu-h p{margin:4px 0 0;line-height:1.45}
 .nudge ol{margin:10px 0 4px;padding-left:20px;font-size:14px}
 .nudge .nu-act{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
-.nudge .nu-act button{flex:0 0 auto;width:auto;padding:8px 14px;font-size:14px}
+.nudge .nu-act button{flex:0 0 auto;width:auto;padding:8px 16px;font-size:14px}
 #nuInstall:empty{display:none}
 #nuInstall .btn2{margin-top:10px}
-.study-links button{flex:1;padding:8px 10px;font-size:13px;font-weight:600}
-#goWords{white-space:nowrap;padding-left:6px;padding-right:6px}
+.study-links button{flex:1;padding:8px 14px;font-size:13px;font-weight:600}
+#goWords{white-space:nowrap;padding-left:12px;padding-right:12px}
 body.in-session:not(.auto-session) .study-links{display:none}
 .stat.tone b .of{font-size:14px;font-weight:600;opacity:.75}
 .stat.tone small{display:block;font-size:10px;margin-top:2px;opacity:.9}
@@ -117,13 +127,13 @@ body.in-session:not(.auto-session) .study-links{display:none}
   .t-purple{--t-fg:#a9a3ff} .t-amber{--t-bg:#3a2e17;--t-fg:#f0b35a}
   .t-master{--t-fg:#3ecf8e} .t-streak{--t-bg:#3d2318;--t-fg:#ff9a5c}
 }
-button{font:inherit;cursor:pointer;border:none;border-radius:12px;padding:12px 16px;font-weight:600}
+button{font:inherit;cursor:pointer;border:none;border-radius:var(--r-pill);padding:12px 20px;font-weight:600}
 .btn{background:var(--accent);color:var(--on-accent);width:100%}
 /* list-page header, same look as the ARMY hero: big icon + page name, a compact "+" action on the right */
 .pg-head{display:flex;align-items:center;gap:12px;margin:2px 2px 14px}
 .pg-head .h{font-size:34px;line-height:1}
-.pg-head h2{flex:1;min-width:0;margin:0}
-.pg-head .btn{flex:0 0 auto;width:auto;padding:8px 14px;font-size:14px}
+.pg-head h2{flex:1;min-width:0;margin:0;font-size:17px}   /* every page title is 17px, with or without ← */
+.pg-head .btn{flex:0 0 auto;width:auto;padding:8px 16px;font-size:14px}
 .btn:disabled,.btn2:disabled{opacity:.5;cursor:default}
 .btn2{background:var(--accent-soft);color:var(--accent)}
 .btn-ghost{background:color-mix(in srgb, var(--muted) 14%, transparent);color:var(--muted)}
@@ -134,11 +144,15 @@ button{font:inherit;cursor:pointer;border:none;border-radius:12px;padding:12px 1
 .caret{display:block;width:1.2em;height:1.2em;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 #wBack .caret{display:inline-block;vertical-align:middle}
 .sub-head .back,.rd-top > .back{font-size:20px;padding:6px 10px}   /* arrow-only: a bit bigger so it's easy to hit */
-.btn-danger{background:var(--bad-soft);color:var(--bad)}
+/* every delete: red on a pale-red fill; the first tap arms it (solid red, "tap again"), the second deletes — see confirmTap */
+.btn-danger{background:var(--bad-soft);color:var(--bad);transition:background .15s,color .15s}
+.btn-danger[data-confirm]{background:var(--bad);color:#fff}
+.btn-danger.ico{flex:0 0 auto;padding:8px 10px}
+.btn-danger.ico[data-confirm]{padding:8px 14px}
 .row{display:flex;gap:8px;align-items:center}
 .row > *{flex:1}
 input,textarea,select{font:inherit;font-size:14px;color:var(--text);background:var(--bg);border:1px solid var(--line);
-  border-radius:12px;padding:12px;width:100%}
+  border-radius:var(--r-md);padding:12px;width:100%}
 textarea{min-height:120px;resize:vertical}
 select{-webkit-appearance:none;appearance:none;padding-right:40px;cursor:pointer;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%238a8fa8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -149,8 +163,11 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px
   display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom);z-index:10}
 nav .in{display:flex;max-width:560px;width:100%}
 nav button{flex:1;background:none;color:var(--muted);border-radius:0;padding:10px 4px 12px;font-size:12px;font-weight:500}
-nav button .ic{display:block;font-size:20px;line-height:1.2}
-nav button.on{color:var(--accent)}
+nav button .ic{display:flex;align-items:center;justify-content:center;height:26px;font-size:20px;line-height:1}
+nav button .ic .i{width:24px;height:24px}
+nav .ic .f, nav button.on .ic .o{display:none}
+nav button.on .ic .f{display:block}   /* ARMY: outline heart at rest, the sparkle heart when on */
+nav button.on{color:var(--accent);font-weight:600}
 .hidden{display:none!important}
 /* ---- welcome / guide ---- */
 .toast{z-index:60}
@@ -159,12 +176,12 @@ nav button.on{color:var(--accent)}
 #welcome .wbox{max-width:420px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
 #welcome .wtop{display:flex;justify-content:space-between;align-items:center;min-height:36px}
 #welcome .dots{display:flex;gap:5px}
-#welcome .dots i{width:6px;height:6px;border-radius:9px;background:var(--line);transition:width .2s,background .2s}
+#welcome .dots i{width:6px;height:6px;border-radius:var(--r-pill);background:var(--line);transition:width .2s,background .2s}
 #welcome .dots i.on{width:18px;background:var(--accent)}
 #welcome .wlang{padding:2px}
 #welcome .wlang button{padding:4px 10px;font-size:12px}
 #welcome .wstep{flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 0}
-#welcome .wicon{width:64px;height:64px;border-radius:18px;background:var(--accent);color:var(--on-accent);font-size:34px;font-weight:800;
+#welcome .wicon{width:64px;height:64px;border-radius:var(--radius);background:var(--accent);color:var(--on-accent);font-size:34px;font-weight:800;
   display:flex;align-items:center;justify-content:center;margin-bottom:18px}
 #welcome .wemoji{font-size:34px;line-height:1;margin-bottom:14px}
 #welcome h2{font-size:22px;margin:0 0 6px;line-height:1.25}
@@ -174,40 +191,40 @@ nav button.on{color:var(--accent)}
 #welcome .feat li > span{font-size:20px;line-height:1.2;width:24px;flex:0 0 24px;text-align:center}
 #welcome .feat b{display:block;color:var(--text);font-size:15px;margin-bottom:1px}
 #welcome ol{padding-left:20px;margin:0 0 14px;line-height:1.6;font-size:14px}
-#welcome .note{font-size:13px;background:var(--accent-soft);border-radius:12px;padding:10px 12px;line-height:1.5;margin:12px 0 0}
+#welcome .note{font-size:13px;background:var(--accent-soft);border-radius:var(--r-md);padding:10px 12px;line-height:1.5;margin:12px 0 0}
 #welcome .res{font-size:14px;margin:10px 0 0;line-height:1.5;min-height:1em}
 #welcome .wnav{display:flex;gap:8px;padding-top:10px}
 #welcome .wnav .btn{flex:1;width:auto}
 #welcome .wnav .btn-ghost{flex:0 0 auto}
-#welcome a, .guide a{color:var(--accent)}
-#welcome code{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12.5px;word-break:break-all}
-.ai-hint{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);line-height:1.45}
+a{color:var(--accent);text-underline-offset:2px}   /* every link: app purple, readable on light and dark (no browser blue) */
+#welcome code{background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);padding:1px 5px;font-size:12.5px;word-break:break-all}
+.ai-hint{margin:0 0 12px;padding:10px 12px;border-radius:var(--r-md);background:var(--accent-soft);line-height:1.45}
 .linkbtn{background:none;color:var(--accent);padding:0;font-weight:600;font-size:13px}
 .m-tip{margin:12px 0 0;border:1px solid var(--accent)}
 .m-tip .linkbtn{font-size:inherit;text-decoration:underline}
 .guide details{border-top:1px solid var(--line)}
-.guide summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;gap:8px}
+.guide summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:15px;list-style:none;display:flex;align-items:center;gap:8px}
 .guide summary::-webkit-details-marker{display:none}
-.guide summary::after{content:"+";color:var(--muted);font-weight:400}
+.guide summary::after{content:"+";color:var(--muted);font-weight:400;margin-left:auto}   /* text (and its icon) stay left, +/– pinned right */
 .guide details[open] summary::after{content:"–"}
 .guide details > div{padding:0 0 10px}
 .card > .guide{margin-top:10px}
 #gMicRes:empty,#voiceInfo:empty{display:none}
-.eye-btn{display:flex;align-items:center;justify-content:center;align-self:stretch}
-.eye-btn[aria-pressed="false"] .eye-off{display:none}
-.key-del{color:var(--bad)}
-.key-del[data-confirm]{background:var(--bad-soft)}   /* armed: the next tap removes the key */   /* slashed eye while the key is visible */
+/* square icon buttons next to a field (👁 🗑 by the key): round, as tall as the input */
+.row > .sq{flex:0 0 44px;width:44px;align-self:stretch;padding:0;display:flex;align-items:center;justify-content:center}
+.row > .sq .i{width:20px;height:20px}
+.row > .sq[data-confirm]{flex:0 0 auto;width:auto;padding:0 14px;gap:4px}   /* armed: grows to fit "Gỡ?" */
+.eye-btn[aria-pressed="false"] .eye-off, .eye-btn[aria-pressed="true"] .eye-on{display:none}
 .card > .guide details{border-bottom:1px solid var(--line)}   /* a how-to inside a settings card */
 .guide p, .guide li{font-size:14px;line-height:1.6}
 .guide p{margin:0 0 8px}
 .guide ol, .guide ul{padding-left:20px;margin:0 0 8px}
-.guide code{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12.5px;word-break:break-all}
+.guide code{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-sm);padding:1px 5px;font-size:12.5px;word-break:break-all}
 
 
 
 /* ---- ARMY live translate ---- */
-:root{--army:#7c3aed; --army-soft:#f1eafe}
-@media (prefers-color-scheme: dark){:root{--army:#b197fc; --army-soft:#2d2350}}
+:root{--army:var(--accent); --army-soft:var(--accent-soft)}   /* ARMY uses the app purple, so every tab reads as one app */
 nav button[data-v=army].on{color:var(--army)}
 #v-army .seg button.on{color:var(--army)}
 #v-army .seg button:disabled{opacity:.4;cursor:default}
@@ -215,8 +232,16 @@ nav button[data-v=army].on{color:var(--army)}
 .ar-pick{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--card);color:var(--text);border:1px solid transparent;
   border-radius:var(--radius);padding:18px 16px;margin-bottom:12px;box-shadow:var(--shadow);font-weight:400}
 .ar-pick:hover{border-color:var(--army)}
-.ar-pick .i{font-size:34px;line-height:1}
-.bts-logo{width:1em;height:1em;fill:var(--army);vertical-align:-.12em}
+.ar-pick > .i{font-size:34px;line-height:1}
+/* card icons: a tinted box one step smaller than the page-head icon (44px), so the cards don't out-shout the heading */
+.ar-pick > .i{flex:0 0 40px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:var(--r-md);background:var(--accent-soft);color:var(--army)}
+.ar-pick > .i > svg.i{width:22px;height:22px;vertical-align:0}
+.ar-pick > .i > .bts-logo{width:20px;height:20px;vertical-align:0}
+.sp-pick > .i{color:var(--accent)}
+.bts-logo{width:1em;height:1em;fill:none;stroke:var(--army);stroke-width:6.5;stroke-linejoin:round;vertical-align:-.12em}
+.sub-head h2 .bts-logo{fill:var(--army)}
+#asTabs .bts-logo{stroke:currentColor}   /* outline + grey while the tab is off, solid when it's on */
+#asTabs button.on .bts-logo{fill:currentColor}   /* the BTS Live screen title: the solid logo, as its special mark */
 .ar-pick .tx{flex:1;min-width:0}
 .ar-pick b{display:block;font-size:17px;margin-bottom:3px}
 .ar-pick .d{display:block;font-size:13px;color:var(--muted);line-height:1.45}
@@ -226,11 +251,11 @@ nav button[data-v=army].on{color:var(--army)}
 .tk-msg{display:flex;flex-direction:column;align-items:flex-start;max-width:88%}
 .tk-msg.ai{flex-direction:row;align-items:flex-end;gap:2px}
 .tk-msg.me{align-self:flex-end;align-items:flex-end}
-.tk-b{background:var(--card);border-radius:18px 18px 18px 6px;padding:10px 14px;box-shadow:var(--shadow);min-width:0}
-.tk-msg.me .tk-b{background:var(--accent);color:var(--on-accent);border-radius:18px 18px 6px 18px}
+.tk-b{background:var(--card);border-radius:var(--radius) var(--radius) var(--radius) var(--r-sm);padding:10px 14px;box-shadow:var(--shadow);min-width:0}
+.tk-msg.me .tk-b{background:var(--accent);color:var(--on-accent);border-radius:var(--radius) var(--radius) var(--r-sm) var(--radius)}
 .tk-b .ko{font-size:17px;line-height:1.45}
 .tk-b .mean{font-size:14px;color:var(--muted);margin-top:4px;line-height:1.4}
-.tk-fb{margin-top:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:14px;width:100%;box-sizing:border-box}
+.tk-fb{margin-top:6px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:8px 12px;font-size:14px;width:100%;box-sizing:border-box}
 .tk-fb .ok{color:var(--ok);font-weight:600}
 .tk-fb .fix{color:var(--warn);font-weight:600;font-size:15px}
 .tk-fb .fix .icon-btn{padding:0 4px;font-size:14px}
@@ -246,18 +271,19 @@ nav button[data-v=army].on{color:var(--army)}
 #talk.tk-chat .tk-ctl,#talk.tk-chat .tk-foot{margin-top:auto}
 /* summary: "keep talking" / "new conversation" stay pinned right above the bottom bar */
 .tk-foot{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));z-index:5;background:var(--card);border-radius:var(--radius);padding:8px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
-/* speed on the left · 💡 🎙 🔊 in the centre · red "finish" on the right; while recording only ⏹ stays */
+/* speed on the left · 💡 🎙 🔊 in the centre (the empty last column keeps them centred); "finish" sits top right in the header; while recording only ⏹ stays */
 .pctl.tk-btns{display:grid;grid-template-columns:1fr auto auto auto 1fr}
 .pctl.tk-btns .prate{justify-self:start;margin-left:2px;background-color:transparent;color:var(--text)}
-.pctl.tk-btns button.tk-end{justify-self:end;width:auto;height:34px;padding:0 12px;font-size:13px;font-weight:600;background:var(--bad-soft);color:var(--bad)}
+.sub-head > .r button.tk-end, .sub-head > .r button.sh-act{padding:7px 14px;font-size:13px;font-weight:600}   /* a text action top right (Finish, + New) */
+.sub-head > .r button.tk-end{background:var(--bad-soft);color:var(--bad)}
 .tk-ctl.recording .tk-btns > :not(#tkRec){visibility:hidden}
 .tk-ctl .turn:empty{display:none}
 .tk-hints{display:grid;gap:6px}
-.tk-hint{display:flex;align-items:center;gap:10px;text-align:left;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:500}
+.tk-hint{display:flex;align-items:center;gap:10px;text-align:left;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-md);padding:8px 12px;font-weight:500}
 .tk-hint .tx{flex:1;min-width:0;display:grid;gap:2px}
 .tk-hint .sp{flex:0 0 auto;font-size:16px}
 .tk-hint:hover{border-color:var(--accent)}
-.tk-ask{margin:0;padding:8px 10px;border-radius:10px;background:var(--accent-soft);color:var(--text);line-height:1.45}
+.tk-ask{margin:0;padding:8px 10px;border-radius:var(--r-md);background:var(--accent-soft);color:var(--text);line-height:1.45}
 .tk-btns{gap:12px}
 .pctl.tk-btns button{width:40px;height:40px;font-size:15px}
 .pctl.tk-btns button.main{width:48px;height:48px;font-size:20px}
@@ -277,7 +303,9 @@ nav button[data-v=army].on{color:var(--army)}
 .tk-sum:last-child{border-bottom:none}
 .tk-sum .bad{color:var(--bad);text-decoration:line-through;text-decoration-thickness:1px}
 .tk-sum .good{color:var(--ok);font-weight:600;font-size:16px}
-.ar-hero .h{font-size:34px;line-height:1}
+.ar-hero .h{font-size:34px;line-height:1;display:flex;color:var(--accent)}
+.ar-hero h2{font-size:17px}
+.ar-hero .h .i{width:44px;height:44px;vertical-align:0}   /* the sparkles take part of the box: a little larger than an emoji */
 .ar-go{margin-top:12px}
 body.ar-listening header, body.ar-listening #arHistCard > p{display:none}
 #arStatus:empty{display:none}
@@ -296,18 +324,18 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 #arCtl.ar-on .ar-mini{flex:1;margin:0}
 #arCtl.ar-on .ar-dir{font-size:24px;gap:10px}
 #arCtl.ar-on .ar-mini button{min-width:48px;min-height:48px;padding:10px 14px;font-size:18px}
-#arCtl.ar-on .ar-go{width:auto;flex:0 0 auto;margin:0;min-height:48px;padding:10px 18px;font-size:16px;border-radius:99px;animation:pulse 1.6s infinite}
+#arCtl.ar-on .ar-go{width:auto;flex:0 0 auto;margin:0;min-height:48px;padding:10px 18px;font-size:16px;border-radius:var(--r-pill);animation:pulse 1.6s infinite}
 #arCtl.ar-on .ar-lvl{flex-basis:100%;margin-top:0}
 #arCtl.ar-on #arStatus{flex-basis:100%;margin:0!important}
 .ar-mini{font-weight:600;font-size:15px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .ar-mini{flex-wrap:wrap}
 .ar-mini .acts{display:flex;gap:6px}
 .ar-dir{display:flex;align-items:center;gap:8px}
-.ar-mini button{padding:8px 12px;font-size:14px;min-width:40px}
+.ar-mini button{padding:8px 14px;font-size:14px;min-width:40px}
 .ar-mini button.btn-ghost.on{color:var(--army);border-color:var(--army)}
 #v-army .fl{font-size:.8em;margin-right:6px;font-style:normal}
 .ar-go.on{background:var(--bad)}
-.ar-lvl{height:4px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:10px}
+.ar-lvl{height:4px;background:var(--line);border-radius:var(--r-pill);overflow:hidden;margin-top:10px}
 .ar-lvl i{display:block;height:100%;width:0;background:var(--army);transition:width .1s}
 .ar-live{position:sticky;top:calc(8px + env(safe-area-inset-top));z-index:5;max-height:60vh;max-height:60dvh;overflow:auto;min-height:clamp(190px, 34vh, 340px);
   display:flex;flex-direction:column;justify-content:flex-end;padding:18px;border:2px solid var(--army);
@@ -323,7 +351,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .ar-hist{list-style:none;margin:0;padding:0}
 /* just-saved highlight: a layer behind the row, wider than it (into the gutter) but never taller, so it can't spill onto the rows around it */
 #arSavedList li{position:relative;isolation:isolate}
-#arSavedList li::before{content:"";position:absolute;inset:0 -10px;z-index:-1;border-radius:10px;background:var(--accent-soft);opacity:0;transition:opacity .8s}
+#arSavedList li::before{content:"";position:absolute;inset:0 -10px;z-index:-1;border-radius:var(--r-md);background:var(--accent-soft);opacity:0;transition:opacity .8s}
 #arSavedList li.just::before{opacity:1;transition:none}
 .ar-hist li{padding:10px 0;border-bottom:1px solid var(--line)}
 .ar-hist li:last-child{border-bottom:none}
@@ -334,11 +362,11 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .ar-tools{display:flex;gap:6px;flex-wrap:wrap}
 /* saved conversation name: reads as a heading, still editable in place */
 /* sub-screen header: [←] title on one row */
-.av-title{width:100%;min-width:0;border-color:transparent;background:none;padding:2px 0;font-size:17px;font-weight:700;border-radius:6px;text-align:center}
+.av-title{width:100%;min-width:0;border-color:transparent;background:none;padding:2px 0;font-size:17px;font-weight:700;border-radius:var(--r-sm);text-align:center}
 .av-title:focus{padding:2px 8px;background:var(--bg)}
 .ar-tools button{flex:1;padding:10px;font-size:14px}
 .ar-disp{display:flex;gap:4px;justify-content:flex-end;margin-bottom:auto;padding-bottom:8px}
-.ar-disp button{background:none;border:1px solid var(--line);color:var(--muted);padding:3px 10px;font-size:12px;border-radius:99px;font-weight:600}
+.ar-disp button{background:none;border:1px solid var(--line);color:var(--muted);padding:3px 10px;font-size:12px;border-radius:var(--r-pill);font-weight:600}
 .ar-disp button.on{color:var(--army);border-color:var(--army)}
 .ar-hhead{display:flex;align-items:center;gap:6px}
 .ar-hhead + .ar-hist{margin-top:6px}
@@ -355,7 +383,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .ko-line .speak.sm{flex:0 0 auto}
 .ko-line .ko{min-width:0;max-width:100%;overflow-wrap:anywhere;font-size:clamp(30px,11vw,44px)}
 .mean{font-size:22px;font-weight:600}
-.speak{background:var(--accent-soft);color:var(--accent);border-radius:99px;width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
+.speak{background:var(--accent-soft);color:var(--accent);border-radius:var(--r-pill);width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
 .speak.big{width:96px;height:96px;font-size:40px}
 .speak.sm{width:40px;height:40px;font-size:17px;margin:0}
 /* phones, study session: the mic of speaking questions and the post-answer actions (Continue / Hard·Good·Easy)
@@ -368,40 +396,44 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
   body.in-session.auto-session{padding-bottom:calc(330px + env(safe-area-inset-bottom))}
   body.in-session.auto-session .dock{bottom:calc(66px + env(safe-area-inset-bottom));padding-bottom:16px}
   .dock{margin:0;position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--card);border-top:1px solid var(--line);
-    border-radius:20px 20px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.18);padding:16px 16px calc(36px + env(safe-area-inset-bottom))}
+    border-radius:var(--radius) var(--radius) 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.18);padding:16px 16px calc(36px + env(safe-area-inset-bottom))}
   /* lifted off the very edge (home indicator / hard-to-reach corner) into the comfortable thumb arc */
-  .dock button:not(.speak){min-height:52px}
+  .dock button:not(.speak){min-height:44px}   /* same 44px as text buttons elsewhere */
   .dock .cgrade button{min-height:0}
   .dock > *{max-width:528px;margin-left:auto;margin-right:auto}
   .dock .speak.big{margin-top:0}
 }
 .speak.rec.on{background:var(--bad);color:#fff;animation:pulse 1.2s infinite}
 .choices{display:grid;gap:8px;margin-top:16px}
-.choice{background:var(--bg);color:var(--text);border:1px solid var(--line);text-align:left;font-weight:500;display:flex;gap:10px;align-items:center}
-.choice .k{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.choice{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r-md);text-align:left;font-weight:500;display:flex;gap:10px;align-items:center}
+.choice .k{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:var(--r-sm);padding:1px 6px}
 .choice.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
 .choice.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
-.feedback{margin-top:14px;padding:12px;border-radius:12px;text-align:left}
+.feedback{margin-top:14px;padding:12px;border-radius:var(--r-md);text-align:left}
 .feedback.ok{background:var(--ok-soft);color:var(--ok)}
 .feedback.bad{background:var(--bad-soft);color:var(--bad)}
+/* study hint ("Starts with: 밥 · 1 characters"): green text right by the Hint button, hidden until the first tap */
+.hint-box{display:flex;align-items:center;justify-content:center;gap:6px;max-width:100%;margin:12px auto 0;color:var(--ok);font-size:15px}   /* green, like the reader's "Tap 🎙 …" hint */
+.hint-box:has(#hintTxt:empty){display:none}
 .grades{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.grades button{border-radius:var(--r-md)}   /* two-line labels: a pill would crowd them */
 .grades button small{display:block;font-weight:400;font-size:11px;opacity:.8}
-.progress{height:6px;background:var(--line);border-radius:9px;overflow:hidden;margin-bottom:12px}
+.progress{height:6px;background:var(--line);border-radius:var(--r-pill);overflow:hidden;margin-bottom:12px}
 .progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
-.newtag{display:inline-block;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;margin-bottom:10px}
+.newtag{display:inline-block;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:700;padding:3px 8px;border-radius:var(--r-pill);margin-bottom:10px}
 /* list */
 .wl{list-style:none;margin:0;padding:0}
 /* my-words: search + filters stay pinned while the list scrolls under them */
 .wbar{position:sticky;top:0;z-index:4;background:var(--bg);margin:0;padding:calc(10px + env(safe-area-inset-top)) 0 10px;border-bottom:1px solid var(--line)}
 @media (max-width:560px){ .wbar{margin:0 -16px;padding-left:16px;padding-right:16px} }   /* edge to edge only on phones; on wide screens it lines up with the list */
-.wbar #search{background:var(--card)}
+.wbar #search{background:var(--card);border-radius:var(--r-pill);padding-left:18px;padding-right:18px}
 #filterTabs .n{opacity:.7;font-variant-numeric:tabular-nums}
 .wl li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .wl li:last-child{border-bottom:none}
 .wl .t{flex:1;min-width:0}
 .wl .t b{font-size:18px}
 .wl .t div{font-size:14px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.badge{font-size:11px;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.badge{font-size:11px;padding:3px 8px;border-radius:var(--r-pill);white-space:nowrap}
 .b-new{background:var(--accent-soft);color:var(--accent)}
 .b-learn{background:#fff4e0;color:var(--warn)}
 .b-master{background:var(--ok-soft);color:var(--ok)}
@@ -413,38 +445,39 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .wl .t .wh{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;white-space:normal;overflow:visible;font-size:inherit;color:inherit}
 .wh .badge{margin-left:auto}   /* status sits at the right, next to ⋯ */
 .more-btn{flex:0 0 auto;margin:-2px -6px 0 0;padding:8px 10px;line-height:1;font-size:20px;letter-spacing:1px}
-.menu{position:absolute;right:0;top:34px;z-index:6;background:var(--card);border:1px solid var(--line);border-radius:12px;
+.menu{position:absolute;right:0;top:34px;z-index:6;background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);
   box-shadow:0 6px 24px rgba(0,0,0,.25);padding:4px;min-width:140px;display:flex;flex-direction:column}
-.menu button{background:none;color:var(--text);text-align:left;padding:10px 12px;border-radius:8px;font-weight:500;font-size:15px}
+.menu button{background:none;color:var(--text);text-align:left;padding:10px 12px;border-radius:var(--r-sm);font-weight:500;font-size:15px}
 .menu button:hover{background:var(--bg)}
-.menu .danger{color:var(--bad)}
+.menu .danger{color:var(--bad)}   /* in a menu the red text is enough at rest; armed it turns solid like .btn-danger */
+.menu .danger[data-confirm]{background:var(--bad);color:#fff}
 .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-.tabs button{background:var(--card);border:1px solid transparent;color:var(--muted);padding:8px 12px;font-size:14px;font-weight:500}
+.tabs button{background:var(--card);border:1px solid transparent;color:var(--muted);padding:8px 14px;font-size:14px;font-weight:500}
 .tabs button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .prev{display:grid;grid-template-columns:24px 1fr 1fr 32px;gap:6px;align-items:center;margin-bottom:6px}
 .prev input[type=text]{padding:8px}
 .prev input[type=checkbox]{width:18px;height:18px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));background:var(--text);color:var(--bg);
-  padding:12px 16px;border-radius:12px;font-size:14px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none;
+  padding:12px 16px;border-radius:var(--r-md);font-size:14px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none;
   width:max-content;max-width:min(528px, calc(100% - 32px));text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.2)}   /* hugs the text; only wraps past the content width */
 .toast.show{opacity:1}
 .check{display:flex;align-items:center;gap:10px;padding:6px 0;color:var(--text);font-size:15px;margin:0}
 .check input{width:20px;height:20px}
 .set-inline{justify-content:space-between}
-.set-inline > label{flex:1;margin:0;font-size:15px;color:var(--text)}
+.set-inline > label{flex:1;margin:0;font-size:14px;color:var(--text)}
 .set-inline > input{flex:0 0 84px;text-align:center}
-.set-lab{font-size:15px;color:var(--text);margin:22px 0 10px}   /* a settings row title, same look as the .set-inline labels */
+.set-lab{font-size:14px;font-weight:600;color:var(--text);margin:22px 0 10px}   /* a settings row title, same look as the .set-inline labels */
 .qrow{display:flex;align-items:flex-start;gap:6px;margin:0 0 8px}
 .qlab{flex:0 0 58px;font-size:12px;font-weight:600;color:var(--muted);padding-top:11px}
 .qchips{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px}   /* wrapped chips stay in their own column, not under the label */
-.qt{position:relative;display:inline-flex;align-items:center;margin:0;padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--bg);
+.qt{position:relative;display:inline-flex;align-items:center;gap:5px;margin:0;padding:7px 12px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--bg);
   color:var(--muted);font-size:14px;cursor:pointer;user-select:none}
 .qt input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}   /* hidden box must not stretch the page (global input width:100%) */
 .qt:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
 .qt:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
-.drop{border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted);cursor:pointer}
-.drop img{max-width:100%;max-height:220px;border-radius:8px;margin-top:10px}
-.bar{height:8px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:10px}
+.drop{border:2px dashed var(--line);border-radius:var(--r-md);padding:22px;text-align:center;color:var(--muted);cursor:pointer}
+.drop img{max-width:100%;max-height:220px;border-radius:var(--r-sm);margin-top:10px}
+.bar{height:8px;background:var(--line);border-radius:var(--r-pill);overflow:hidden;margin-top:10px}
 .bar i{display:block;height:100%;background:var(--accent);width:0}
 .empty{text-align:center;padding:26px 10px}
 .empty > p,#homeCard > p.muted,#homeCard > .feedback{font-size:14px}   /* home descriptions ("Add some Korean words…") match the greeting's translation line */
@@ -459,7 +492,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 @keyframes pop{40%{transform:scale(1.15)}}
 @media (prefers-reduced-motion: reduce){.cheer-m,.stat.pop{animation:none}}
 /* examples */
-.ex{margin-top:12px;padding:10px 12px;background:var(--bg);border-radius:12px;text-align:left;display:flex;gap:10px;align-items:flex-start}
+.ex{margin-top:12px;padding:10px 12px;background:var(--bg);border-radius:var(--r-md);text-align:left;display:flex;gap:10px;align-items:flex-start}
 .ex .exk{font-size:17px;line-height:1.5} .ex .exm{font-size:14px;color:var(--muted)}
 #rdVocab li{padding:8px 0}
 #rdVocab .t b{display:block;font-size:17px}
@@ -468,13 +501,15 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 /* stays above the tab bar while scrolling a long review list */
 .prev-cta{position:sticky;bottom:calc(66px + env(safe-area-inset-bottom));z-index:5;display:flex;gap:8px;margin:10px -10px 0;padding:10px;
   background:var(--card);border-radius:var(--radius);box-shadow:0 -8px 16px -12px rgba(0,0,0,.35)}
-.prev-cta button{flex:1 1 0;min-width:0;padding:10px 14px}
+.prev-cta button{flex:1 1 0;min-width:0;padding:10px 18px}
+.prev-cta button, #autoTr, #addOneBtn{white-space:nowrap}
+#prevTr{flex:0 0 auto;padding-left:16px;padding-right:16px}   /* "Fill meanings" keeps its width; Add takes the rest — no wrapping on phones */
 .prev-ex{grid-column:2 / 4;font-size:12px;color:var(--muted);margin:-2px 0 6px}
 /* chips */
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chip{background:var(--bg);border:1px solid var(--line);color:var(--text);font-weight:500;font-size:13px;padding:6px 10px;border-radius:99px}
+.chip{background:var(--bg);border:1px solid var(--line);color:var(--text);font-weight:500;font-size:13px;padding:6px 12px;border-radius:var(--r-pill)}
 .chip:hover{border-color:var(--accent)}
-.abc-ask{display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;text-align:left}
+.abc-ask{display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-md);text-align:left}
 .abc-ask > span{flex:1;font-weight:600}
 .abc-ask .small{font-weight:400}
 .abc-ask button{flex:0 0 auto;padding:7px 14px}
@@ -497,12 +532,12 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .abc-page .prev-cta{margin:14px -16px 0;padding:10px 16px;border-radius:0}   /* full-width bar to the page gutters */
 /* modal */
 .modal{position:fixed;inset:0;background:rgba(10,12,30,.55);z-index:30;display:flex;align-items:flex-end;justify-content:center}
-.modal .sheet{background:var(--card);width:100%;max-width:560px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
-@media (min-width:600px){.modal{align-items:center}.modal .sheet{border-radius:18px}}
+.modal .sheet{background:var(--card);width:100%;max-width:560px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:var(--radius) var(--radius) 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+@media (min-width:600px){.modal{align-items:center}.modal .sheet{border-radius:var(--radius)}}
 .modal textarea{min-height:90px;font-size:13px}
 .steps{margin:0 0 6px;padding-left:20px;font-size:14px}
 .steps li{margin:4px 0}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:6px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:var(--r-pill);animation:spin .8s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* reader */
 .plist{list-style:none;margin:0;padding:0}
@@ -513,7 +548,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 /* reader: one slim pinned bar — ⏮ ▶ ⏭ · speed · ⚙; the rarely-changed options fold into the ⚙ panel */
 .player{position:sticky;top:calc(6px + env(safe-area-inset-top));z-index:5;background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:8px;margin-bottom:12px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
 .pctl{display:flex;gap:8px;justify-content:center;align-items:center}
-.pctl button{background:var(--accent-soft);color:var(--accent);width:48px;height:48px;padding:0;border-radius:99px;font-size:18px}
+.pctl button{background:var(--accent-soft);color:var(--accent);width:48px;height:48px;padding:0;border-radius:var(--r-pill);display:inline-flex;align-items:center;justify-content:center;font-size:18px}
 .pctl button.main{width:60px;height:60px;background:var(--accent);color:var(--on-accent);font-size:24px}
 .player .pctl button{width:40px;height:40px;font-size:15px}
 .player .pctl button.main{width:48px;height:48px;font-size:20px}
@@ -530,13 +565,13 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .popts label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:8px 6px;color:var(--text);font-size:14px;font-weight:500;cursor:pointer}
 .popts select{width:84px;padding:4px 26px 4px 10px;font-size:14px;background-position:right 9px center;background-size:10px 7px}
 /* iOS-style switch */
-input.sw{appearance:none;-webkit-appearance:none;width:40px;height:24px;border-radius:99px;background:var(--line);position:relative;margin:0;flex:0 0 auto;cursor:pointer;transition:background .15s}
-input.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s}
+input.sw{appearance:none;-webkit-appearance:none;width:40px;height:24px;border-radius:var(--r-pill);background:var(--line);position:relative;margin:0;flex:0 0 auto;cursor:pointer;transition:background .15s}
+input.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:var(--r-pill);background:#fff;transition:transform .15s}
 input.sw:checked{background:var(--accent)}
 input.sw:checked::after{transform:translateX(16px)}
 input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .turn{text-align:center;font-size:14px;font-weight:600;color:var(--ok);min-height:20px;margin-top:8px}
-.sent{padding:12px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:4px}
+.sent{padding:12px;border-radius:var(--r-md);cursor:pointer;border:1px solid transparent;margin-bottom:4px}
 .sent:not(.coaching):hover{background:var(--bg)}
 .sent.cur{background:var(--accent-soft);border-color:var(--accent)}
 .sent .sk{font-size:20px;line-height:1.6}
@@ -545,17 +580,18 @@ input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .hidek .sent.reveal .sk{filter:none}
 .hidem .sent .sm{display:none}
 .hidem .sent.reveal .sm{display:block}
-.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
-.seg button{flex:1;background:none;color:var(--muted);padding:8px;font-size:14px;border-radius:9px;font-weight:500}
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-pill);padding:3px;gap:3px}
+.seg button{flex:1;background:none;color:var(--muted);padding:8px 12px;font-size:14px;border-radius:var(--r-pill);font-weight:500}
 .seg button.on{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
 /* icon-over-label segments: several options stay on one row on phones */
-.seg-ico{margin-bottom:12px}
+.seg-ico{margin-bottom:12px;border-radius:var(--r-md)}
+.seg-ico button{border-radius:var(--r-sm)}   /* icon over label: rounded box, inner = outer − padding */
 #rdNewCard .card > div > label:first-child{margin-top:0}   /* the tabs moved out of the card: no gap above the first field */
 .seg-ico button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 4px;font-size:12px;line-height:1.2;white-space:nowrap}
 .seg-ico button i{font-style:normal;font-size:18px;line-height:1}
 /* speaking coach */
 .ctarget{font-size:24px;line-height:1.7;text-align:center;margin-top:8px;word-break:keep-all}
-.ctarget mark{background:var(--bad-soft);color:var(--bad);border-radius:4px;padding:0 1px;text-decoration:underline wavy;text-underline-offset:5px}
+.ctarget mark{background:var(--bad-soft);color:var(--bad);border-radius:var(--r-sm);padding:0 1px;text-decoration:underline wavy;text-underline-offset:5px}
 .ctarget mark.warn{background:#fff4e0;color:var(--warn)}
 @media (prefers-color-scheme: dark){.ctarget mark.warn{background:#3a2e17}}
 .ctarget mark sup{font-size:11px;text-decoration:none;margin-left:1px}
@@ -566,9 +602,9 @@ input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .s-hi b{color:var(--ok)} .s-mid b{color:var(--warn)} .s-lo b{color:var(--bad)}
 .issue{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);text-align:left}
 .issue:last-child{border-bottom:none}
-.issue .n{flex:0 0 22px;height:22px;border-radius:99px;background:var(--bad-soft);color:var(--bad);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.issue .n{flex:0 0 22px;height:22px;border-radius:var(--r-pill);background:var(--bad-soft);color:var(--bad);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .issue .ty{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
-.box{background:var(--bg);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px;text-align:left}
+.box{background:var(--bg);border-radius:var(--r-md);padding:10px 12px;margin-top:10px;font-size:14px;text-align:left}
 .box .heard-ok{color:var(--ok);margin-top:6px}   /* "clear!" belongs with what was heard */
 .box .bsec + .bsec{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 .box .bsec .issue:first-child{padding-top:0}
@@ -578,20 +614,20 @@ input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* passage editor + photo review: reads like the text itself, fields only show while you touch them */
 #rdShotRes{margin-top:12px}
 /* a soft fill (no border, no underline) is the "you can edit this" hint — touch screens have no hover */
-.rd-lite input,.rd-lite textarea{background:color-mix(in srgb, var(--muted) 9%, transparent);border-color:transparent;border-radius:8px;padding:6px 8px;min-height:0;resize:none;overflow:hidden;display:block}
+.rd-lite input,.rd-lite textarea{background:color-mix(in srgb, var(--muted) 9%, transparent);border-color:transparent;border-radius:var(--r-sm);padding:6px 8px;min-height:0;resize:none;overflow:hidden;display:block}
 .rd-lite .tm,.rd-lite .es .em{margin-top:4px}
 .rd-lite .tt{font-size:18px;font-weight:700}
 .rd-lite .tm{font-size:14px;color:var(--muted);margin-bottom:8px}
 .rd-lite .es{display:grid;grid-template-columns:28px 1fr auto;gap:4px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
 .rd-lite .es .h{display:flex;justify-content:center;align-self:stretch;padding:9px 0;color:var(--muted);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}   /* drag handle */
-.rd-lite .es.drag{background:var(--accent-soft);border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.15);position:relative;z-index:1}
+.rd-lite .es.drag{background:var(--accent-soft);border-radius:var(--r-md);box-shadow:0 6px 16px rgba(0,0,0,.15);position:relative;z-index:1}
 .rd-lite .es.drag .h{cursor:grabbing}
 .rd-lite .es .ek{font-size:16px}
 .rd-lite .es .em{font-size:14px;color:var(--muted)}
 .rd-lite .es .x{background:none;color:var(--muted);padding:6px 8px;font-size:14px;line-height:1}
 /* speaking coach expanded inline under its sentence: one joined block, no repeated sentence text until there are marks to show */
-.sent.coaching{background:var(--accent-soft);border-color:var(--accent);border-bottom-color:transparent;border-radius:12px 12px 0 0;margin-bottom:0}
-#sentList #coach{margin:0 0 8px;padding:12px;box-shadow:none;background:var(--accent-soft);border:1px solid var(--accent);border-top:0;border-radius:0 0 12px 12px}
+.sent.coaching{background:var(--accent-soft);border-color:var(--accent);border-bottom-color:transparent;border-radius:var(--r-md) var(--r-md) 0 0;margin-bottom:0}
+#sentList #coach{margin:0 0 8px;padding:12px;box-shadow:none;background:var(--accent-soft);border:1px solid var(--accent);border-top:0;border-radius:0 0 var(--r-md) var(--r-md)}
 #sentList #coach > .row:first-child{display:none}
 .rd-hint{font-size:13px;font-weight:600;color:var(--ok);text-align:center;margin:6px 0 0}   /* no bottom margin: the player's 8px padding is the same with or without this line */
 .player .turn:not(:empty) + .rd-hint{display:none}   /* "your turn…" / "finished" takes that line while it shows */
@@ -619,6 +655,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 </style>
 </head>
 <body>
+<!-- icons: Phosphor (MIT), regular + fill -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol><symbol id="i-export" viewBox="0 0 256 256"><path d="M216,112v96a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V112A16,16,0,0,1,56,96H80a8,8,0,0,1,0,16H56v96H200V112H176a8,8,0,0,1,0-16h24A16,16,0,0,1,216,112ZM93.66,69.66,120,43.31V136a8,8,0,0,0,16,0V43.31l26.34,26.35a8,8,0,0,0,11.32-11.32l-40-40a8,8,0,0,0-11.32,0l-40,40A8,8,0,0,0,93.66,69.66Z"/></symbol><symbol id="i-heart" viewBox="0 0 256 256"><path d="M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z"/></symbol><symbol id="i-translate" viewBox="0 0 256 256"><path d="M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z"/></symbol><symbol id="i-floppy-disk" viewBox="0 0 256 256"><path d="M219.31,72,184,36.69A15.86,15.86,0,0,0,172.69,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V83.31A15.86,15.86,0,0,0,219.31,72ZM168,208H88V152h80Zm40,0H184V152a16,16,0,0,0-16-16H88a16,16,0,0,0-16,16v56H48V48H172.69L208,83.31ZM160,72a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h56A8,8,0,0,1,160,72Z"/></symbol><symbol id="i-note-pencil" viewBox="0 0 256 256"><path d="M229.66,58.34l-32-32a8,8,0,0,0-11.32,0l-96,96A8,8,0,0,0,88,128v32a8,8,0,0,0,8,8h32a8,8,0,0,0,5.66-2.34l96-96A8,8,0,0,0,229.66,58.34ZM124.69,152H104V131.31l64-64L188.69,88ZM200,76.69,179.31,56,192,43.31,212.69,64ZM224,128v80a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V48A16,16,0,0,1,48,32h80a8,8,0,0,1,0,16H48V208H208V128a8,8,0,0,1,16,0Z"/></symbol><symbol id="i-monitor" viewBox="0 0 256 256"><path d="M208,40H48A24,24,0,0,0,24,64V176a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V64A24,24,0,0,0,208,40Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V64a8,8,0,0,1,8-8H208a8,8,0,0,1,8,8Zm-48,48a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,224Z"/></symbol><symbol id="i-download-simple" viewBox="0 0 256 256"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></symbol><symbol id="i-upload-simple" viewBox="0 0 256 256"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0ZM93.66,77.66,120,51.31V144a8,8,0,0,0,16,0V51.31l26.34,26.35a8,8,0,0,0,11.32-11.32l-40-40a8,8,0,0,0-11.32,0l-40,40A8,8,0,0,0,93.66,77.66Z"/></symbol><symbol id="i-eye" viewBox="0 0 256 256"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"/></symbol><symbol id="i-eye-slash" viewBox="0 0 256 256"><path d="M53.92,34.62A8,8,0,1,0,42.08,45.38L61.32,66.55C25,88.84,9.38,123.2,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208a127.11,127.11,0,0,0,52.07-10.83l22,24.21a8,8,0,1,0,11.84-10.76Zm47.33,75.84,41.67,45.85a32,32,0,0,1-41.67-45.85ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.16,133.16,0,0,1,25,128c4.69-8.79,19.66-33.39,47.35-49.38l18,19.75a48,48,0,0,0,63.66,70l14.73,16.2A112,112,0,0,1,128,192Zm6-95.43a8,8,0,0,1,3-15.72,48.16,48.16,0,0,1,38.77,42.64,8,8,0,0,1-7.22,8.71,6.39,6.39,0,0,1-.75,0,8,8,0,0,1-8-7.26A32.09,32.09,0,0,0,134,96.57Zm113.28,34.69c-.42.94-10.55,23.37-33.36,43.8a8,8,0,1,1-10.67-11.92A132.77,132.77,0,0,0,231.05,128a133.15,133.15,0,0,0-23.12-30.77C185.67,75.19,158.78,64,128,64a118.37,118.37,0,0,0-19.36,1.57A8,8,0,1,1,106,49.79,134,134,0,0,1,128,48c34.88,0,66.57,13.26,91.66,38.35,18.83,18.83,27.3,37.62,27.65,38.41A8,8,0,0,1,247.31,131.26Z"/></symbol><!-- custom: heart with sparkles (ARMY), stands in for 💜 --><symbol id="i-heart-sparkle" viewBox="0 0 256 256"><path d="M108 222C108 222 18 170 18 106C18 75 41 52 70 52C87 52 100 61 108 74C116 61 129 52 146 52C175 52 198 75 198 106C198 170 108 222 108 222Z"/><ellipse cx="72" cy="104" rx="40" ry="36" fill="#fff" opacity=".16"/><path d="M50 104c0-18 13-32 31-32" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="13" stroke-linecap="round"/><path d="M214 20Q214 52 246 52Q214 52 214 84Q214 52 182 52Q214 52 214 20Z"/><path d="M242 95Q242 108 255 108Q242 108 242 121Q242 108 229 108Q242 108 242 95Z" opacity=".75"/><path d="M170 10Q170 20 180 20Q170 20 170 30Q170 20 160 20Q170 20 170 10Z" opacity=".6"/></symbol><symbol id="i-books-fill" viewBox="0 0 256 256"><path d="M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm10,47.38-3.35-15.9,46.82-10.06,3.34,15.9Zm70,100.41-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm48,160H56V192h48v16Z"/></symbol><symbol id="i-book-open-fill" viewBox="0 0 256 256"><path d="M240,56V200a8,8,0,0,1-8,8H160a24,24,0,0,0-24,23.94,7.9,7.9,0,0,1-5.12,7.55A8,8,0,0,1,120,232a24,24,0,0,0-24-24H24a8,8,0,0,1-8-8V56a8,8,0,0,1,8-8H88a32,32,0,0,1,32,32v87.73a8.17,8.17,0,0,0,7.47,8.25,8,8,0,0,0,8.53-8V80a32,32,0,0,1,32-32h64A8,8,0,0,1,240,56Z"/></symbol><symbol id="i-arrow-clockwise" viewBox="0 0 256 256"><path d="M240,56v48a8,8,0,0,1-8,8H184a8,8,0,0,1,0-16H211.4L184.81,71.64l-.25-.24a80,80,0,1,0-1.67,114.78,8,8,0,0,1,11,11.63A95.44,95.44,0,0,1,128,224h-1.32A96,96,0,1,1,195.75,60L224,85.8V56a8,8,0,1,1,16,0Z"/></symbol><symbol id="i-arrows-clockwise" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol><symbol id="i-book-open" viewBox="0 0 256 256"><path d="M232,48H160a40,40,0,0,0-32,16A40,40,0,0,0,96,48H24a8,8,0,0,0-8,8V200a8,8,0,0,0,8,8H96a24,24,0,0,1,24,24,8,8,0,0,0,16,0,24,24,0,0,1,24-24h72a8,8,0,0,0,8-8V56A8,8,0,0,0,232,48ZM96,192H32V64H96a24,24,0,0,1,24,24V200A39.81,39.81,0,0,0,96,192Zm128,0H160a39.81,39.81,0,0,0-24,8V88a24,24,0,0,1,24-24h64Z"/></symbol><symbol id="i-books" viewBox="0 0 256 256"><path d="M231.65,194.55,198.46,36.75a16,16,0,0,0-19-12.39L132.65,34.42a16.08,16.08,0,0,0-12.3,19l33.19,157.8A16,16,0,0,0,169.16,224a16.25,16.25,0,0,0,3.38-.36l46.81-10.06A16.09,16.09,0,0,0,231.65,194.55ZM136,50.15c0-.06,0-.09,0-.09l46.8-10,3.33,15.87L139.33,66Zm6.62,31.47,46.82-10.05,3.34,15.9L146,97.53Zm6.64,31.57,46.82-10.06,13.3,63.24-46.82,10.06ZM216,197.94l-46.8,10-3.33-15.87L212.67,182,216,197.85C216,197.91,216,197.94,216,197.94ZM104,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V48A16,16,0,0,0,104,32ZM56,48h48V64H56Zm0,32h48v96H56Zm48,128H56V192h48v16Z"/></symbol><symbol id="i-camera" viewBox="0 0 256 256"><path d="M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z"/></symbol><symbol id="i-cards-fill" viewBox="0 0 256 256"><path d="M200,88V200a16,16,0,0,1-16,16H40a16,16,0,0,1-16-16V88A16,16,0,0,1,40,72H184A16,16,0,0,1,200,88Zm16-48H64a8,8,0,0,0,0,16H216V176a8,8,0,0,0,16,0V56A16,16,0,0,0,216,40Z"/></symbol><symbol id="i-cards" viewBox="0 0 256 256"><path d="M184,72H40A16,16,0,0,0,24,88V200a16,16,0,0,0,16,16H184a16,16,0,0,0,16-16V88A16,16,0,0,0,184,72Zm0,128H40V88H184V200ZM232,56V176a8,8,0,0,1-16,0V56H64a8,8,0,0,1,0-16H216A16,16,0,0,1,232,56Z"/></symbol><symbol id="i-chat-circle-dots" viewBox="0 0 256 256"><path d="M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128ZM84,116a12,12,0,1,0,12,12A12,12,0,0,0,84,116Zm88,0a12,12,0,1,0,12,12A12,12,0,0,0,172,116Zm60,12A104,104,0,0,1,79.12,219.82L45.07,231.17a16,16,0,0,1-20.24-20.24l11.35-34.05A104,104,0,1,1,232,128Zm-16,0A88,88,0,1,0,51.81,172.06a8,8,0,0,1,.66,6.54L40,216,77.4,203.53a7.85,7.85,0,0,1,2.53-.42,8,8,0,0,1,4,1.08A88,88,0,0,0,216,128Z"/></symbol><symbol id="i-clipboard-text" viewBox="0 0 256 256"><path d="M168,152a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,152Zm-8-40H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm56-64V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V48A16,16,0,0,1,56,32H92.26a47.92,47.92,0,0,1,71.48,0H200A16,16,0,0,1,216,48ZM96,64h64a32,32,0,0,0-64,0ZM200,48H173.25A47.93,47.93,0,0,1,176,64v8a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V64a47.93,47.93,0,0,1,2.75-16H56V216H200Z"/></symbol><symbol id="i-clock-counter-clockwise" viewBox="0 0 256 256"><path d="M136,80v43.47l36.12,21.67a8,8,0,0,1-8.24,13.72l-40-24A8,8,0,0,1,120,128V80a8,8,0,0,1,16,0Zm-8-48A95.44,95.44,0,0,0,60.08,60.15C52.81,67.51,46.35,74.59,40,82V64a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H72a8,8,0,0,0,0-16H49c7.15-8.42,14.27-16.35,22.39-24.57a80,80,0,1,1,1.66,114.75,8,8,0,1,0-11,11.64A96,96,0,1,0,128,32Z"/></symbol><symbol id="i-copy" viewBox="0 0 256 256"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></symbol><symbol id="i-file-text" viewBox="0 0 256 256"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></symbol><symbol id="i-flame-fill" viewBox="0 0 256 256"><path d="M173.79,51.48a221.25,221.25,0,0,0-41.67-34.34,8,8,0,0,0-8.24,0A221.25,221.25,0,0,0,82.21,51.48C54.59,80.48,40,112.47,40,144a88,88,0,0,0,176,0C216,112.47,201.41,80.48,173.79,51.48ZM96,184c0-27.67,22.53-47.28,32-54.3,9.48,7,32,26.63,32,54.3a32,32,0,0,1-64,0Z"/></symbol><symbol id="i-gear-six-fill" viewBox="0 0 256 256"><path d="M237.94,107.21a8,8,0,0,0-3.89-5.4l-29.83-17-.12-33.62a8,8,0,0,0-2.83-6.08,111.91,111.91,0,0,0-36.72-20.67,8,8,0,0,0-6.46.59L128,41.85,97.88,25a8,8,0,0,0-6.47-.6A111.92,111.92,0,0,0,54.73,45.15a8,8,0,0,0-2.83,6.07l-.15,33.65-29.83,17a8,8,0,0,0-3.89,5.4,106.47,106.47,0,0,0,0,41.56,8,8,0,0,0,3.89,5.4l29.83,17,.12,33.63a8,8,0,0,0,2.83,6.08,111.91,111.91,0,0,0,36.72,20.67,8,8,0,0,0,6.46-.59L128,214.15,158.12,231a7.91,7.91,0,0,0,3.9,1,8.09,8.09,0,0,0,2.57-.42,112.1,112.1,0,0,0,36.68-20.73,8,8,0,0,0,2.83-6.07l.15-33.65,29.83-17a8,8,0,0,0,3.89-5.4A106.47,106.47,0,0,0,237.94,107.21ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"/></symbol><symbol id="i-gear-six" viewBox="0 0 256 256"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm109.94-52.79a8,8,0,0,0-3.89-5.4l-29.83-17-.12-33.62a8,8,0,0,0-2.83-6.08,111.91,111.91,0,0,0-36.72-20.67,8,8,0,0,0-6.46.59L128,41.85,97.88,25a8,8,0,0,0-6.47-.6A112.1,112.1,0,0,0,54.73,45.15a8,8,0,0,0-2.83,6.07l-.15,33.65-29.83,17a8,8,0,0,0-3.89,5.4,106.47,106.47,0,0,0,0,41.56,8,8,0,0,0,3.89,5.4l29.83,17,.12,33.62a8,8,0,0,0,2.83,6.08,111.91,111.91,0,0,0,36.72,20.67,8,8,0,0,0,6.46-.59L128,214.15,158.12,231a7.91,7.91,0,0,0,3.9,1,8.09,8.09,0,0,0,2.57-.42,112.1,112.1,0,0,0,36.68-20.73,8,8,0,0,0,2.83-6.07l.15-33.65,29.83-17a8,8,0,0,0,3.89-5.4A106.47,106.47,0,0,0,237.94,107.21Zm-15,34.91-28.57,16.25a8,8,0,0,0-3,3c-.58,1-1.19,2.06-1.81,3.06a7.94,7.94,0,0,0-1.22,4.21l-.15,32.25a95.89,95.89,0,0,1-25.37,14.3L134,199.13a8,8,0,0,0-3.91-1h-.19c-1.21,0-2.43,0-3.64,0a8.08,8.08,0,0,0-4.1,1l-28.84,16.1A96,96,0,0,1,67.88,201l-.11-32.2a8,8,0,0,0-1.22-4.22c-.62-1-1.23-2-1.8-3.06a8.09,8.09,0,0,0-3-3.06l-28.6-16.29a90.49,90.49,0,0,1,0-28.26L61.67,97.63a8,8,0,0,0,3-3c.58-1,1.19-2.06,1.81-3.06a7.94,7.94,0,0,0,1.22-4.21l.15-32.25a95.89,95.89,0,0,1,25.37-14.3L122,56.87a8,8,0,0,0,4.1,1c1.21,0,2.43,0,3.64,0a8.08,8.08,0,0,0,4.1-1l28.84-16.1A96,96,0,0,1,188.12,55l.11,32.2a8,8,0,0,0,1.22,4.22c.62,1,1.23,2,1.8,3.06a8.09,8.09,0,0,0,3,3.06l28.6,16.29A90.49,90.49,0,0,1,222.9,142.12Z"/></symbol><symbol id="i-headphones" viewBox="0 0 256 256"><path d="M201.89,54.66A103.43,103.43,0,0,0,128.79,24H128A104,104,0,0,0,24,128v56a24,24,0,0,0,24,24H64a24,24,0,0,0,24-24V144a24,24,0,0,0-24-24H40.36A88,88,0,0,1,128,40h.67a87.71,87.71,0,0,1,87,80H192a24,24,0,0,0-24,24v40a24,24,0,0,0,24,24h16a24,24,0,0,0,24-24V128A103.41,103.41,0,0,0,201.89,54.66ZM64,136a8,8,0,0,1,8,8v40a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V136Zm152,48a8,8,0,0,1-8,8H192a8,8,0,0,1-8-8V144a8,8,0,0,1,8-8h24Z"/></symbol><symbol id="i-key" viewBox="0 0 256 256"><path d="M216.57,39.43A80,80,0,0,0,83.91,120.78L28.69,176A15.86,15.86,0,0,0,24,187.31V216a16,16,0,0,0,16,16H72a8,8,0,0,0,8-8V208H96a8,8,0,0,0,8-8V184h16a8,8,0,0,0,5.66-2.34l9.56-9.57A79.73,79.73,0,0,0,160,176h.1A80,80,0,0,0,216.57,39.43ZM224,98.1c-1.09,34.09-29.75,61.86-63.89,61.9H160a63.7,63.7,0,0,1-23.65-4.51,8,8,0,0,0-8.84,1.68L116.69,168H96a8,8,0,0,0-8,8v16H72a8,8,0,0,0-8,8v16H40V187.31l58.83-58.82a8,8,0,0,0,1.68-8.84A63.72,63.72,0,0,1,96,95.92c0-34.14,27.81-62.8,61.9-63.89A64,64,0,0,1,224,98.1ZM192,76a12,12,0,1,1-12-12A12,12,0,0,1,192,76Z"/></symbol><symbol id="i-lightbulb" viewBox="0 0 256 256"><path d="M176,232a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h80A8,8,0,0,1,176,232Zm40-128a87.55,87.55,0,0,1-33.64,69.21A16.24,16.24,0,0,0,176,186v6a16,16,0,0,1-16,16H96a16,16,0,0,1-16-16v-6a16,16,0,0,0-6.23-12.66A87.59,87.59,0,0,1,40,104.49C39.74,56.83,78.26,17.14,125.88,16A88,88,0,0,1,216,104Zm-16,0a72,72,0,0,0-73.74-72c-39,.92-70.47,33.39-70.26,72.39a71.65,71.65,0,0,0,27.64,56.3A32,32,0,0,1,96,186v6h64v-6a32.15,32.15,0,0,1,12.47-25.35A71.65,71.65,0,0,0,200,104Zm-16.11-9.34a57.6,57.6,0,0,0-46.56-46.55,8,8,0,0,0-2.66,15.78c16.57,2.79,30.63,16.85,33.44,33.45A8,8,0,0,0,176,104a9,9,0,0,0,1.35-.11A8,8,0,0,0,183.89,94.66Z"/></symbol><symbol id="i-lock-simple" viewBox="0 0 256 256"><path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Z"/></symbol><symbol id="i-microphone" viewBox="0 0 256 256"><path d="M128,176a48.05,48.05,0,0,0,48-48V64a48,48,0,0,0-96,0v64A48.05,48.05,0,0,0,128,176ZM96,64a32,32,0,0,1,64,0v64a32,32,0,0,1-64,0Zm40,143.6V240a8,8,0,0,1-16,0V207.6A80.11,80.11,0,0,1,48,128a8,8,0,0,1,16,0,64,64,0,0,0,128,0,8,8,0,0,1,16,0A80.11,80.11,0,0,1,136,207.6Z"/></symbol><symbol id="i-pause-fill" viewBox="0 0 256 256"><path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z"/></symbol><symbol id="i-pencil-simple" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"/></symbol><symbol id="i-play-fill" viewBox="0 0 256 256"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/></symbol><symbol id="i-skip-back-fill" viewBox="0 0 256 256"><path d="M208,47.88V208.12a16,16,0,0,1-24.43,13.43L64,146.77V216a8,8,0,0,1-16,0V40a8,8,0,0,1,16,0v69.23L183.57,34.45A15.95,15.95,0,0,1,208,47.88Z"/></symbol><symbol id="i-skip-forward-fill" viewBox="0 0 256 256"><path d="M208,40V216a8,8,0,0,1-16,0V146.77L72.43,221.55A15.95,15.95,0,0,1,48,208.12V47.88A15.95,15.95,0,0,1,72.43,34.45L192,109.23V40a8,8,0,0,1,16,0Z"/></symbol><symbol id="i-speaker-high" viewBox="0 0 256 256"><path d="M155.51,24.81a8,8,0,0,0-8.42.88L77.25,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H77.25l69.84,54.31A8,8,0,0,0,160,224V32A8,8,0,0,0,155.51,24.81ZM32,96H72v64H32ZM144,207.64,88,164.09V91.91l56-43.55Zm54-106.08a40,40,0,0,1,0,52.88,8,8,0,0,1-12-10.58,24,24,0,0,0,0-31.72,8,8,0,0,1,12-10.58ZM248,128a79.9,79.9,0,0,1-20.37,53.34,8,8,0,0,1-11.92-10.67,64,64,0,0,0,0-85.33,8,8,0,1,1,11.92-10.67A79.83,79.83,0,0,1,248,128Z"/></symbol><symbol id="i-speaker-slash" viewBox="0 0 256 256"><path d="M53.92,34.62A8,8,0,1,0,42.08,45.38L73.55,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H77.25l69.84,54.31A8,8,0,0,0,160,224V175.09l42.08,46.29a8,8,0,1,0,11.84-10.76ZM32,96H72v64H32ZM144,207.64,88,164.09V95.89l56,61.6Zm42-63.77a24,24,0,0,0,0-31.72,8,8,0,1,1,12-10.57,40,40,0,0,1,0,52.88,8,8,0,0,1-12-10.59Zm-80.16-76a8,8,0,0,1,1.4-11.23l39.85-31A8,8,0,0,1,160,32v74.83a8,8,0,0,1-16,0V48.36l-26.94,21A8,8,0,0,1,105.84,67.91ZM248,128a79.9,79.9,0,0,1-20.37,53.34,8,8,0,0,1-11.92-10.67,64,64,0,0,0,0-85.33,8,8,0,1,1,11.92-10.67A79.83,79.83,0,0,1,248,128Z"/></symbol><symbol id="i-stop-fill" viewBox="0 0 256 256"><path d="M216,56V200a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V56A16,16,0,0,1,56,40H200A16,16,0,0,1,216,56Z"/></symbol><symbol id="i-trash" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></symbol><symbol id="i-user-sound-fill" viewBox="0 0 256 256"><path d="M198.13,202.85A8,8,0,0,1,192,216H24a8,8,0,0,1-6.12-13.15c14.94-17.78,33.52-30.41,54.17-37.17a68,68,0,1,1,71.9,0C164.6,172.44,183.18,185.07,198.13,202.85ZM196.86,61.39a8,8,0,0,0-4.22,10.5,92.26,92.26,0,0,1,0,72.22,8,8,0,1,0,14.72,6.29,108.36,108.36,0,0,0,0-84.8A8,8,0,0,0,196.86,61.39Zm39.85-8.54a8,8,0,1,0-14.7,6.3,124.43,124.43,0,0,1,0,97.7,8,8,0,1,0,14.7,6.3,140.34,140.34,0,0,0,0-110.3Z"/></symbol><symbol id="i-user-sound" viewBox="0 0 256 256"><path d="M144,165.68a68,68,0,1,0-71.9,0c-20.65,6.76-39.23,19.39-54.17,37.17a8,8,0,0,0,12.25,10.3C50.25,189.19,77.91,176,108,176s57.75,13.19,77.88,37.15a8,8,0,1,0,12.25-10.3C183.18,185.07,164.6,172.44,144,165.68ZM56,108a52,52,0,1,1,52,52A52.06,52.06,0,0,1,56,108ZM207.36,65.6a108.36,108.36,0,0,1,0,84.8,8,8,0,0,1-7.36,4.86,8,8,0,0,1-7.36-11.15,92.26,92.26,0,0,0,0-72.22,8,8,0,0,1,14.72-6.29ZM248,108a139,139,0,0,1-11.29,55.15,8,8,0,0,1-14.7-6.3,124.43,124.43,0,0,0,0-97.7,8,8,0,1,1,14.7-6.3A139,139,0,0,1,248,108Z"/></symbol><symbol id="i-x" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol></svg>
 <div class="wrap">
   <header>
     <h1><span class="logo">Hangul with PV</span> <span class="leaf">🌿</span></h1>
@@ -634,7 +672,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <button class="stat tone t-amber st-go" data-f="today" title="See these words"><b id="sToday">0</b><span>Due today</span></button>
       <button class="stat tone t-purple st-go" data-f="learn" title="See these words"><b id="sLearn">0</b><span>Learning</span></button>
       <button class="stat tone t-master st-go" data-f="master" title="See these words"><b id="sMaster">0</b><span>Mastered</span></button>
-      <div class="stat tone t-streak"><b id="sStreak">🔥 0</b><span>Day streak</span></div>
+      <div class="stat tone t-streak"><b id="sStreak"><svg class="i" aria-hidden="true"><use href="#i-flame-fill"/></svg>0</b><span>Day streak</span></div>
     </div>
     <div class="study-links"><button class="btn-ghost" id="goWords" data-noi18n><span id="goWordsL"></span><span id="goWordsN"></span></button><button class="btn-ghost" id="goAddTop">+ Add words</button></div>
     <div id="studyHome">
@@ -655,14 +693,14 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   <section id="v-add" class="hidden">
     <div class="sub-head">
       <div class="l"><button class="btn-ghost back" id="addBack" title="My words" aria-label="My words"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
-      <div class="c"><span class="h">📚</span><h2>Add words</h2></div><div class="r"></div>
+      <div class="c"><span class="h hic"><svg class="i" aria-hidden="true"><use href="#i-books-fill"/></svg></span><h2>Add words</h2></div><div class="r"></div>
     </div>
     <div class="abc-ask hidden" id="goAbc" data-noi18n></div>
     <div class="seg seg-ico" id="addTabs">
       <button data-t="ai" class="on"><i>✨</i>AI</button>
-      <button data-t="one"><i>✏️</i>Single</button>
-      <button data-t="bulk"><i>📋</i>Paste list</button>
-      <button data-t="shot"><i>📷</i>Screenshot</button>
+      <button data-t="one"><i><svg class="i" aria-hidden="true"><use href="#i-pencil-simple"/></svg></i>Single</button>
+      <button data-t="bulk"><i><svg class="i" aria-hidden="true"><use href="#i-clipboard-text"/></svg></i>Paste list</button>
+      <button data-t="shot"><i><svg class="i" aria-hidden="true"><use href="#i-camera"/></svg></i>Screenshot</button>
     </div>
 
     <div class="card" id="add-ai">
@@ -680,17 +718,11 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     <div class="card hidden" id="add-one">
       <h2>Add a word</h2>
       <label for="inKo">Korean</label>
-      <div class="row">
-        <input id="inKo" type="text" placeholder="e.g. 사과" autocomplete="off" lang="ko">
-        <button class="speak sm" style="flex:0 0 40px" id="inKoSpeak" title="Listen">🔊</button>
-      </div>
+      <input id="inKo" type="text" placeholder="e.g. 사과" autocomplete="off" lang="ko">
       <label for="inMean">Meaning</label>
-      <div class="row">
-        <input id="inMean" type="text" placeholder="e.g. apple" autocomplete="off">
-        <button class="btn2" style="flex:0 0 auto" id="autoTr">Auto</button>
-      </div>
-      <p class="small muted" style="margin:6px 0 12px">“Auto” suggests a meaning with free online translation — check it before saving.</p>
-      <button class="btn" id="addOneBtn">Add word</button>
+      <input id="inMean" type="text" placeholder="e.g. apple" autocomplete="off">
+      <!-- same pair as the review bar of a pasted list / screenshot: fill meaning · add -->
+      <div class="row" style="margin-top:16px"><button class="btn2" id="autoTr" style="flex:0 0 auto;padding-left:16px;padding-right:16px" data-noi18n></button><button class="btn" id="addOneBtn">Add word</button></div>
     </div>
 
     <div class="card hidden" id="add-bulk">
@@ -727,18 +759,18 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     <!-- Speak = 📖 Read (passages + pronunciation coach) or 💬 Talk (spoken conversation with AI) -->
     <div id="spHome" data-noi18n></div>
     <div id="readHome" class="hidden">
-      <div class="pg-head" id="rdListHead"><button class="btn-ghost back" id="rdListBack" title="Speak" aria-label="Speak"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><h2>My passages</h2><button class="btn" id="rdNewOpen" data-noi18n></button></div>
+      <div class="sub-head" id="rdListHead"><div class="l"><button class="btn-ghost back" id="rdListBack" title="Speak" aria-label="Speak"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div><div class="c"><h2><svg class="i" aria-hidden="true"><use href="#i-book-open"/></svg> My passages</h2></div><div class="r"><button class="btn2 sh-act" id="rdNewOpen" data-noi18n></button></div></div>
       <!-- "new passage" is its own sub-page, like Add words: [←] Tạo bài đọc — or a plain page heading when there's nothing to go back to -->
       <div class="sub-head hidden" id="rdNewHead">
         <div class="l"><button class="btn-ghost back" id="rdNewBack" title="My passages" aria-label="My passages"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
-        <div class="c"><span class="h">📖</span><h2>Create a passage</h2></div><div class="r"></div>
+        <div class="c"><span class="h hic"><svg class="i" aria-hidden="true"><use href="#i-book-open-fill"/></svg></span><h2>Create a passage</h2></div><div class="r"></div>
       </div>
       <!-- same layout as Add words: icon tabs above the form card -->
       <div id="rdNewCard">
         <div class="seg seg-ico" id="readSrc">
           <button data-s="ai" class="on"><i>✨</i>AI writes</button>
-          <button data-s="own"><i>📋</i>Add my own</button>
-          <button data-s="shot"><i>📷</i>Screenshot</button>
+          <button data-s="own"><i><svg class="i" aria-hidden="true"><use href="#i-clipboard-text"/></svg></i>Add my own</button>
+          <button data-s="shot"><i><svg class="i" aria-hidden="true"><use href="#i-camera"/></svg></i>Screenshot</button>
         </div>
         <div class="card">
         <div id="rs-ai">
@@ -791,16 +823,16 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <div class="rd-top">
         <button class="btn-ghost back" id="rdBack" title="Back" aria-label="Back"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
         <div class="tt"><h2 id="rdTitle"></h2><p class="small muted" id="rdSub"></p></div>
-        <button class="btn-ghost" id="rdEdit" title="Edit" aria-label="Edit">✏️</button>
-        <button class="btn-ghost" id="rdDel">🗑️</button>
+        <button class="btn-ghost" id="rdEdit" title="Edit" aria-label="Edit"><svg class="i" aria-hidden="true"><use href="#i-pencil-simple"/></svg></button>
+        <button class="btn-danger ico" id="rdDel" title="Delete" aria-label="Delete"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button>
       </div>
       <div class="player">
         <div class="pctl">
           <select id="pRate" class="prate" title="Speed"><option value="0.6">0.6×</option><option value="0.75">0.75×</option><option value="0.85">0.85×</option><option value="1">1×</option></select>
-          <button id="pPrev" title="Previous sentence">⏮</button>
-          <button id="pPlay" class="main" title="Play / pause">▶</button>
-          <button id="pNext" title="Next sentence">⏭</button>
-          <button id="pOptBtn" class="popt-btn" title="Options" aria-expanded="false" aria-controls="pOpts">⚙️</button>
+          <button id="pPrev" title="Previous sentence"><svg class="i" aria-hidden="true"><use href="#i-skip-back-fill"/></svg></button>
+          <button id="pPlay" class="main" title="Play / pause"><svg class="i" aria-hidden="true"><use href="#i-play-fill"/></svg></button>
+          <button id="pNext" title="Next sentence"><svg class="i" aria-hidden="true"><use href="#i-skip-forward-fill"/></svg></button>
+          <button id="pOptBtn" class="popt-btn" title="Options" aria-expanded="false" aria-controls="pOpts"><svg class="i" aria-hidden="true"><use href="#i-gear-six"/></svg></button>
         </div>
         <div class="turn" id="pTurn"></div>
         <p class="rd-hint" id="rdHint">Tap 🎙 to check your pronunciation</p>
@@ -813,13 +845,13 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
         </div>
       </div>
       <div class="card hidden" id="coach">
-        <div class="row"><h2 style="margin:0">🎙 Speaking coach</h2><button class="icon-btn" style="flex:0 0 auto" id="cClose" title="Close">✕</button></div>
+        <div class="row"><h2 style="margin:0">🎙 Speaking coach</h2><button class="icon-btn" style="flex:0 0 auto" id="cClose" title="Close"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button></div>
         <div class="ctarget" id="cTarget" lang="ko"></div>
         <div class="small muted" style="text-align:center" id="cTargetM"></div>
         <div class="pctl" style="margin-top:12px">
-          <button id="cListen" title="Listen to the native model">🔊</button>
-          <button id="cRec" class="main rec" title="Record">🎙</button>
-          <button id="cMine" title="Play my recording" disabled>🎧</button>
+          <button id="cListen" title="Listen to the native model"><svg class="i" aria-hidden="true"><use href="#i-speaker-high"/></svg></button>
+          <button id="cRec" class="main rec" title="Record"><svg class="i" aria-hidden="true"><use href="#i-microphone"/></svg></button>
+          <button id="cMine" title="Play my recording" disabled><svg class="i" aria-hidden="true"><use href="#i-headphones"/></svg></button>
         </div>
         <div class="turn" id="cStatus"></div>
         <div class="cgrade-row"><span class="small muted">Grading</span><div class="seg cgrade" id="cGrade" title="How your speaking practice is checked"><button data-g="basic">⚡ Basic</button><button data-g="ai">✨ AI</button></div></div>
@@ -840,7 +872,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 
   <!-- WORDS -->
   <section id="v-words" class="hidden">
-    <div class="pg-head"><button class="btn-ghost back" id="wordsBack" title="Study" aria-label="Back"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><h2>My words</h2><button class="btn" id="goAddBig">+ Add words</button></div>
+    <div class="sub-head"><div class="l"><button class="btn-ghost back" id="wordsBack" title="Study" aria-label="Back"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div><div class="c"><h2><svg class="i" aria-hidden="true"><use href="#i-cards"/></svg> My words</h2></div><div class="r"><button class="btn2 sh-act" id="goAddBig">+ Add words</button></div></div>
     <div class="abc-ask hidden" id="exPrompt"><span id="exPromptTxt" data-noi18n></span><button class="linkbtn" id="exGenBtn">✨ Add now</button></div>
     <div class="wbar">
       <input id="search" type="search" placeholder="Search words…">
@@ -861,7 +893,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   <!-- SETTINGS -->
   <section id="v-set" class="hidden">
     <div class="card" data-noi18n>
-      <h2>🌐 Ngôn ngữ · Language</h2>
+      <h2>Ngôn ngữ · Language</h2>
       <div class="seg" id="uiLangSeg"><button data-ui="vi">Tiếng Việt</button><button data-ui="en">English</button></div>
     </div>
     <div class="card">
@@ -874,14 +906,14 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <!-- grouped by how you answer; each chip is a checkbox -->
       <div class="qrow"><span class="qlab">Choose</span><div class="qchips">
         <label class="qt"><input type="checkbox" data-mode="ko2m">Korean → meaning</label>
-        <label class="qt"><input type="checkbox" data-mode="listen2m">🔊 → meaning</label>
-        <label class="qt"><input type="checkbox" data-mode="listen2kc">🔊 → Korean word</label></div></div>
+        <label class="qt"><input type="checkbox" data-mode="listen2m"><svg class="i" aria-hidden="true"><use href="#i-speaker-high"/></svg> → meaning</label>
+        <label class="qt"><input type="checkbox" data-mode="listen2kc"><svg class="i" aria-hidden="true"><use href="#i-speaker-high"/></svg> → Korean word</label></div></div>
       <div class="qrow"><span class="qlab">Type</span><div class="qchips">
         <label class="qt"><input type="checkbox" data-mode="m2ko">Meaning → Korean</label>
-        <label class="qt"><input type="checkbox" data-mode="listen2ko">🔊 Dictation</label></div></div>
+        <label class="qt"><input type="checkbox" data-mode="listen2ko"><svg class="i" aria-hidden="true"><use href="#i-speaker-high"/></svg> Dictation</label></div></div>
       <div class="qrow"><span class="qlab">Speak</span><div class="qchips">
-        <label class="qt"><input type="checkbox" data-mode="ko2say">🎙 Read aloud</label>
-        <label class="qt"><input type="checkbox" data-mode="m2say">🎙 From meaning</label></div></div>
+        <label class="qt"><input type="checkbox" data-mode="ko2say"><svg class="i" aria-hidden="true"><use href="#i-microphone"/></svg> Read aloud</label>
+        <label class="qt"><input type="checkbox" data-mode="m2say"><svg class="i" aria-hidden="true"><use href="#i-microphone"/></svg> From meaning</label></div></div>
       <label class="check"><input type="checkbox" id="setAuto"> Auto-play audio for Korean words</label>
     </div>
     <div class="card">
@@ -896,8 +928,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       </div>
       <input id="setRate" type="range" min="0.5" max="1.2" step="0.05" style="padding:0">
       <div class="row" style="margin-top:10px;align-items:stretch">
-        <button class="btn2" id="testVoice">🔊 Test: 안녕하세요</button>
-        <button class="btn2" id="gMicTest">🎙 Test microphone</button>
+        <button class="btn2" id="testVoice"><svg class="i" aria-hidden="true"><use href="#i-speaker-high"/></svg> Test: 안녕하세요</button>
+        <button class="btn2" id="gMicTest"><svg class="i" aria-hidden="true"><use href="#i-microphone"/></svg> Test microphone</button>
       </div>
       <p class="small" id="gMicRes" style="margin:8px 0 0" data-noi18n></p>
       <div class="guide" data-g="g-mic" data-noi18n></div>
@@ -907,7 +939,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <p class="small muted" style="margin-top:0">Used for generating words, example sentences and reading passages.</p>
       <div class="guide" data-g="g-key" data-noi18n></div>
       <label for="setKey">Gemini API key</label>
-      <div class="row"><input id="setKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn-ghost eye-btn" style="flex:0 0 auto" id="keyShow" aria-label="Show key" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="eye-off" d="M4 4l16 16"/></svg></button><button class="btn-ghost eye-btn key-del hidden" style="flex:0 0 auto" id="keyDel"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg></button></div>
+      <div class="row"><input id="setKey" type="password" placeholder="AIza…" autocomplete="off"><button class="btn-ghost eye-btn sq" id="keyShow" aria-label="Show key" aria-pressed="false"><svg class="i eye-on" aria-hidden="true"><use href="#i-eye"/></svg><svg class="i eye-off" aria-hidden="true"><use href="#i-eye-slash"/></svg></button><button class="btn-danger ico sq hidden" id="keyDel"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button></div>
       <label for="setModel">Model</label>
       <select id="setModel"></select>
       <p class="small muted" style="margin:6px 0 0" data-noi18n id="setModelHint"></p>
@@ -915,14 +947,13 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <label class="check" style="margin-top:10px"><input type="checkbox" id="setAutoEx"> Auto-add example sentences to new words (needs key)</label>
     </div>
     <div class="card">
-      <h2>☁️ Google Drive sync</h2>
+      <div class="row" style="margin-bottom:10px"><h2 style="margin:0">Google Drive sync</h2><span class="pill hidden" id="gdStatus" style="flex:0 0 auto">☁️</span></div>
       <p class="small muted" style="margin-top:0">Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.</p>
       <div class="guide" data-g="g-sync" data-noi18n></div>
       <div id="gdClientRow">
         <label for="gdClient">Google OAuth Client ID</label>
         <input id="gdClient" type="text" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off">
       </div>
-      <p class="small" id="gdStatus" style="margin:10px 0">Not connected</p>
       <div class="row">
         <button class="btn2" id="gdConnect">Connect Google Drive</button>
         <button class="btn-ghost hidden" id="gdOff" style="flex:0 0 auto">Disconnect</button>
@@ -933,8 +964,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <h2>Backup</h2>
       <p class="small muted" style="margin-top:0">Your words are stored in this browser (and in Google Drive if sync is on). Export a file as an extra backup.</p>
       <div class="row">
-        <button class="btn2" id="expBtn">⬇️ Export</button>
-        <button class="btn2" id="impBtn">⬆️ Import</button>
+        <button class="btn2" id="expBtn"><svg class="i" aria-hidden="true"><use href="#i-download-simple"/></svg> Export</button>
+        <button class="btn2" id="impBtn"><svg class="i" aria-hidden="true"><use href="#i-upload-simple"/></svg> Import</button>
       </div>
       <input type="file" id="impFile" accept=".json,application/json" class="hidden">
       <button class="btn-danger" style="width:100%;margin-top:10px" id="resetBtn">Delete all data</button>
@@ -945,23 +976,23 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 </div>
 
 <nav><div class="in">
-  <button data-v="study" class="on" data-noi18n><span class="ic">🎯</span><span id="navStudy">Study</span></button>
-  <button data-v="read" data-noi18n><span class="ic">🗣</span><span id="navSpeak">Speak</span></button>
-  <button data-v="army"><span class="ic">💜</span>ARMY</button>
-  <button data-v="set"><span class="ic">⚙️</span>Settings</button>
+  <button data-v="study" class="on" data-noi18n><span class="ic"><svg class="i o" aria-hidden="true"><use href="#i-cards"/></svg><svg class="i f" aria-hidden="true"><use href="#i-cards-fill"/></svg></span><span id="navStudy">Study</span></button>
+  <button data-v="read" data-noi18n><span class="ic"><svg class="i o" aria-hidden="true"><use href="#i-user-sound"/></svg><svg class="i f" aria-hidden="true"><use href="#i-user-sound-fill"/></svg></span><span id="navSpeak">Speak</span></button>
+  <button data-v="army"><span class="ic"><svg class="i o" aria-hidden="true"><use href="#i-heart"/></svg><svg class="i f" aria-hidden="true"><use href="#i-heart-sparkle"/></svg></span>ARMY</button>
+  <button data-v="set"><span class="ic"><svg class="i o" aria-hidden="true"><use href="#i-gear-six"/></svg><svg class="i f" aria-hidden="true"><use href="#i-gear-six-fill"/></svg></span>Settings</button>
 </div></nav>
 <div id="welcome" class="hidden" role="dialog" aria-modal="true" data-noi18n></div>
 <div class="toast" id="toast"></div>
 
 <div class="modal hidden" id="aiModal"><div class="sheet">
-  <div class="row"><h2 style="margin:0">Use a free chatbot</h2><button class="icon-btn" style="flex:0 0 auto" id="mCancel" title="Close" aria-label="Close">✕</button></div>
+  <div class="row"><h2 style="margin:0">Use a free chatbot</h2><button class="icon-btn" style="flex:0 0 auto" id="mCancel" title="Close" aria-label="Close"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button></div>
   <ol class="steps">
     <li>Copy the prompt below.</li>
     <li>Paste it into <a href="https://gemini.google.com/app" target="_blank" rel="noopener">Gemini</a>, <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a> or any chatbot.</li>
     <li>Copy its whole answer and paste it in the second box.</li>
   </ol>
   <textarea id="mPrompt" readonly></textarea>
-  <button class="btn2" style="width:100%;margin-top:8px" id="mCopy">📋 Copy prompt</button>
+  <button class="btn2" style="width:100%;margin-top:8px" id="mCopy"><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg> Copy prompt</button>
   <label for="mResp">Chatbot answer</label>
   <textarea id="mResp" placeholder="Paste the answer here…"></textarea>
   <button class="btn" id="mOk" style="width:100%;margin-top:10px">Use answer</button>
@@ -973,6 +1004,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 "use strict";
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
+const ic = n => `<svg class="i" aria-hidden="true"><use href="#i-${n}"/></svg>`;   // Phosphor icon from the sprite at the top of <body>
 const DAY = 86400000, MIN = 60000;
 const KEY = "hangulCards.v1";
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1006,7 +1038,7 @@ const VI = {
 "Single":"Từng từ","Paste list":"Danh sách","Screenshot":"Ảnh chụp",
 "Generate words by topic":"Tạo từ theo chủ đề","Topic":"Chủ đề","Level":"Trình độ","How many":"Số lượng",
 "Each word comes with an example sentence. Words already in your list are skipped automatically.":"Mỗi từ kèm một câu ví dụ. Từ đã có sẽ tự bỏ qua.",
-"✨ Generate":"✨ Tạo","Add a word":"Thêm một từ","Korean":"Tiếng Hàn","Meaning":"Nghĩa","Auto":"Tự động",
+"✨ Generate":"✨ Tạo","Generate":"Tạo","Generate passage":"Tạo bài đọc","Add now":"Thêm ngay","Basic":"Cơ bản","Copy prompt":"Copy câu lệnh","Test microphone":"Thử micro","Test: 안녕하세요":"Nghe thử: 안녕하세요","→ meaning":"→ nghĩa","→ Korean word":"→ từ Hàn","Dictation":"Chính tả","Read aloud":"Đọc to","From meaning":"Nói từ nghĩa","Add a word":"Thêm một từ","Korean":"Tiếng Hàn","Meaning":"Nghĩa","Auto":"Tự động",
 "“Auto” suggests a meaning with free online translation — check it before saving.":"“Tự động” gợi ý nghĩa bằng dịch online — kiểm tra lại trước khi lưu.",
 "Add word":"Thêm từ","Paste a word list":"Dán danh sách từ",
 "One word per line. Separate Korean and meaning with":"Mỗi dòng một từ. Ngăn tiếng Hàn và nghĩa bằng",
@@ -1020,7 +1052,7 @@ const VI = {
 "Length":"Độ dài","Short (~4 sentences)":"Ngắn (~4 câu)","Medium (~8)":"Vừa (~8 câu)","Long (~14)":"Dài (~14 câu)",
 "Use words I'm learning":"Dùng từ tôi đang học","✨ Generate passage":"✨ Tạo bài đọc","Title (optional)":"Tiêu đề (tuỳ chọn)",
 "Korean text":"Văn bản tiếng Hàn","Add translations (free auto-translate)":"Thêm bản dịch (tự dịch miễn phí)","Open in reader":"Mở để đọc",
-"My passages":"Bài đọc của tôi","← Back":"← Quay lại","Shadow mode":"Nói đuổi","Repeat":"Lặp lại","Speed":"Tốc độ",
+"My passages":"Bài đọc","← Back":"← Quay lại","Shadow mode":"Nói đuổi","Repeat":"Lặp lại","Speed":"Tốc độ",
 "1× native":"1× bản xứ","Translation":"Bản dịch","Hide Korean":"Ẩn tiếng Hàn","Hide translation":"Ẩn bản dịch","Tap 🎙 to check your pronunciation":"Chạm 🎙 để chấm điểm phát âm","⚡ Basic":"⚡ Cơ bản","Grading":"Chấm điểm","AI grading needs a Gemini key.":"Chấm bằng AI cần Gemini key.","Add key":"Thêm key","How your speaking practice is checked":"Cách chấm phần luyện nói","🎙 Speaking coach":"🎙 Luyện nói",
 "Tap a sentence to play from there. Press space to play/pause.":"Chạm vào câu để phát từ đó. Phím cách để phát/dừng.",
 "Key words":"Từ khoá","+ Add new words to flashcards":"+ Thêm từ mới vào flashcard","✨ Add now":"✨ Thêm ngay",
@@ -1043,7 +1075,7 @@ const VI = {
 "Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.":"Giữ từ vựng, tiến độ, bài đọc và cài đặt (cả Gemini key) giống nhau trên mọi máy. Lưu trong thư mục ẩn trên Drive của bạn.",
 "Connect Google Drive":"Kết nối Google Drive","Disconnect":"Ngắt kết nối",
 "Backup":"Sao lưu","Your words are stored in this browser (and in Google Drive if sync is on). Export a file as an extra backup.":"Từ vựng lưu trên trình duyệt này (và Drive nếu bật đồng bộ). Xuất file để dự phòng thêm.",
-"⬇️ Export":"⬇️ Xuất file","⬆️ Import":"⬆️ Nhập file","Delete all data":"Xoá toàn bộ dữ liệu",
+"⬇️ Export":"⬇️ Xuất file","⬆️ Import":"⬆️ Nhập file","Export":"Xuất file","Import":"Nhập file","Delete all data":"Xoá toàn bộ dữ liệu",
 "Read":"Đọc","Add":"Thêm","Words":"Từ vựng","Settings":"Cài đặt",
 "Use a free chatbot":"Dùng chatbot miễn phí","Copy the prompt below.":"Copy câu lệnh bên dưới.","Paste it into":"Dán vào","or any chatbot.":"hoặc chatbot bất kỳ.",
 "Copy its whole answer and paste it in the second box.":"Copy toàn bộ câu trả lời, dán vào ô thứ hai.","📋 Copy prompt":"📋 Copy câu lệnh",
@@ -1056,7 +1088,7 @@ const VI = {
 "Record":"Ghi âm","Play my recording":"Nghe lại giọng mình","Search words…":"Tìm từ…","Paste the answer here…":"Dán câu trả lời vào đây…",
 "All these words are already in your list":"Các từ này đều đã có trong danh sách","→ you said":"→ bạn đọc",
 "I was right":"Tôi đúng mà","Correct pronunciation":"Phát âm đúng","We heard":"App nghe được","Welcome!":"Chào bạn!",
-"Add some Korean words to start learning.":"Thêm vài từ tiếng Hàn để bắt đầu học.","+ Add words":"+ Thêm từ","Add words":"Thêm từ vựng","My words":"Từ vựng của tôi","Create a passage":"Tạo bài đọc","← My words":"← Từ vựng của tôi","Ready to study":"Sẵn sàng học",
+"Add some Korean words to start learning.":"Thêm vài từ tiếng Hàn để bắt đầu học.","+ Add words":"+ Thêm từ","Add words":"Thêm từ vựng","My words":"Từ vựng","Create a passage":"Tạo bài đọc","← My words":"← Từ vựng","Ready to study":"Sẵn sàng học",
 "▶ Start":"▶ Bắt đầu","Default":"Mặc định","Working…":"Đang xử lý…","Coach is listening to your recording…":"Đang nghe bản ghi của bạn…",
 "All data deleted":"Đã xoá toàn bộ dữ liệu","Couldn't read that answer — paste the whole reply":"Không đọc được câu trả lời — hãy dán toàn bộ",
 "Delete?":"Xoá?","Describe what the passage should be about":"Hãy mô tả nội dung bài đọc",
@@ -1138,6 +1170,7 @@ const VI_RX = [
  [/^✅ Done! (\d+)\/(\d+) correct$/, "✅ Xong! Đúng $1/$2"],
  [/^💪 Done! (\d+)\/(\d+) correct — let's lock in the words you missed\.$/, "💪 Xong! Đúng $1/$2 — luyện lại các từ còn sai nhé."],
  [/^🔁 Practice (\d+) missed words?$/, "🔁 Luyện lại $1 từ sai"],
+ [/^Practice (\d+) missed words?$/, "Luyện lại $1 từ sai"],
  [/^🎙 best (\d+)\/100$/, "🎙 Kỷ lục $1/100"],
  [/^(\d+) left$/, "còn $1"],
  [/^Practice · (\d+) left$/, "Luyện thêm · còn $1"],
@@ -1193,6 +1226,32 @@ if (UI === "vi"){
     else m.addedNodes.forEach(trNode);
   })).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["placeholder","title","aria-label"] });
 }
+// an emoji that stands for an on-screen control ("Tap 🎙 …", "listen 🔊") is drawn as the same icon as that button.
+// It runs after the translator (whose observer was created first), so the dictionary keys keep their emoji.
+// The welcome screen keeps its emoji (so does ARMY's 💜 / BTS / flags — they aren't in the map)
+const EMOJI_IC = { "🎙":"microphone", "🔊":"speaker-high", "🔇":"speaker-slash", "⏹":"stop-fill", "🔒":"lock-simple", "🗑":"trash", "🎧":"headphones", "💡":"lightbulb", "🎯":"cards", "🗣":"user-sound", "📚":"books", "ℹ":"info", "⬆":"export", "💾":"floppy-disk", "📝":"note-pencil", "🖥":"monitor", "📖":"book-open", "🔑":"key", "▶":"play-fill", "🌐":"translate" };
+const EMOJI_RX = /(🎙|🔊|🔇|⏹|🔒|🗑|🎧|💡|🎯|🗣|📚|ℹ|⬆|💾|📝|🖥|📖|🔑|▶|🌐)\uFE0F?/gu;
+const NO_ICONIZE = "#welcome,.ar-live,.ar-hist,script,style,textarea,select,option,svg,[data-noicon]";
+function iconizeText(n){
+  const el = n.parentElement; EMOJI_RX.lastIndex = 0;
+  if (!el || !EMOJI_RX.test(n.nodeValue) || el.closest(NO_ICONIZE)) return;
+  const f = document.createDocumentFragment(), t = document.createElement("template");
+  n.nodeValue.split(EMOJI_RX).forEach((p, i) => {   // the capture group puts each emoji at the odd indexes
+    if (i % 2){ t.innerHTML = ic(EMOJI_IC[p]); f.append(t.content.firstChild); }
+    else if (p) f.append(p);
+  });
+  n.replaceWith(f);
+}
+function iconize(n){
+  if (n.nodeType === 3) return iconizeText(n);
+  if (n.nodeType !== 1 || n.closest(NO_ICONIZE)) return;
+  const w = document.createTreeWalker(n, 4), list = [];   // collect first: replacing nodes mid-walk would derail the walker
+  let x; while ((x = w.nextNode())) list.push(x);
+  list.forEach(iconizeText);
+}
+iconize(document.body);
+new MutationObserver(ms => ms.forEach(m => m.type === "characterData" ? iconize(m.target) : m.addedNodes.forEach(iconize)))
+  .observe(document.body, { subtree: true, childList: true, characterData: true });
 
 
 /* ---------------- state ---------------- */
@@ -1299,7 +1358,7 @@ function syncAbcPick(){
   b.classList.toggle("hidden", !n);
   if (!n) return;
   b.innerHTML = `<span><b>${L("Học bảng chữ cái?", "Learn the alphabet?")}</b>${n < Object.keys(ABC_SAY).length ? ` <span class="small muted">(${L(`còn ${n} chữ`, `${n} left`)})</span>` : ""}</span><button class="linkbtn" id="abcGo">${L("Có", "Yes")}</button>
-    <button class="icon-btn" id="abcHide" title="${L("Ẩn", "Hide")}" aria-label="${L("Ẩn", "Hide")}">✕</button>`;
+    <button class="icon-btn" id="abcHide" title="${L("Ẩn", "Hide")}" aria-label="${L("Ẩn", "Hide")}">${ic("x")}</button>`;
   $("#abcGo").onclick = () => show("abc");
   $("#abcHide").onclick = () => { S.settings.abcHide = true; save(); syncAbcPick(); };
 }
@@ -1324,7 +1383,7 @@ function renderAbc(){
 }
 function exampleHTML(c){
   if (!c.ex) return "";
-  return `<div class="ex"><button class="speak sm" data-say="${esc(c.ex)}">🔊</button><div><div class="exk" lang="ko">${esc(c.ex)}</div><div class="exm">${esc(c.exMean)}</div></div></div>`;
+  return `<div class="ex"><button class="speak sm" data-say="${esc(c.ex)}">${ic("speaker-high")}</button><div><div class="exk" lang="ko">${esc(c.ex)}</div><div class="exm">${esc(c.exMean)}</div></div></div>`;
 }
 function bindSay(root){ root.querySelectorAll("[data-say]").forEach(b => b.onclick = e => { e.stopPropagation(); speak(b.dataset.say); }); }
 
@@ -1685,7 +1744,7 @@ function refreshStats(){
   $("#sToday").innerHTML = (due + nl) + (due + nl + doneToday ? `<span class="of">/${due + nl + doneToday}</span>` : "");
   $("#sLearn").textContent = S.cards.filter(c=>status(c)==="learn").length;
   $("#sMaster").textContent = S.cards.filter(c=>status(c)==="master").length;
-  $("#sStreak").textContent = "🔥 " + streakNow();
+  $("#sStreak").innerHTML = ic("flame-fill") + streakNow();
   $("#goWordsN").textContent = S.cards.length ? ` (${S.cards.length})` : "";
   $(".study-links").classList.toggle("hidden", !S.cards.length);   // no words yet: the home card's own "+ Add words" is the only way in
   return { due, nl };
@@ -1766,7 +1825,7 @@ const pickOne = a => a[Math.floor(Math.random()*a.length)];
 function cheerHTML(list){
   const e = pickOne(BTS), [ko, vi, en] = list ? pickOne(list) : streakCheer() || pickOne(cheerTry || (S.daily.result && S.daily.result.missed.length) ? CHEER_TRY : CHEER_OK);
   return `<div data-noi18n><div class="cheer-m">${e}</div>
-    <div class="cheer-ko"><span lang="ko">${ko}</span><button class="speak sm cheer-say" data-say="${esc(ko.replace(/\p{Extended_Pictographic}/gu, "").trim())}" title="Listen">🔊</button></div><div class="cheer-tr muted">${L(vi, en)}</div></div>`;
+    <div class="cheer-ko"><span lang="ko">${ko}</span><button class="speak sm cheer-say" data-say="${esc(ko.replace(/\p{Extended_Pictographic}/gu, "").trim())}" title="Listen">${ic("speaker-high")}</button></div><div class="cheer-tr muted">${L(vi, en)}</div></div>`;
 }
 // the cheer card is rendered from many places, so one delegated listener covers them all
 document.addEventListener("click", e => { const b = e.target.closest(".cheer-say"); if (b){ e.stopPropagation(); speak(b.dataset.say); } });
@@ -1867,7 +1926,7 @@ function resultHTML(){
   if (!r || !r.answered) return "";
   if (!missed.length) return perfectRun ? `<div class="feedback ok" style="margin:0 0 12px">✅ Done! ${r.correct}/${r.answered} correct</div>` : "";
   return `<div class="feedback bad" style="margin:0 0 12px">💪 Done! ${r.correct}/${r.answered} correct — let's lock in the words you missed.</div>
-    <button class="btn" id="retryMissed" style="margin-bottom:14px">🔁 Practice ${missed.length} missed word${missed.length===1?"":"s"}</button>`;
+    <button class="btn" id="retryMissed" style="margin-bottom:14px">${ic("arrow-clockwise")} Practice ${missed.length} missed word${missed.length===1?"":"s"}</button>`;
 }
 function bindResult(){
   const b = $("#retryMissed"), r = S.daily.result;
@@ -1887,7 +1946,7 @@ function renderIntro(item){
   const c = item.card;
   $("#qBox").innerHTML = `<span class="newtag">NEW WORD</span>
     <div class="ko" lang="ko">${esc(c.ko)}</div>
-    <button class="speak" id="qSpeak">🔊</button>
+    <button class="speak" id="qSpeak">${ic("speaker-high")}</button>
     <div class="mean">${esc(c.meaning) || '<span class="muted">(no meaning)</span>'}</div>
     ${exampleHTML(c)}
     <p class="small muted">Listen, say it out loud, then continue.</p>
@@ -1920,8 +1979,8 @@ function renderQuiz(item){
   const c = item.card, mode = item.mode || (item.mode = pickMode(c));
   const titles = { ko2m:"Choose the meaning", listen2m:"Listen · choose the meaning", listen2kc:"Listen · choose what you hear", m2ko:"Type it in Korean", listen2ko:"Listen · type what you hear", ko2say:"Read it aloud", m2say:"Say it in Korean" };
   let prompt = "";
-  if (mode === "ko2m" || mode === "ko2say") prompt = `<div class="ko-line"><div class="ko" lang="ko">${esc(c.ko)}</div><button class="speak sm" id="qSpeak" title="Listen" aria-label="Listen">🔊</button></div>`;
-  if (mode === "listen2m" || mode === "listen2ko" || mode === "listen2kc") prompt = `<button class="speak big" id="qSpeak">🔊</button><p class="small muted" style="margin:0">Tap to replay</p>`;
+  if (mode === "ko2m" || mode === "ko2say") prompt = `<div class="ko-line"><div class="ko" lang="ko">${esc(c.ko)}</div><button class="speak sm" id="qSpeak" title="Listen" aria-label="Listen">${ic("speaker-high")}</button></div>`;
+  if (mode === "listen2m" || mode === "listen2ko" || mode === "listen2kc") prompt = `<button class="speak big" id="qSpeak">${ic("speaker-high")}</button><p class="small muted" style="margin:0">Tap to replay</p>`;
   if (mode === "m2ko" || mode === "m2say") prompt = `<div class="mean" style="font-size:28px">${esc(c.meaning)}</div>`;
   let answer = "";
   if (mode === "ko2m" || mode === "listen2m"){
@@ -1936,16 +1995,16 @@ function renderQuiz(item){
     item.opts = opts;
     answer = `<div class="choices">${opts.map((o,i)=>`<button class="choice" data-i="${i}"><span class="k">${i+1}</span><span lang="ko" style="font-size:20px">${esc(o.ko)}</span></button>`).join("")}</div>`;
   } else if (SPEAK_MODES.includes(mode)){
-    answer = `<p class="small muted" id="hintTxt" style="margin:8px 0 0"></p>
-      <div class="dock" id="sayDock"><button class="speak big rec" id="sayRec" title="Record">🎙</button>
+    answer = `<div class="dock" id="sayDock"><button class="speak big rec" id="sayRec" title="Record">${ic("microphone")}</button>
       <p class="small muted" id="sayStatus" style="margin:0;text-align:center">Tap 🎙 and say it</p>
       <div class="cgrade-row"><span class="small muted">Grading</span><div class="seg cgrade" id="sayGrade"><button data-g="basic" title="${L("Nhận giọng nói của trình duyệt: chỉ xem máy có nhận ra đúng từ không", "Browser speech recognition: only checks whether the word was recognised")}">⚡ Basic</button><button data-g="ai" title="${L("Gemini nghe giọng bạn: chấm điểm phát âm và gợi ý cách sửa", "Gemini listens to you: pronunciation score and tips")}">✨ AI</button></div></div>
       <p class="small muted hidden" id="sayNote" style="text-align:center;margin:6px 0 0">AI grading needs a Gemini key. <button class="linkbtn" id="sayKeyLink">Add key</button></p>
+      <p class="hint-box">${ic("lightbulb")}<span id="hintTxt"></span></p>
       <div class="row" style="margin-top:12px">${mode === "m2say" ? `<button class="btn-ghost" id="hintBtn">Hint</button>` : ""}<button class="btn-ghost" id="saySkip" style="flex:2">Can't speak now</button></div></div>`;
   } else {
     answer = `<div style="margin-top:16px"><input id="typeIn" type="text" lang="ko" enterkeyhint="go" autocomplete="off" autocapitalize="off" placeholder="한글로 입력…">
       <div class="row" style="margin-top:8px"><button class="btn-ghost" id="hintBtn">Hint</button><button class="btn" id="checkBtn" style="flex:2">Check</button></div>
-      <p class="small muted" id="hintTxt" style="margin:8px 0 0"></p></div>`;
+      <p class="hint-box">${ic("lightbulb")}<span id="hintTxt"></span></p></div>`;
   }
   $("#qBox").innerHTML = `<div class="qtype">${titles[mode]}</div>${prompt}${answer}<div id="fb"></div>`;
   const sp = $("#qSpeak"); if (sp) sp.onclick = () => speak(c.ko);
@@ -1959,7 +2018,7 @@ function renderQuiz(item){
     // same Basic / AI choice as the reader's speaking coach (one setting for both)
     const syncSay = ask => {
       $$("#sayGrade button").forEach(b => b.classList.toggle("on", b.dataset.g === (coachAI() ? "ai" : "basic")));
-      $("#sayGrade [data-g=ai]").textContent = "✨ AI" + (hasKey() ? "" : " 🔒");
+      $("#sayGrade [data-g=ai]").innerHTML = "✨ AI" + (hasKey() ? "" : " " + ic("lock-simple"));
       $("#sayNote").classList.toggle("hidden", !ask);
     };
     $$("#sayGrade button").forEach(b => b.onclick = () => {
@@ -2075,7 +2134,7 @@ function finish(item, ok, typed, extra){
     } else html += `<div class="dock"><button class="btn" id="contBtn">Continue</button></div>`;
   } else {
     html = `<div class="feedback bad">❌ Not quite${typed ? ` ${item.spoken ? "— we heard" : "— you wrote"} <b lang="ko">${esc(typed)}</b>` : ""}.${reveal}${extra || ""}</div>${exBlock}
-      <div class="dock"><div class="row">${$("#qSpeak") ? "" : `<button class="speak sm" style="flex:0 0 48px;height:48px;width:48px" id="fbSpeak">🔊</button>`}${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn" style="flex:0 0 auto;white-space:nowrap">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2;white-space:nowrap">Continue</button></div></div>`;
+      <div class="dock"><div class="row">${$("#qSpeak") ? "" : `<button class="speak sm" style="flex:0 0 48px;height:48px;width:48px" id="fbSpeak">${ic("speaker-high")}</button>`}${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn" style="flex:0 0 auto;white-space:nowrap">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2;white-space:nowrap">Continue</button></div></div>`;
   }
   $("#fb").innerHTML = html;
   bindSay($("#fb"));
@@ -2115,7 +2174,7 @@ function frCancel(){
   FR.rec = FR.recog = FR.stream = null;
   frBtn(false);
 }
-function frBtn(on){ const b = $("#sayRec"); if (b){ b.classList.toggle("on", on); b.textContent = on ? "⏹" : "🎙"; } }
+function frBtn(on){ const b = $("#sayRec"); if (b){ b.classList.toggle("on", on); b.innerHTML = ic(on ? "stop-fill" : "microphone"); } }
 function frSay(html){ const el = $("#sayStatus"); if (el) el.innerHTML = html; }
 const frBlocked = () => L("🎙 Micro bị chặn. Cho phép micro cho trang này rồi thử lại (xem Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked. Allow it for this site and try again (see Settings → Voice → Microphone & speaking).");
 async function sayStart(item){
@@ -2203,7 +2262,7 @@ Return JSON exactly like: {"heard":"","correct":false,"score":0,"tip":""}`;
     item.busy = false;
     if (!session || session.queue[0] !== item) return;
     const extra = ((j.score != null || j.tip) ? `<div class="small" style="margin-top:6px">🎙 ${j.score != null ? `<b>${Math.round(j.score)}/100</b>` : ""}${j.tip ? " · " + esc(j.tip) : ""}</div>` : "")
-      + gradedBy(true) + `<button class="btn-ghost" id="sayMine" style="margin-top:8px;padding:6px 12px;font-size:13px">🎧 ${L("Nghe lại giọng mình", "Play my recording")}</button>`;
+      + gradedBy(true) + `<button class="btn-ghost" id="sayMine" style="margin-top:8px;padding:6px 12px;font-size:13px">${ic("headphones")} ${L("Nghe lại giọng mình", "Play my recording")}</button>`;
     sayResult(item, !!j.correct, String(j.heard || "").trim(), extra);
   } catch(e){
     item.busy = false;
@@ -2282,16 +2341,17 @@ function photoGate(tip, els, why){
   const k = hasKey();
   tip.classList.toggle("hidden", k); els.forEach(e => e.classList.toggle("hidden", !k));
   if (k) return true;
-  tip.innerHTML = `<b>🔑 ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${why} ${L("Tạo key miễn phí trong ~1 phút.", "A free key takes ~1 minute to create.")}</p><button class="btn">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button>`;
+  tip.innerHTML = `<b>${ic("key")} ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${why} ${L("Tạo key miễn phí trong ~1 phút.", "A free key takes ~1 minute to create.")}</p><button class="btn">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button>`;
   tip.querySelector("button").onclick = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
   return false;
 }
-$("#inKoSpeak").onclick = () => speak($("#inKo").value.trim());
+const AUTO_TR = () => L("Tự điền nghĩa", "Fill meaning");
+$("#autoTr").textContent = AUTO_TR();
 $("#autoTr").onclick = async () => {
   const ko = $("#inKo").value.trim(); if (!ko) { toast("Type a Korean word first"); return; }
-  const b = $("#autoTr"); b.disabled = true; b.textContent = "…";
+  const b = $("#autoTr"); b.style.width = b.offsetWidth + "px"; b.disabled = true; b.innerHTML = `<span class="spinner" style="margin:0"></span>`;   // keep its width while busy
   try { $("#inMean").value = await translate(ko); } catch(e){ toast("Translation unavailable — type it yourself"); }
-  b.disabled = false; b.textContent = "Auto";
+  b.disabled = false; b.textContent = AUTO_TR(); b.style.width = "";
 };
 $("#addOneBtn").onclick = async () => {
   const ko = $("#inKo").value.trim(); let m = $("#inMean").value.trim();
@@ -2360,7 +2420,7 @@ function showPreview(items){
       <input type="checkbox" checked title="${have.has(it.ko) ? "Already added" : ""}">
       <input type="text" class="pk" lang="ko" value="${esc(it.ko)}">
       <input type="text" class="pm" value="${esc(it.meaning)}" placeholder="meaning">
-      <button class="icon-btn ps" title="Listen">🔊</button>
+      <button class="icon-btn ps" title="Listen">${ic("speaker-high")}</button>
       <input type="hidden" class="pe" value="${esc(it.ex||"")}"><input type="hidden" class="pem" value="${esc(it.exMean||"")}">
       ${it.ex ? `<div></div><div class="prev-ex" lang="ko">${esc(it.ex)}<br>${esc(it.exMean||"")}</div>` : ""}</div>`).join("");
   $$("#prevList .ps").forEach(b => b.onclick = () => speak(b.parentNode.querySelector(".pk").value));
@@ -2530,7 +2590,7 @@ $("#rdListBack").onclick = () => spShow("");
 function renderPassItems(){
   const L = S.passages.slice().sort((a,b)=>b.created-a.created);
   const lvl = k => { const t = (LEVELS.find(l=>l[0]===k)||[])[1] || ""; return UI === "vi" ? trLevels(t) : t; };
-  $("#passList").innerHTML = L.length ? L.map(p => `<li data-id="${p.id}"><span style="font-size:22px">📄</span>
+  $("#passList").innerHTML = L.length ? L.map(p => `<li data-id="${p.id}"><span class="li-ic">${ic("file-text")}</span>
       <div class="t"><b lang="ko">${esc(p.title)}</b>${[p.titleMean, lvl(p.level)].filter(Boolean).length ? `<span class="small muted">${esc([p.titleMean, lvl(p.level)].filter(Boolean).join(" · "))}</span>` : ""}</div><span class="muted">›</span></li>`).join("")
     : `<li class="muted" style="justify-content:center;cursor:default">No passages yet — generate one above.</li>`;
   $$("#passList li[data-id]").forEach(li => li.onclick = () => openReader(li.dataset.id));
@@ -2615,7 +2675,7 @@ function liteRow(list, x){
   const d = document.createElement("div"); d.className = "es";
   d.innerHTML = `<div class="h" title="${L("Kéo để đổi thứ tự", "Drag to reorder")}"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2" cy="2" r="1.5"/><circle cx="8" cy="2" r="1.5"/><circle cx="2" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="2" cy="14" r="1.5"/><circle cx="8" cy="14" r="1.5"/></svg></div>
     <div><textarea class="ek" lang="ko" rows="1">${esc(x.ko || "")}</textarea><textarea class="em" rows="1" placeholder="${L("Bản dịch", "Translation")}">${esc(x.meaning || "")}</textarea></div>
-    <button class="btn-ghost x" title="${L("Xoá câu", "Delete sentence")}" aria-label="${L("Xoá câu", "Delete sentence")}">✕</button>`;
+    <button class="btn-ghost x" title="${L("Xoá câu", "Delete sentence")}" aria-label="${L("Xoá câu", "Delete sentence")}">${ic("x")}</button>`;
   d.querySelector(".x").onclick = () => d.remove();
   // drag by the handle (mouse or touch): the row slots in before the first row whose middle is below the pointer
   const h = d.querySelector(".h");
@@ -2810,7 +2870,7 @@ function renderSentences(){
   $("#reader .player").after($("#coach"));   // park the inline coach before the list is rebuilt, or innerHTML would destroy it
   $("#sentList").innerHTML = curP.sentences.map((s,i) => `<div class="sent" data-i="${i}"><div class="row" style="align-items:flex-start">
       <div style="flex:1"><div class="sk" lang="ko">${esc(s.ko)}</div>${s.meaning ? `<div class="sm">${esc(s.meaning)}</div>` : ""}${s.best != null ? `<div class="best">🎙 best ${s.best}/100</div>` : ""}</div>
-      <button class="icon-btn smic" title="Practice speaking this sentence">🎙</button></div></div>`).join("");
+      <button class="icon-btn smic" title="Practice speaking this sentence">${ic("microphone")}</button></div></div>`).join("");
   $$("#sentList .sent").forEach(el => {
     el.onclick = () => { el.classList.add("reveal"); playFrom(+el.dataset.i, true); };
     el.querySelector(".smic").onclick = e => { e.stopPropagation(); +el.dataset.i === C.i ? closeCoach() : openCoach(+el.dataset.i); };
@@ -2834,12 +2894,9 @@ $("#pHideM").onchange = applyReaderView; $("#pHideK").onchange = applyReaderView
 $("#rdBack").onclick = () => {
   if (!$("#rdEditor").classList.contains("hidden")) return closeRdEditor();   // ← while editing = cancel, back to the passage
   stopPlayer(); if ("speechSynthesis" in window) speechSynthesis.cancel(); closeCoach(); curP = null; navSave({ p: "", y: 0 }); $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
-$("#rdDel").onclick = () => {
-  const b = $("#rdDel");
-  if (!b.dataset.confirm){ b.dataset.confirm = "1"; b.textContent = "Delete?"; setTimeout(()=>{ delete b.dataset.confirm; b.textContent = "🗑️"; }, 2500); return; }
-  delete b.dataset.confirm; b.textContent = "🗑️";
+$("#rdDel").onclick = e => confirmTap(e.currentTarget, ic("trash"), () => {
   S.passages = S.passages.filter(p => p !== curP); save(); $("#rdBack").click(); toast("Passage deleted");
-};
+}, ic("trash") + " " + L("Xoá?", "Delete?"));
 // key words: 🔊 | word over meaning | status badge (saved) or ＋ (not saved yet), all vertically centred
 function renderRdVocab(){
   const byKo = new Map(S.cards.map(c => [c.ko, c]));
@@ -2847,7 +2904,7 @@ function renderRdVocab(){
   $("#rdVocabCard").classList.toggle("hidden", !curP.vocab.length);
   $("#rdVocab").innerHTML = curP.vocab.map((v, i) => {
     const c = byKo.get(v.ko), [t, cls] = c ? lab[status(c)] : [];
-    return `<li><button class="speak sm" data-say="${esc(v.ko)}" title="${L("Nghe", "Listen")}">🔊</button><div class="t"><b lang="ko">${esc(v.ko)}</b>
+    return `<li><button class="speak sm" data-say="${esc(v.ko)}" title="${L("Nghe", "Listen")}">${ic("speaker-high")}</button><div class="t"><b lang="ko">${esc(v.ko)}</b>
       <div>${esc(v.meaning)}</div></div>${c ? `<span class="badge ${cls}">${t}</span>` : `<button class="icon-btn" style="flex:0 0 auto;color:var(--accent);font-size:22px" data-add="${i}" title="${L("Thêm vào thẻ", "Add to flashcards")}" aria-label="${L("Thêm vào thẻ", "Add to flashcards")}">＋</button>`}</li>`;
   }).join("");
   bindSay($("#rdVocab"));
@@ -2870,7 +2927,7 @@ function markSentence(i){
   const el = $$("#sentList .sent")[i];
   if (el){ const r = el.getBoundingClientRect(); if (r.top < 170 || r.bottom > innerHeight - 90) window.scrollTo({ top: scrollY + r.top - 190, behavior: "smooth" }); }
 }
-function setPlayIcon(){ const b = $("#pPlay"); if (b) b.textContent = P.playing ? "⏸" : "▶"; }
+function setPlayIcon(){ const b = $("#pPlay"); if (b) b.innerHTML = ic(P.playing ? "pause-fill" : "play-fill"); }
 function clearTimers(){ clearTimeout(P.timer); clearInterval(P.tick); P.timer = P.tick = null; $("#pTurn").textContent = ""; }
 function stopPlayer(){
   const was = P.playing || P.timer;
@@ -2969,7 +3026,7 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const coachAI = () => hasKey() && S.settings.coachGrade !== "basic";
 function syncGrade(askKey){
   $$("#cGrade button").forEach(b => b.classList.toggle("on", b.dataset.g === (coachAI() ? "ai" : "basic")));
-  $("#cGrade [data-g=ai]").textContent = "✨ AI" + (hasKey() ? "" : " 🔒");
+  $("#cGrade [data-g=ai]").innerHTML = "✨ AI" + (hasKey() ? "" : " " + ic("lock-simple"));
   $("#cNote").classList.toggle("hidden", !askKey);   // no key + tapped AI → say what's missing, right there
 }
 $$("#cGrade button").forEach(b => b.onclick = () => {
@@ -2994,7 +3051,7 @@ function openCoach(i){
   if (el){ el.style.scrollMarginTop = ($("#reader .player").offsetHeight + 12) + "px"; el.scrollIntoView({ behavior: "smooth", block: "start" }); }
 }
 // the row's 🎙 turns into the coach's close button while it's open
-function setMic(row, open){ const b = row.querySelector(".smic"); if (!b) return; b.textContent = open ? "✕" : "🎙"; b.title = open ? L("Đóng", "Close") : L("Luyện nói câu này", "Practice speaking this sentence"); }
+function setMic(row, open){ const b = row.querySelector(".smic"); if (!b) return; b.innerHTML = ic(open ? "x" : "microphone"); b.title = open ? L("Đóng", "Close") : L("Luyện nói câu này", "Practice speaking this sentence"); }
 function closeCoach(){ cancelRec(); C.tok++; C.busy = false; $("#coach").classList.add("hidden"); $("#rdHint").classList.remove("hidden"); $$("#sentList .sent.coaching").forEach(x => { x.classList.remove("coaching"); setMic(x, false); }); C.i = -1; }
 $("#cClose").onclick = closeCoach;
 $("#cListen").onclick = () => { if (curP && C.i >= 0) speak(curP.sentences[C.i].ko); };
@@ -3007,7 +3064,7 @@ function cancelRec(){
   try { if (C.recog) { C.recog.onend = null; C.recog.abort(); } } catch(e){}
   if (C.stream) C.stream.getTracks().forEach(t => t.stop());
   C.rec = C.recog = C.stream = null;
-  const b = $("#cRec"); if (b) { b.classList.remove("on"); b.textContent = "🎙"; }
+  const b = $("#cRec"); if (b) { b.classList.remove("on"); b.innerHTML = ic("microphone"); }
 }
 /* explain *why* the mic is blocked (file://, Chrome app permission, site permission) */
 function micHelp(kind, el){
@@ -3093,14 +3150,14 @@ async function startRec(){
     } catch(e){ C.recog = null; }
   }
   C.t0 = Date.now();
-  const b = $("#cRec"); b.classList.add("on"); b.textContent = "⏹";
+  const b = $("#cRec"); b.classList.add("on"); b.innerHTML = ic("stop-fill");
   $("#cStatus").textContent = "🔴 Recording… read the sentence, then tap ⏹";
   C.autoStop = setTimeout(stopRec, 30000);
 }
 function stopRec(){
   clearTimeout(C.autoStop);
   C.dur = Date.now() - C.t0;
-  const b = $("#cRec"); b.classList.remove("on"); b.textContent = "🎙";
+  const b = $("#cRec"); b.classList.remove("on"); b.innerHTML = ic("microphone");
   const recog = C.recog; C.recog = null;
   if (recog){ try { recog.onend = null; recog.stop(); } catch(e){} }
   if (C.rec && C.rec.state === "recording") C.rec.stop();   // → onRecStop
@@ -3302,7 +3359,7 @@ function renderCoachResult(s, j, ai){
   // what was heard, how it should sound and what to fix: one block, split by thin lines
   const secs = [
     j.heard ? `<span class="muted small">We heard</span><div lang="ko" style="font-size:17px">${esc(j.heard)}</div>${j.good ? `<div class="heard-ok">✅ ${esc(j.good)}</div>` : ""}` : "",
-    j.pron ? `<span class="muted small">Correct pronunciation</span><div lang="ko" style="font-size:17px">${esc(j.pron)} <button class="icon-btn" data-say="${esc(s.ko)}">🔊</button></div>` : "",
+    j.pron ? `<span class="muted small">Correct pronunciation</span><div lang="ko" style="font-size:17px">${esc(j.pron)} <button class="icon-btn" data-say="${esc(s.ko)}">${ic("speaker-high")}</button></div>` : "",
     issues.map((x, n) => `<div class="issue"><span class="n">${n+1}</span><div>
         <div class="ty">${esc(typeName(x.type))}</div>
         <div><b lang="ko">${esc(x.part)}</b>${x.heard ? ` <span class="muted">→ you said</span> <span lang="ko">${esc(x.heard)}</span>` : ""}</div>
@@ -3334,7 +3391,7 @@ function renderWordsSoft(){ if (!$("#v-words").classList.contains("hidden") && !
 function renderWords(){
   // same as the home card: due + today's new words if any (daily limit untouched), otherwise extra practice
   const n = dueCards().length + Math.min(newLeftToday(), newCards().length), ws = $("#wordsStudy");
-  ws.textContent = n ? L("▶ Luyện tập", "▶ Study") : L("▶ Luyện thêm", "▶ Extra practice");
+  ws.innerHTML = ic("play-fill") + " " + (n ? L("Luyện tập", "Study") : L("Luyện thêm", "Extra practice"));
   ws.onclick = () => { homeAuto = false; show("study"); startSession(!n); };
   const q = $("#search").value.trim().toLowerCase();
   const hits = S.cards.filter(c => !q || c.ko.includes(q) || c.meaning.toLowerCase().includes(q));
@@ -3346,9 +3403,9 @@ function renderWords(){
   $("#wordList").innerHTML = list.length ? list.map(c => {
     const s = status(c), [t, cls] = lab[s];
     const due = s !== "new" ? (c.due <= Date.now() ? "due now" : "in " + timeUntil(c.due)) : "";
-    const iv = s === "learn" ? ` · ${c.interval || 0}/21 ${L("ngày", "d")}` : s === "master" ? ` · ${c.interval} ${L("ngày", "d")}` : "";
+    const iv = s === "learn" ? `${c.interval || 0}/21 ${L("ngày", "d")}` : s === "master" ? `${c.interval} ${L("ngày", "d")}` : "";
     return `<li data-id="${c.id}">
-      <div class="t"><div class="wh"><button class="speak sm" data-a="say" title="${L("Nghe", "Listen")}">🔊</button><b lang="ko">${esc(c.ko)}</b><span class="badge ${cls}" title="${esc(due)}">${t}<span class="iv">${iv}</span></span></div>
+      <div class="t"><div class="wh"><button class="speak sm" data-a="say" title="${L("Nghe", "Listen")}">${ic("speaker-high")}</button><b lang="ko">${esc(c.ko)}</b><span class="badge ${cls}" title="${esc(s === "new" ? due : (s === "learn" ? L("Đang học", "Learning") : L("Đã thuộc", "Mastered")) + " · " + due)}">${s === "new" ? t : ""}<span class="iv">${iv}</span></span></div>
         <div>${esc(c.meaning) || "<i>no meaning</i>"}</div>${c.ex ? `<div class="exl" lang="ko">${esc(c.ex)} <span>· ${esc(c.exMean)}</span></div>` : ""}</div>
       <button class="icon-btn more-btn" data-a="more" title="${L("Thêm", "More")}" aria-haspopup="menu" aria-expanded="false">⋯</button></li>`;
   }).join("") : `<li class="muted" style="justify-content:center">${!S.cards.length ? "No words yet" : today && !q ? L("Hôm nay học xong rồi 🎉", "All done for today 🎉") : "No matches"}</li>`;
@@ -3366,18 +3423,18 @@ function closeWordMenu(){ const m = $("#wordList .menu"); if (m){ m.previousElem
 function wordMenu(li, btn, c){
   const open = li.querySelector(".menu"); closeWordMenu(); if (open) return;
   btn.setAttribute("aria-expanded", "true");
-  btn.insertAdjacentHTML("afterend", `<div class="menu" role="menu"><button role="menuitem" data-m="edit">✏️ ${L("Sửa", "Edit")}</button><button role="menuitem" class="danger" data-m="del">🗑️ ${L("Xoá", "Delete")}</button></div>`);
+  btn.insertAdjacentHTML("afterend", `<div class="menu" role="menu"><button role="menuitem" data-m="edit">${ic("pencil-simple")} ${L("Sửa", "Edit")}</button><button role="menuitem" class="danger" data-m="del">${ic("trash")} ${L("Xoá", "Delete")}</button></div>`);
   const m = li.querySelector(".menu");
   m.onclick = e => e.stopPropagation();
   m.querySelector("[data-m=edit]").onclick = () => { closeWordMenu(); editRow(li, c); };
-  m.querySelector("[data-m=del]").onclick = () => {
+  m.querySelector("[data-m=del]").onclick = e => { e.stopPropagation(); confirmTap(e.currentTarget, `${ic("trash")} ${L("Xoá", "Delete")}`, () => {
     closeWordMenu(); S.cards = S.cards.filter(x => x.id !== c.id); save(); renderWords(); toast("Deleted “" + c.ko + "”");
     if (session){   // the running round must not ask it again
       const cur = session.queue[0];
       session.queue = session.queue.filter(q => q.card.id !== c.id);
       if (cur && cur.card.id === c.id) nextQ();
     }
-  };
+  }); };
 }
 document.addEventListener("click", closeWordMenu);
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeWordMenu(); });
@@ -3426,7 +3483,7 @@ $("#setKey").onchange = e => { S.settings.apiKey = e.target.value.trim(); save()
 const KEYOK_KEY = "hangulCards.keyOk";
 const keyFp = () => { const k = (S.settings.apiKey || "").trim(); return k ? k.length + ":" + k.slice(-6) : ""; };   // which key was verified, without a second copy of it
 const keyOk = () => { try { return !!keyFp() && localStorage.getItem(KEYOK_KEY) === keyFp(); } catch(e){ return false; } };
-function keyDelBtn(){ const b = $("#keyDel"); delete b.dataset.confirm; b.title = b.ariaLabel = L("Gỡ key", "Remove key"); b.classList.toggle("hidden", !keyOk()); }
+function keyDelBtn(){ const b = $("#keyDel"); delete b.dataset.confirm; b.innerHTML = ic("trash"); b.title = b.ariaLabel = L("Gỡ key", "Remove key"); b.classList.toggle("hidden", !keyOk()); }
 // listing models is free (no quota) and fails with 400/403 for a bad key; offline leaves the last answer as it was
 async function checkKey(){
   const fp = keyFp(); if (!fp) return keyDelBtn();
@@ -3434,11 +3491,9 @@ async function checkKey(){
   catch(e){ if (/HTTP 4\d\d/.test(e.message) && fp === keyFp()) try { localStorage.removeItem(KEYOK_KEY); } catch(e){} }
   keyDelBtn();
 }
-$("#keyDel").onclick = () => {
-  const b = $("#keyDel");
-  if (!b.dataset.confirm){ b.dataset.confirm = "1"; toast(L("Bấm 🗑 lần nữa để gỡ key", "Tap 🗑 again to remove the key")); setTimeout(() => { if (b.dataset.confirm) keyDelBtn(); }, 3000); return; }
+$("#keyDel").onclick = e => confirmTap(e.currentTarget, ic("trash"), () => {
   S.settings.apiKey = ""; save(); $("#setKey").value = ""; try { localStorage.removeItem(KEYOK_KEY); } catch(e){} keyDelBtn(); toast(L("Đã gỡ Gemini key", "Gemini key removed"));
-};
+}, ic("trash") + " " + L("Gỡ?", "Remove?"));
 $("#setModel").onchange = e => { S.settings.model = e.target.value; save(); };
 $("#setAutoEx").onchange = e => { S.settings.autoEx = e.target.checked; save(); };
 $("#keyShow").onclick = e => { const i = $("#setKey"); i.type = i.type === "password" ? "text" : "password"; e.currentTarget.setAttribute("aria-pressed", i.type === "text"); };
@@ -3525,14 +3580,14 @@ const clientId = () => (GOOGLE_CLIENT_ID || SY.clientId || "").trim();
 const tokValid = () => !!(tok && tok.t && tok.exp > Date.now());
 let cloudState = "off";
 
+// Drive status, shown the same way on Home (top right) and in Settings: emoji only, the words live in the tooltip
+const CLOUD_BADGE = { ok: "☁️ ✅", busy: "☁️ …", expired: "☁️ ⚠️", error: "☁️ ⚠️" };   // idle / off: just ☁️
 function setCloud(st){
   cloudState = st;
   const b = $("#cloudBtn");
   b.classList.toggle("hidden", !SY.on);
-  // needs-action states turn red with a ⚠️ (fits next to the logo on a phone); the full reason lives in the tooltip
-  // ⚠️ is always a yellow emoji → draw the warning triangle so it follows the button's red
-  const warn = `☁️ <svg class="warn-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 1.5 21h21z" fill="currentColor"/><path d="M12 9.5v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="18.2" r="1.35" fill="#fff"/></svg>`;
-  b.innerHTML = { ok: "☁️ ✓", busy: "☁️ …", expired: warn, error: warn }[st] || "☁️";   // idle: signed out, nothing waiting
+  // needs-action states turn the pill red with a ⚠️; the full reason lives in the tooltip. Same look as the Settings badge
+  b.textContent = CLOUD_BADGE[st] || "☁️";
   b.dataset.st = st;
   b.title = b.ariaLabel = { expired: L("Phiên đăng nhập Google đã hết hạn — chạm để đồng bộ tiếp", "Google sign-in expired — tap to keep syncing"), error: L("Đồng bộ lỗi — chạm để thử lại", "Sync failed — tap to retry") }[st] || "Google Drive sync";
   renderSyncCard();
@@ -3546,12 +3601,14 @@ function renderSyncCard(){
   $("#gdClientRow").classList.toggle("hidden", !!GOOGLE_CLIENT_ID);
   if ($("#gdClient") !== document.activeElement) $("#gdClient").value = SY.clientId || "";
   $("#gdOff").classList.toggle("hidden", !SY.on);
-  $("#gdConnect").textContent = SY.on ? L("🔄 Đồng bộ ngay", "🔄 Sync now") : L("Kết nối Google Drive", "Connect Google Drive");
-  $("#gdStatus").textContent = !SY.on ? L("Chưa kết nối", "Not connected") :
+  $("#gdConnect").innerHTML = SY.on ? ic("arrows-clockwise") + " " + L("Đồng bộ ngay", "Sync now") : L("Kết nối Google Drive", "Connect Google Drive");
+  const st = SY.on ? cloudState : "off", gs = $("#gdStatus");
+  gs.textContent = CLOUD_BADGE[st] || "☁️"; gs.dataset.st = st; gs.classList.toggle("hidden", !SY.on);   // like Home: nothing to show until Drive is connected
+  gs.title = gs.ariaLabel = !SY.on ? L("Chưa kết nối", "Not connected") :
     cloudState === "busy" ? L("Đang đồng bộ…", "Syncing…") :
-    cloudState === "error" ? L("⚠️ Đồng bộ lỗi — bấm Đồng bộ ngay", "⚠️ Last sync failed — tap Sync now") :
+    cloudState === "error" ? L("Đồng bộ lỗi — bấm Đồng bộ ngay", "Last sync failed — tap Sync now") :
     cloudState === "expired" || cloudState === "idle" ? L(`Đã kết nối · lần cuối ${ago(SY.last)} · bấm Đồng bộ ngay để tiếp tục`, `Connected · last sync ${ago(SY.last)} · tap Sync now to continue`) :
-    L(`✅ Đã kết nối · lần cuối ${ago(SY.last)}`, `✅ Connected · last sync ${ago(SY.last)}`);
+    L(`Đã kết nối · lần cuối ${ago(SY.last)}`, `Connected · last sync ${ago(SY.last)}`);
 }
 
 function gisReady(){ return !!(window.google && google.accounts && google.accounts.oauth2); }
@@ -3755,7 +3812,7 @@ async function renderNotifyCard(){
   else if (notifyOn()){
     try { const st = await navigator.permissions.query({ name: "periodic-background-sync" }); if (st.state !== "granted") note = L("Trình duyệt chưa cho chạy nền — hãy cài app vào màn hình chính.", "Background runs not allowed yet — install the app to your home screen."); } catch(e){}
   }
-  el.innerHTML = `<h2>🔔 ${L("Nhắc ôn tập", "Review reminders")}</h2>
+  el.innerHTML = `<h2>${L("Nhắc ôn tập", "Review reminders")}</h2>
     <p class="small muted" style="margin-top:0">${L("Gửi thông báo khi có từ cần ôn. Trình duyệt tự chọn thời điểm kiểm tra (khoảng vài giờ một lần), không nhắc từ 0h đến 5h.", "Get a notification when words are due. The browser decides when to check (roughly every few hours); no reminders between 00:00 and 5:00.")}</p>
     <label class="check"><input type="checkbox" id="setNotify" ${notifyOn() ? "checked" : ""}> ${L("Bật nhắc trên thiết bị này", "Remind me on this device")}</label>
     ${note ? `<p class="small muted" style="margin:6px 0 0">${note}</p>` : ""}`;
@@ -3943,9 +4000,9 @@ const GUIDE = [
     <li><b>Mac</b>: System Settings → Privacy & Security → Microphone</li></ul>
     <p>On Android without a key, only text is checked and playback of your voice is off.</p>`)],
   ["g-backup", L("Sao lưu & chuyển máy", "Backup & moving devices"), L(`
-    <p><b>⬇️ Xuất file</b> để lưu dự phòng, <b>⬆️ Nhập file</b> để khôi phục hoặc chuyển máy.</p>
+    <p><b>${ic("download-simple")} Xuất file</b> để lưu dự phòng, <b>${ic("upload-simple")} Nhập file</b> để khôi phục hoặc chuyển máy.</p>
     <p>⚠️ Xoá dữ liệu trình duyệt sẽ mất từ vựng nếu chưa đồng bộ Drive hoặc xuất file.</p>`, `
-    <p><b>⬇️ Export</b> to save a backup file, <b>⬆️ Import</b> to restore or move devices.</p>
+    <p><b>${ic("download-simple")} Export</b> to save a backup file, <b>${ic("upload-simple")} Import</b> to restore or move devices.</p>
     <p>⚠️ Clearing browser data deletes your words unless Drive sync is on or you exported them.</p>`)],
   ["g-faq", L("Câu hỏi thường gặp", "FAQ"), L(`
     <p><b>Người khác có thấy dữ liệu của mình?</b> Không. Mỗi người có dữ liệu, key và Drive riêng.</p>
@@ -3959,7 +4016,7 @@ function buildGuide(){
   // topic guides sit inside the settings card they explain; the rest form the general guide at the bottom
   const box = ([id, t, body]) => `<details id="${id}"><summary>ℹ️ ${t}</summary><div>${body}</div></details>`;
   GUIDE.forEach(g => { const slot = $(`[data-g="${g[0]}"]`); if (slot) slot.innerHTML = box(g); });
-  $("#guideCard").innerHTML = `<h2>📘 ${L("Hướng dẫn chung", "General guide")}</h2>` +
+  $("#guideCard").innerHTML = `<h2>${L("Hướng dẫn chung", "General guide")}</h2>` +
     GUIDE.filter(g => !$(`[data-g="${g[0]}"]`)).map(box).join("") +
     `<button class="btn-ghost" style="width:100%;margin-top:12px" id="gWelcome">${L("↺ Xem lại màn hình chào mừng", "↺ Show the welcome screen again")}</button>`;
   $("#gWelcome").onclick = openWelcome;
@@ -4075,9 +4132,11 @@ function arToPassage(lines, title){
   save(); toast(L(`Đã lưu ${ko.length} câu vào mục Đọc`, `Saved ${ko.length} lines to Read`));
   return id;
 }
-function confirmTap(b, label, fn){
-  if (!b.dataset.confirm){ b.dataset.confirm = 1; b.textContent = L("Chạm lần nữa để xoá", "Tap again to delete"); setTimeout(() => { delete b.dataset.confirm; b.textContent = label; }, 3000); return; }
-  delete b.dataset.confirm; b.textContent = label; fn();
+// two-tap delete: the first tap arms the button (solid red + "tap again"), the second runs fn; it disarms by itself after 3 s.
+// Icon-only buttons pass a short armed label so they don't grow too wide
+function confirmTap(b, label, fn, armed){
+  if (!b.dataset.confirm){ b.dataset.confirm = 1; b.innerHTML = armed || L("Chạm lần nữa để xoá", "Tap again to delete"); setTimeout(() => { if (b.dataset.confirm){ delete b.dataset.confirm; b.innerHTML = label; } }, 3000); return; }
+  delete b.dataset.confirm; b.innerHTML = label; fn();
 }
 
 /* ---------------- 🗣 Speak tab: 📖 Read (passages + coach) or 💬 Talk (spoken conversation with AI) ---------------- */
@@ -4101,11 +4160,11 @@ function spShow(scr){
 }
 function renderSpHome(){
   const n = S.passages.length, t = S.talk;
-  const pick = (k, icon, title, desc) => `<button class="ar-pick sp-pick" data-s="${k}"><span class="i">${icon}</span><span class="tx"><b>${title}</b><span class="d">${desc}</span></span><span class="muted">›</span></button>`;
+  const pick = (k, icon, title, desc) => `<button class="ar-pick sp-pick" data-s="${k}"><span class="i">${ic(icon)}</span><span class="tx"><b>${title}</b><span class="d">${desc}</span></span><span class="muted">›</span></button>`;
   $("#spHome").innerHTML = `
-    <div class="pg-head"><span class="h">🗣</span><h2>${L("Luyện nói", "Speak")}</h2></div>
-    ${pick("read", "📖", L("Luyện đọc", "Reading practice") + (n ? ` (${n})` : ""), L("Đọc to từng câu trong bài, nghe mẫu và được chấm phát âm.", "Read passages aloud sentence by sentence, hear the model and get your pronunciation scored."))}
-    ${pick("talk", "💬", L("Luyện nói giao tiếp", "Conversation practice") + ((S.talks || []).length ? ` (${S.talks.length})` : ""), t && !t.done
+    <div class="pg-head"><span class="h hic">${ic("user-sound-fill")}</span><h2>${L("Luyện nói", "Speak")}</h2></div>
+    ${pick("read", "book-open", L("Luyện đọc", "Reading practice") + (n ? ` (${n})` : ""), L("Đọc to từng câu trong bài, nghe mẫu và được chấm phát âm.", "Read passages aloud sentence by sentence, hear the model and get your pronunciation scored."))}
+    ${pick("talk", "chat-circle-dots", L("Luyện nói giao tiếp", "Conversation practice") + ((S.talks || []).length ? ` (${S.talks.length})` : ""), t && !t.done
       ? L(`Đang nói dở: ${esc(talkScene(t).name)} — chạm để nói tiếp.`, `In progress: ${esc(talkScene(t).name)} — tap to continue.`)
       : L("Nói chuyện với AI bằng tiếng Hàn — AI trả lời và chữa lỗi cho bạn.", "Have a spoken conversation in Korean — the AI answers and corrects you."))}`;
   $$("#spHome .sp-pick").forEach(b => b.onclick = () => { spShow(b.dataset.s); scrollTo(0, 0); });
@@ -4139,8 +4198,9 @@ function talkStop(){
 }
 // while recording only ⏹ shows — the other controls would just stop the recording
 function talkRecUI(on){
-  const b = $("#tkRec"); if (b){ b.classList.toggle("on", on); b.textContent = on ? "⏹" : "🎙"; }
+  const b = $("#tkRec"); if (b){ b.classList.toggle("on", on); b.innerHTML = ic(on ? "stop-fill" : "microphone"); }
   const c = $(".tk-ctl"); if (c) c.classList.toggle("recording", on);
+  const e = $("#tkEnd"); if (e) e.style.visibility = on ? "hidden" : "";   // finishing mid-recording would drop what was just said
 }
 // the status line (errors, mic help) survives re-renders; empty = hidden
 function talkStatus(html){
@@ -4151,7 +4211,7 @@ function talkStatus(html){
 // 🕘 + count, top right (mirrors ←): opens the past-conversations list
 function talkHistBtn(){
   const n = (S.talks || []).length;
-  return n ? `<button class="btn-ghost tk-hist" id="tkHistOpen" title="${L("Hội thoại đã luyện", "Past conversations")}" aria-label="${L(`Hội thoại đã luyện (${n})`, `Past conversations (${n})`)}">🕘<span class="n">${n}</span></button>` : "";
+  return n ? `<button class="btn-ghost tk-hist" id="tkHistOpen" title="${L("Hội thoại đã luyện", "Past conversations")}" aria-label="${L(`Hội thoại đã luyện (${n})`, `Past conversations (${n})`)}">${ic("clock-counter-clockwise")}<span class="n">${n}</span></button>` : "";
 }
 function talkHead(title, right){
   return `<div class="sub-head">
@@ -4188,12 +4248,12 @@ function renderTalkSetup(){
   const key = hasKey();
   const goKey = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
   if (!key){   // nothing below works without AI → just the way to get a key
-    $("#talk").innerHTML = talkHead(`💬 ${L("Luyện nói giao tiếp", "Conversation practice")}`, talkHistBtn()) + `<div class="card tk-key"><b>🔑 ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${L("Hội thoại dùng AI để nghe, trả lời và chữa lỗi. Tạo key miễn phí trong ~1 phút.", "Talk uses AI to listen, answer and correct you. A free key takes ~1 minute to create.")}</p><button class="btn" id="tkKey">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button></div>`;
+    $("#talk").innerHTML = talkHead(`${ic("chat-circle-dots")} ${L("Luyện nói giao tiếp", "Conversation practice")}`, talkHistBtn()) + `<div class="card tk-key"><b>${ic("key")} ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${L("Hội thoại dùng AI để nghe, trả lời và chữa lỗi. Tạo key miễn phí trong ~1 phút.", "Talk uses AI to listen, answer and correct you. A free key takes ~1 minute to create.")}</p><button class="btn" id="tkKey">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button></div>`;
     $("#tkKey").onclick = goKey;
     return;
   }
   const live = S.talk && !S.talk.done ? S.talk : null;
-  $("#talk").innerHTML = talkHead(`💬 ${L("Luyện nói giao tiếp", "Conversation practice")}`,
+  $("#talk").innerHTML = talkHead(`${ic("chat-circle-dots")} ${L("Luyện nói giao tiếp", "Conversation practice")}`,
     talkHistBtn()) + `
     ${live ? `<button class="ar-pick sp-pick" id="tkResume"><span class="i">${talkScene(live).icon}</span><span class="tx"><b>${L("Đang nói dở", "In progress")}: ${esc(talkScene(live).name)}</b><span class="d">${L("Chạm để nói tiếp", "Tap to continue")}</span></span><span class="muted">›</span></button>` : ""}
     <!-- same shape as Add words → AI: topic box + suggestion chips + level + one button -->
@@ -4204,7 +4264,7 @@ function renderTalkSetup(){
       <label for="tkLevel">${L("Trình độ", "Level")}</label>
       <select id="tkLevel"></select>
       <p class="small muted" style="margin:8px 0 18px">${L("AI đóng vai và nói chuyện với bạn, dùng từ và ngữ pháp theo trình độ này. Bạn chỉ cần trả lời bằng giọng nói.", "The AI plays a role and talks with you, keeping to this level. You just answer out loud.")}</p>
-      <button class="btn" id="tkGo">💬 ${L("Bắt đầu", "Start")}</button>
+      <button class="btn" id="tkGo">${ic("play-fill")} ${L("Bắt đầu", "Start")}</button>
     </div>
 `;
   if ($("#tkResume")) $("#tkResume").onclick = () => { TK.list = false; renderTalk(); };
@@ -4222,11 +4282,11 @@ function renderTalkSetup(){
 }
 function renderTalkHistList(){
   const list = (S.talks || []).slice().sort((a, b) => b.created - a.created);
-  $("#talk").innerHTML = talkHead(`🕘 ${L("Hội thoại đã luyện", "Past conversations")}`) + (list.length ? `
+  $("#talk").innerHTML = talkHead(`${ic("clock-counter-clockwise")} ${L("Hội thoại đã luyện", "Past conversations")}`) + (list.length ? `
     <div class="card flat"><ul class="wl" id="tkHist">${list.map(x => {
       const sc = talkScene(x), st = talkStats(x);
       const meta = [arDate(x.created),
-        st.fixes.length ? `✏️ ${st.fixes.length}` : "✅", `🗣 ${st.avg}`].join(" · ");
+        st.fixes.length ? `${ic("pencil-simple")} ${st.fixes.length}` : "✅", `${ic("user-sound")} ${st.avg}`].join(" · ");
       return `<li data-id="${x.id}" style="cursor:pointer"><span style="font-size:22px">${sc.icon}</span><div class="t"><b>${esc(sc.name)}</b><div class="small muted">${meta}</div></div><span class="muted">›</span></li>`;
     }).join("")}</ul></div>` : `<p class="muted" style="text-align:center">${L("Chưa có hội thoại nào.", "No conversations yet.")}</p>`);
   // from the list you came to read it: open with the whole talk shown
@@ -4334,7 +4394,7 @@ Return JSON exactly like: {"ask":"","hints":[{"ko":"","mean":""}]}`, null, { tem
     renderTalkChat();
     if (talkVisible()) requestAnimationFrame(() => scrollTo(0, document.body.scrollHeight));
   } catch(e){ talkStatus("⚠️ " + esc(e.message)); }
-  const hb = $("#tkHint"); if (hb){ hb.disabled = false; hb.textContent = "💡"; }
+  const hb = $("#tkHint"); if (hb){ hb.disabled = false; hb.innerHTML = ic("lightbulb"); }
 }
 function talkSay(i){
   const x = S.talk && S.talk.turns[i];
@@ -4346,19 +4406,19 @@ function talkMsg(x, i){
   if (x.pending) return `<div class="tk-msg ${x.who}"><div class="tk-b"><span class="spinner"></span></div></div>`;
   if (x.who === "ai") return `<div class="tk-msg ai" data-i="${i}">
       <div class="tk-b"><div class="ko" lang="ko">${esc(x.ko)}</div>${x.mean ? `<div class="mean">${esc(x.mean)}</div>` : ""}</div>
-      <button class="icon-btn" data-a="say" title="${L("Nghe", "Listen")}" aria-label="${L("Nghe", "Listen")}">🔊</button></div>`;
+      <button class="icon-btn" data-a="say" title="${L("Nghe", "Listen")}" aria-label="${L("Nghe", "Listen")}">${ic("speaker-high")}</button></div>`;
   const open = !!TK.open["d" + i], sc = x.score >= 80 ? "s-hi" : x.score >= 60 ? "s-mid" : "s-lo";
   return `<div class="tk-msg me" data-i="${i}">
     <div class="tk-b"><div class="ko" lang="ko">${esc(x.heard)}</div></div>
     <div class="tk-fb">
       ${x.ok ? `<div class="ok">✅ ${L("Câu đúng và tự nhiên!", "Correct and natural!")}</div>`
-        : `<div class="fix">✏️ <span lang="ko">${esc(x.fix)}</span> <button class="icon-btn" data-a="sayfix" title="${L("Nghe câu đúng", "Hear the correct sentence")}">🔊</button></div>${x.why ? `<div class="why">${esc(x.why)}</div>` : ""}`}
+        : `<div class="fix">${ic("pencil-simple")} <span lang="ko">${esc(x.fix)}</span> <button class="icon-btn" data-a="sayfix" title="${L("Nghe câu đúng", "Hear the correct sentence")}">${ic("speaker-high")}</button></div>${x.why ? `<div class="why">${esc(x.why)}</div>` : ""}`}
       ${x.mean ? `<div class="why muted">${esc(x.mean)}</div>` : ""}
-      <button class="tk-more ${sc}" data-a="more">🗣 ${L("Phát âm", "Pronunciation")} <b>${x.score}</b>/100${x.issues.length ? ` · ${L(`${x.issues.length} lỗi`, `${x.issues.length} issue${x.issues.length > 1 ? "s" : ""}`)}` : ""} <span class="muted">${open ? "▴" : "▾"}</span></button>
+      <button class="tk-more ${sc}" data-a="more">${ic("user-sound")} ${L("Phát âm", "Pronunciation")} <b>${x.score}</b>/100${x.issues.length ? ` · ${L(`${x.issues.length} lỗi`, `${x.issues.length} issue${x.issues.length > 1 ? "s" : ""}`)}` : ""} <span class="muted">${open ? "▴" : "▾"}</span></button>
       ${open ? `<div class="tk-det">
         ${x.pron ? `<div><span class="muted">${L("Đọc chuẩn", "Standard")}:</span> <span lang="ko">${esc(x.pron)}</span></div>` : ""}
         ${x.issues.map(s => `<div class="iss">${s.part ? `<b lang="ko">${esc(s.part)}</b> · ` : ""}${esc(s.tip)}</div>`).join("") || `<div class="muted">${L("Không có lỗi phát âm đáng kể 👍", "No notable pronunciation issues 👍")}</div>`}
-        <div class="row" style="margin-top:8px;gap:6px">${TK.urls[i] ? `<button class="btn2" data-a="mine">🎧 ${L("Giọng của tôi", "My recording")}</button>` : ""}<button class="btn2" data-a="sayme">🔊 ${L("Nghe mẫu", "Model")}</button></div>
+        <div class="row" style="margin-top:8px;gap:6px">${TK.urls[i] ? `<button class="btn2" data-a="mine">${ic("headphones")} ${L("Giọng của tôi", "My recording")}</button>` : ""}<button class="btn2" data-a="sayme">${ic("speaker-high")} ${L("Nghe mẫu", "Model")}</button></div>
       </div>` : ""}
     </div></div>`;
 }
@@ -4368,20 +4428,19 @@ $("#talk").addEventListener("click", e => {
 function renderTalkChat(){
   const t = S.talk; if (!t) return;
   const sc = talkScene(t), wasBottom = innerHeight + scrollY >= document.body.scrollHeight - 80;
-  $("#talk").innerHTML = talkHead(`${sc.icon} ${esc(sc.name)}`) + `
+  $("#talk").innerHTML = talkHead(`${sc.icon} ${esc(sc.name)}`, `<button id="tkEnd" class="tk-end" title="${L("Kết thúc hội thoại", "Finish the conversation")}">${L("Kết thúc", "Finish")}</button>`) + `
     <div class="tk-list" id="tkList">${t.turns.map(talkMsg).join("")}</div>
-    ${TK.hints ? `<div class="card tk-hints"><div class="row"><b class="small">💡 ${L("Bạn có thể nói", "You could say")}</b><button class="icon-btn" style="flex:0 0 auto" id="tkHintX" aria-label="${L("Đóng", "Close")}">✕</button></div>
+    ${TK.hints ? `<div class="card tk-hints"><div class="row"><b class="small">${ic("lightbulb")} ${L("Bạn có thể nói", "You could say")}</b><button class="icon-btn" style="flex:0 0 auto" id="tkHintX" aria-label="${L("Đóng", "Close")}">${ic("x")}</button></div>
       ${TK.hintAsk ? `<p class="small tk-ask">${esc(TK.hintAsk)}</p>` : ""}
-      ${TK.hints.map((h, k) => `<button class="tk-hint" data-k="${k}" title="${L("Nghe câu này", "Hear this")}"><span class="tx"><span lang="ko">${esc(h.ko)}</span><span class="small muted">${esc(h.mean || "")}</span></span><span class="sp" aria-hidden="true">🔊</span></button>`).join("")}
+      ${TK.hints.map((h, k) => `<button class="tk-hint" data-k="${k}" title="${L("Nghe câu này", "Hear this")}"><span class="tx"><span lang="ko">${esc(h.ko)}</span><span class="small muted">${esc(h.mean || "")}</span></span><span class="sp" aria-hidden="true">${ic("speaker-high")}</span></button>`).join("")}
       <p class="small muted" style="margin:2px 0 0">${L("Chạm để nghe, rồi chạm 🎙 và nói theo cách của bạn.", "Tap to hear it, then tap 🎙 and say it your way.")}</p></div>` : ""}
     <div class="tk-ctl">
       <div class="turn" id="tkStatus"></div>
       <div class="pctl tk-btns">
         <select id="tkRate" class="prate" title="${L("Tốc độ đọc", "Speed")}" aria-label="${L("Tốc độ đọc", "Speed")}"></select>
-        <button id="tkHint" title="${L("Không biết nói gì? Xem câu gợi ý", "Stuck? See suggested answers")}" aria-label="${L("Gợi ý", "Hint")}">💡</button>
-        <button id="tkRec" class="main rec" title="${L("Nói", "Speak")}" aria-label="${L("Nói", "Speak")}">🎙</button>
+        <button id="tkHint" title="${L("Không biết nói gì? Xem câu gợi ý", "Stuck? See suggested answers")}" aria-label="${L("Gợi ý", "Hint")}">${ic("lightbulb")}</button>
+        <button id="tkRec" class="main rec" title="${L("Nói", "Speak")}" aria-label="${L("Nói", "Speak")}">${ic("microphone")}</button>
         <button id="tkTts" title=""></button>
-        <button id="tkEnd" class="tk-end" title="${L("Kết thúc hội thoại", "Finish the conversation")}">${L("Kết thúc", "Finish")}</button>
       </div>
     </div>`;
   $("#talk").classList.add("tk-chat");
@@ -4389,7 +4448,7 @@ function renderTalkChat(){
   rs.onchange = () => { $("#pRate").value = rs.value; $("#pRate").onchange(); fitPRate(rs); };
   if (TK.rec) talkRecUI(true);
   talkStatus(TK.status);
-  const ttsBtn = () => { const b = $("#tkTts"); b.textContent = talkTts() ? "🔊" : "🔇"; b.setAttribute("aria-label", talkTts() ? L("Đọc to", "Read aloud") : L("Tắt tiếng", "Muted")); b.title = talkTts() ? L("AI đang đọc to — chạm để tắt", "AI reads aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); };
+  const ttsBtn = () => { const b = $("#tkTts"); b.innerHTML = ic(talkTts() ? "speaker-high" : "speaker-slash"); b.setAttribute("aria-label", talkTts() ? L("Đọc to", "Read aloud") : L("Tắt tiếng", "Muted")); b.title = talkTts() ? L("AI đang đọc to — chạm để tắt", "AI reads aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); };
   ttsBtn();
   $("#tkTts").onclick = () => { S.settings.talkTts = !talkTts(); save(); ttsBtn(); if (!talkTts() && "speechSynthesis" in window) speechSynthesis.cancel(); };
   $("#tkHint").onclick = talkHint;
@@ -4445,8 +4504,7 @@ async function talkRecStart(){
     else toast("⚠️ " + (e.message || "Can't access microphone"));
     return;
   }
-  TK.t0 = Date.now(); TK.hints = null;
-  if ($(".tk-hints")) $(".tk-hints").remove();
+  TK.t0 = Date.now();   // hints stay up while recording, so you can read one out; they clear once the turn is sent
   talkRecUI(true);
   talkStatus("");   // the pulsing red ⏹ already says it's recording
   TK.autoStop = setTimeout(talkRecStop, 30000);
@@ -4462,9 +4520,9 @@ function talkTranscript(t){
   return `<div class="tk-list tk-read">${t.turns.filter(x => !x.pending).map(x => x.who === "ai"
     ? `<div class="tk-msg ai"><div class="tk-b" data-say="${esc(x.ko)}"><div class="ko" lang="ko">${esc(x.ko)}</div>${x.mean ? `<div class="mean">${esc(x.mean)}</div>` : ""}</div></div>`
     : `<div class="tk-msg me"><div class="tk-b"><div class="ko" lang="ko">${esc(x.heard)}</div></div><div class="tk-fb">
-        ${x.ok ? `<div class="ok">✅ ${L("Câu đúng và tự nhiên!", "Correct and natural!")}</div>` : `<div class="fix" data-say="${esc(x.fix)}">✏️ <span lang="ko">${esc(x.fix)}</span> 🔊</div>${x.why ? `<div class="why">${esc(x.why)}</div>` : ""}`}
+        ${x.ok ? `<div class="ok">✅ ${L("Câu đúng và tự nhiên!", "Correct and natural!")}</div>` : `<div class="fix" data-say="${esc(x.fix)}">${ic("pencil-simple")} <span lang="ko">${esc(x.fix)}</span> ${ic("speaker-high")}</div>${x.why ? `<div class="why">${esc(x.why)}</div>` : ""}`}
         ${x.mean ? `<div class="why muted">${esc(x.mean)}</div>` : ""}
-        <div class="why muted">🗣 ${L("Phát âm", "Pronunciation")} ${x.score}/100</div></div></div>`).join("")}</div>`;
+        <div class="why muted">${ic("user-sound")} ${L("Phát âm", "Pronunciation")} ${x.score}/100</div></div></div>`).join("")}</div>`;
 }
 function renderTalkSummary(t, hist){
   const sc = talkScene(t), { mine, fixes, avg } = talkStats(t);
@@ -4477,13 +4535,13 @@ function renderTalkSummary(t, hist){
       <div class="stat ${avg >= 80 ? "s-hi" : avg >= 60 ? "s-mid" : "s-lo"}"><b>${avg}</b><span>${L("phát âm TB", "avg. pronunciation")}</span></div>
     </div>
     <div class="card">
-      <h2>✏️ ${L("Câu cần sửa", "Corrections")}</h2>
+      <h2>${ic("pencil-simple")} ${L("Câu cần sửa", "Corrections")}</h2>
       ${fixes.length ? fixes.map(x => `<div class="tk-sum"><div class="bad" lang="ko">${esc(x.heard)}</div><div class="good" lang="ko">→ ${esc(x.fix)}</div>${x.why ? `<div class="small muted">${esc(x.why)}</div>` : ""}</div>`).join("")
         : `<p class="muted" style="margin:0">${L("Không có câu nào sai — tuyệt vời! 🎉", "Nothing to fix — great job! 🎉")}</p>`}
-      ${issues.length ? `<h2 style="margin-top:16px">🗣 ${L("Lưu ý phát âm", "Pronunciation notes")}</h2>${issues.slice(0, 8).map(s => `<div class="tk-sum small">${s.part ? `<b lang="ko">${esc(s.part)}</b> · ` : ""}${esc(s.tip)}</div>`).join("")}` : ""}
+      ${issues.length ? `<h2 style="margin-top:16px">${ic("user-sound")} ${L("Lưu ý phát âm", "Pronunciation notes")}</h2>${issues.slice(0, 8).map(s => `<div class="tk-sum small">${s.part ? `<b lang="ko">${esc(s.part)}</b> · ` : ""}${esc(s.tip)}</div>`).join("")}` : ""}
     </div>
-    <details class="card tk-all" id="tkAll" ${TK.showAll ? "open" : ""}><summary>💬 ${L("Cả hội thoại", "Whole conversation")} <span class="muted">· ${L(`${t.turns.filter(x => !x.pending).length} câu`, `${t.turns.filter(x => !x.pending).length} lines`)}</span></summary>${talkTranscript(t)}</details>
-    ${hist ? `<div class="row tk-foot"><button class="btn2" id="tkMore">${L("Nói tiếp", "Keep talking")}</button><button class="btn-ghost" id="tkDel">🗑 ${L("Xoá", "Delete")}</button></div>`
+    <details class="card tk-all" id="tkAll" ${TK.showAll ? "open" : ""}><summary>${ic("chat-circle-dots")} ${L("Cả hội thoại", "Whole conversation")} <span class="muted">· ${L(`${t.turns.filter(x => !x.pending).length} câu`, `${t.turns.filter(x => !x.pending).length} lines`)}</span></summary>${talkTranscript(t)}</details>
+    ${hist ? `<div class="row tk-foot"><button class="btn2" id="tkMore">${L("Nói tiếp", "Keep talking")}</button><button class="btn-danger" id="tkDel">${ic("trash")} ${L("Xoá", "Delete")}</button></div>`
       : `<div class="row tk-foot">
       <button class="btn2" id="tkMore">${L("Nói tiếp", "Keep talking")}</button>
       <button class="btn2" id="tkNew">${L("Hội thoại mới", "New conversation")}</button>
@@ -4498,7 +4556,7 @@ function renderTalkSummary(t, hist){
       talkDropUrls(); TK.view = ""; TK.list = false; TK.histList = false; TK.showAll = false; TK.hints = null; TK.open = {}; TK.status = "";
       save(); renderTalk();
     };
-    $("#tkDel").onclick = e => confirmTap(e.currentTarget, `🗑 ${L("Xoá", "Delete")}`, () => {
+    $("#tkDel").onclick = e => confirmTap(e.currentTarget, `${ic("trash")} ${L("Xoá", "Delete")}`, () => {
       S.talks = S.talks.filter(x => x !== t); if (S.talk && S.talk.id === t.id){ S.talk = null; talkDropUrls(); } TK.view = ""; save(); renderTalk(); scrollTo(0, 0); toast(L("Đã xoá hội thoại", "Conversation deleted"));
     });
     return;
@@ -4508,10 +4566,10 @@ function renderTalkSummary(t, hist){
 }
 
 // BTS logo: two trapezoid "doors", drawn inline so it follows the theme's purple
-const BTS_LOGO = `<svg class="bts-logo" viewBox="0 0 100 100" aria-label="BTS" role="img"><path d="M6 4 L42 18 V82 L6 96 Z M94 4 L58 18 V82 L94 96 Z"/></svg>`;
+const BTS_LOGO = `<svg class="bts-logo" viewBox="0 0 100 100" aria-label="BTS" role="img"><path d="M10 9 L40 21 V79 L10 91 Z M90 9 L60 21 V79 L90 91 Z"/></svg>`;   // outline, same weight as the Phosphor icons
 const AR_MODES = {
   bts: [BTS_LOGO, () => "BTS Live", () => L("Phụ đề cho live — dịch kiểu fansub, hiểu tên thành viên và từ fandom.", "Subtitles for lives — fan-sub style, knows member names and fandom words.")],
-  talk: ["🌐", () => L("Phiên dịch", "Interpreter"), () => L("Dịch hội thoại trực tiếp — nói là dịch và đọc to ngay, bấm ⇄ khi đổi lượt nói.", "Live interpreter for face-to-face talks — speak, it translates and reads aloud, tap ⇄ when you take turns.")]
+  talk: [ic("translate"), () => L("Phiên dịch", "Interpreter"), () => L("Dịch hội thoại trực tiếp — nói là dịch và đọc to ngay, bấm ⇄ khi đổi lượt nói.", "Live interpreter for face-to-face talks — speak, it translates and reads aloud, tap ⇄ when you take turns.")]
 };
 function renderArmy(){
   if (AR.view && !(S.lives || []).some(x => x.id === AR.view)) AR.view = "";
@@ -4565,7 +4623,7 @@ function renderArmy(){
       <div class="ar-hhead">
         <b>📝 ${L("Hội thoại", "Conversation")}</b>
         <button class="btn2" id="arSave" title="${L("Lưu bản song ngữ vào Hội thoại đã lưu (không lưu giọng nói)", "Save the bilingual transcript to Saved conversations (no audio is kept)")}">${L("💾 Lưu", "💾 Save")}</button>
-        <button class="btn-ghost" id="arNew" title="${L("Xoá màn hình, bắt đầu hội thoại mới", "Clear the screen and start a new conversation")}">🗑 ${L("Xoá", "Clear")}</button>
+        <button class="btn-danger" id="arNew" title="${L("Xoá màn hình, bắt đầu hội thoại mới", "Clear the screen and start a new conversation")}">🗑 ${L("Xoá", "Clear")}</button>
       </div>
       <ul class="ar-hist" id="arHist"></ul>
     </div>
@@ -4610,13 +4668,13 @@ function renderArmyHome(){
       ? `<span class="d" style="color:var(--army);font-weight:600">📝 ${L(`${open} câu chưa lưu`, `${open} unsaved line${open === 1 ? "" : "s"}`)}</span>` : ""}</span><span class="muted">›</span></button>`;
   };
   $("#v-army").innerHTML = `
-    <div class="ar-hero" style="margin:2px 2px 14px"><span class="h">💜</span><div><h2 style="margin:0">ARMY Borahae</h2></div></div>
+    <div class="ar-hero" style="margin:2px 2px 14px"><span class="h">${ic("heart-sparkle")}</span><div><h2 style="margin:0">ARMY Borahae</h2></div></div>
     ${pick("bts")}${pick("talk")}
-    <button class="ar-pick" id="arSavedOpen"><span class="i">💾</span><span class="tx"><b>${L("Hội thoại đã lưu", "Saved conversations")}${n ? ` (${n})` : ""}</b><span class="d">${n
+    <button class="ar-pick" id="arSavedOpen"><span class="i">${ic("floppy-disk")}</span><span class="tx"><b>${L("Hội thoại đã lưu", "Saved conversations")}${n ? ` (${n})` : ""}</b><span class="d">${n
       ? L("Xem lại hoặc lưu thành bài đọc.", "Review or turn into a reading passage.")
       : L("Chưa có — bấm 💾 Lưu sau khi nghe dịch.", "None yet — tap 💾 Save after listening.")}</span></span><span class="muted">›</span></button>`;
   $$("#v-army .ar-pick[data-m]").forEach(b => b.onclick = () => { AR.mode = b.dataset.m; AR.screen = "mode"; arUseSess(); arPersist(); renderArmy(); scrollTo(0, 0); });
-  $("#arSavedOpen").onclick = () => { AR.screen = "saved"; AR.savedFrom = ""; renderArmy(); scrollTo(0, 0); };
+  $("#arSavedOpen").onclick = () => { AR.screen = "saved"; AR.savedFrom = ""; AR.savedTab = ""; renderArmy(); scrollTo(0, 0); };
 }
 // saved conversations get their own screen: ARMY → 💾 card → this list → one conversation
 // older saved copies have no mode: the default title tells them apart ("🌐 Phiên dịch · …" vs "💜 BTS Live · …")
@@ -4633,7 +4691,8 @@ function arSavedRow(x){
 function renderArmySaved(){
   const cnt = m => (S.lives || []).filter(x => arLiveMode(x) === m).length;
   let tab = AR.savedTab || arMode();
-  if (!cnt(tab) && cnt(tab === "bts" ? "talk" : "bts")) tab = tab === "bts" ? "talk" : "bts";   // don't open on an empty tab when the other has some
+  // on arrival, don't open on an empty tab when the other has some — but a tab the user tapped stays, empty or not
+  if (!AR.savedTab && !cnt(tab) && cnt(tab === "bts" ? "talk" : "bts")) tab = tab === "bts" ? "talk" : "bts";
   const saved = (S.lives || []).filter(x => arLiveMode(x) === tab).sort((a, b) => b.created - a.created);
   $("#v-army").innerHTML = `
     <div class="sub-head">
@@ -4641,7 +4700,7 @@ function renderArmySaved(){
       <div class="c"><h2>💾 ${L("Hội thoại đã lưu", "Saved conversations")}</h2></div><div class="r"></div>
     </div>
     <div class="card flat">
-    <div class="seg" id="asTabs" style="margin-bottom:6px"><button data-m="bts">💜 BTS Live${cnt("bts") ? ` (${cnt("bts")})` : ""}</button><button data-m="talk">🌐 ${L("Phiên dịch", "Interpreter")}${cnt("talk") ? ` (${cnt("talk")})` : ""}</button></div>${saved.length ? `<ul class="wl" id="arSavedList">${saved.map(x =>
+    <div class="seg" id="asTabs" style="margin-bottom:6px"><button data-m="bts">${BTS_LOGO} BTS Live${cnt("bts") ? ` (${cnt("bts")})` : ""}</button><button data-m="talk">🌐 ${L("Phiên dịch", "Interpreter")}${cnt("talk") ? ` (${cnt("talk")})` : ""}</button></div>${saved.length ? `<ul class="wl" id="arSavedList">${saved.map(x =>
       `<li data-id="${x.id}" class="${x.id === AR.justSaved ? "just" : ""}" style="cursor:pointer">${arSavedRow(x)}<span class="muted">›</span></li>`).join("")}</ul>`
       : `<p class="muted" style="text-align:center">${L("Chưa có hội thoại nào.", "No saved conversations yet.")}</p>`}</div>`;
   $$("#asTabs button").forEach(b => { b.classList.toggle("on", b.dataset.m === tab); b.onclick = () => { AR.savedTab = b.dataset.m; renderArmy(); }; });
@@ -4699,7 +4758,7 @@ function arUI(msg){
   $("#arCtl").classList.toggle("ar-on", AR.on); $("#arHead").classList.toggle("hidden", AR.on);
   $("#arLiveCard").classList.toggle("hidden", !AR.on);   // when stopped, the newest line is already at the top of the list
   $("#arSetup").classList.toggle("hidden", AR.on); $("#arMini").classList.toggle("hidden", !AR.on);
-  b.textContent = AR.on ? L("⏹ Dừng", "⏹ Stop") : arAiAsk() ? L("🔑 Thêm Gemini key", "🔑 Add a Gemini key") : L("▶ Bắt đầu nghe", "▶ Start listening");
+  b.textContent = AR.on ? L("⏹ Dừng", "⏹ Stop") : arAiAsk() ? L("🔑 Thêm Gemini key", "🔑 Add a Gemini key") : L("▶ Bắt đầu", "▶ Start");
   $("#arLvlBar").classList.toggle("hidden", !(AR.on && AR.ac));
   if (msg !== undefined) $("#arStatus").innerHTML = msg;
   else $("#arStatus").innerHTML = AR.on ? (AR.engine === "ai" ? `<span class="spinner"></span>${L("Đoạn đầu tiên hiện sau ~10 giây", "The first chunk shows in ~10 s")}` : "") : "";
@@ -4715,7 +4774,7 @@ function arRenderLive(){
     ? (last ? (AR.interim ? `<div class="old">${arLine(last)}</div>` : arLine(last)) : "")
       + (AR.interim ? `<div class="interim">${AR.interimTr ? `<div class="ko">${arFlag(arIn())}${esc(AR.interim)}</div><div class="tr">${arFlag(arOut())}${esc(AR.interimTr)}</div>`
         : `<div class="tr">${arFlag(arIn())}${esc(AR.interim)}</div>`}</div>` : "")
-    : `<div class="muted" style="text-align:center;margin:auto">${L("💜 Phụ đề sẽ hiện ở đây", "💜 Subtitles appear here")}</div>`;
+    : `<div class="muted" style="text-align:center;margin:auto">${ic("heart-sparkle")} ${L("Phụ đề sẽ hiện ở đây", "Subtitles appear here")}</div>`;
 }
 function arRender(){
   arRenderLive();
