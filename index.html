@@ -41,7 +41,6 @@
 .hic{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--accent);flex:0 0 auto}   /* page-head icon: solid, no box — same weight as ARMY's sparkle heart; the cards below keep the boxed outline icons */
 .hic .i{width:40px;height:40px;vertical-align:0}
 .li-ic{display:flex;color:var(--accent);font-size:20px}
-#sStreak .i{width:.85em;height:.85em;align-self:center}
 .pctl button.rec.on{color:#fff}   /* white stop square on the red recording button */
 :root{accent-color:var(--accent)}   /* checkboxes, sliders: app purple instead of system blue */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}   /* no blue/grey flash on tap: buttons have their own pressed look */
@@ -99,13 +98,13 @@ h2{font-size:16px;margin:0 0 10px}
 .stat{background:var(--card);border:1px solid transparent;border-radius:var(--r-md);padding:10px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0}
 .stat b{display:flex;align-items:baseline;justify-content:center;gap:2px;font-size:clamp(15px,5vw,20px);line-height:24px;height:24px;white-space:nowrap}
 .stat span{display:block;font-size:11px;line-height:1.25;color:var(--muted)}
-/* home stats: each tile tinted; fg/bg pairs checked for ≥4.5:1 so the 11px labels pass too */
-.stat.tone{background:var(--t-bg);border-color:transparent;color:var(--t-fg)}
-.stat.tone span{color:inherit}
+/* home stats: plain tiles, only the number carries the colour; "Due today" gets its tint back while there's work left. fg/bg pairs checked for ≥4.5:1 */
+.stat.tone b{color:var(--t-fg)}
+.stat.tone.hot{background:var(--t-bg);color:var(--t-fg)}
+.stat.tone.hot span{color:inherit}
 button.stat{font:inherit;cursor:pointer;width:auto;padding:10px 4px;border-radius:var(--r-md)}
 button.stat:hover{border-color:color-mix(in srgb, var(--t-fg) 40%, transparent)}
 button.stat:active{transform:scale(.97)}
-.study-links{display:flex;gap:8px;margin-bottom:14px}
 .nudge .nu-h{display:flex;gap:12px;align-items:flex-start}
 .nudge .nu-h > span{font-size:28px;line-height:1}
 .nudge .nu-h p{margin:4px 0 0;line-height:1.45}
@@ -114,9 +113,9 @@ button.stat:active{transform:scale(.97)}
 .nudge .nu-act button{flex:0 0 auto;width:auto;padding:8px 16px;font-size:14px}
 #nuInstall:empty{display:none}
 #nuInstall .btn2{margin-top:10px}
-.study-links button{flex:1;padding:8px 14px;font-size:13px;font-weight:600}
-#goWords{white-space:nowrap;padding-left:12px;padding-right:12px}
-body.in-session:not(.auto-session) .study-links{display:none}
+#sStreak .i{width:.85em;height:.85em;align-self:center}
+.pg-head .btn2{flex:0 0 auto;width:auto;padding:7px 14px;font-size:13px}   /* same size as the text action top right of sub-pages */
+body.in-session:not(.auto-session) #studyHead{display:none}
 .stat.tone b .of{font-size:14px;font-weight:600;opacity:.75}
 .stat.tone small{display:block;font-size:10px;margin-top:2px;opacity:.9}
 .t-purple{--t-bg:var(--accent-soft);--t-fg:#4f46e5}
@@ -670,14 +669,14 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 
   <!-- STUDY -->
   <section id="v-study">
+    <div class="pg-head" id="studyHead"><span class="h hic"><svg class="i" aria-hidden="true"><use href="#i-cards-fill"/></svg></span><h2 id="studyTitle" data-noi18n></h2><button class="btn2 hidden" id="goAddTop">+ Add words</button></div>
     <!-- the first three tiles open My words filtered to that group -->
-    <div class="stats" style="margin-bottom:10px">
+    <div class="stats" style="margin-bottom:14px">
       <button class="stat tone t-amber st-go" data-f="today" title="See these words"><b id="sToday">0</b><span>Due today</span></button>
       <button class="stat tone t-purple st-go" data-f="learn" title="See these words"><b id="sLearn">0</b><span>Learning</span></button>
       <button class="stat tone t-master st-go" data-f="master" title="See these words"><b id="sMaster">0</b><span>Mastered</span></button>
       <div class="stat tone t-streak"><b id="sStreak"><svg class="i" aria-hidden="true"><use href="#i-flame-fill"/></svg>0</b><span>Day streak</span></div>
     </div>
-    <div class="study-links"><button class="btn-ghost" id="goWords" data-noi18n><span id="goWordsL"></span><span id="goWordsN"></span></button><button class="btn-ghost" id="goAddTop">+ Add words</button></div>
     <div id="studyHome">
       <div class="card" id="homeCard"></div>
       <div class="card nudge hidden" id="nudge" data-noi18n></div>
@@ -1135,7 +1134,7 @@ const VI = {
 "Work & office":"Công việc & văn phòng","✅ Correct!":"✅ Chính xác!","❌ Not quite":"❌ Chưa đúng","❌ Not quite.":"❌ Chưa đúng.","❌ Not quite — you wrote":"❌ Chưa đúng — bạn gõ","— you wrote":"— bạn gõ","❌ Not quite — we heard":"❌ Chưa đúng — app nghe được","— we heard":"— app nghe được",
 "🎙 Korean → read it aloud":"🎙 Tiếng Hàn → đọc to","🎙 Meaning → say it in Korean":"🎙 Nghĩa → nói tiếng Hàn","Read it aloud":"Đọc to từ này","Say it in Korean":"Nói bằng tiếng Hàn","Can't speak now":"Giờ không nói được","Tap 🎙 and say it":"Bấm 🎙 rồi nói","🔊 Test:":"🔊 Nghe thử:",
 "Continue":"Tiếp tục",
-"Extra practice":"Luyện thêm","+5 new words":"+5 từ mới","🔁 Try again":"🔁 Thử lại","In list":"Đã có",
+"Extra practice":"Luyện thêm","Learn 5 more":"Học thêm 5 từ","🔁 Try again":"🔁 Thử lại","In list":"Đã có",
 "Add more words or practice without changing your schedule.":"Thêm từ hoặc luyện thêm mà không ảnh hưởng lịch ôn.",
 "Tap to reveal":"Chạm để xem","Show answer":"Xem đáp án","Hint":"Gợi ý","Check":"Kiểm tra","Got it":"Đã hiểu","Skip":"Bỏ qua","Next":"Tiếp",
 "No passages yet — generate one above.":"Chưa có bài đọc — tạo một bài ở trên nhé.","NEW WORD":"TỪ MỚI","(no meaning)":"(chưa có nghĩa)","no meaning":"chưa có nghĩa",
@@ -1722,15 +1721,13 @@ function navRoot(v){
   if (v === "read"){ spScreen = ""; rdNewOpen = false; TK.view = ""; TK.list = false; TK.histList = false; TK.showAll = false; }   // show() → spShow("") also closes an open passage
   if (v === "army"){ arStop(); AR.view = ""; AR.screen = "home"; arPersist(); }
 }
-$("#navSpeak").textContent = L("Luyện nói", "Speak");
-$("#navStudy").textContent = L("Từ vựng", "Vocabulary");
-$("#goWordsL").textContent = L("Từ vựng", "Words");   // short next to "+ Add words"; the page itself is still "My words"   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
+$("#navSpeak").textContent = L("Luyện nói", "Speak");   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
+$("#navStudy").textContent = $("#studyTitle").textContent = L("Từ vựng", "Vocabulary");
 $("#goAddBig").onclick = () => show("add");
 let curView = "study", addFrom = "study";
 // Add words goes back to whichever page opened it
 $("#addBack").onclick = () => show(addFrom);
 $("#wordsBack").onclick = () => show("study");
-$("#goWords").onclick = () => { setFilter("all"); show("words"); };
 $("#goAddTop").onclick = () => show("add");
 $$("#v-study .st-go").forEach(b => b.onclick = () => { setFilter(b.dataset.f); show("words"); });
 
@@ -1744,9 +1741,9 @@ function refreshStats(){
   $("#sToday").innerHTML = (due + nl) + (due + nl + doneToday ? `<span class="of">/${due + nl + doneToday}</span>` : "");
   $("#sLearn").textContent = S.cards.filter(c=>status(c)==="learn").length;
   $("#sMaster").textContent = S.cards.filter(c=>status(c)==="master").length;
+  $(".st-go[data-f=today]").classList.toggle("hot", due + nl > 0);
   $("#sStreak").innerHTML = ic("flame-fill") + streakNow();
-  $("#goWordsN").textContent = S.cards.length ? ` (${S.cards.length})` : "";
-  $(".study-links").classList.toggle("hidden", !S.cards.length);   // no words yet: the home card's own "+ Add words" is the only way in
+  $("#goAddTop").classList.toggle("hidden", !S.cards.length);   // no words yet: the home card's own "+ Add words" is the only way in
   return { due, nl };
 }
 // one gentle suggestion at a time, on the Study home (not mid-session); "Later" hides it for 2 weeks on this device
@@ -1792,7 +1789,7 @@ function refreshHome(noAuto){
     const next = S.cards.filter(c=>c.last).sort((a,b)=>a.due-b.due)[0];
     const when = next ? timeUntil(next.due) : "";
     h.innerHTML = `${resultHTML()}<div class="empty">${cheerHTML()}<p class="muted" style="margin-top:0">${when ? "Next review in " + when + ". " : ""}Add more words or practice without changing your schedule.</p>
-      <div class="row" style="align-items:stretch"><button class="btn2" id="pracBtn">Extra practice</button><button class="btn2" id="moreNew">+5 new words</button></div></div>`;
+      <div class="row" style="align-items:stretch"><button class="btn-ghost" id="pracBtn">Extra practice</button><button class="btn" id="moreNew">Learn 5 more</button></div></div>`;
     $("#pracBtn").onclick = () => startSession(true); bindResult();
     $("#moreNew").onclick = () => { if (!newCards().length) { toast("No new words left — add some!"); return; } S.daily.newCount = Math.max(0, S.daily.newCount - 5); save(); refreshHome(); };
   }
