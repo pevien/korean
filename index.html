@@ -3217,11 +3217,13 @@ function evaluateLocal(){
   const sps = tg.length / Math.max(0.5, talk / 1000);
   const fluency = Math.round(Math.max(20, Math.min(100, (sps / 4.5) * 100)));
   const issues = [];
+  const wordOf = []; let w = 0;   // which word (between spaces) each target syllable belongs to
+  for (const ch of s.ko){ if (/\s/.test(ch)) w++; else if (/[가-힣]/.test(ch)) wordOf.push(w); }
   tg.forEach((ch, i) => {
     if (map[i] === ch) return;
-    // syllables missing in a row (뚱뚱해 not heard) are one problem, not three identical tips
+    // syllables missing in a row within one word (뚱뚱해 not heard) are one problem, not three identical tips
     const last = issues[issues.length - 1];
-    if (!map[i] && last && last.type === "missing" && last.idx + last.len === i){ last.part += ch; last.len++; last.tip = localTip(last.part); return; }
+    if (!map[i] && last && last.type === "missing" && last.idx + last.len === i && wordOf[i] === wordOf[last.idx]){ last.part += ch; last.len++; last.tip = localTip(last.part); return; }
     if (issues.length < 6) issues.push({ idx: i, len: 1, part: ch, heard: map[i] || "", type: map[i] ? "sound" : "missing", tip: localTip(ch, tg[i-1], tg[i+1], map[i]) });
   });
   const j = { heard, scores: { accuracy, fluency }, issues, local: true,
