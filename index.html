@@ -5041,7 +5041,7 @@ function arSay(text, lang){
 function arPauseEars(){
   AR.taint = true;   // AI engine: the chunk being recorded now contains our own voice
   clearTimeout(arStableT);
-  if (AR.recog){ const r = AR.recog; AR.recog = null; try { r.onend = null; r.abort(); } catch(e){} }
+  if (AR.recog){ const r = AR.recog; AR.recog = null; arFlushPending(r); try { r.onend = null; r.abort(); } catch(e){} }
   if (AR.interim){ AR.interim = ""; arRenderLive(); }
 }
 function arResumeEars(){ if (AR.on && !AR.saying && AR.engine === "free" && !AR.recog) try { arStartFree(); } catch(e){} }
@@ -5064,18 +5064,31 @@ function arCommitSoon(){
 }
 
 /* ---- free engine: browser speech recognition, restarted whenever it stops on its own ---- */
+function arFlushPending(r){
+  const t = r && r.pending; if (!t) return;
+  r.pending = "";
+  if (AR.interim === t) AR.interim = "";
+  arAdd(t, null, r.snap); arRenderLive();
+}
 function arStartFree(){
   const android = /Android/i.test(navigator.userAgent);
   const r = new SR(), snap = r.snap = arSnap(); r.lang = AR_LANGS[snap.from][3]; r.interimResults = true; r.maxAlternatives = 1;
   r.continuous = !android;   // Android repeats earlier results in continuous mode
+  // Android also marks every step of a sentence as final ("Rất", "Rất vui", "Rất vui được gặp bạn"):
+  // keep only the latest one and add it when the recogniser ends (or a new sentence starts)
+  r.pending = "";
   r.onresult = ev => {
     let interim = "";
     for (let i = ev.resultIndex; i < ev.results.length; i++){
       const res = ev.results[i];
-      if (res.isFinal){ const t = res[0].transcript.trim(); if (t) arAdd(t, null, snap); }   // also the late final one after Stop / ⇄
+      if (res.isFinal){
+        const t = res[0].transcript.trim(); if (!t) continue;
+        if (!android || AR.recog !== r) arAdd(t, null, snap);   // also the late final one after Stop / ⇄
+        else { if (r.pending && !arNorm(t).startsWith(arNorm(r.pending))) arFlushPending(r); r.pending = t; }
+      }
       else interim += res[0].transcript;
     }
-    AR.interim = interim.trim(); arInterimTr(); arRenderLive(); arCommitSoon();
+    AR.interim = interim.trim() || r.pending; arInterimTr(); arRenderLive(); arCommitSoon();
   };
   r.onerror = ev => {
     if (ev.error === "not-allowed" || ev.error === "service-not-allowed"){ arStop(); arUI(L("🎙 Micro bị chặn — cho phép micro cho trang này rồi thử lại (Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked — allow it for this site and try again (Settings → Voice → Microphone & speaking).")); }
@@ -5083,6 +5096,7 @@ function arStartFree(){
     else if (ev.error === "network") arUI(L("⚠️ Cần có mạng để nhận giọng nói", "⚠️ Speech recognition needs internet"));
   };
   r.onend = () => {
+    arFlushPending(r);
     if (!AR.on || AR.recog !== r) return;
     try { r.start(); } catch(e){ setTimeout(() => { if (AR.on && AR.recog === r) try { r.start(); } catch(e){} }, 400); }
   };
@@ -5200,7 +5214,7 @@ async function arStart(){
 function arStop(){
   if (!AR.on && !AR.stream && !AR.recog) return;
   AR.on = false;
-  if (AR.recog){ const r = AR.recog; AR.recog = null; try { r.onend = null; r.stop(); } catch(e){} }
+  if (AR.recog){ const r = AR.recog; AR.recog = null; arFlushPending(r); try { r.onend = null; r.stop(); } catch(e){} }
   if (AR.rec && AR.rec.state === "recording") AR.rec.stop();   // the last partial chunk still gets translated
   AR.rec = null;
   if (AR.stream) AR.stream.getTracks().forEach(t => t.stop());
