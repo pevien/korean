@@ -96,6 +96,7 @@ button.stat:active{transform:scale(.97)}
 #nuInstall:empty{display:none}
 #nuInstall .btn2{margin-top:10px}
 .study-links button{flex:1;padding:8px 10px;font-size:13px;font-weight:600}
+#goWords{white-space:nowrap;padding-left:6px;padding-right:6px}
 body.in-session:not(.auto-session) .study-links{display:none}
 .stat.tone b .of{font-size:14px;font-weight:600;opacity:.75}
 .stat.tone small{display:block;font-size:10px;margin-top:2px;opacity:.9}
@@ -444,6 +445,24 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chip{background:var(--bg);border:1px solid var(--line);color:var(--text);font-weight:500;font-size:13px;padding:6px 10px;border-radius:99px}
 .chip:hover{border-color:var(--accent)}
+.abc-ask{display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;text-align:left}
+.abc-ask > span{flex:1;font-weight:600}
+.abc-ask .small{font-weight:400}
+.abc-ask button{flex:0 0 auto;padding:7px 14px}
+.abc-ask .icon-btn{padding:6px 8px;margin-right:-4px}
+/* tinted one-line prompts: "Learn the alphabet?" (Add words) and "N words have no example" (My words) */
+#goAbc, #exPrompt{background:var(--accent-soft);border-color:transparent;font-size:14px}
+#goAbc{margin-bottom:12px}
+#goAbc > span, #exPrompt > span{font-weight:400}
+#goAbc .linkbtn, #exPrompt .linkbtn{font-size:inherit;padding:7px 4px}
+/* My words: start studying without going back to the home card — floats above the tab bar */
+.w-cta{position:fixed;z-index:9;left:50%;transform:translateX(-50%);bottom:calc(72px + env(safe-area-inset-bottom));width:min(528px, calc(100% - 32px))}
+#v-words .wl{margin-bottom:76px}   /* room for the floating button, so the last word isn't hidden under it */
+.w-cta .btn{box-shadow:0 8px 24px rgba(10,8,30,.25)}
+.abc-g{padding:10px 0;border-top:1px solid var(--line)}
+.abc-g:first-of-type{border-top:0;padding-top:0}
+.abc-g .chips{margin-top:6px;gap:5px}
+.abc-g .chip{font-size:18px;min-width:38px;padding:4px 8px}
 /* modal */
 .modal{position:fixed;inset:0;background:rgba(10,12,30,.55);z-index:30;display:flex;align-items:flex-end;justify-content:center}
 .modal .sheet{background:var(--card);width:100%;max-width:560px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
@@ -574,7 +593,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <button class="stat tone t-master st-go" data-f="master" title="See these words"><b id="sMaster">0</b><span>Mastered</span></button>
       <div class="stat tone t-streak"><b id="sStreak">🔥 0</b><span>Day streak</span></div>
     </div>
-    <div class="study-links"><button class="btn-ghost" id="goWords">📚 <span>My words</span><span id="goWordsN"></span></button><button class="btn-ghost" id="goAddTop">+ Add words</button></div>
+    <div class="study-links"><button class="btn-ghost" id="goWords"><span>My words</span><span id="goWordsN"></span></button><button class="btn-ghost" id="goAddTop">+ Add words</button></div>
     <div id="studyHome">
       <div class="card" id="homeCard"></div>
       <div class="card nudge hidden" id="nudge" data-noi18n></div>
@@ -595,6 +614,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <div class="l"><button class="btn-ghost back" id="addBack" title="My words" aria-label="My words"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
       <div class="c"><span class="h">📚</span><h2>Add words</h2></div><div class="r"></div>
     </div>
+    <div class="abc-ask hidden" id="goAbc" data-noi18n></div>
     <div class="seg seg-ico" id="addTabs">
       <button data-t="ai" class="on"><i>✨</i>AI</button>
       <button data-t="one"><i>✏️</i>Single</button>
@@ -657,6 +677,9 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       </div>
     </div>
   </section>
+
+  <!-- ALPHABET (a page of Add words) -->
+  <section id="v-abc" class="hidden" data-noi18n></section>
 
   <!-- READ -->
   <section id="v-read" class="hidden">
@@ -761,9 +784,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   <!-- WORDS -->
   <section id="v-words" class="hidden">
     <div class="pg-head"><button class="btn-ghost back" id="wordsBack" title="Study" aria-label="Back"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><h2>My words</h2><button class="btn" id="goAddBig">+ Add words</button></div>
-    <div class="card hidden" id="exPrompt">
-      <div class="row"><span class="small" id="exPromptTxt" style="flex:2"></span><button class="btn2" style="flex:0 0 auto" id="exGenBtn">✨ Add examples</button></div>
-    </div>
+    <div class="abc-ask hidden" id="exPrompt"><span id="exPromptTxt" data-noi18n></span><button class="linkbtn" id="exGenBtn">✨ Add now</button></div>
     <div class="wbar">
       <input id="search" type="search" placeholder="Search words…">
       <div class="tabs" id="filterTabs" style="margin:10px 0 0">
@@ -774,6 +795,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       </div>
     </div>
     <ul class="wl" id="wordList"></ul>
+    <div class="w-cta"><button class="btn" id="wordsStudy" data-noi18n></button></div>
   </section>
 
   <!-- ARMY: live Korean → Vietnamese/English subtitles for BTS lives -->
@@ -944,7 +966,7 @@ const VI = {
 "My passages":"Bài đọc của tôi","← Back":"← Quay lại","🎤 Shadow mode":"🎤 Nói đuổi","Repeat":"Lặp lại","Speed":"Tốc độ",
 "1× native":"1× bản xứ","Translation":"Bản dịch","Hide Korean":"Ẩn tiếng Hàn","Hide translation":"Ẩn bản dịch","Tap 🎙 to check your pronunciation":"Chạm 🎙 để chấm điểm phát âm","⚡ Basic":"⚡ Cơ bản","Grading":"Chấm điểm","AI grading needs a Gemini key.":"Chấm bằng AI cần Gemini key.","Add key":"Thêm key","How your speaking practice is checked":"Cách chấm phần luyện nói","🎙 Speaking coach":"🎙 Luyện nói",
 "Tap a sentence to play from there. Press space to play/pause.":"Chạm vào câu để phát từ đó. Phím cách để phát/dừng.",
-"Key words":"Từ khoá","+ Add new words to flashcards":"+ Thêm từ mới vào flashcard","✨ Add examples":"✨ Thêm câu ví dụ",
+"Key words":"Từ khoá","+ Add new words to flashcards":"+ Thêm từ mới vào flashcard","✨ Add now":"✨ Thêm ngay",
 "All":"Tất cả","New":"Mới","Study":"Học","New words per day":"Số từ mới mỗi ngày","Question types":"Dạng câu hỏi","Choose":"Chọn","Type":"Gõ","Speak":"Nói","Korean → meaning":"Hàn → nghĩa","🔊 → meaning":"🔊 → nghĩa","🔊 → Korean word":"🔊 → từ Hàn","Meaning → Korean":"Nghĩa → Hàn","🔊 Dictation":"🔊 Chính tả","🎙 Read aloud":"🎙 Đọc to","🎙 From meaning":"🎙 Nói từ nghĩa",
 "Korean → choose meaning":"Tiếng Hàn → chọn nghĩa","🔊 Listen → choose meaning":"🔊 Nghe → chọn nghĩa","🔊 Listen → choose the Korean word":"🔊 Nghe → chọn từ tiếng Hàn","Listen · choose what you hear":"Nghe · chọn từ bạn nghe thấy","Meaning → type Korean":"Nghĩa → gõ tiếng Hàn",
 "🔊 Listen → type Korean (dictation)":"🔊 Nghe → gõ tiếng Hàn (chính tả)","Auto-play audio for Korean words":"Tự phát âm từ tiếng Hàn",
@@ -1181,6 +1203,69 @@ function addCards(list){
   }
   return {added, dup, cards};
 }
+/* ---- Hangul alphabet: letters are added as ordinary cards and reviewed like any word ----
+   [letter, meaning vi, meaning en, example word, example meaning vi, example meaning en, name (consonants)] */
+const ABC = [
+  ["vow", L("Nguyên âm cơ bản", "Basic vowels"), [
+    ["ㅏ","a","a","아이","đứa trẻ","child"], ["ㅑ","ya","ya","야구","bóng chày","baseball"],
+    ["ㅓ","eo (như “ơ”)","eo (as in “up”)","어머니","mẹ","mother"], ["ㅕ","yeo (như “yơ”)","yeo (as in “young”)","여자","phụ nữ","woman"],
+    ["ㅗ","o (như “ô”)","o (as in “go”)","오이","dưa chuột","cucumber"], ["ㅛ","yo (như “yô”)","yo (as in “yoga”)","요리","nấu ăn","cooking"],
+    ["ㅜ","u","u (as in “moon”)","우유","sữa","milk"], ["ㅠ","yu","yu (as in “you”)","유리","kính","glass"],
+    ["ㅡ","eu (như “ư”)","eu (lips flat)","음악","âm nhạc","music"], ["ㅣ","i","i (as in “see”)","이","răng","tooth"]]],
+  ["con", L("Phụ âm cơ bản", "Basic consonants"), [
+    ["ㄱ","g / k","g / k","가방","cái cặp","bag","기역"], ["ㄴ","n","n","나무","cái cây","tree","니은"],
+    ["ㄷ","d / t","d / t","다리","chân; cây cầu","leg; bridge","디귿"], ["ㄹ","r / l","r / l","라면","mì gói","ramen","리을"],
+    ["ㅁ","m","m","물","nước","water","미음"], ["ㅂ","b / p","b / p","바다","biển","sea","비읍"],
+    ["ㅅ","s","s","사과","quả táo","apple","시옷"], ["ㅇ",L("câm ở đầu / ng ở cuối","silent first / ng at the end"),L("câm ở đầu / ng ở cuối","silent first / ng at the end"),"공","quả bóng","ball","이응"],
+    ["ㅈ","j","j","주스","nước ép","juice","지읒"], ["ㅊ",L("ch (bật hơi)","ch (aspirated)"),L("ch (bật hơi)","ch (aspirated)"),"차","trà; xe hơi","tea; car","치읓"],
+    ["ㅋ",L("k (bật hơi)","k (aspirated)"),L("k (bật hơi)","k (aspirated)"),"커피","cà phê","coffee","키읔"], ["ㅌ",L("t (bật hơi)","t (aspirated)"),L("t (bật hơi)","t (aspirated)"),"토끼","con thỏ","rabbit","티읕"],
+    ["ㅍ",L("p (bật hơi)","p (aspirated)"),L("p (bật hơi)","p (aspirated)"),"포도","quả nho","grapes","피읖"], ["ㅎ","h","h","하나","một","one","히읗"]]],
+  ["tense", L("Phụ âm căng", "Tense consonants"), [
+    ["ㄲ",L("kk (căng)","kk (tense)"),L("kk (căng)","kk (tense)"),"꽃","hoa","flower","쌍기역"], ["ㄸ",L("tt (căng)","tt (tense)"),L("tt (căng)","tt (tense)"),"딸기","dâu tây","strawberry","쌍디귿"],
+    ["ㅃ",L("pp (căng)","pp (tense)"),L("pp (căng)","pp (tense)"),"빵","bánh mì","bread","쌍비읍"], ["ㅆ",L("ss (căng)","ss (tense)"),L("ss (căng)","ss (tense)"),"쌀","gạo","rice","쌍시옷"],
+    ["ㅉ",L("jj (căng)","jj (tense)"),L("jj (căng)","jj (tense)"),"짜다","mặn","salty","쌍지읒"]]],
+  ["dip", L("Nguyên âm ghép", "Compound vowels"), [
+    ["ㅐ","ae (như “e”)","ae (as in “bed”)","개","con chó","dog"], ["ㅒ","yae (như “ye”)","yae (as in “yes”)","얘기","câu chuyện","story"],
+    ["ㅔ","e (như “ê”)","e (as in “bed”)","게","con cua","crab"], ["ㅖ","ye (như “yê”)","ye (as in “yes”)","예","vâng","yes"],
+    ["ㅘ","wa (như “oa”)","wa","과자","bánh kẹo","snack"], ["ㅙ","wae (như “oe”)","wae","왜","tại sao","why"],
+    ["ㅚ","oe (như “uê”)","oe (≈ “we”)","회사","công ty","company"], ["ㅝ","wo (như “uơ”)","wo","뭐","cái gì","what"],
+    ["ㅞ","we (như “uê”)","we","웨이터","bồi bàn","waiter"], ["ㅟ","wi (như “uy”)","wi","귀","cái tai","ear"],
+    ["ㅢ","ui (như “ưi”)","ui (eu + i)","의사","bác sĩ","doctor"]]]
+];
+// what TTS reads for a letter: consonant → its name, vowel → the vowel on its own (ㅇ + vowel)
+const ABC_SAY = Object.fromEntries(ABC.flatMap(g => g[2]).map(x => [x[0], x[6] || String.fromCharCode(0xAC00 + 11*588 + "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ".indexOf(x[0])*28)]));
+const isLetter = c => !!ABC_SAY[c.ko];
+const abcCard = x => ({ ko: x[0], meaning: L(x[1], x[2]), ex: x[3], exMean: L(x[4], x[5]) + (x[6] ? L(" · tên chữ: ", " · letter name: ") + x[6] : "") });
+const abcMissing = () => { const have = new Set(S.cards.map(c => c.ko)); return Object.keys(ABC_SAY).filter(k => !have.has(k)); };
+// Add words: the same one-line question as on the empty home card, offered above the tabs until the whole alphabet is in the deck
+function syncAbcPick(){
+  const b = $("#goAbc"), n = S.settings.abcHide ? 0 : abcMissing().length;   // ✕ hides it for good
+  b.classList.toggle("hidden", !n);
+  if (!n) return;
+  b.innerHTML = `<span><b>${L("Học bảng chữ cái?", "Learn the alphabet?")}</b>${n < Object.keys(ABC_SAY).length ? ` <span class="small muted">(${L(`còn ${n} chữ`, `${n} left`)})</span>` : ""}</span><button class="linkbtn" id="abcGo">${L("Có", "Yes")}</button>
+    <button class="icon-btn" id="abcHide" title="${L("Ẩn", "Hide")}" aria-label="${L("Ẩn", "Hide")}">✕</button>`;
+  $("#abcGo").onclick = () => show("abc");
+  $("#abcHide").onclick = () => { S.settings.abcHide = true; save(); syncAbcPick(); };
+}
+function renderAbc(){
+  const n = abcMissing().length;
+  $("#v-abc").innerHTML = `<div class="sub-head">
+      <div class="l"><button class="btn-ghost back" id="abcBack" title="${L("Thêm từ vựng", "Add words")}" aria-label="${L("Quay lại", "Back")}"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+      <div class="c"><span class="h" lang="ko">ㄱ</span><h2>${L("Bảng chữ cái", "Hangul alphabet")}</h2></div><div class="r"></div></div>
+    <div class="card">
+      <p class="small muted" style="margin:0 0 14px">${L("Cả bảng chữ cái sẽ được thêm vào danh sách từ và ôn như từ vựng. Chạm vào chữ để nghe.", "The whole alphabet goes into your word list and is reviewed like words. Tap a letter to hear it.")}</p>
+      ${ABC.map(([k, name, xs]) => `<div class="abc-g"><b>${name}</b> <span class="small muted">${xs.length}</span>
+        <div class="chips">${xs.map(x => `<button class="chip" lang="ko" data-say="${x[0]}">${x[0]}</button>`).join("")}</div></div>`).join("")}
+      <button class="btn" id="abcAdd" style="margin-top:12px">${L(`Thêm ${n} chữ cái`, `Add ${n} letters`)}</button>
+    </div>`;
+  bindSay($("#v-abc"));
+  $("#abcBack").onclick = () => show("add");
+  $("#abcAdd").onclick = () => {
+    const r = addCards(ABC.flatMap(g => g[2]).map(abcCard));
+    toast(L(`Đã thêm ${r.added} chữ cái`, `Added ${r.added} letters`));
+    setFilter("all"); show("words");
+  };
+}
 function exampleHTML(c){
   if (!c.ex) return "";
   return `<div class="ex"><button class="speak sm" data-say="${esc(c.ex)}">🔊</button><div><div class="exk" lang="ko">${esc(c.ex)}</div><div class="exm">${esc(c.exMean)}</div></div></div>`;
@@ -1285,6 +1370,7 @@ function loadVoices(){
 let lastU = null;
 function speak(text, opts){
   opts = opts || {};
+  if (ABC_SAY[text]) text = ABC_SAY[text];   // a lone jamo isn't read reliably: say its name (ㄱ → 기역) or its sound (ㅏ → 아)
   if (!("speechSynthesis" in window) || !text) { if (opts.onend) setTimeout(opts.onend, 800); return null; }
   if (!opts.keepPlayer && typeof stopPlayer === "function") stopPlayer(true);
   speechSynthesis.cancel();
@@ -1302,6 +1388,8 @@ function speak(text, opts){
     .replace(/[~*_#"“”'‘’()\[\]{}<>…·•\/\\|@^=+]/g, " ").replace(/\s+/g, " ").trim();
   const u = new SpeechSynthesisUtterance(clean || text);
   u.lang = v.lang || "ko-KR"; u.rate = S.settings.rate;   // every 🔊 follows Settings → Speed
+  // a lone word of 1–3 syllables is over before the speed change is audible: read it a bit slower still
+  if ((clean.match(/[\uac00-\ud7a3]/g) || []).length <= 3 && !/\s/.test(clean)) u.rate = Math.max(0.5, S.settings.rate * 0.8);
   u.voice = v;
   if (opts.onend) { u.onend = opts.onend; u.onerror = opts.onend; }
   if (opts.onstart) u.onstart = opts.onstart;
@@ -1439,25 +1527,45 @@ Return JSON exactly like: {"items":[{"ko":"<the word exactly as given>","ex":"<K
   return n;
 }
 
-/* ---------------- free translation (MyMemory, no key) ---------------- */
+/* ---------------- free translation (Google, then MyMemory; no key) ---------------- */
+// meanings are English/Vietnamese, so anything with Hangul, kana or Han characters is a bad result
+// (MyMemory's translation memory returns things like 사과 → 사과 or 오렌지 → 橘子)
+const NOT_MEANING = /[\u1100-\u11ff\u3040-\u30ff\u3130-\u318f\u3400-\u9fff\uac00-\ud7a3\uf900-\ufaff]/;
 async function translate(ko){
-  const url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(ko) + "&langpair=ko|" + S.settings.lang;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error("HTTP " + r.status);
-  const j = await r.json();
-  let t = (j.responseData && j.responseData.translatedText) || "";
-  if (/MYMEMORY WARNING|QUERY LENGTH/i.test(t)) throw new Error("limit");
-  return t.trim();
+  let t = await translateGoogle(ko);
+  if (!t || NOT_MEANING.test(t)) t = await translateMyMemory(ko);
+  if (!t || NOT_MEANING.test(t)) throw new Error("no translation");
+  return t;
+}
+async function translateGoogle(ko){
+  try {
+    const r = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&dt=t&tl=" + S.settings.lang + "&q=" + encodeURIComponent(ko));
+    const j = await r.json();
+    return (j[0] || []).map(x => x[0]).join("").trim();
+  } catch(e){ return ""; }
+}
+async function translateMyMemory(ko){
+  try {
+    const r = await fetch("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(ko) + "&langpair=ko|" + S.settings.lang);
+    const j = await r.json();
+    const t = (j.responseData && j.responseData.translatedText) || "";
+    if (/MYMEMORY WARNING|QUERY LENGTH/i.test(t)) return "";
+    if (t && !NOT_MEANING.test(t)) return t.trim();
+    const m = (j.matches || []).filter(m => m.translation && !NOT_MEANING.test(m.translation))
+      .sort((a, b) => (b.match - a.match) || (+b.quality - +a.quality))[0];
+    return m ? m.translation.trim() : "";
+  } catch(e){ return ""; }
 }
 
 /* ---------------- navigation ---------------- */
 function show(v){
   if (v === "words" && !S.cards.length) v = "add";   // nothing to list yet → straight to adding words
   $$("section[id^=v-]").forEach(s => s.classList.toggle("hidden", s.id !== "v-"+v));
-  $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" || v === "words" ? "study" : v)));   // My words / Add words are pages of Study
-  if (v === "add" && curView !== "add") addFrom = curView === "words" && S.cards.length ? "words" : "study";
+  $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" || v === "words" || v === "abc" ? "study" : v)));   // My words / Add words / Alphabet are pages of Study
+  if (v === "add" && curView !== "add" && curView !== "abc") addFrom = curView === "words" && S.cards.length ? "words" : "study";
   curView = v;
-  if (v === "add") syncAddKeyHint();
+  if (v === "add") { syncAddKeyHint(); syncAbcPick(); }
+  if (v === "abc") renderAbc();
   if (v === "study" && !session) refreshHome();
   document.body.classList.toggle("in-session", v === "study" && !!session);   // leaving via a link mid-session must bring the tab bar back
   if (v !== "read") { stopPlayer(); cancelRec(); talkStop(); if ("speechSynthesis" in window) speechSynthesis.cancel(); }
@@ -1545,8 +1653,11 @@ function refreshHome(noAuto){
   if (!noAuto && homeAuto && due + nl > 0 && !session && !$("#v-study").classList.contains("hidden")) return startSession(false, null, true);
   const h = $("#homeCard");
   if (!S.cards.length){
-    h.innerHTML = `<div class="empty">${cheerHTML([["환영해요!", "Chào mừng bạn!", "Welcome!"]])}<p class="muted">Add some Korean words to start learning.</p><button class="btn" id="goAdd">+ Add words</button></div>`;
+    // a new learner may not read Hangul yet: the alphabet sits next to Add words
+    h.innerHTML = `<div class="empty">${cheerHTML([["환영해요!", "Chào mừng bạn!", "Welcome!"]])}<p class="muted">Add some Korean words to start learning.</p>
+      <div class="row" style="align-items:stretch">${S.settings.abcHide ? "" : `<button class="btn2" id="goAbcHome" data-noi18n>${L("Học bảng chữ cái", "Learn the alphabet")}</button>`}<button class="btn" id="goAdd">+ Add words</button></div></div>`;
     $("#goAdd").onclick = () => show("add");
+    if (!S.settings.abcHide) $("#goAbcHome").onclick = () => show("abc");
     return;
   }
   if (due + nl > 0){
@@ -1748,7 +1859,9 @@ function renderQuiz(item){
   if (mode === "m2ko" || mode === "m2say") prompt = `<div class="mean" style="font-size:28px">${esc(c.meaning)}</div>`;
   let answer = "";
   if (mode === "ko2m" || mode === "listen2m"){
-    const others = shuffle(S.cards.filter(x => x.id !== c.id && x.meaning && x.meaning !== c.meaning)).slice(0,3);
+    // letters vs letters, words vs words — "g / k" among word meanings would give the answer away
+    const pool = S.cards.filter(x => x.id !== c.id && x.meaning && x.meaning !== c.meaning), same = pool.filter(x => isLetter(x) === isLetter(c));
+    const others = shuffle(same.length >= 3 ? same : pool).slice(0,3);
     const opts = shuffle([c, ...others]);
     item.opts = opts;
     answer = `<div class="choices">${opts.map((o,i)=>`<button class="choice" data-i="${i}"><span class="k">${i+1}</span><span>${esc(o.meaning)}</span></button>`).join("")}</div>`;
@@ -1791,14 +1904,14 @@ function renderQuiz(item){
     $("#sayKeyLink").onclick = () => { frCancel(); show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
     syncSay(false);
     const hb = $("#hintBtn"); let h = 0;
-    if (hb) hb.onclick = () => { h = Math.min(h+1, [...c.ko].length); item.hinted = true; $("#hintTxt").textContent = "Starts with: " + [...c.ko].slice(0,h).join("") + " · " + [...c.ko].length + " characters"; };
+    if (hb) hb.onclick = () => { h = Math.min(h+1, [...c.ko].length); item.hinted = true; $("#hintTxt").textContent = isLetter(c) ? L("Có trong: ", "As in: ") + c.ex : "Starts with: " + [...c.ko].slice(0,h).join("") + " · " + [...c.ko].length + " characters"; };
   } else {
     const inp = $("#typeIn");
     setTimeout(()=>inp.focus(), 50);
     inp.onkeydown = e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); answerTyped(item); } };
     $("#checkBtn").onclick = () => answerTyped(item);
     let h = 0;
-    $("#hintBtn").onclick = () => { h = Math.min(h+1, [...c.ko].length); item.hinted = true; $("#hintTxt").textContent = "Starts with: " + [...c.ko].slice(0,h).join("") + " · " + [...c.ko].length + " characters"; };
+    $("#hintBtn").onclick = () => { h = Math.min(h+1, [...c.ko].length); item.hinted = true; $("#hintTxt").textContent = isLetter(c) ? L("Có trong: ", "As in: ") + c.ex : "Starts with: " + [...c.ko].slice(0,h).join("") + " · " + [...c.ko].length + " characters"; };
   }
 }
 /* ---- sound-alike distractors for "listen → choose the Korean word" ----
@@ -1843,9 +1956,16 @@ function editDist(a, b){
   }
   return row[b.length];
 }
+// letters that are easy to mix up by ear (ㅐ/ㅔ sound the same today, so they're not paired)
+const LETTER_ALIKE = ["ㄱㅋㄲ", "ㄷㅌㄸ", "ㅂㅍㅃ", "ㅈㅊㅉ", "ㅅㅆ", "ㄴㄹㅁ", "ㅇㅎ", "ㅓㅗㅜㅡ", "ㅕㅛㅠ", "ㅏㅑ", "ㅐㅒ", "ㅔㅖ", "ㅘㅙㅝ", "ㅚㅟㅢ"];
 function soundAlikes(c, n){
   const target = norm(c.ko), seen = new Set([target]), picks = [];
   const add = o => { const k = norm(o.ko); if (!k || seen.has(k) || picks.length >= n) return; seen.add(k); picks.push(o); };
+  if (isLetter(c)){
+    shuffle([...LETTER_ALIKE.filter(g => g.includes(c.ko)).join("")]).forEach((ko, i) => add({ id: "alike" + i, ko }));
+    shuffle(Object.keys(ABC_SAY)).forEach((ko, i) => add(S.cards.find(x => x.ko === ko) || { id: "abc" + i, ko }));
+    return picks;
+  }
   const cj = jamo(c.ko);
   const ranked = S.cards.filter(x => x.id !== c.id && x.ko)
     .map(x => ({ x, d: editDist(cj, jamo(x.ko)) + Math.abs([...x.ko].length - [...c.ko].length) }))
@@ -2001,8 +2121,9 @@ async function sayRecorded(item){
   item.busy = true; frSay(`<span class="spinner"></span>` + L("Đang chấm…", "Checking…"));
   try {
     const b64 = await blobToWavB64(blob);
-    const prompt = `You are a friendly Korean teacher. A ${uiLangName()}-speaking learner was ${read
-      ? `shown the Korean word "${c.ko}" and asked to read it aloud`
+    const prompt = `You are a friendly Korean teacher. A ${uiLangName()}-speaking learner was ${isLetter(c)
+      ? `${read ? `shown the Hangul letter "${c.ko}"` : `shown "${c.meaning}" (the sound of a Hangul letter)`} and asked to say the letter "${c.ko}" — its name "${ABC_SAY[c.ko]}" or its sound (e.g. the letter + ㅏ for a consonant) both count`
+      : read ? `shown the Korean word "${c.ko}" and asked to read it aloud`
       : `shown the meaning "${c.meaning}" and asked to say the Korean word for it. Expected answer: "${c.ko}"`}.
 Listen to the attached recording.
 "heard" = what the learner said, in Hangul ("" if silent or unclear).
@@ -2037,7 +2158,7 @@ function sayCheckLocal(item){
     return;
   }
   const t = norm(item.card.ko), cands = FR.alts.length ? FR.alts : [heard];
-  const ok = cands.some(a => { const n = norm(a); return n === t || n.includes(t); });
+  const ok = cands.some(a => { const n = norm(a); return n === t || n.includes(t) || (isLetter(item.card) && saidLetter(item.card.ko, n)); });
   let extra = "";
   if (!ok){
     // how close the recogniser got, letter by letter (jamo), so a near miss reads as "almost" rather than just "wrong"
@@ -2046,6 +2167,20 @@ function sayCheckLocal(item){
     extra = `<div class="small" style="margin-top:6px">🎙 ${L("Độ khớp", "Match")} <b>${score}/100</b>${score >= 70 ? " · " + L("gần đúng rồi, nghe mẫu 🔊 rồi thử lại nhé", "close — listen 🔊 and try again") : ""}</div>`;
   }
   sayResult(item, ok, heard, extra + gradedBy(false));
+}
+/* a spoken letter: its name (기역, close enough — 기억 counts), or a syllable made with it (가 for ㄱ, 어 for ㅓ).
+   Vowels that merged in today's Korean (ㅐ/ㅔ, ㅙ/ㅚ/ㅞ) are accepted for each other; 오/이 often come back as digits */
+const VOWELS = "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ", LEADS = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+const VOW_SAME = ["ㅐㅔ", "ㅒㅖ", "ㅙㅚㅞ"];
+function saidLetter(letter, heard){
+  heard = heard.replace(/5/g, "오").replace(/2/g, "이");
+  const name = ABC_SAY[letter], syl = [...heard];
+  if (heard === name || (name.length > 1 && editDist(jamo(heard), jamo(name)) <= 1)) return true;
+  if (syl.length !== 1 || !isSyl(syl[0])) return false;
+  const [l, v] = splitSyl(syl[0]), vi = VOWELS.indexOf(letter);
+  if (vi < 0) return LEADS[l] === letter;
+  const ok = new Set([letter, ...(VOW_SAME.find(g => g.includes(letter)) || "")]);
+  return l === 11 && ok.has(VOWELS[v]);
 }
 function sayResult(item, ok, heard, extra){
   if (item.answered) return;
@@ -2948,6 +3083,10 @@ $("#search").oninput = () => renderWords();
 // background refreshes (sync, example sentences) must not wipe a row being edited
 function renderWordsSoft(){ if (!$("#v-words").classList.contains("hidden") && !$("#wordList .ek")) renderWords(); }
 function renderWords(){
+  // same as the home card: due + today's new words if any (daily limit untouched), otherwise extra practice
+  const n = dueCards().length + Math.min(newLeftToday(), newCards().length), ws = $("#wordsStudy");
+  ws.textContent = n ? L("▶ Luyện tập", "▶ Study") : L("▶ Luyện thêm", "▶ Extra practice");
+  ws.onclick = () => { homeAuto = false; show("study"); startSession(!n); };
   const q = $("#search").value.trim().toLowerCase();
   const hits = S.cards.filter(c => !q || c.ko.includes(q) || c.meaning.toLowerCase().includes(q));
   const today = filter === "today" ? todayIds() : null;
@@ -2966,7 +3105,7 @@ function renderWords(){
   }).join("") : `<li class="muted" style="justify-content:center">${!S.cards.length ? "No words yet" : today && !q ? L("Hôm nay học xong rồi 🎉", "All done for today 🎉") : "No matches"}</li>`;
   const noEx = S.cards.filter(c => !c.ex).length;
   $("#exPrompt").classList.toggle("hidden", !noEx);
-  $("#exPromptTxt").textContent = `${noEx} word${noEx===1?"":"s"} without an example sentence.`;
+  $("#exPromptTxt").innerHTML = L(`<b>${noEx}</b> từ chưa có câu ví dụ.`, `<b>${noEx}</b> word${noEx===1?"":"s"} without an example sentence.`);
   $$("#wordList button").forEach(b => b.onclick = e => {
     const li = b.closest("li"), id = li.dataset.id, c = S.cards.find(x => x.id === id); if (!c) return;
     if (b.dataset.a === "say") speak(c.ko);
@@ -3450,9 +3589,9 @@ async function micTest(out){
 
 const GUIDE = [
   ["g-start", L("Bắt đầu nhanh", "Quick start"), L(`
-    <ol>    <li><b>🎯 Học từ vựng</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý. Chạm ô <b>Cần học / Đang học / Đã thuộc</b> hoặc <b>📚 Từ của tôi</b> để xem, sửa, xoá từ; <b>+ Thêm từ</b> để thêm từ mới, dán cả danh sách hoặc chụp ảnh.</li>
+    <ol>    <li><b>🎯 Học từ vựng</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý. Chạm ô <b>Cần học / Đang học / Đã thuộc</b> hoặc <b>📚 Từ của tôi</b> để xem, sửa, xoá từ; <b>+ Thêm từ</b> để thêm từ mới, dán cả danh sách, chụp ảnh, hoặc thêm <b>bảng chữ cái</b> để ôn như từ vựng.</li>
     <li><b>🗣 Luyện nói</b>: <b>Luyện đọc</b> — bài đọc theo trình độ, 🔊 để nghe, 🎙 để đọc to và được chấm; <b>Luyện nói giao tiếp</b> — nói chuyện với AI, được chữa lỗi từng câu.</li></ol>`, `
-    <ol>    <li><b>🎯 Vocabulary</b>: review flashcards daily. Answer honestly so the schedule fits you. Tap <b>Due today / Learning / Mastered</b> or <b>📚 My words</b> to view, edit and delete words; <b>+ Add words</b> to add more, paste a whole list or use a screenshot.</li>
+    <ol>    <li><b>🎯 Vocabulary</b>: review flashcards daily. Answer honestly so the schedule fits you. Tap <b>Due today / Learning / Mastered</b> or <b>📚 My words</b> to view, edit and delete words; <b>+ Add words</b> to add more, paste a whole list, use a screenshot, or add the <b>Hangul alphabet</b> to review like words.</li>
     <li><b>🗣 Speak</b>: <b>Reading practice</b> — passages at your level, 🔊 to listen, 🎙 to read aloud and get scored; <b>Conversation practice</b> — a spoken conversation with AI that corrects each line.</li></ol>`)],
   ["g-install", L("Cài app", "Install the app"), L(`
     <ul><li><b>Android</b>: Chrome → <b>⋮</b> → <b>Cài đặt ứng dụng</b></li>
