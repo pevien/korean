@@ -357,8 +357,9 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 /* interpreter, once started: the whole screen splits in two like Papago — each half in one speaker's language, with its own mic.
    The top half belongs to the person across the table, so it can be turned to face them. */
 .ar-conv{position:fixed;top:var(--hdr-h, 0px);left:0;right:0;bottom:var(--nav-h, 0px);z-index:40;display:flex;flex-direction:column;align-items:center;gap:12px;
-  padding:2px 16px 12px}
-body.ar-conv-on section[id^="v-"]{visibility:hidden}   /* the tab underneath steps aside, so the app's own background shows through */   /* a tab of its own: the app header stays above it, the tab bar below */
+  padding:2px 16px 12px}   /* a tab of its own, between the top of the screen and the tab bar */
+body.ar-conv-on section[id^="v-"]{visibility:hidden}   /* the tab underneath steps aside, so the app's own background shows through */
+body.no-hdr .wrap > header, body.ar-conv-on .wrap > header{display:none}   /* ARMY, Translate and Settings start right at the top */
 .ar-conv > *{width:100%;max-width:528px}   /* same column as every other page (.wrap) */
 body.ar-conv-on{overflow:hidden}
 .ar-cbar{flex-wrap:wrap;gap:8px 10px;margin:0;position:relative;z-index:5}   /* the page title like every tab, its two toggles on the right */
@@ -376,24 +377,28 @@ body.ar-conv-on{overflow:hidden}
 .ar-cbar.compact .ar-clab.short{display:inline}
 .ar-cbar.compact button.ar-ctts{padding:6px 10px}
 .ar-cstat{margin:0}
+.ar-cvoice{margin:0;display:flex;gap:8px;align-items:flex-start;color:var(--warn);line-height:1.45}
+.ar-cvoice:empty{display:none}
+.ar-cvoice .i{flex:0 0 auto;width:18px;height:18px;margin-top:1px}
 .ar-cstat:empty{display:none}
 .ar-pane{flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 18px;background:var(--card);color:var(--army);border-radius:var(--radius)}
 .ar-pane.them{background:var(--army);color:var(--on-accent)}
 .ar-conv.flip .ar-pane.them{transform:rotate(180deg)}
 .ar-pane{position:relative}
-.ar-flip{position:absolute;top:10px;left:10px;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;
+.ar-flip{position:absolute;top:10px;left:10px;width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;
   border-radius:50%;background:color-mix(in srgb, currentColor 14%, transparent);color:inherit}
-.ar-flip .i{width:22px;height:22px}
+.ar-flip .i{width:19px;height:19px}
+.ar-pane.them .ar-say{padding-top:36px}   /* clear of the turn button in its corner */
 /* swap sits on the seam between the halves, like Papago */
 .ar-swapw{height:0;margin:-5px 0;display:flex;align-items:center;justify-content:center;position:relative;z-index:2}
-.ar-swap{width:52px;height:52px;flex:0 0 auto;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;
+.ar-swap{width:46px;height:46px;flex:0 0 auto;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;
   background:var(--card);color:var(--army);border:5px solid var(--bg)}
 .ar-swap .i{width:22px;height:22px}
 .ar-flip.on{background:color-mix(in srgb, currentColor 30%, transparent)}
 .ar-say{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;justify-content:center;text-align:center;
-  font-size:calc(30px * var(--ar-fs,1));font-weight:600;line-height:1.35;overflow-wrap:anywhere}
-.ar-say.long{font-size:calc(22px * var(--ar-fs,1))}
-.ar-say .hint{opacity:.55;font-weight:500;font-size:calc(20px * var(--ar-fs,1))}
+  font-size:calc(clamp(20px, 5.6vw, 24px) * var(--ar-fs,1));font-weight:400;line-height:1.4;overflow-wrap:anywhere;word-break:keep-all}
+.ar-say.long{font-size:calc(clamp(17px, 4.6vw, 20px) * var(--ar-fs,1))}
+.ar-say .hint{opacity:.55;font-weight:400;font-size:calc(clamp(16px, 4.4vw, 18px) * var(--ar-fs,1))}
 /* recording: bouncing bars; waiting for the translation: a big spinner — each with a word in that half's language */
 .ar-state{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:12px;font-size:calc(18px * var(--ar-fs,1));font-weight:500;opacity:.8}
 .ar-wave{display:inline-flex;align-items:center;gap:4px;height:24px}
@@ -407,17 +412,20 @@ body.ar-conv-on{overflow:hidden}
 @media (prefers-reduced-motion: reduce){.ar-wave i{animation:none;transform:scaleY(.6)}}
 .ar-pfoot{display:flex;align-items:center;justify-content:flex-end;gap:14px;padding-top:10px}
 /* the language is a dropdown: a chevron in the half's own colour */
-.ar-plw{position:relative;display:inline-flex;min-width:0;max-width:60%;border-radius:var(--r-pill);transition:background .15s}
+/* what shows is our own label (flag at full size, the name smaller and regular weight); the real <select> lies invisible on top of it */
+.ar-plw{position:relative;display:inline-flex;align-items:center;min-width:0;max-width:60%;padding:6px 28px 6px 10px;border-radius:var(--r-pill);transition:background .15s}
+.ar-plab{display:inline-flex;align-items:center;gap:6px;min-width:0;font-size:13px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ar-plab .f{font-size:15px;line-height:1}   /* same flag size as before */
 .ar-plw:focus-within, .ar-plw:hover{background:color-mix(in srgb, currentColor 13%, transparent)}   /* open / focused: a soft fill, no outline */
-.ar-plw::after{content:"";position:absolute;right:14px;top:50%;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;
+.ar-plw::after{content:"";position:absolute;right:11px;top:50%;width:5px;height:5px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
   transform:translateY(-70%) rotate(45deg);pointer-events:none}
-.ar-plang{width:auto;max-width:100%;background:none;border:none;border-radius:var(--r-pill);color:inherit;font-size:16px;font-weight:600;padding:10px 34px 10px 12px;text-overflow:ellipsis}
+.ar-plang{position:absolute;inset:0;width:100%;height:100%;opacity:0;padding:0;border:none;font-size:16px;cursor:pointer}   /* 16px: iOS won't zoom on tap */
 .ar-plang:focus{outline:none}
 .ar-plang option{color:var(--text);background:var(--card)}
-.ar-mic{width:76px;height:76px;flex:0 0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;
+.ar-mic{width:60px;height:60px;flex:0 0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;
   background:var(--army);color:var(--on-accent)}
 .ar-pane.them .ar-mic{background:color-mix(in srgb, var(--on-accent) 22%, transparent)}
-.ar-mic .i{width:34px;height:34px}
+.ar-mic .i{width:26px;height:26px}
 .ar-mic.on, .ar-pane.them .ar-mic.on{background:var(--bad);color:#fff;animation:pulse 1.6s infinite}
 .ar-lvl{height:4px;background:var(--line);border-radius:var(--r-pill);overflow:hidden;margin-top:10px}
 .ar-lvl i{display:block;height:100%;width:0;background:var(--army);transition:width .1s}
@@ -1838,6 +1846,7 @@ function show(v){
   if (v === "words" && !S.cards.length) v = "add";   // nothing to list yet → straight to adding words
   $$("section[id^=v-]").forEach(s => s.classList.toggle("hidden", s.id !== "v-"+v));
   navHi(v);
+  document.body.classList.toggle("no-hdr", v === "army" || v === "set");   // these start right at the top, without the app header
   if (v === "add" && curView !== "add" && curView !== "abc") addFrom = curView === "words" && S.cards.length ? "words" : "study";
   curView = v;
   if (v === "add"){ syncAbcPick(); shotTip(); }   // key may have been added in Settings meanwhile
@@ -1854,7 +1863,7 @@ function show(v){
   window.scrollTo(0,0);
   navSave({ v, p: v === "read" && curP ? curP.id : "", y: 0 });
 }
-const navHi = v => $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" || v === "words" || v === "abc" ? "study" : v)));   // My words / Add words / Alphabet are pages of Study
+function navHi(v){ $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" || v === "words" || v === "abc" ? "study" : v))); }   // My words / Add words / Alphabet are pages of Study
 /* remember the open tab / passage / scroll position so a reload lands on the same page */
 const NAV_KEY = "hangulCards.nav";
 function navGet(){ try { return JSON.parse(sessionStorage.getItem(NAV_KEY) || "{}"); } catch(e){ return {}; } }
@@ -1871,7 +1880,8 @@ function navRoot(v){
 }
 $("#navSpeak").textContent = L("Luyện nói", "Speak");
 $("#navTr").textContent = L("Dịch", "Translate");   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
-$("#navStudy").textContent = $("#studyTitle").textContent = L("Từ vựng", "Vocabulary");
+$("#navStudy").textContent = L("Từ vựng", "Vocab");   // the tab label is short; the page title keeps the full word
+$("#studyTitle").textContent = L("Từ vựng", "Vocabulary");
 $("#goAddBig").onclick = () => show("add");
 let curView = "study", addFrom = "study";
 // Add words goes back to whichever page opened it
@@ -5110,14 +5120,48 @@ Return JSON exactly like: {"t":["<translation of line 1>", "..."]} with the same
 
 /* ---- talk mode: read each translation aloud; the ears pause meanwhile so the app doesn't translate its own voice ---- */
 function arVoiceFor(lang){
-  const vs = speechSynthesis.getVoices(), norm = v => (v.lang || "").toLowerCase().replace("_", "-");
-  if (lang === "ko"){ const v = vs.find(v => v.name === S.settings.voice); if (v) return v; }
-  return vs.find(v => norm(v).startsWith(lang + "-") && v.localService) || vs.find(v => norm(v).startsWith(lang)) || null;
+  // only a voice of that very language: Vietnamese read by an English voice is worse than silence
+  const vs = speechSynthesis.getVoices(), base = v => (v.lang || "").toLowerCase().replace("_", "-").split("-")[0];
+  if (lang === "ko"){ const v = vs.find(v => v.name === S.settings.voice && base(v) === "ko"); if (v) return v; }
+  const full = AR_LANGS[lang][3].toLowerCase(), mine = vs.filter(v => base(v) === lang);
+  return mine.find(v => v.lang.toLowerCase().replace("_", "-") === full && v.localService) || mine.find(v => v.localService) || mine[0] || null;
 }
+/* the voice list arrives late on some browsers (Chrome fills it after a moment): wait a little before calling a language missing */
+function arVoicesReady(){
+  if (!("speechSynthesis" in window)) return Promise.resolve(false);
+  if (speechSynthesis.getVoices().length) return Promise.resolve(true);
+  return new Promise(res => {
+    const t = setTimeout(() => res(speechSynthesis.getVoices().length > 0), 1500);
+    speechSynthesis.addEventListener("voiceschanged", () => { clearTimeout(t); res(true); }, { once: true });
+  });
+}
+// where to add a voice, per device
+function arVoiceHow(name){
+  return isIOS ? L(`Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói → ${name} → tải một giọng`, `Settings → Accessibility → Spoken Content → Voices → ${name} → download a voice`)
+    : isAndroid ? L(`Cài đặt → Ngôn ngữ (hoặc Trợ năng) → Chuyển văn bản thành giọng nói → Công cụ của Google → Cài đặt dữ liệu giọng nói → ${name}`, `Settings → Languages (or Accessibility) → Text-to-speech → Google engine → Install voice data → ${name}`)
+    : /Mac/.test(navigator.platform) ? L(`Cài đặt hệ thống → Trợ năng → Nội dung được đọc → Giọng hệ thống → Quản lý giọng → ${name}`, `System Settings → Accessibility → Spoken Content → System voice → Manage voices → ${name}`)
+    : /Win/.test(navigator.platform) ? L(`Cài đặt → Thời gian & ngôn ngữ → Giọng nói → Thêm giọng → ${name}`, `Settings → Time & language → Speech → Add voices → ${name}`)
+    : L(`thêm giọng ${name} trong phần cài đặt giọng nói của máy`, `add a ${name} voice in your device's speech settings`);
+}
+/* Read aloud: check both languages of the pair and say plainly which one this device can't read, and how to fix it */
+async function arVoiceCheck(){
+  const el = $("#arConvVoice"); if (!el) return;
+  if (!arTts()){ el.innerHTML = ""; return; }
+  if (!("speechSynthesis" in window)){ el.innerHTML = `${ic("speaker-slash")} ${L("Trình duyệt này không đọc to được.", "This browser can't read aloud.")}`; return; }
+  await arVoicesReady();
+  if (!$("#arConvVoice") || !arTts()) return;
+  const miss = [arIn0(), arOut0()].filter(k => !arVoiceFor(k));
+  el.innerHTML = miss.length ? `${ic("speaker-slash")} <span>${miss.map(k => {
+      const name = L(AR_LANGS[k][1], AR_LANGS[k][2]);
+      return L(`Máy chưa có giọng đọc <b>${name}</b>, nên câu dịch sang ${name} sẽ không được đọc. Cài: ${arVoiceHow(name)}, rồi tải lại trang.`,
+        `This device has no <b>${name}</b> voice, so translations into ${name} won't be read aloud. Add one: ${arVoiceHow(name)}, then reload.`);
+    }).join("<br>")}</span>` : "";
+}
+if ("speechSynthesis" in window) speechSynthesis.addEventListener("voiceschanged", () => arVoiceCheck());   // installed meanwhile
 function arSay(text, lang){
   if (!arTts() || !AR.on || !text || !("speechSynthesis" in window)) return;
   const v = arVoiceFor(lang);
-  if (!v){ if (!AR.noVoice){ AR.noVoice = true; toast(L("🔇 Máy chưa có giọng đọc cho ngôn ngữ này", "🔇 No voice for this language on this device")); } return; }
+  if (!v){ if ($("#arConvVoice")) arVoiceCheck(); else if (!AR.noVoice){ AR.noVoice = true; toast(L("🔇 Máy chưa có giọng đọc cho ngôn ngữ này", "🔇 No voice for this language on this device")); } return; }
   const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang;
   if (lang === "ko") u.rate = S.settings.rate;
   let done = false;
@@ -5398,7 +5442,7 @@ function arConvHTML(can){
       ${cls === "them" ? `<button class="ar-flip" id="arConvFlip" title="${L("Xoay nửa này cho người ngồi đối diện", "Turn this half for someone sitting across")}" aria-label="${L("Xoay nửa này", "Turn this half")}">${ic("arrows-clockwise")}</button>` : ""}
       <div class="ar-say" aria-live="polite"></div>
       <div class="ar-pfoot">
-        <span class="ar-plw"><select class="ar-plang" aria-label="${L("Đổi ngôn ngữ", "Change language")}">${Object.keys(AR_LANGS).filter(x => x !== other).map(x => `<option value="${x}">${AR_LANGS[x][0]} ${AR_NATIVE[x]}</option>`).join("")}</select></span>
+        <span class="ar-plw"><span class="ar-plab" aria-hidden="true"><span class="f">${AR_LANGS[k][0]}</span>${AR_NATIVE[k]}</span><select class="ar-plang" aria-label="${L("Đổi ngôn ngữ", "Change language")}">${Object.keys(AR_LANGS).filter(x => x !== other).map(x => `<option value="${x}">${AR_LANGS[x][0]} ${AR_NATIVE[x]}</option>`).join("")}</select></span>
         <button class="ar-mic" data-l="${k}" ${can ? "" : "disabled"}>${ic("microphone")}</button>
       </div>
     </div>`;
@@ -5409,6 +5453,7 @@ function arConvHTML(can){
       <button class="btn-ghost ar-ctts" id="arConvTts"><span id="arConvTtsIc"></span><span class="ar-clab">${L("Đọc bản dịch", "Read aloud")}</span></button>
     </div>
     <p class="small muted ar-cstat" id="arConvStat"></p>
+    <p class="small ar-cvoice" id="arConvVoice" role="status"></p>
     ${pane(them, me, "them")}
     <div class="ar-swapw"><button class="ar-swap" id="arConvSwap" title="${L("Đổi chỗ hai ngôn ngữ", "Swap the two languages")}" aria-label="${L("Đổi chỗ hai ngôn ngữ", "Swap the two languages")}">${ic("arrows-down-up")}</button></div>
     ${pane(me, them, "me")}
@@ -5421,6 +5466,7 @@ function arInterpOpen(){
   arStop();   // a BTS live listening in the ARMY tab stops first
   AR.prevMode = AR.mode; AR.mode = "talk"; arUseSess(); AR.flip = false;
   arConvFit(); requestAnimationFrame(arConvFit); navHi("tr"); renderConv(); arStart(); navSave({ tr: 1 });
+  AR.hideBefore = AR.lines.length; arRenderConv();   // opens clean (also after a reload): the old turns stay in the saved lines only
   if (!AR.on){
     toast(arEngine() ? L("🎙 Cần mở app từ link https:// để dùng micro.", "🎙 Open the app from its https:// link to use the mic.")
       : L("⚠️ Trình duyệt này không nhận giọng nói. Thêm Gemini key trong Cài đặt, hoặc dùng Chrome/Safari.", "⚠️ This browser can't recognise speech. Add a Gemini key in Settings, or use Chrome/Safari."));
@@ -5430,8 +5476,9 @@ function arInterpOpen(){
 function arConvFit(){   // fit between the app header and the tab bar
   scrollTo(0, 0);
   const st = document.documentElement.style;
-  const h = $("header");   // + its bottom margin, so the title sits where every tab's title does
-  st.setProperty("--hdr-h", Math.round(h.getBoundingClientRect().bottom + parseFloat(getComputedStyle(h).marginBottom)) + "px");
+  const h = $("header");   // hidden on Translate: the title starts where a page's content starts
+  st.setProperty("--hdr-h", getComputedStyle(h).display === "none" ? "calc(16px + env(safe-area-inset-top))"
+    : Math.round(h.getBoundingClientRect().bottom + parseFloat(getComputedStyle(h).marginBottom)) + "px");
   st.setProperty("--nav-h", $("nav").offsetHeight + "px");
   arBarFit();
 }
@@ -5446,7 +5493,7 @@ function arInterpClose(){
 }
 function renderConv(){
   $("#arConvRoot").innerHTML = arConvHTML(!!arEngine() || hasKey());
-  arConvWire(false, arGoKey); arConvUI(); arRenderConv(); arBarFit();
+  arConvWire(false, arGoKey); arConvUI(); arRenderConv(); arBarFit(); arVoiceCheck();
 }
 function arBarFit(){   // the two toggles shrink to icons as soon as the title would no longer fit on its line
   const b = $("#arConv .ar-cbar"); if (!b) return;
@@ -5458,7 +5505,7 @@ function arConvWire(aiAsk, goKey){
   const c = $("#arConv"); if (!c) return;
   $$("#arConv .ar-pane").forEach(p => {
     const k = p.dataset.l, sel = p.querySelector("select");
-    sel.value = k; arFitSelect(sel);
+    sel.value = k;
     sel.onchange = () => {   // pick another language for that half: the other half keeps its own
       if (AR.turn) arEndTurn();
       const v = sel.value;
@@ -5479,17 +5526,10 @@ function arConvWire(aiAsk, goKey){
   // turned for someone across the table only for this conversation: next time it opens upright, like Google Translate
   $("#arConvFlip").onclick = () => { AR.flip = !AR.flip; c.classList.toggle("flip", AR.flip); arConvUI(); };
   $("#arConvTts").onclick = () => {
-    S.settings.armyTts = !arTts(); save(); arConvUI();
+    S.settings.armyTts = !arTts(); save(); arConvUI(); arVoiceCheck();
     if (!arTts() && "speechSynthesis" in window){ speechSynthesis.cancel(); AR.saying = 0; }
   };
 
-}
-// a <select> is as wide as its longest option: size it to the chosen one so the chevron sits right after the name
-function arFitSelect(sel){
-  const cs = getComputedStyle(sel), cx = (arFitSelect.c ||= document.createElement("canvas").getContext("2d"));
-  cx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-  const txt = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : "";
-  sel.style.width = Math.ceil(cx.measureText(txt).width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 4) + "px";
 }
 function arConvUI(msg){
   const c = $("#arConv"); if (!c) return;
