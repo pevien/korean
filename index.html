@@ -367,6 +367,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .ar-live .old .tr{font-size:calc(17px * var(--ar-fs,1));font-weight:600}
 .ar-live .old .ko{font-size:calc(13px * var(--ar-fs,1));margin-bottom:2px}
 .ar-live .interim .tr{opacity:.85}
+.ar-live .grp + .grp{margin-top:14px}
 .ar-hist{list-style:none;margin:0;padding:0}
 /* just-saved highlight: a layer behind the row, wider than it (into the gutter) but never taller, so it can't spill onto the rows around it */
 #arSavedList li{position:relative;isolation:isolate}
@@ -4158,12 +4159,14 @@ bindLangSeg($("#uiLangSeg"));
 
 /* ---------------- ARMY: live subtitles for BTS lives ---------------- */
 // Listens to speech (mic, or a browser tab's audio with a Gemini key) and shows running translated subtitles.
-// Free mode: browser speech recognition + MyMemory. AI mode: ~10 s audio chunks → Gemini transcribes + translates.
+// Free mode: browser speech recognition + MyMemory. AI mode: 3–8 s audio chunks, cut at pauses → Gemini transcribes + translates.
 const AR = { on: false, engine: "", recog: null, stream: null, rec: null, lines: [], interim: "", ac: null, raf: 0,
   wake: null, chain: Promise.resolve(), queued: 0, quota: 0, trq: [], trBusy: false,
   savedId: "",   // once the live is saved, that saved copy keeps growing with new lines
   view: "" };    // id of the saved conversation being reviewed
-const AR_KEY = "hangulCards.army", AR_CHUNK = 10000;
+const AR_KEY = "hangulCards.army";
+// AI engine: each chunk ends at the first pause between sentences (≥ AR_GAP ms) after AR_CH_MIN ms of it, or at AR_CH_MAX ms (music, nonstop talk)
+const AR_CH_MIN = 3000, AR_CH_MAX = 8000, AR_GAP = 1000, AR_TICK = 250;
 const AR_LANGS = { ko: ["🇰🇷", "Tiếng Hàn", "Korean", "ko-KR", "KOR"], vi: ["🇻🇳", "Tiếng Việt", "Vietnamese", "vi-VN", "VIE"], en: ["🇬🇧", "Tiếng Anh", "English", "en-US", "ENG"],
   zh: ["🇨🇳", "Tiếng Trung", "Chinese", "zh-CN", "CHN"], ja: ["🇯🇵", "Tiếng Nhật", "Japanese", "ja-JP", "JPN"], th: ["🇹🇭", "Tiếng Thái", "Thai", "th-TH", "THA"] };
 // language <option>: short code (VIE) on any mobile device or narrow screen so the select doesn't truncate, full name otherwise
@@ -4730,7 +4733,7 @@ function renderArmy(){
       ${aiAsk ? `<p class="small muted" style="margin:6px 0 0">${L("AI cần <b>Gemini key</b> (tạo trong ~1 phút). Thêm xong quay lại đây là dùng được AI — hoặc chọn ⚡ Cơ bản để nghe ngay.", "AI needs a <b>Gemini key</b> (takes ~1 minute to create). Add it and come back to use AI — or pick ⚡ Basic to start listening now.")}</p>` : ""}
       ${aiAsk && eng ? "" : `<p class="small muted" style="margin:6px 0 0">${
         !eng ? L("⚠️ Trình duyệt này không nhận giọng nói. Thêm Gemini key trong Cài đặt, hoặc dùng Chrome/Safari.", "⚠️ This browser can't recognise speech. Add a Gemini key in Settings, or use Chrome/Safari.")
-        : eng === "ai" ? L("AI nghe từng đoạn ~10 giây: chính xác hơn, nhưng phụ đề trễ ~10–15 giây. Dùng lượt Gemini của bạn.", "AI listens in ~10 s chunks: more accurate, but subtitles lag ~10–15 s. Uses your Gemini quota.")
+        : eng === "ai" ? L("AI nghe từng đoạn 3–8 giây, cắt ở chỗ ngừng câu: chính xác hơn, nhưng phụ đề trễ ~5–10 giây. Dùng lượt Gemini của bạn.", "AI listens in 3–8 s chunks, cut where a sentence ends: more accurate, but subtitles lag ~5–10 s. Uses your Gemini quota.")
         : L("Nhận giọng nói của trình duyệt: gần như tức thì, nhưng dễ nghe nhầm khi nói nhanh/ồn.", "Browser speech recognition: near-instant, but mishears fast or noisy talk.")
       }</p>`}
       ${eng === "ai" && arCanTab() && !arTalk() ? `<label>${L("Nguồn âm thanh", "Audio source")}</label>
@@ -4896,7 +4899,7 @@ function arUI(msg){
   b.textContent = AR.on ? L("⏹ Dừng", "⏹ Stop") : arAiAsk() ? L("🔑 Thêm Gemini key", "🔑 Add a Gemini key") : L("▶ Bắt đầu", "▶ Start");
   $("#arLvlBar").classList.toggle("hidden", !(AR.on && AR.ac));
   if (msg !== undefined) $("#arStatus").innerHTML = msg;
-  else $("#arStatus").innerHTML = AR.on ? (AR.engine === "ai" ? `<span class="spinner"></span>${L("Đoạn đầu tiên hiện sau ~10 giây", "The first chunk shows in ~10 s")}` : "") : "";
+  else $("#arStatus").innerHTML = AR.on ? (AR.engine === "ai" ? `<span class="spinner"></span>${L("Câu đầu tiên hiện sau vài giây", "The first lines show in a few seconds")}` : "") : "";
 }
 const arTime = t => { const d = new Date(t); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
 const arFlag = k => AR_LANGS[k] ? `<span class="fl">${AR_LANGS[k][0]}</span>` : "";
@@ -4905,8 +4908,10 @@ const arTr = l => l.tr ? esc(l.tr) : l.fail ? `<span class="muted">${L("(chưa d
 function arRenderLive(){
   const live = $("#arLive"); if (!live) return;
   const last = AR.lines[AR.lines.length - 1];
+  let grp = last ? [last] : [];   // the whole latest AI chunk, not only its last sentence
+  if (last && last.c && !AR.interim){ grp = []; for (let i = AR.lines.length - 1; i >= 0 && AR.lines[i].c === last.c && grp.length < 5; i--) grp.unshift(AR.lines[i]); }
   live.innerHTML = (last || AR.interim)
-    ? (last ? (AR.interim ? `<div class="old">${arLine(last)}</div>` : arLine(last)) : "")
+    ? (last ? (AR.interim ? `<div class="old">${arLine(last)}</div>` : grp.map(l => `<div class="grp">${arLine(l)}</div>`).join("")) : "")
       + (AR.interim ? `<div class="interim">${AR.interimTr ? `<div class="ko">${arFlag(arIn())}${esc(AR.interim)}</div><div class="tr">${arFlag(arOut())}${esc(AR.interimTr)}</div>`
         : `<div class="tr">${arFlag(arIn())}${esc(AR.interim)}</div>`}</div>` : "")
     : `<div class="muted" style="text-align:center;margin:auto">${ic("heart-sparkle")} ${L("Phụ đề sẽ hiện ở đây", "Subtitles appear here")}</div>`;
@@ -4919,8 +4924,9 @@ function arRender(){
   h.innerHTML = all.map(l => `<li>${arLine(l, true)}</li>`).join("");
 }
 const AR_MAX = 3000;
-function arAdd(ko, tr, snap = arSnap()){
+function arAdd(ko, tr, snap = arSnap(), chunk){
   const l = { t: Date.now(), ko, tr: tr || "", from: snap.from, to: snap.to, m: snap.m }, lines = arLinesOf(snap.m);
+  if (chunk) l.c = chunk;   // AI engine: lines heard in the same chunk stay together in the live box
   lines.push(l);
   if (lines.length > AR_MAX){ lines.shift(); if (!AR.trimWarned){ AR.trimWarned = true; toast(L("📝 Hội thoại rất dài — câu cũ nhất đang bị bỏ. Bấm 💾 Lưu để giữ lại.", "📝 Very long transcript — the oldest lines are being dropped. Tap 💾 Save to keep it.")); } }
   if (!tr){
@@ -5059,7 +5065,7 @@ function arCommitSoon(r){
     if (!AR.on || AR.recog !== r || r.seg !== seg) return;
     if (r.pending && arNorm(seg).startsWith(arNorm(r.pending))) r.pending = "";
     AR.interim = ""; arTake(r, seg); arRenderLive();
-  }, arTts() ? 800 : 700);
+  }, arTts() ? 900 : 1100);   // a pause between sentences, not a breath mid-sentence
 }
 
 /* ---- free engine: browser speech recognition, restarted whenever it stops on its own ---- */
@@ -5142,16 +5148,23 @@ async function arStartAI(){
 }
 function arRecChunk(){
   if (!AR.on || !AR.stream) return;
-  const rec = new MediaRecorder(new MediaStream(AR.stream.getAudioTracks())), parts = [], snap = arSnap();
+  const rec = new MediaRecorder(new MediaStream(AR.stream.getAudioTracks())), parts = [], snap = arSnap(), t0 = Date.now();
   let self = AR.saying > 0;   // talk mode: drop chunks that caught the app reading a translation aloud
+  let heard = false, voiced = false, quiet = 0, last = t0, empty = false;
   // the recorder's own timeslice drives the cycle: timers get throttled while the live plays in another tab
   rec.ondataavailable = e => {
     if (e.data.size) parts.push(e.data);
     self = self || AR.taint;
-    if (rec.state === "recording"){ AR.taint = AR.saying > 0; arRecChunk(); rec.stop(); }
+    if (rec.state !== "recording") return;
+    const now = Date.now(), age = now - t0, lv = arLevel();
+    if (lv){ heard = heard || lv.loud; if (lv.speech){ voiced = true; quiet = 0; } else quiet += now - last; }
+    last = now;
+    // no level meter → plain AR_CH_MAX chunks; only silence so far → start over (and don't send it)
+    const cut = age >= AR_CH_MAX || (lv && age >= AR_CH_MIN && (!heard || (voiced && quiet >= AR_GAP)));
+    if (cut){ empty = !!lv && !heard; AR.taint = AR.saying > 0; arRecChunk(); rec.stop(); }
   };
-  rec.onstop = () => { if (parts.length && !self) arQueueChunk(new Blob(parts, { type: rec.mimeType || "audio/webm" }), snap); };
-  rec.start(AR_CHUNK);
+  rec.onstop = () => { if (parts.length && !self && !empty) arQueueChunk(new Blob(parts, { type: rec.mimeType || "audio/webm" }), snap); };
+  rec.start(AR_TICK);
   AR.rec = rec;
 }
 function arQueueChunk(blob, snap){
@@ -5166,7 +5179,7 @@ async function arChunk(blob, snap){
   const { m, from, to } = snap;
   const ctx = arLinesOf(m).slice(-4).map(l => l.ko).join("\n");
   const prompt = `You are a live interpreter. ${arCtxFor(m, from, to)}
-The attached audio is the next ~10 seconds. Transcribe only the ${arName(from)} speech (ignore music, singing, noise and laughter${m === "talk" ? "; ignore any synthetic voice reading a translation aloud" : ""}). The clip may start or end mid-word — drop cut-off fragments. Keep any words spoken in other languages as they are.
+The attached audio is the next few seconds. Transcribe only the ${arName(from)} speech (ignore music, singing, noise and laughter${m === "talk" ? "; ignore any synthetic voice reading a translation aloud" : ""}). The clip may start or end mid-word — drop cut-off fragments. Keep any words spoken in other languages as they are.
 Split it into short subtitle lines (about one sentence each) and translate each into ${arHow(to, m)}. Don't guess who is speaking.
 Earlier lines for context (don't repeat them): ${ctx || "(none)"}
 If there is no clear speech, return {"lines":[]}.
@@ -5174,7 +5187,8 @@ Return JSON exactly like: {"lines":[{"src":"<transcription>","tr":"<translation>
   try {
     const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }]));
     AR.quota = 0;
-    (j.lines || []).forEach(l => { const src = String(l.src || l.ko || "").trim(); if (src) arAdd(src, String(l.tr || "").trim() || null, snap); });
+    const chunk = Date.now();
+    (j.lines || []).forEach(l => { const src = String(l.src || l.ko || "").trim(); if (src) arAdd(src, String(l.tr || "").trim() || null, snap, chunk); });
     if (AR.on) arUI("");
   } catch(e){
     if (e.status === 429 && ++AR.quota >= 3 && AR.on){
@@ -5189,7 +5203,10 @@ function arMeter(){
     const AC = window.AudioContext || window.webkitAudioContext;
     AR.ac = new AC();
     const an = AR.ac.createAnalyser(); an.fftSize = 512;
-    AR.ac.createMediaStreamSource(new MediaStream(AR.stream.getAudioTracks())).connect(an);
+    const src = AR.ac.createMediaStreamSource(new MediaStream(AR.stream.getAudioTracks())); src.connect(an);
+    // a longer window for pause detection: covers the whole time between two recorder ticks
+    AR.vad = AR.ac.createAnalyser(); AR.vad.fftSize = 16384; src.connect(AR.vad); AR.floor = null;
+    if (AR.ac.state === "suspended") AR.ac.resume().catch(() => {});
     const buf = new Uint8Array(an.fftSize);
     const tick = () => {
       if (!AR.ac) return;
@@ -5199,7 +5216,16 @@ function arMeter(){
       AR.raf = requestAnimationFrame(tick);
     };
     tick();
-  } catch(e){ AR.ac = null; }
+  } catch(e){ AR.ac = null; AR.vad = null; }
+}
+function arLevel(){   // the last moment's sound: loud = not silence, speech = well above the background; null when it can't tell
+  const an = AR.vad; if (!an || !AR.ac || AR.ac.state !== "running") return null;
+  const buf = AR.vadBuf && AR.vadBuf.length === an.fftSize ? AR.vadBuf : (AR.vadBuf = new Float32Array(an.fftSize));
+  an.getFloatTimeDomainData(buf);
+  let sum = 0; for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+  const rms = Math.sqrt(sum / buf.length);
+  AR.floor = AR.floor == null ? rms : Math.min(rms, AR.floor * 1.01 + 1e-5);   // background noise: follows quiet moments, rises slowly
+  return { loud: rms > 0.01, speech: rms > Math.max(0.01, AR.floor * 3) };
 }
 
 async function arWake(on){
@@ -5238,6 +5264,7 @@ function arStop(){
   AR.stream = null;
   cancelAnimationFrame(AR.raf);
   if (AR.ac) { try { AR.ac.close(); } catch(e){} AR.ac = null; }
+  AR.vad = null;
   AR.interim = ""; AR.saying = 0; AR.taint = false; clearTimeout(arStableT);
   if (arTalk() && "speechSynthesis" in window) speechSynthesis.cancel();
   arWake(false); arUI(""); arRenderLive(); arFlushSaved();
