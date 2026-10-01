@@ -210,7 +210,7 @@ a{color:var(--accent);text-underline-offset:2px}   /* every link: app purple, re
 .m-tip{margin:12px 0 0;border:1px solid var(--accent)}
 .m-tip .linkbtn{font-size:inherit;text-decoration:underline}
 .guide details{border-top:1px solid var(--line)}
-.guide summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:15px;list-style:none;display:flex;align-items:center;gap:8px}
+.guide summary{cursor:pointer;padding:12px 0;font-weight:500;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px}
 .guide summary::-webkit-details-marker{display:none}
 .guide summary::after{content:"+";color:var(--muted);font-weight:400;margin-left:auto}   /* text (and its icon) stay left, +/– pinned right */
 .guide details[open] summary::after{content:"–"}
@@ -483,14 +483,16 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
   padding:12px 16px;border-radius:var(--r-md);font-size:14px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none;
   width:max-content;max-width:min(528px, calc(100% - 32px));text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.2)}   /* hugs the text; only wraps past the content width */
 .toast.show{opacity:1}
-.check{display:flex;align-items:center;gap:10px;padding:6px 0;color:var(--text);font-size:15px;margin:0}
-.check input{width:20px;height:20px}
+/* settings type scale: card title 16/700 → setting name (field label, checkbox row) 14/600 → value (input, select, chip) 14/400 → help row 14/500 → note 13 muted */
+.check{display:flex;align-items:center;gap:10px;padding:6px 0;color:var(--text);font-size:14px;margin:0}
+.check input{flex:0 0 auto;width:18px;height:18px;margin:0}
+#v-set :is(.btn,.btn2,.btn-ghost,.btn-danger):not(.ico){font-size:14px;padding-top:10px;padding-bottom:10px}   /* actions sit under the card title (16px), level with setting names */
 .set-inline{justify-content:space-between}
 .set-inline > label{flex:1;margin:0;font-size:14px;color:var(--text)}
 .set-inline > input{flex:0 0 84px;text-align:center}
 .set-lab{font-size:14px;font-weight:600;color:var(--text);margin:22px 0 10px}   /* a settings row title, same look as the .set-inline labels */
 .qrow{display:flex;align-items:flex-start;gap:6px;margin:0 0 8px}
-.qlab{flex:0 0 58px;font-size:12px;font-weight:600;color:var(--muted);padding-top:11px}
+.qlab{flex:0 0 58px;font-size:12px;font-weight:400;color:var(--muted);padding-top:11px}
 .qchips{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px}   /* wrapped chips stay in their own column, not under the label */
 .qt{position:relative;display:inline-flex;align-items:center;gap:5px;margin:0;padding:7px 12px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--bg);
   color:var(--muted);font-size:14px;cursor:pointer;user-select:none}
@@ -1061,7 +1063,7 @@ const VI = {
 "Single":"Từng từ","Paste list":"Danh sách","Screenshot":"Ảnh chụp",
 "Generate words by topic":"Tạo từ theo chủ đề","Topic":"Chủ đề","Level":"Trình độ","How many":"Số lượng",
 "Each word comes with an example sentence. Words already in your list are skipped automatically.":"Mỗi từ kèm một câu ví dụ. Từ đã có sẽ tự bỏ qua.",
-"✨ Generate":"✨ Tạo","Generate":"Tạo","Generate passage":"Tạo bài đọc","Add now":"Thêm ngay","Basic":"Cơ bản","Copy prompt":"Copy câu lệnh","Test microphone":"Thử micro","Test: 안녕하세요":"Nghe thử: 안녕하세요","→ meaning":"→ nghĩa","→ Korean word":"→ từ Hàn","Dictation":"Chính tả","Read aloud":"Đọc to","From meaning":"Nói từ nghĩa","Add a word":"Thêm một từ","Korean":"Tiếng Hàn","Meaning":"Nghĩa","Auto":"Tự động",
+"✨ Generate":"✨ Tạo","Generate":"Tạo","Generate passage":"Tạo bài đọc","Add now":"Thêm ngay","Basic":"Cơ bản","Copy prompt":"Copy câu lệnh","Test microphone":"Thử micro","Test: 안녕하세요":"Nghe thử: 안녕하세요","→ meaning":"→ nghĩa","→ Korean word":"→ Hàn","Dictation":"Chính tả","Read aloud":"Đọc to","From meaning":"Nói theo nghĩa","Add a word":"Thêm một từ","Korean":"Tiếng Hàn","Meaning":"Nghĩa","Auto":"Tự động",
 "“Auto” suggests a meaning with free online translation — check it before saving.":"“Tự động” gợi ý nghĩa bằng dịch online — kiểm tra lại trước khi lưu.",
 "Add word":"Thêm từ","Paste a word list":"Dán danh sách từ",
 "One word per line. Separate Korean and meaning with":"Mỗi dòng một từ. Ngăn tiếng Hàn và nghĩa bằng",
@@ -1079,7 +1081,7 @@ const VI = {
 "1× native":"1× bản xứ","Translation":"Bản dịch","Hide Korean":"Ẩn tiếng Hàn","Hide translation":"Ẩn bản dịch","Tap 🎙 to check your pronunciation":"Chạm 🎙 để chấm điểm phát âm","⚡ Basic":"⚡ Cơ bản","Grading":"Chấm điểm","AI grading needs a Gemini key.":"Chấm bằng AI cần Gemini key.","Add key":"Thêm key","How your speaking practice is checked":"Cách chấm phần luyện nói","🎙 Speaking coach":"🎙 Luyện nói",
 "Tap a sentence to play from there. Press space to play/pause.":"Chạm vào câu để phát từ đó. Phím cách để phát/dừng.",
 "Key words":"Từ khoá","+ Add new words to flashcards":"+ Thêm từ mới vào flashcard","✨ Add now":"✨ Thêm ngay",
-"All":"Tất cả","New":"Mới","Study":"Học","New words per day":"Số từ mới mỗi ngày","Question types":"Dạng câu hỏi","Choose":"Chọn","Type":"Gõ","Speak":"Nói","Korean → meaning":"Hàn → nghĩa","🔊 → meaning":"🔊 → nghĩa","🔊 → Korean word":"🔊 → từ Hàn","Meaning → Korean":"Nghĩa → Hàn","🔊 Dictation":"🔊 Chính tả","🎙 Read aloud":"🎙 Đọc to","🎙 From meaning":"🎙 Nói từ nghĩa",
+"All":"Tất cả","New":"Mới","Study":"Học","New words per day":"Số từ mới mỗi ngày","Question types":"Dạng câu hỏi","Choose":"Chọn","Type":"Gõ","Speak":"Nói","Korean → meaning":"Hàn → nghĩa","🔊 → meaning":"🔊 → nghĩa","🔊 → Korean word":"🔊 → Hàn","Meaning → Korean":"Nghĩa → Hàn","🔊 Dictation":"🔊 Chính tả","🎙 Read aloud":"🎙 Đọc to","🎙 From meaning":"🎙 Nói theo nghĩa",
 "Korean → choose meaning":"Tiếng Hàn → chọn nghĩa","🔊 Listen → choose meaning":"🔊 Nghe → chọn nghĩa","🔊 Listen → choose the Korean word":"🔊 Nghe → chọn từ tiếng Hàn","Listen · choose what you hear":"Nghe · chọn từ bạn nghe thấy","Meaning → type Korean":"Nghĩa → gõ tiếng Hàn",
 "🔊 Listen → type Korean (dictation)":"🔊 Nghe → gõ tiếng Hàn (chính tả)","Auto-play audio for Korean words":"Tự phát âm từ tiếng Hàn",
 "Voice":"Giọng đọc","Korean voice":"Giọng tiếng Hàn","No known young voice on this device — showing all.":"Máy không có giọng trẻ — hiện tất cả.",
