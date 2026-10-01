@@ -1,7 +1,7 @@
 {
-  "name": "Hangul with PV",
-  "short_name": "Hangul with PV",
-  "description": "Học từ vựng, luyện đọc và luyện nói tiếng Hàn",
+  "name": "Grow with PV",
+  "short_name": "Grow with PV",
+  "description": "Học từ vựng, luyện đọc và luyện nói tiếng Hàn, Anh, Nhật, Trung, Thái, Việt",
   "id": "./",
   "start_url": "./",
   "scope": "./",

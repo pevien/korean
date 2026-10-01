@@ -1,4 +1,4 @@
-// Hangul with PV service worker: works offline, but always tries the network first
+// Grow with PV service worker: works offline, but always tries the network first
 // so updates you push to GitHub show up on the next open.
 const CACHE = "hangul-v18", NOTIFY_CACHE = "hangul-notify";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
@@ -30,13 +30,14 @@ async function remind(){
   const h = new Date().getHours(); if (h < 5) return;   // quiet hours 00:00–05:00
   if (st.lastNotified && Date.now() - st.lastNotified < 6*60*60*1000) return;
   const now = Date.now(), due = (st.dues || []).filter(t => t <= now).length;
-  const newLeft = Math.min(st.newTotal || 0, Math.max(0, (st.newPerDay || 0) - (st.date === today() ? st.newCount || 0 : 0)));
+  const left = (n, c) => Math.min(n || 0, Math.max(0, (st.newPerDay || 0) - (st.date === today() ? c || 0 : 0)));
+  const newLeft = st.courses ? st.courses.reduce((a, x) => a + left(x.n, x.c), 0) : left(st.newTotal, st.newCount);   // one count per course
   if (!due && !newLeft) return;
   const vi = st.ui !== "en";
   const parts = [];
   if (due) parts.push(vi ? `${due} từ cần ôn` : `${due} word${due === 1 ? "" : "s"} to review`);
   if (newLeft) parts.push(vi ? `${newLeft} từ mới` : `${newLeft} new word${newLeft === 1 ? "" : "s"}`);
-  await self.registration.showNotification(vi ? "🎯 Đến giờ ôn tiếng Hàn!" : "🎯 Time for Korean!", {
+  await self.registration.showNotification(vi ? "🎯 Đến giờ ôn tập rồi!" : "🎯 Time to review!", {
     body: parts.join(" · "), icon: "./icon-192.png", badge: "./icon-192.png", tag: "review-reminder", renotify: true
   });
   st.lastNotified = Date.now();
