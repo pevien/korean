@@ -240,7 +240,17 @@ nav button[data-v=army].on{color:var(--army)}
 .tk-det{border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font-size:13px;display:grid;gap:5px}
 .tk-det .btn2{flex:0 0 auto;padding:6px 10px;font-size:13px}
 .tk-ctl{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));z-index:5;background:var(--card);border-radius:var(--radius);padding:6px 8px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
-.tk-ctl .turn{margin:4px 0 2px;font-size:13px;min-height:0}
+.tk-ctl .turn{margin:2px 0 6px;font-size:13px;min-height:0}   /* status sits above the buttons */
+/* the chat fills the screen so the controls rest at the bottom even when there are only a few messages */
+#talk.tk-chat{display:flex;flex-direction:column;min-height:calc(100vh - 108px - env(safe-area-inset-bottom));min-height:calc(100dvh - 108px - env(safe-area-inset-bottom))}
+#talk.tk-chat .tk-ctl,#talk.tk-chat .tk-foot{margin-top:auto}
+/* summary: "keep talking" / "new conversation" stay pinned right above the bottom bar */
+.tk-foot{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));z-index:5;background:var(--card);border-radius:var(--radius);padding:8px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
+/* speed on the left · 💡 🎙 🔊 in the centre · red "finish" on the right; while recording only ⏹ stays */
+.pctl.tk-btns{display:grid;grid-template-columns:1fr auto auto auto 1fr}
+.pctl.tk-btns .prate{justify-self:start;margin-left:2px;background-color:transparent;color:var(--text)}
+.pctl.tk-btns button.tk-end{justify-self:end;width:auto;height:34px;padding:0 12px;font-size:13px;font-weight:600;background:var(--bad-soft);color:var(--bad)}
+.tk-ctl.recording .tk-btns > :not(#tkRec){visibility:hidden}
 .tk-ctl .turn:empty{display:none}
 .tk-hints{display:grid;gap:6px}
 .tk-hint{display:flex;align-items:center;gap:10px;text-align:left;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:500}
@@ -2931,11 +2941,12 @@ function syncPRate(){
   }
   sel.value = o.value;
   const s2 = $("#pRate2"); s2.innerHTML = sel.innerHTML; s2.value = sel.value;   // same speeds in ⚙️
+  const s3 = $("#tkRate"); if (s3){ s3.innerHTML = sel.innerHTML; s3.value = sel.value; fitPRate(s3); }   // and in 💬 Talk
   fitPRate();
 }
 // a <select> is as wide as its longest option (0.75×): size it to the chosen one so the ⌄ sits right after "1×"
-function fitPRate(){
-  const sel = $("#pRate"), cs = getComputedStyle(sel), g = (fitPRate.c ||= document.createElement("canvas")).getContext("2d");
+function fitPRate(sel = $("#pRate")){
+  const cs = getComputedStyle(sel), g = (fitPRate.c ||= document.createElement("canvas")).getContext("2d");
   g.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
   const t = sel.options[sel.selectedIndex]?.textContent || "";
   sel.style.width = Math.ceil(g.measureText(t).width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2) + "px";
@@ -4124,7 +4135,12 @@ function talkStop(){
   try { if (TK.rec && TK.rec.state === "recording"){ TK.rec.onstop = null; TK.rec.stop(); } } catch(e){}
   if (TK.stream) TK.stream.getTracks().forEach(t => t.stop());
   TK.rec = TK.stream = null;
-  const b = $("#tkRec"); if (b){ b.classList.remove("on"); b.textContent = "🎙"; }
+  talkRecUI(false);
+}
+// while recording only ⏹ shows — the other controls would just stop the recording
+function talkRecUI(on){
+  const b = $("#tkRec"); if (b){ b.classList.toggle("on", on); b.textContent = on ? "⏹" : "🎙"; }
+  const c = $(".tk-ctl"); if (c) c.classList.toggle("recording", on);
 }
 // the status line (errors, mic help) survives re-renders; empty = hidden
 function talkStatus(html){
@@ -4143,6 +4159,7 @@ function talkHead(title, right){
     <div class="c"><h2>${title}</h2></div><div class="r">${right || ""}</div></div>`;
 }
 function renderTalk(){
+  $("#talk").classList.remove("tk-chat");   // only the chat and its summary pin their controls to the bottom
   const t = S.talk, h = TK.view && (S.talks || []).find(x => x.id === TK.view);
   if (h) renderTalkSummary(h, true);
   else if (TK.histList) renderTalkHistList();
@@ -4358,14 +4375,19 @@ function renderTalkChat(){
       ${TK.hints.map((h, k) => `<button class="tk-hint" data-k="${k}" title="${L("Nghe câu này", "Hear this")}"><span class="tx"><span lang="ko">${esc(h.ko)}</span><span class="small muted">${esc(h.mean || "")}</span></span><span class="sp" aria-hidden="true">🔊</span></button>`).join("")}
       <p class="small muted" style="margin:2px 0 0">${L("Chạm để nghe, rồi chạm 🎙 và nói theo cách của bạn.", "Tap to hear it, then tap 🎙 and say it your way.")}</p></div>` : ""}
     <div class="tk-ctl">
+      <div class="turn" id="tkStatus"></div>
       <div class="pctl tk-btns">
+        <select id="tkRate" class="prate" title="${L("Tốc độ đọc", "Speed")}" aria-label="${L("Tốc độ đọc", "Speed")}"></select>
         <button id="tkHint" title="${L("Không biết nói gì? Xem câu gợi ý", "Stuck? See suggested answers")}" aria-label="${L("Gợi ý", "Hint")}">💡</button>
         <button id="tkRec" class="main rec" title="${L("Nói", "Speak")}" aria-label="${L("Nói", "Speak")}">🎙</button>
         <button id="tkTts" title=""></button>
-        <button id="tkEnd" title="${L("Kết thúc hội thoại", "Finish the conversation")}" aria-label="${L("Kết thúc", "Finish")}">🏁</button>
+        <button id="tkEnd" class="tk-end" title="${L("Kết thúc hội thoại", "Finish the conversation")}">${L("Kết thúc", "Finish")}</button>
       </div>
-      <div class="turn" id="tkStatus"></div>
     </div>`;
+  $("#talk").classList.add("tk-chat");
+  const rs = $("#tkRate"); rs.innerHTML = $("#pRate").innerHTML; rs.value = $("#pRate").value; fitPRate(rs);
+  rs.onchange = () => { $("#pRate").value = rs.value; $("#pRate").onchange(); fitPRate(rs); };
+  if (TK.rec) talkRecUI(true);
   talkStatus(TK.status);
   const ttsBtn = () => { const b = $("#tkTts"); b.textContent = talkTts() ? "🔊" : "🔇"; b.setAttribute("aria-label", talkTts() ? L("Đọc to", "Read aloud") : L("Tắt tiếng", "Muted")); b.title = talkTts() ? L("AI đang đọc to — chạm để tắt", "AI reads aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); };
   ttsBtn();
@@ -4425,13 +4447,13 @@ async function talkRecStart(){
   }
   TK.t0 = Date.now(); TK.hints = null;
   if ($(".tk-hints")) $(".tk-hints").remove();
-  const b = $("#tkRec"); b.classList.add("on"); b.textContent = "⏹";
-  talkStatus("🔴 " + L("Đang ghi… nói xong chạm ⏹", "Recording… tap ⏹ when you're done"));
+  talkRecUI(true);
+  talkStatus("");   // the pulsing red ⏹ already says it's recording
   TK.autoStop = setTimeout(talkRecStop, 30000);
 }
 function talkRecStop(){
   clearTimeout(TK.autoStop);
-  const b = $("#tkRec"); if (b){ b.classList.remove("on"); b.textContent = "🎙"; }
+  talkRecUI(false);
   if (TK.rec && TK.rec.state === "recording") TK.rec.stop();   // → onstop sends the turn
 }
 
@@ -4461,11 +4483,12 @@ function renderTalkSummary(t, hist){
       ${issues.length ? `<h2 style="margin-top:16px">🗣 ${L("Lưu ý phát âm", "Pronunciation notes")}</h2>${issues.slice(0, 8).map(s => `<div class="tk-sum small">${s.part ? `<b lang="ko">${esc(s.part)}</b> · ` : ""}${esc(s.tip)}</div>`).join("")}` : ""}
     </div>
     <details class="card tk-all" id="tkAll" ${TK.showAll ? "open" : ""}><summary>💬 ${L("Cả hội thoại", "Whole conversation")} <span class="muted">· ${L(`${t.turns.filter(x => !x.pending).length} câu`, `${t.turns.filter(x => !x.pending).length} lines`)}</span></summary>${talkTranscript(t)}</details>
-    ${hist ? `<div class="row"><button class="btn2" id="tkMore">← ${L("Nói tiếp", "Keep talking")}</button><button class="btn-ghost" id="tkDel">🗑 ${L("Xoá", "Delete")}</button></div>`
-      : `<div class="row">
-      <button class="btn2" id="tkMore">← ${L("Nói tiếp", "Keep talking")}</button>
-      <button class="btn2" id="tkNew">💬 ${L("Hội thoại mới", "New conversation")}</button>
+    ${hist ? `<div class="row tk-foot"><button class="btn2" id="tkMore">${L("Nói tiếp", "Keep talking")}</button><button class="btn-ghost" id="tkDel">🗑 ${L("Xoá", "Delete")}</button></div>`
+      : `<div class="row tk-foot">
+      <button class="btn2" id="tkMore">${L("Nói tiếp", "Keep talking")}</button>
+      <button class="btn2" id="tkNew">${L("Hội thoại mới", "New conversation")}</button>
     </div>`}`;
+  $("#talk").classList.add("tk-chat");
   $("#tkAll").ontoggle = e => { TK.showAll = e.target.open; };
   $$("#talk [data-say]").forEach(el => el.onclick = () => speak(el.dataset.say));
   if (hist){
