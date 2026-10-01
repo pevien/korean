@@ -117,6 +117,8 @@ button.stat:active{transform:scale(.97)}
 .pg-head .btn2{flex:0 0 auto;width:auto;padding:7px 14px;font-size:13px}   /* same size as the text action top right of sub-pages */
 /* focus mode (in a session and the learner has started): the session is the whole page — no app title, page heading, metrics or tab bar */
 body.in-session:not(.auto-session) header,body.in-session:not(.auto-session) #studyHead,body.in-session:not(.auto-session) #v-study > .stats{display:none}
+/* …and the reverse: before that, the home metrics already say how many are left and there's nothing to "End" yet */
+body.auto-session #sessTop{display:none}
 .stat.tone b .of{font-size:14px;font-weight:600;opacity:.75}
 .stat.tone small{display:block;font-size:10px;margin-top:2px;opacity:.9}
 .t-purple{--t-bg:var(--accent-soft);--t-fg:#4f46e5}
@@ -717,11 +719,13 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       <div class="card nudge hidden" id="nudge" data-noi18n></div>
     </div>
     <div id="studySession" class="hidden">
-      <div class="row" style="margin-bottom:8px">
-        <span class="small muted" id="sessCount" style="flex:3"></span>
-        <button class="btn-danger small" style="flex:0 0 auto;padding:6px 12px" id="endBtn">End</button>
+      <div id="sessTop">
+        <div class="row" style="margin-bottom:8px">
+          <span class="small muted" id="sessCount" style="flex:3"></span>
+          <button class="btn-danger small" style="flex:0 0 auto;padding:6px 12px" id="endBtn">End</button>
+        </div>
+        <div class="progress"><i id="sessBar"></i></div>
       </div>
-      <div class="progress"><i id="sessBar"></i></div>
       <div class="card qwrap" id="qBox"></div>
     </div>
   </section>
