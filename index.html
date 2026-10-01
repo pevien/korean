@@ -38,8 +38,8 @@
 }
 /* icons: Phosphor sprite (#i-*), sized by the surrounding text, coloured by currentColor */
 .i{width:1.2em;height:1.2em;fill:currentColor;flex:0 0 auto;vertical-align:-.25em}
-.hic{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;color:var(--accent);flex:0 0 auto}   /* page-head icon: solid, no box — same weight as ARMY's sparkle heart; the cards below keep the boxed outline icons */
-.hic .i{width:40px;height:40px;vertical-align:0}
+.hic{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;color:var(--accent);flex:0 0 auto}   /* page-head icon: solid, no box — same weight as ARMY's sparkle heart; the cards below keep the boxed outline icons */
+.hic .i{width:28px;height:28px;vertical-align:0}
 .li-ic{display:flex;color:var(--accent);font-size:20px}
 .pctl button.rec.on{color:#fff}   /* white stop square on the red recording button */
 :root{accent-color:var(--accent)}   /* checkboxes, sliders: app purple instead of system blue */
@@ -109,13 +109,14 @@ button.stat:active{transform:scale(.97)}
 .nudge .nu-h > span{font-size:28px;line-height:1}
 .nudge .nu-h p{margin:4px 0 0;line-height:1.45}
 .nudge ol{margin:10px 0 4px;padding-left:20px;font-size:14px}
-.nudge .nu-act{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.nudge .nu-act{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
 .nudge .nu-act button{flex:0 0 auto;width:auto;padding:8px 16px;font-size:14px}
 #nuInstall:empty{display:none}
 #nuInstall .btn2{margin-top:10px}
 #sStreak .i{width:.85em;height:.85em;align-self:center}
 .pg-head .btn2{flex:0 0 auto;width:auto;padding:7px 14px;font-size:13px}   /* same size as the text action top right of sub-pages */
-body.in-session:not(.auto-session) #studyHead{display:none}
+/* focus mode (in a session and the learner has started): the session is the whole page — no app title, page heading, metrics or tab bar */
+body.in-session:not(.auto-session) header,body.in-session:not(.auto-session) #studyHead,body.in-session:not(.auto-session) #v-study > .stats{display:none}
 .stat.tone b .of{font-size:14px;font-weight:600;opacity:.75}
 .stat.tone small{display:block;font-size:10px;margin-top:2px;opacity:.9}
 .t-purple{--t-bg:var(--accent-soft);--t-fg:#4f46e5}
@@ -305,7 +306,7 @@ nav button[data-v=army].on{color:var(--army)}
 .tk-sum .good{color:var(--ok);font-weight:600;font-size:16px}
 .ar-hero .h{font-size:34px;line-height:1;display:flex;color:var(--accent)}
 .ar-hero h2{font-size:17px}
-.ar-hero .h .i{width:44px;height:44px;vertical-align:0}   /* the sparkles take part of the box: a little larger than an emoji */
+.ar-hero .h .i{width:32px;height:32px;vertical-align:0}   /* the sparkles take part of the box: a little larger than an emoji */
 .ar-go{margin-top:12px}
 body.ar-listening header, body.ar-listening #arHistCard > p{display:none}
 #arStatus:empty{display:none}
@@ -384,6 +385,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .ko-line > div{position:relative;display:inline-block;max-width:100%}
 .ko-line .speak.sm{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:12px}
 .ko-line .ko{overflow-wrap:anywhere;font-size:clamp(30px,11vw,44px)}
+.ko-mean{text-align:center;font-size:17px;color:var(--muted);margin-top:2px}
 .mean{font-size:22px;font-weight:600}
 .speak{background:var(--accent-soft);color:var(--accent);border-radius:var(--r-pill);width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
 .speak.big{width:96px;height:96px;font-size:40px}
@@ -414,6 +416,17 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .feedback{margin-top:14px;padding:12px;border-radius:var(--r-md);text-align:left}
 .feedback.ok{background:var(--ok-soft);color:var(--ok)}
 .feedback.bad{background:var(--bad-soft);color:var(--bad)}
+/* quiz answer: only the verdict line and the score carry the colour; meaning reads as normal text, notes stay muted */
+.feedback.qfb{color:var(--text);background:var(--bg);border-left:3px solid var(--fb)}   /* neutral box, a coloured edge says right / wrong */
+.feedback.qfb.ok{--fb:var(--ok)} .feedback.qfb.bad{--fb:var(--bad)}
+.qfb .fb-t{color:var(--fb);font-weight:600;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.qfb #sayMine{flex:0 0 auto;margin:-4px -4px 0 0;padding:5px 10px;font-size:13px;white-space:nowrap}
+.qfb .small{color:var(--muted)}
+.qfb .small b{color:var(--fb)}
+.qfb .fb-heard,.qfb .fb-ans{margin-top:4px}
+.qfb .fb-ans span{color:var(--text);font-weight:600}
+.qfb .wrong{color:var(--bad)}
+.qfb .ex{margin-top:12px;padding:12px 0 0;background:none;border-radius:0;border-top:1px solid var(--line)}   /* the example sits inside the result box, split off by a hairline */
 /* study hint ("Starts with: 밥 · 1 characters"): green text right by the Hint button, hidden until the first tap */
 .hint-box{display:flex;align-items:center;justify-content:center;gap:6px;max-width:100%;margin:12px auto 0;color:var(--ok);font-size:15px}   /* green, like the reader's "Tap 🎙 …" hint */
 .hint-box:has(#hintTxt:empty){display:none}
@@ -484,6 +497,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .empty{text-align:center;padding:26px 10px}
 .empty > p,#homeCard > p.muted,#homeCard > .feedback{font-size:14px}   /* home descriptions ("Add some Korean words…") match the greeting's translation line */
 .empty .big{font-size:44px}
+.cta-note{margin:0 0 20px;text-wrap:balance}   /* a description right above its button(s): same 20px gap on every screen, no lone last word */
 /* completion cheer: a random BTS member emoji + a short Korean phrase */
 .cheer-m{font-size:52px;line-height:1;display:inline-block;animation:bob 1.6s ease-in-out infinite}
 .cheer-ko{font-size:22px;font-weight:800;margin-top:10px;text-align:center}
@@ -498,6 +512,7 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 /* examples */
 .ex{margin-top:12px;padding:10px 12px;background:var(--bg);border-radius:var(--r-md);text-align:left;display:flex;gap:10px;align-items:flex-start}
 .ex .exk{font-size:17px;line-height:1.5} .ex .exm{font-size:14px;color:var(--muted)}
+.ex .exm b{color:var(--text);font-weight:600}
 #rdVocab li{padding:8px 0}
 #rdVocab .t b{display:block;font-size:17px}
 #rdVocab .badge{flex:0 0 auto}
@@ -686,7 +701,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     <div id="studySession" class="hidden">
       <div class="row" style="margin-bottom:8px">
         <span class="small muted" id="sessCount" style="flex:3"></span>
-        <button class="btn-ghost small" style="flex:0 0 auto;padding:6px 12px" id="endBtn">End</button>
+        <button class="btn-danger small" style="flex:0 0 auto;padding:6px 12px" id="endBtn">End</button>
       </div>
       <div class="progress"><i id="sessBar"></i></div>
       <div class="card qwrap" id="qBox"></div>
@@ -1154,8 +1169,6 @@ const VI_RX = [
  [/^in (\d+ (?:min|h|days?|mo))$/, (m, t) => "sau " + viTime(t)],
  [/^🔥 (\d+) day streak$/, "🔥 $1 ngày liên tiếp"],
  [/^(\d+) reviews? and (\d+) new words?\. Reviewed today: (\d+)\.$/, "$1 từ cần ôn và $2 từ mới. Hôm nay đã ôn: $3."],
- [/^Next review in ([^.]+)\.$/, (m, t) => "Lần ôn tới sau " + viTime(t) + "."],
- [/^Next review in (.+?)\. Add more words or practice without changing your schedule\.$/, (m, t) => "Lần ôn tới sau " + viTime(t) + ". Thêm từ hoặc luyện thêm mà không ảnh hưởng lịch ôn."],
  [/^Added (\d+) example sentences?$/, "Đã thêm $1 câu ví dụ"],
  [/^Adding example sentences to (\d+) words?…$/, "Đang thêm câu ví dụ cho $1 từ…"],
  [/^(\d+) words? without an example sentence\.$/, "$1 từ chưa có câu ví dụ."],
@@ -1170,7 +1183,6 @@ const VI_RX = [
  [/^Added “(.*)”( \(no meaning\))?$/, (m, w, n) => "Đã thêm “" + w + "”" + (n ? " (chưa có nghĩa)" : "")],
  [/^Deleted “(.*)”$/, "Đã xoá “$1”"],
  [/^✅ Done! (\d+)\/(\d+) correct$/, "✅ Xong! Đúng $1/$2"],
- [/^💪 Done! (\d+)\/(\d+) correct — let's lock in the words you missed\.$/, "💪 Xong! Đúng $1/$2 — luyện lại các từ còn sai nhé."],
  [/^🔁 Practice (\d+) missed words?$/, "🔁 Luyện lại $1 từ sai"],
  [/^Practice (\d+) missed words?$/, "Luyện lại $1 từ sai"],
  [/^🎙 best (\d+)\/100$/, "🎙 Kỷ lục $1/100"],
@@ -1383,9 +1395,27 @@ function renderAbc(){
     setFilter("all"); show("words");
   };
 }
+// bold the first place one of the needles shows up (raw text in, escaped text out).
+// ci: meaning side — case-insensitive, whole words only ("eat" not inside "great"). grow: a verb stem takes the rest of its word (먹 → 먹어요)
+function markFirst(text, needles, ci, grow){
+  const hay = ci ? text.toLowerCase() : text, letter = ch => !!ch && /\p{L}/u.test(ch);
+  for (const n of needles){
+    const k = ci ? n.toLowerCase() : n;
+    for (let i = k ? hay.indexOf(k) : -1; i >= 0; i = hay.indexOf(k, i + 1)){
+      let e = i + n.length;
+      if (ci && (letter(text[i - 1]) || letter(text[e]))) continue;
+      if (grow && n === grow) while (e < text.length && /[\uac00-\ud7a3]/.test(text[e])) e++;
+      return esc(text.slice(0, i)) + "<b>" + esc(text.slice(i, e)) + "</b>" + esc(text.slice(e));
+    }
+  }
+  return esc(text);
+}
 function exampleHTML(c){
   if (!c.ex) return "";
-  return `<div class="ex"><button class="speak sm" data-say="${esc(c.ex)}">${ic("speaker-high")}</button><div><div class="exk" lang="ko">${esc(c.ex)}</div><div class="exm">${esc(c.exMean)}</div></div></div>`;
+  // the word being learned stands out in its example: Korean by its stem (먹다 → 먹 in 먹어요), the translation only where the meaning shows up as-is
+  const ko = c.ko.trim(), kos = [ko, ko.length > 1 && ko.endsWith("다") ? ko.slice(0, -1) : ""];
+  const means = String(c.meaning || "").replace(/\(.*?\)/g, "").split(/[,;/]/).map(m => m.trim().replace(/^to /i, "")).filter(m => m.length > 1);
+  return `<div class="ex"><button class="speak sm" data-say="${esc(c.ex)}">${ic("speaker-high")}</button><div><div class="exk" lang="ko">${markFirst(c.ex, kos, false, kos[1])}</div><div class="exm">${markFirst(c.exMean || "", means, true)}</div></div></div>`;
 }
 function bindSay(root){ root.querySelectorAll("[data-say]").forEach(b => b.onclick = e => { e.stopPropagation(); speak(b.dataset.say); }); }
 
@@ -1779,21 +1809,23 @@ function refreshHome(noAuto){
   const h = $("#homeCard");
   if (!S.cards.length){
     // a new learner may not read Hangul yet: the alphabet sits next to Add words
-    h.innerHTML = `<div class="empty">${cheerHTML([["환영해요!", "Chào mừng bạn!", "Welcome!"]])}<p class="muted">Add some Korean words to start learning.</p>
+    h.innerHTML = `<div class="empty">${cheerHTML([["환영해요!", "Chào mừng bạn!", "Welcome!"]])}<p class="muted cta-note">Add some Korean words to start learning.</p>
       <div class="row" style="align-items:stretch">${S.settings.abcHide ? "" : `<button class="btn2" id="goAbcHome" style="white-space:nowrap" data-noi18n>${L("Bảng chữ cái", "Alphabet")}</button>`}<button class="btn" id="goAdd" style="white-space:nowrap">+ Add words</button></div></div>`;
     $("#goAdd").onclick = () => show("add");
     if (!S.settings.abcHide) $("#goAbcHome").onclick = () => show("abc");
     return;
   }
   if (due + nl > 0){
-    h.innerHTML = `${resultHTML()}<div class="empty" style="padding:4px 0 14px">${cheerHTML(CHEER_START)}</div><h2>Ready to study</h2><p class="muted" style="margin-top:0">${due} review${due===1?"":"s"} and ${nl} new word${nl===1?"":"s"}. Reviewed today: ${S.daily.reviews}.</p><button class="btn" id="startBtn">▶ Start</button>`;
+    h.innerHTML = `${resultHTML()}<div class="empty" style="padding:4px 0 14px">${cheerHTML(CHEER_START)}</div><h2>Ready to study</h2><p class="muted cta-note">${due} review${due===1?"":"s"} and ${nl} new word${nl===1?"":"s"}. Reviewed today: ${S.daily.reviews}.</p><button class="btn" id="startBtn">▶ Start</button>`;
     $("#startBtn").onclick = () => startSession(false); bindResult();
   } else {
     const next = S.cards.filter(c=>c.last).sort((a,b)=>a.due-b.due)[0];
     const when = next ? timeUntil(next.due) : "";
     const res = resultHTML(), retry = res.includes("retryMissed");   // missed words left: "Practice N missed" is the one thing to do, the extras come back once it's clean
-    h.innerHTML = `${res}<div class="empty">${cheerHTML()}${retry ? (when ? `<p class="muted" style="margin:0">Next review in ${when}.</p>` : "") : `<p class="muted" style="margin-top:0">${when ? "Next review in " + when + ". " : ""}Add more words or practice without changing your schedule.</p>
-      <div class="row" style="align-items:stretch"><button class="btn-ghost" id="pracBtn">Extra practice</button><button class="btn" id="moreNew">Learn 5 more</button></div>`}</div>`;
+    // with misses: cheer first, then the score and the retry button under it
+    h.innerHTML = retry ? `<div class="empty" style="padding-bottom:16px">${cheerHTML()}</div>${res}`
+      : `<div class="empty">${cheerHTML()}<p class="muted cta-note" data-noi18n>${doneLine(!!res, when)}</p>
+      <div class="row" style="align-items:stretch"><button class="btn-ghost" id="pracBtn">Extra practice</button><button class="btn" id="moreNew">Learn 5 more</button></div></div>`;
     bindResult();
     if (retry) return;
     $("#pracBtn").onclick = () => startSession(true);
@@ -1903,6 +1935,8 @@ function startSession(practice, only, auto){
   nextQ();
 }
 $("#endBtn").onclick = () => endSession();
+// an auto-started session keeps the home chrome until the learner does something (tap, type) — the word being read out on its own doesn't count
+["pointerdown", "keydown"].forEach(t => $("#studySession").addEventListener(t, e => { if (e.target.closest("#endBtn")) return; document.body.classList.remove("auto-session"); }, true));
 function endSession(summary){
   frCancel();
   homeAuto = false;
@@ -1924,11 +1958,18 @@ function endSession(summary){
 /* today's last session result, shown on top of the home card until a later session replaces it:
    imperfect → kept for the day (S.daily.result); perfect → kept in memory until the page is reloaded */
 let perfectRun = false;
+// all-done line: score (only right after a clean run — res is then the ✅ banner), next review, and the reassurance about the extras
+function doneLine(perfect, when){
+  const r = S.daily.result, sc = perfect ? `<b style="color:var(--ok)">${r.correct}/${r.answered}</b>` : "";
+  return L(`${sc ? "💯 Đúng " + sc + ". " : ""}${when ? "Lần ôn tới sau " + viTime(when) + ". " : ""}Học thêm từ hoặc luyện thêm sẽ không ảnh hưởng lịch ôn.`,
+    `${sc ? "💯 " + sc + " correct. " : ""}${when ? "Next review in " + when + ". " : ""}Add more words or practice without changing your schedule.`);
+}
 function resultHTML(){
   const r = S.daily.result, missed = r ? S.cards.filter(c => r.missed.includes(c.id)) : [];
   if (!r || !r.answered) return "";
   if (!missed.length) return perfectRun ? `<div class="feedback ok" style="margin:0 0 12px">✅ Done! ${r.correct}/${r.answered} correct</div>` : "";
-  return `<div class="feedback bad" style="margin:0 0 12px">💪 Done! ${r.correct}/${r.answered} correct — let's lock in the words you missed.</div>
+  const sc = `<b style="color:var(--ok)">${r.correct}/${r.answered}</b>`;
+  return `<p class="muted cta-note" style="text-align:center" data-noi18n>${L(`💪 Đúng ${sc} — luyện lại các từ còn sai nhé.`, `💪 ${sc} correct — let's lock in the words you missed.`)}</p>
     <button class="btn" id="retryMissed" style="margin-bottom:14px">${ic("arrow-clockwise")} Practice ${missed.length} missed word${missed.length===1?"":"s"}</button>`;
 }
 function bindResult(){
@@ -1952,8 +1993,8 @@ function renderIntro(item){
     <button class="speak" id="qSpeak">${ic("speaker-high")}</button>
     <div class="mean">${esc(c.meaning) || '<span class="muted">(no meaning)</span>'}</div>
     ${exampleHTML(c)}
-    <p class="small muted">Listen, say it out loud, then continue.</p>
-    <button class="btn" id="gotIt" style="margin-top:8px">Got it →</button>`;
+    <p class="small muted cta-note" style="margin-top:14px">Listen, say it out loud, then continue.</p>
+    <button class="btn" id="gotIt">Got it →</button>`;
   $("#qSpeak").onclick = () => speak(c.ko);
   bindSay($("#qBox"));
   if (S.settings.autoPlay) setTimeout(()=>speak(c.ko), 250);
@@ -2006,8 +2047,8 @@ function renderQuiz(item){
       <div class="row" style="margin-top:12px">${mode === "m2say" ? `<button class="btn-ghost" id="hintBtn">Hint</button>` : ""}<button class="btn-ghost" id="saySkip" style="flex:2">Can't speak now</button></div></div>`;
   } else {
     answer = `<div style="margin-top:16px"><input id="typeIn" type="text" lang="ko" enterkeyhint="go" autocomplete="off" autocapitalize="off" placeholder="한글로 입력…">
-      <div class="row" style="margin-top:8px"><button class="btn-ghost" id="hintBtn">Hint</button><button class="btn" id="checkBtn" style="flex:2">Check</button></div>
-      <p class="hint-box">${ic("lightbulb")}<span id="hintTxt"></span></p></div>`;
+      <div class="row" id="typeCtl" style="margin-top:8px"><button class="btn-ghost" id="hintBtn">Hint</button><button class="btn" id="checkBtn" style="flex:2">Check</button></div>
+      <p class="hint-box" id="typeHint">${ic("lightbulb")}<span id="hintTxt"></span></p></div>`;
   }
   $("#qBox").innerHTML = `<div class="qtype">${titles[mode]}</div>${prompt}${answer}<div id="fb"></div>`;
   const sp = $("#qSpeak"); if (sp) sp.onclick = () => speak(c.ko);
@@ -2116,17 +2157,48 @@ function answerTyped(item){
   if (!v.trim()) { $("#typeIn").focus(); return; }
   item.answered = true;
   const ok = norm(v) === norm(item.card.ko);
-  $("#typeIn").disabled = true; $("#checkBtn").disabled = true; $("#hintBtn").disabled = true;
+  $("#typeIn").disabled = true;
+  $("#typeCtl").classList.add("hidden"); $("#typeHint").classList.add("hidden");   // answered → the feedback + grade buttons take over, like the speaking dock
   finish(item, ok, v);
+}
+// what they said / typed, with the syllables that aren't in the answer in red (longest common subsequence, syllable by syllable)
+function markWrong(got, want){
+  const a = [...got], b = [...want], d = a.map(() => Array(b.length + 1).fill(0));
+  const L2 = (i, j) => i < 0 ? 0 : d[i][j];
+  a.forEach((x, i) => b.forEach((y, j) => { d[i][j+1] = x === y ? L2(i-1, j) + 1 : Math.max(L2(i-1, j+1), d[i][j]); }));
+  const keep = new Set();
+  for (let i = a.length - 1, j = b.length; i >= 0 && j > 0;){
+    if (a[i] === b[j-1]) { keep.add(i); i--; j--; } else if (L2(i-1, j) >= d[i][j-1]) i--; else j--;
+  }
+  return a.map((x, i) => keep.has(i) || x === " " ? esc(x) : `<b class="wrong">${esc(x)}</b>`).join("");
 }
 function finish(item, ok, typed, extra){
   document.body.classList.remove("auto-session");   // they're studying now → focus mode, tab bar goes
   const c = item.card; session.answered++; if (ok) session.correct++; else session.missed.add(c.id);
-  const reveal = `<div style="margin-top:4px"><b lang="ko" style="font-size:20px">${esc(c.ko)}</b> — ${esc(c.meaning)}</div>`;
+  const choice = item.mode === "ko2m" || item.mode === "listen2m" || item.mode === "listen2kc";
+  // Korean already big at the top (read aloud): the meaning appears right under it instead of being repeated in the box
+  const top = !choice && $("#qBox .ko-line");
+  if (top && c.meaning) top.insertAdjacentHTML("afterend", `<div class="ko-mean">${esc(c.meaning)}</div>`);
+  // word — meaning, same small size as the score line ("Từ đúng:" in front when the answer was wrong)
+  const reveal = top ? "" : `<div class="small fb-ans" data-noi18n>${ok ? "" : L("Từ đúng", "Correct") + ": "}<span lang="ko">${esc(c.ko)}</span> — ${esc(c.meaning)}</div>`;
   const exBlock = exampleHTML(c);
+  // one box: verdict, word + meaning, score notes, then the example. Multiple choice skips the word + meaning — the highlighted options already show it
+  // "play my recording" rides on the verdict line (top right) instead of taking a row of its own
+  const mine = ((extra || "").match(/<button[^>]*id="sayMine"[\s\S]*?<\/button>/) || [""])[0], notes = (extra || "").replace(mine, "");
+  // what was heard / typed: right after the score when there is one ("58/100 · App nghe được: 필당 · tip"), else its own line
+  const box = (cls, title, heard = "") => {
+    let n = notes;
+    if (heard && /<b>\d+\/100<\/b>/.test(n)) { n = n.replace(/(<b>\d+\/100<\/b>)/, `$1 · ${heard}`); heard = ""; }
+    // listen → meaning, wrong: they never saw the word written, so spell it out. The other choice modes already show the Korean (top or the green option)
+    const spell = !ok && (choice ? item.mode === "listen2m" : !!reveal);
+    let ans = choice && !spell ? "" : reveal;
+    // what they said comes first, then the right word: if "heard" went into the score line, the answer goes right after that line
+    if (!ok && ans && n !== notes) { n = n.replace("</div>", "</div>" + ans); ans = ""; }
+    return `<div class="feedback ${cls} qfb"><div class="fb-t"><span>${title}</span>${mine}</div>${heard ? `<div class="small fb-heard">${heard}</div>` : ""}${ans}${n}${exBlock}</div>`;
+  };
   let html;
   if (ok){
-    html = `<div class="feedback ok">✅ Correct!${reveal}${extra || ""}</div>` + exBlock;
+    html = box("ok", "✅ Correct!");
     if (!session.practice){
       const base = item.fresh || item.hinted || item.failed ? [3,4] : [3,4,5];
       html += `<div class="dock"><div class="grades" style="grid-template-columns:repeat(${base.length},1fr)">` + base.map(q => {
@@ -2136,13 +2208,12 @@ function finish(item, ok, typed, extra){
       }).join("") + `</div></div>`;
     } else html += `<div class="dock"><button class="btn" id="contBtn">Continue</button></div>`;
   } else {
-    html = `<div class="feedback bad">❌ Not quite${typed ? ` ${item.spoken ? "— we heard" : "— you wrote"} <b lang="ko">${esc(typed)}</b>` : ""}.${reveal}${extra || ""}</div>${exBlock}
-      <div class="dock"><div class="row">${$("#qSpeak") ? "" : `<button class="speak sm" style="flex:0 0 48px;height:48px;width:48px" id="fbSpeak">${ic("speaker-high")}</button>`}${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn" style="flex:0 0 auto;white-space:nowrap">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2;white-space:nowrap">Continue</button></div></div>`;
+    html = box("bad", "❌ Not quite", typed ? `<span data-noi18n>${item.spoken ? L("App nghe được", "We heard") : L("Bạn gõ", "You wrote")}: <span lang="ko">${markWrong(typed, c.ko)}</span></span>` : "") + `
+      <div class="dock"><div class="row">${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn" style="flex:0 0 auto;white-space:nowrap">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2;white-space:nowrap">Continue</button></div></div>`;
   }
   $("#fb").innerHTML = html;
   bindSay($("#fb"));
   speak(c.ko);
-  const fs = $("#fbSpeak"); if (fs) fs.onclick = () => speak(c.ko);
   $$("#fb .grades button").forEach(b => b.onclick = () => done(item, +b.dataset.q));
   const cb = $("#contBtn"); if (cb) { cb.onclick = () => done(item, ok ? 4 : 1); setTimeout(()=>cb.focus(), 30); }
   const tb = $("#typoBtn"); if (tb) tb.onclick = () => { session.correct++; if (!item.failed) session.missed.delete(c.id); done(item, 3); };
@@ -2265,7 +2336,7 @@ Return JSON exactly like: {"heard":"","correct":false,"score":0,"tip":""}`;
     item.busy = false;
     if (!session || session.queue[0] !== item) return;
     const extra = ((j.score != null || j.tip) ? `<div class="small" style="margin-top:6px">🎙 ${j.score != null ? `<b>${Math.round(j.score)}/100</b>` : ""}${j.tip ? " · " + esc(j.tip) : ""}</div>` : "")
-      + gradedBy(true) + `<button class="btn-ghost" id="sayMine" style="margin-top:8px;padding:6px 12px;font-size:13px">${ic("headphones")} ${L("Nghe lại giọng mình", "Play my recording")}</button>`;
+      + gradedBy(true) + `<button class="btn-ghost" id="sayMine">${ic("headphones")} ${L("Nghe lại", "Replay")}</button>`;
     sayResult(item, !!j.correct, String(j.heard || "").trim(), extra);
   } catch(e){
     item.busy = false;
@@ -2344,7 +2415,7 @@ function photoGate(tip, els, why){
   const k = hasKey();
   tip.classList.toggle("hidden", k); els.forEach(e => e.classList.toggle("hidden", !k));
   if (k) return true;
-  tip.innerHTML = `<b>${ic("key")} ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${why} ${L("Tạo key miễn phí trong ~1 phút.", "A free key takes ~1 minute to create.")}</p><button class="btn">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button>`;
+  tip.innerHTML = `<b>${ic("key")} ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted cta-note" style="margin-top:6px">${why} ${L("Tạo key miễn phí trong ~1 phút.", "A free key takes ~1 minute to create.")}</p><button class="btn">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button>`;
   tip.querySelector("button").onclick = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
   return false;
 }
@@ -4262,7 +4333,7 @@ function renderTalkSetup(){
   const key = hasKey();
   const goKey = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
   if (!key){   // nothing below works without AI → just the way to get a key
-    $("#talk").innerHTML = talkHead(`${ic("chat-circle-dots")} ${L("Luyện nói giao tiếp", "Conversation practice")}`, talkHistBtn()) + `<div class="card tk-key"><b>${ic("key")} ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${L("Hội thoại dùng AI để nghe, trả lời và chữa lỗi. Tạo key miễn phí trong ~1 phút.", "Talk uses AI to listen, answer and correct you. A free key takes ~1 minute to create.")}</p><button class="btn" id="tkKey">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button></div>`;
+    $("#talk").innerHTML = talkHead(`${ic("chat-circle-dots")} ${L("Luyện nói giao tiếp", "Conversation practice")}`, talkHistBtn()) + `<div class="card tk-key"><b>${ic("key")} ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted cta-note" style="margin-top:6px">${L("Hội thoại dùng AI để nghe, trả lời và chữa lỗi. Tạo key miễn phí trong ~1 phút.", "Talk uses AI to listen, answer and correct you. A free key takes ~1 minute to create.")}</p><button class="btn" id="tkKey">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button></div>`;
     $("#tkKey").onclick = goKey;
     return;
   }
