@@ -379,9 +379,11 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .qtype{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
 .ko{font-size:44px;font-weight:700;line-height:1.2;word-break:keep-all}
 /* word + 🔊 on one row, so the prompt stays short and the dock never covers the speaker */
-.ko-line{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
-.ko-line .speak.sm{flex:0 0 auto}
-.ko-line .ko{min-width:0;max-width:100%;overflow-wrap:anywhere;font-size:clamp(30px,11vw,44px)}
+/* the word stays centred (lined up with the label above); the speaker hangs off its right edge — side padding keeps room for it on long words */
+.ko-line{text-align:center;padding:0 52px}
+.ko-line > div{position:relative;display:inline-block;max-width:100%}
+.ko-line .speak.sm{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:12px}
+.ko-line .ko{overflow-wrap:anywhere;font-size:clamp(30px,11vw,44px)}
 .mean{font-size:22px;font-weight:600}
 .speak{background:var(--accent-soft);color:var(--accent);border-radius:var(--r-pill);width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
 .speak.big{width:96px;height:96px;font-size:40px}
@@ -1976,7 +1978,7 @@ function renderQuiz(item){
   const c = item.card, mode = item.mode || (item.mode = pickMode(c));
   const titles = { ko2m:"Choose the meaning", listen2m:"Listen · choose the meaning", listen2kc:"Listen · choose what you hear", m2ko:"Type it in Korean", listen2ko:"Listen · type what you hear", ko2say:"Read it aloud", m2say:"Say it in Korean" };
   let prompt = "";
-  if (mode === "ko2m" || mode === "ko2say") prompt = `<div class="ko-line"><div class="ko" lang="ko">${esc(c.ko)}</div><button class="speak sm" id="qSpeak" title="Listen" aria-label="Listen">${ic("speaker-high")}</button></div>`;
+  if (mode === "ko2m" || mode === "ko2say") prompt = `<div class="ko-line"><div><div class="ko" lang="ko">${esc(c.ko)}</div><button class="speak sm" id="qSpeak" title="Listen" aria-label="Listen">${ic("speaker-high")}</button></div></div>`;
   if (mode === "listen2m" || mode === "listen2ko" || mode === "listen2kc") prompt = `<button class="speak big" id="qSpeak">${ic("speaker-high")}</button><p class="small muted" style="margin:0">Tap to replay</p>`;
   if (mode === "m2ko" || mode === "m2say") prompt = `<div class="mean" style="font-size:28px">${esc(c.meaning)}</div>`;
   let answer = "";
