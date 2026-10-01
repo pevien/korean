@@ -546,13 +546,20 @@ input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .box{background:var(--bg);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:14px;text-align:left}
 .sent .smic{flex:0 0 auto!important;font-size:18px;padding:4px 6px}
 .sent .best{font-size:11px;color:var(--ok);font-weight:600;margin-top:6px}
-.rd-ed{display:grid;gap:10px}
-.rd-ed .es{display:grid;grid-template-columns:22px 1fr auto;gap:6px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:12px}
-.rd-ed .es .n{color:var(--muted);font-size:13px;padding-top:10px;text-align:center}
-.rd-ed .es .f{display:grid;gap:6px;min-width:0}
-.rd-ed .es .ctl{display:grid;gap:4px}
-.rd-ed .es .ctl button{padding:4px 8px;font-size:14px}
-.rd-ed .es textarea{min-height:0;resize:vertical}
+/* passage editor + photo review: reads like the text itself, fields only show while you touch them */
+#rdShotRes{margin-top:12px}
+/* a soft fill (no border, no underline) is the "you can edit this" hint — touch screens have no hover */
+.rd-lite input,.rd-lite textarea{background:color-mix(in srgb, var(--muted) 9%, transparent);border-color:transparent;border-radius:8px;padding:6px 8px;min-height:0;resize:none;overflow:hidden;display:block}
+.rd-lite .tm,.rd-lite .es .em{margin-top:4px}
+.rd-lite .tt{font-size:18px;font-weight:700}
+.rd-lite .tm{font-size:14px;color:var(--muted);margin-bottom:8px}
+.rd-lite .es{display:grid;grid-template-columns:18px 1fr auto;gap:4px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
+.rd-lite .es .h{display:flex;justify-content:center;padding:9px 0;color:var(--muted);cursor:grab;touch-action:none}   /* drag handle */
+.rd-lite .es.drag{background:var(--accent-soft);border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.15);position:relative;z-index:1}
+.rd-lite .es.drag .h{cursor:grabbing}
+.rd-lite .es .ek{font-size:16px}
+.rd-lite .es .em{font-size:14px;color:var(--muted)}
+.rd-lite .es .x{background:none;color:var(--muted);padding:6px 8px;font-size:14px;line-height:1}
 /* speaking coach expanded inline under its sentence: one joined block, no repeated sentence text until there are marks to show */
 .sent.coaching{background:var(--accent-soft);border-color:var(--accent);border-bottom-color:transparent;border-radius:12px 12px 0 0;margin-bottom:0}
 #sentList #coach{margin:0 0 8px;padding:12px;box-shadow:none;background:var(--accent-soft);border:1px solid var(--accent);border-top:0;border-radius:0 0 12px 12px}
@@ -702,6 +709,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
         <div class="seg seg-ico" id="readSrc">
           <button data-s="ai" class="on"><i>✨</i>AI writes</button>
           <button data-s="own"><i>📋</i>Add my own</button>
+          <button data-s="shot"><i>📷</i>Screenshot</button>
         </div>
         <div class="card">
         <div id="rs-ai">
@@ -721,12 +729,21 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
           <input id="rdOwnTitle" type="text" placeholder="My text">
           <label for="rdOwn">Korean text</label>
           <textarea id="rdOwn" lang="ko" placeholder="Paste Korean text here. It will be split into sentences."></textarea>
-          <button class="btn2" style="width:100%;margin-top:8px" id="rdShotBtn">📷 From a photo</button>
-          <input type="file" id="rdShotFile" accept="image/*" class="hidden">
-          <div id="rdOcrStatus" class="small muted hidden" style="margin-top:8px"></div>
-          <div class="bar hidden" id="rdOcrBarWrap"><i id="rdOcrBar"></i></div>
           <label class="check"><input type="checkbox" id="rdOwnTr" checked> Add translations (free auto-translate)</label>
           <button class="btn" style="margin-top:10px" id="rdOwnBtn">Open in reader</button>
+        </div>
+        <div id="rs-shot" class="hidden">
+          <p class="small muted" style="margin-top:0" id="rdShotDesc">AI reads the Korean text from a photo — printed or handwritten.</p>
+          <div class="hidden" id="rdShotTip" data-noi18n></div>
+          <div class="drop" id="rdDrop">Tap to choose or take a photo<br><span class="small">or paste an image (Ctrl/Cmd+V)</span><div id="rdShotImg"></div></div>
+          <input type="file" id="rdShotFile" accept="image/*" class="hidden">
+          <div id="rdOcrStatus" class="small muted hidden" style="margin-top:10px"></div>
+          <div id="rdShotRes" class="hidden rd-lite" data-noi18n>
+            <input id="rdShotTitle" class="tt" lang="ko"><input id="rdShotTitleM" class="tm">
+            <div id="rdShotList"></div>
+            <!-- same sticky pair as the word review: stays above the tab bar on a long list -->
+            <div class="prev-cta"><button class="btn2" id="rdShotAdd"></button><button class="btn" id="rdShotBtn"></button></div>
+          </div>
         </div>
         </div>
       </div>
@@ -1011,7 +1028,7 @@ const VI = {
 "Didn't catch anything — speak a bit louder and closer to the mic, then try again.":"Chưa nghe thấy gì — nói to và gần micro hơn rồi thử lại.",
 "Drive sync turned off (your data stays on this device)":"Đã tắt đồng bộ Drive (dữ liệu vẫn còn trên máy)",
 "Enter or pick a topic":"Nhập hoặc chọn chủ đề","Generating…":"Đang tạo…","Invalid backup file":"File sao lưu không hợp lệ",
-"Keep at least one type on":"Cần bật ít nhất một dạng","Korean word is required":"Cần nhập từ tiếng Hàn","Loading reader…":"Đang tải bộ đọc…","📷 From a photo":"📷 Từ ảnh chụp","Reading text with AI…":"AI đang đọc chữ…","Tip: add a Gemini key in Settings to read photos much more accurately.":"Mẹo: thêm Gemini key trong Cài đặt để đọc ảnh chính xác hơn nhiều.","Text added. Please check it for mistakes.":"Đã thêm chữ. Kiểm tra lại lỗi nhé.",
+"Keep at least one type on":"Cần bật ít nhất một dạng","Korean word is required":"Cần nhập từ tiếng Hàn","Reading text with AI…":"AI đang đọc chữ…","AI reads the Korean text from a photo — printed or handwritten.":"AI đọc chữ Hàn trong ảnh — chữ in hay chữ viết tay đều được.","Text read. Please check it for mistakes before opening.":"Đã đọc xong. Kiểm tra lại lỗi trước khi mở nhé.","No Korean sentences found. Try a sharper or cropped photo.":"Không thấy câu tiếng Hàn nào. Thử ảnh rõ hơn hoặc cắt gọn.",
 "Microphone permission denied":"Micro bị chặn","Needs a Gemini key (Settings) or Chrome/Safari":"Cần Gemini key (Cài đặt) hoặc Chrome/Safari",
 "No Korean words found":"Không tìm thấy từ tiếng Hàn","No empty meanings":"Không có nghĩa nào trống",
 "No new words came back — try another topic":"Không có từ mới — thử chủ đề khác","No new words left — add some!":"Hết từ mới — thêm từ nhé!",
@@ -2216,11 +2233,16 @@ $$("#addTabs button").forEach(b => b.onclick = () => {
 });
 // reading words from photos needs AI (the on-device reader got too much wrong): without a key, the same gate as Talk
 function shotTip(){
-  const t = $("#shotTip"), k = hasKey();
-  t.classList.toggle("hidden", k); $("#drop").classList.toggle("hidden", !k); $("#shotDesc").classList.toggle("hidden", !k);
-  if (k) return;
-  t.innerHTML = `<b>🔑 ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${L("AI đọc từ và nghĩa trong ảnh — chữ in hay chữ viết tay đều được. Tạo key miễn phí trong ~1 phút.", "AI reads the words and their meanings from a photo — printed or handwritten. A free key takes ~1 minute to create.")}</p><button class="btn" id="shotKeyGo">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button>`;
-  $("#shotKeyGo").onclick = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
+  photoGate($("#shotTip"), [$("#drop"), $("#shotDesc")], L("AI đọc từ và nghĩa trong ảnh — chữ in hay chữ viết tay đều được.", "AI reads the words and their meanings from a photo — printed or handwritten."));
+}
+// shared by word and passage photos: without a key, swap the drop zone (and whatever else) for a "add a key" card
+function photoGate(tip, els, why){
+  const k = hasKey();
+  tip.classList.toggle("hidden", k); els.forEach(e => e.classList.toggle("hidden", !k));
+  if (k) return true;
+  tip.innerHTML = `<b>🔑 ${L("Cần Gemini key", "Needs a Gemini key")}</b><p class="small muted" style="margin:6px 0 10px">${why} ${L("Tạo key miễn phí trong ~1 phút.", "A free key takes ~1 minute to create.")}</p><button class="btn">${L("Thêm key trong Cài đặt", "Add a key in Settings")}</button>`;
+  tip.querySelector("button").onclick = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
+  return false;
 }
 $("#inKoSpeak").onclick = () => speak($("#inKo").value.trim());
 $("#autoTr").onclick = async () => {
@@ -2347,19 +2369,7 @@ $("#prevAdd").onclick = async () => {
   $("#ocrStatus").classList.add("hidden");
 };
 
-/* ---------------- screenshot OCR (Tesseract.js, free, on-device) ---------------- */
-let tessLoading = null;
-function loadTesseract(){
-  if (window.Tesseract) return Promise.resolve();
-  if (tessLoading) return tessLoading;
-  tessLoading = new Promise((res, rej) => {
-    const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
-    s.onload = res; s.onerror = () => { tessLoading = null; rej(new Error("Could not load OCR (are you online?)")); };
-    document.head.appendChild(s);
-  });
-  return tessLoading;
-}
+/* ---------------- photos (Gemini) ---------------- */
 $("#drop").onclick = () => $("#shotFile").click();
 $("#shotFile").onchange = e => { const f = e.target.files[0]; if (f) runOCR(f); e.target.value = ""; };
 document.addEventListener("paste", e => {
@@ -2377,13 +2387,6 @@ async function imageB64(file, max = 2048){
   const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
   return c.toDataURL("image/jpeg", 0.9).split(",")[1];
 }
-async function geminiOCR(file){
-  const prompt = `Transcribe ALL the text in this image exactly as written. Korean must be copied character by character with correct spacing (띄어쓰기) — do not translate, fix, summarize or add anything. Keep each line on its own line and put a blank line between paragraphs. Skip page numbers, UI buttons and watermarks.
-Return JSON exactly like: {"text":""}`;
-  const parts = [{ inline_data: { mime_type: "image/jpeg", data: await imageB64(file) } }];
-  const j = extractJSON(await gemini(prompt, parts, { temperature: 0 }));
-  return String(j.text || "");
-}
 // word screenshots: let the AI pair words with meanings from the layout instead of guessing line by line
 async function geminiWords(file){
   const prompt = `This image is a Korean vocabulary list (a screenshot, textbook page, notes, flashcards…). Extract every Korean vocabulary item with its meaning.
@@ -2398,55 +2401,6 @@ Return JSON exactly like: {"items":[{"ko":"","meaning":"","ex":"","exMean":""}]}
   return (Array.isArray(j) ? j : j.items || [])
     .map(it => ({ ko: String(it.ko || "").trim(), meaning: String(it.meaning || "").trim(), ex: String(it.ex || "").trim(), exMean: String(it.exMean || "").trim() }))
     .filter(it => HANGUL.test(it.ko)).map(noDot);
-}
-// the basic reader wants dark text on a light background at a decent size:
-// grayscale, invert dark-mode screenshots, and upscale small ones
-async function tessImage(file){
-  const img = await createImageBitmap(file);
-  const k = Math.min(4, 4000 / Math.max(img.width, img.height), Math.max(1, 2000 / img.width));
-  const c = document.createElement("canvas");
-  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
-  const d = g.getImageData(0, 0, c.width, c.height), px = d.data;
-  let sum = 0;
-  for (let i = 0; i < px.length; i += 4){ const y = px[i] * .299 + px[i+1] * .587 + px[i+2] * .114; px[i] = y; sum += y; }
-  const inv = sum / (px.length / 4) < 128;
-  for (let i = 0; i < px.length; i += 4){ const y = inv ? 255 - px[i] : px[i]; px[i] = px[i+1] = px[i+2] = y; }
-  g.putImageData(d, 0, 0);
-  return c;
-}
-// reading passages from a photo: shows progress in st/bar, returns the raw text.
-// Gemini reads Korean far better than Tesseract, so it's used whenever there's a key.
-let aiErr = "";   // why the last photo fell back to the basic reader
-let ocrConf = 100;   // basic reader's confidence in the last photo (0–100)
-async function ocrText(file, langs, st, bw, bar){
-  st.classList.remove("hidden"); aiErr = ""; ocrConf = 100;
-  if (hasKey()){
-    st.innerHTML = `<span class="spinner"></span>Reading text with AI…`;
-    try { return await geminiOCR(file); }
-    catch(e){
-      if (e.status === 400 || e.status === 403) throw e;   // bad key: say so; busy/offline: fall back, but tell why
-      aiErr = e.message || "AI failed";
-    }
-  }
-  bw.classList.remove("hidden"); bar.style.width = "0";
-  st.textContent = "Loading reader…";
-  try {
-    await loadTesseract();
-    const { data } = await Tesseract.recognize(await tessImage(file), langs, {
-      logger: m => {
-        if (m.status === "recognizing text") { st.textContent = "Reading text… " + Math.round(m.progress*100) + "%"; bar.style.width = Math.round(m.progress*100) + "%"; }
-        else if (/load|init/i.test(m.status)) st.textContent = m.status.replace(/^\w/, c=>c.toUpperCase()) + "…";
-      }
-    });
-    ocrConf = data.confidence ?? 100;
-    return data.text || "";
-  } finally { bw.classList.add("hidden"); }
-}
-function ocrHint(st){
-  // handwriting, tilted or blurry photos: the basic reader only knows printed text
-  if (ocrConf < 60) st.append(document.createElement("br"), "⚠️ " + L("Ảnh khó đọc (chữ viết tay, chụp nghiêng hoặc mờ) — bộ đọc cơ bản chỉ đọc tốt chữ in nên kết quả có thể sai nhiều. " + (hasKey() ? "" : "Thêm Gemini key miễn phí trong Cài đặt để AI đọc được cả chữ viết tay."), "Hard to read (handwriting, tilted or blurry) — the basic reader only handles printed text, so expect many mistakes. " + (hasKey() ? "" : "Add a free Gemini key in Settings and AI can read handwriting too.")));
-  else if (aiErr) st.append(document.createElement("br"), "⚠️ AI couldn't read it (" + aiErr + ") — used the basic reader, expect mistakes.");
 }
 async function runOCR(file){
   shotTip();
@@ -2510,8 +2464,12 @@ $("#rdChips").innerHTML = RD_CHIPS.map(t => `<button class="chip">${esc(t)}</but
 $$("#rdChips .chip").forEach(b => b.onclick = () => { $("#rdPrompt").value = b.textContent; });
 $$("#readSrc button").forEach(b => b.onclick = () => {
   $$("#readSrc button").forEach(x => x.classList.toggle("on", x === b));
-  $("#rs-ai").classList.toggle("hidden", b.dataset.s !== "ai"); $("#rs-own").classList.toggle("hidden", b.dataset.s !== "own");
+  ["ai","own","shot"].forEach(t => $("#rs-"+t).classList.toggle("hidden", b.dataset.s !== t));
+  if (b.dataset.s === "shot") rdShotTip();
 });
+function rdShotTip(){
+  return photoGate($("#rdShotTip"), [$("#rdDrop"), $("#rdShotDesc")], L("AI đọc chữ Hàn trong ảnh — chữ in hay chữ viết tay đều được.", "AI reads the Korean text from a photo — printed or handwritten."));
+}
 // the Read tab shows either the list (with "+ New") or the new-passage page; with nothing saved yet it's only the form, without a back arrow
 let rdNewOpen = false;
 function renderPassList(){
@@ -2521,6 +2479,7 @@ function renderPassList(){
   $("#rdNewHead").classList.toggle("hidden", !form);
   $("#rdNewCard").classList.toggle("hidden", !form);
   renderPassItems();
+  if (form) rdShotTip();   // key may have been added in Settings meanwhile
 }
 $("#rdNewOpen").textContent = L("+ Tạo mới", "+ New");
 $("#rdNewOpen").onclick = () => { rdNewOpen = true; renderPassList(); scrollTo(0, 0); $("#rdPrompt").focus({ preventScroll: true }); };
@@ -2567,29 +2526,88 @@ Return JSON exactly like: {"title":"<short Korean title>","titleMean":"<${langNa
   } catch(e){ if (e.message !== "cancelled") toast("⚠️ " + e.message); }
   busy(b, false);
 };
-$("#rdShotBtn").onclick = () => $("#rdShotFile").click();
+$("#rdDrop").onclick = () => $("#rdShotFile").click();
 $("#rdShotFile").onchange = e => { const f = e.target.files[0]; if (f) rdOCR(f); e.target.value = ""; };
 document.addEventListener("paste", e => {
-  if ($("#rs-own").offsetParent === null) return;
+  if ($("#rdNewCard").offsetParent === null || $("#rs-ai").offsetParent !== null) return;   // "Add my own" or "Screenshot"
+  if (e.target.closest && e.target.closest("input, textarea") && e.clipboardData?.types.includes("text/plain")) return;
   const item = Array.from(e.clipboardData?.items || []).find(i => i.type.startsWith("image/"));
-  if (item){ e.preventDefault(); rdOCR(item.getAsFile()); }
+  if (item){ e.preventDefault(); $("#readSrc button[data-s=shot]").click(); rdOCR(item.getAsFile()); }
 });
-async function rdOCR(file){
-  const st = $("#rdOcrStatus"), b = $("#rdShotBtn");
-  b.disabled = true;
-  try {
-    const raw = await ocrText(file, "kor+eng", st, $("#rdOcrBarWrap"), $("#rdOcrBar"));
-    // photo line breaks are layout, not sentences: keep blank lines as paragraphs, join the rest
-    const text = raw.split(/\n\s*\n/).map(p => p.replace(/\s*\n\s*/g, " ").trim()).filter(p => /[\uac00-\ud7a3]/.test(p)).join("\n\n");
-    if (!text){ st.textContent = "No Korean text found. Try a sharper or cropped screenshot."; return; }
-    const ta = $("#rdOwn");
-    ta.value = ta.value.trim() ? ta.value.trim() + "\n\n" + text : text;
-    st.textContent = "Text added. Please check it for mistakes.";
-    ocrHint(st);
-  } catch(err){
-    st.textContent = "⚠️ " + (err.message || "OCR failed");
-  } finally { b.disabled = false; }
+// passage photos: one row per sentence with its meaning, romanization dropped — not one blob of mixed text
+async function geminiPassage(file){
+  const prompt = `This image contains a Korean text (a song, story, dialogue, textbook passage, notes…), possibly with romanization and translations. Extract it sentence by sentence, in reading order.
+- "ko": the Korean sentence or line, copied character by character with correct spacing (띄어쓰기) — do not fix or rewrite it.
+- "meaning": its translation shown in the image, in ${langName()} (translate it if it is in another language). If none is shown, give a natural ${langName()} translation. Never leave it empty.
+- Drop romanization entirely (e.g. "/Gomsemariga han jipe isseo/") — it is neither "ko" nor "meaning".
+- If the image has a heading, use it as "title" (Korean) with "titleMean"; it is not a sentence.
+- Skip page numbers, UI buttons, watermarks and usernames.
+Return JSON exactly like: {"title":"","titleMean":"","sentences":[{"ko":"","meaning":""}]}`;
+  const parts = [{ inline_data: { mime_type: "image/jpeg", data: await imageB64(file) } }];
+  const j = extractJSON(await gemini(prompt, parts, { temperature: 0 }));
+  return { title: String(j.title || "").trim(), titleMean: String(j.titleMean || "").trim(),
+    sentences: (j.sentences || []).map(x => ({ ko: String(x.ko || "").trim(), meaning: String(x.meaning || "").trim() })).filter(x => HANGUL.test(x.ko)) };
 }
+function liteRow(list, x){
+  const d = document.createElement("div"); d.className = "es";
+  d.innerHTML = `<div class="h" title="${L("Kéo để đổi thứ tự", "Drag to reorder")}"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2" cy="2" r="1.5"/><circle cx="8" cy="2" r="1.5"/><circle cx="2" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="2" cy="14" r="1.5"/><circle cx="8" cy="14" r="1.5"/></svg></div>
+    <div><textarea class="ek" lang="ko" rows="1">${esc(x.ko || "")}</textarea><textarea class="em" rows="1" placeholder="${L("Bản dịch", "Translation")}">${esc(x.meaning || "")}</textarea></div>
+    <button class="btn-ghost x" title="${L("Xoá câu", "Delete sentence")}" aria-label="${L("Xoá câu", "Delete sentence")}">✕</button>`;
+  d.querySelector(".x").onclick = () => d.remove();
+  // drag by the handle (mouse or touch): the row slots in before the first row whose middle is below the pointer
+  const h = d.querySelector(".h");
+  h.onpointerdown = e => {
+    e.preventDefault(); h.setPointerCapture(e.pointerId); d.classList.add("drag");
+    h.onpointermove = ev => {
+      const next = [...list.children].find(r => r !== d && ev.clientY < r.getBoundingClientRect().top + r.offsetHeight / 2);
+      if (next){ if (d.nextElementSibling !== next) next.before(d); } else if (list.lastElementChild !== d) list.append(d);
+      if (ev.clientY > innerHeight - 150) scrollBy(0, 8); else if (ev.clientY < 60) scrollBy(0, -8);   // long lists: scroll while dragging near an edge
+    };
+    h.onpointerup = h.onpointercancel = () => { h.onpointermove = h.onpointerup = h.onpointercancel = null; d.classList.remove("drag"); };
+  };
+  list.append(d);
+  return d;
+}
+// one-line fields that grow with their text (no scrollbars, no resize handles)
+const rdGrow = t => { t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; };
+document.addEventListener("input", e => { if (e.target.matches?.(".rd-lite textarea")) rdGrow(e.target); });
+// ＋ add sentence: a fresh empty row, typing straight away
+function liteAdd(list){ const d = liteRow(list, {}); d.querySelectorAll("textarea").forEach(rdGrow); d.querySelector(".ek").focus(); }
+async function rdOCR(file){
+  if (!rdShotTip()){ toast(L("Cần Gemini key để đọc ảnh", "A Gemini key is needed to read photos")); return; }
+  $("#rdShotImg").innerHTML = `<img src="${URL.createObjectURL(file)}" alt="photo">`;
+  const st = $("#rdOcrStatus");
+  st.classList.remove("hidden"); st.innerHTML = `<span class="spinner"></span>Reading text with AI…`;
+  try {
+    const r = await geminiPassage(file);
+    if (!r.sentences.length){ st.textContent = "No Korean sentences found. Try a sharper or cropped photo."; return; }
+    // several photos (pages) add up; the first heading names the passage
+    if (!$("#rdShotTitle").value.trim()){ $("#rdShotTitle").value = r.title; $("#rdShotTitleM").value = r.titleMean; }
+    r.sentences.forEach(x => liteRow($("#rdShotList"), x));
+    $("#rdShotTitle").placeholder = L("Tiêu đề (tuỳ chọn)", "Title (optional)"); $("#rdShotTitleM").placeholder = L("Nghĩa tiêu đề", "Title translation");
+    $("#rdShotAdd").textContent = "＋ " + L("Thêm câu", "Add sentence"); $("#rdShotBtn").textContent = L("Tạo bài đọc", "Create passage");
+    $("#rdShotRes").classList.remove("hidden"); $$("#rdShotList textarea").forEach(rdGrow);   // measured once visible
+    st.textContent = "Text read. Please check it for mistakes before opening.";
+  } catch(err){
+    st.textContent = "⚠️ " + (err.message || "AI failed");
+  }
+}
+$("#rdShotAdd").onclick = () => liteAdd($("#rdShotList"));
+$("#rdShotBtn").onclick = async () => {
+  const sentences = $$("#rdShotList .es").map(el => ({ ko: el.querySelector(".ek").value.trim(), meaning: el.querySelector(".em").value.trim() })).filter(x => x.ko);
+  if (!sentences.length){ toast(L("Bài đọc cần ít nhất 1 câu", "A passage needs at least one sentence")); return; }
+  const b = $("#rdShotBtn"), empty = sentences.filter(x => !x.meaning);
+  if (empty.length){   // rows added by hand
+    busy(b, true, L("Đang dịch…", "Translating…"));
+    for (const x of empty){ try { x.meaning = await translate(x.ko); } catch(e){} await new Promise(r => setTimeout(r, 120)); }
+    busy(b, false);
+  }
+  const p = { id: uid(), created: Date.now(), title: $("#rdShotTitle").value.trim() || sentences[0].ko.slice(0, 24), titleMean: $("#rdShotTitleM").value.trim(), level: "", sentences, vocab: [] };
+  S.passages.push(p); save();
+  $("#rdShotList").innerHTML = ""; $("#rdShotTitle").value = ""; $("#rdShotTitleM").value = ""; $("#rdShotImg").innerHTML = "";
+  $("#rdShotRes").classList.add("hidden"); $("#rdOcrStatus").classList.add("hidden");
+  openNewPassage(p.id);
+};
 $("#rdOwnBtn").onclick = async () => {
   const sents = splitSentences($("#rdOwn").value);
   if (!sents.length) { toast("Paste some Korean text first"); return; }
@@ -2631,43 +2649,25 @@ function openReader(id){
 // ✏️ edit mode: title + each sentence (Korean / translation) become inputs; the player is paused meanwhile
 function openRdEditor(){
   stopPlayer(); closeCoach();
-  const draft = curP.sentences.map(s => ({ ko: s.ko, meaning: s.meaning || "", best: s.best }));
   const ed = $("#rdEditor");
   $("#sentList").classList.add("hidden"); ed.classList.remove("hidden");
   $("#rdTitle").classList.add("hidden"); $("#rdSub").classList.add("hidden"); $("#rdEdit").classList.add("hidden"); $("#reader .player").classList.add("hidden");
-  const draw = () => {
-    ed.innerHTML = `<div class="rd-ed">
-      <div class="f" style="display:grid;gap:6px"><input id="edTitle" lang="ko" value="${esc(curP.title)}" placeholder="${L("Tiêu đề", "Title")}"><input id="edTitleM" value="${esc(curP.titleMean || "")}" placeholder="${L("Nghĩa tiêu đề", "Title translation")}"></div>
-      ${draft.map((s, i) => `<div class="es" data-i="${i}"><div class="n">${i + 1}</div>
-        <div class="f"><textarea class="ek" lang="ko" rows="2">${esc(s.ko)}</textarea><textarea class="em" rows="2" placeholder="${L("Bản dịch", "Translation")}">${esc(s.meaning)}</textarea></div>
-        <div class="ctl"><button class="btn-ghost" data-a="up" title="${L("Lên", "Move up")}" ${i ? "" : "disabled"}>↑</button><button class="btn-ghost" data-a="dn" title="${L("Xuống", "Move down")}" ${i < draft.length - 1 ? "" : "disabled"}>↓</button><button class="btn-ghost" data-a="del" title="${L("Xoá câu", "Delete sentence")}">🗑️</button></div></div>`).join("")}
-      <button class="btn-ghost" data-a="add">＋ ${L("Thêm câu", "Add sentence")}</button>
-      <div class="row"><button class="btn-ghost" data-a="cancel">${L("Huỷ", "Cancel")}</button><button class="btn" data-a="save">${L("Lưu", "Save")}</button></div></div>`;
-  };
-  // keep typed text when the list is redrawn (move / delete / add)
-  const pull = () => $$("#rdEditor .es").forEach(el => { const s = draft[+el.dataset.i]; s.ko = el.querySelector(".ek").value; s.meaning = el.querySelector(".em").value; });
-  let title = curP.title, titleM = curP.titleMean || "";
-  draw();
-  ed.oninput = e => { if (e.target.id === "edTitle") title = e.target.value; if (e.target.id === "edTitleM") titleM = e.target.value; };
-  ed.onclick = e => {
-    const b = e.target.closest("button[data-a]"); if (!b) return;
-    const a = b.dataset.a, i = +(b.closest(".es")?.dataset.i ?? -1);
-    pull();
-    if (a === "up" || a === "dn"){ const j = a === "up" ? i - 1 : i + 1; [draft[i], draft[j]] = [draft[j], draft[i]]; }
-    if (a === "del") draft.splice(i, 1);
-    if (a === "add"){ draft.push({ ko: "", meaning: "" }); }
-    if (a === "cancel") return closeRdEditor();
-    if (a === "save"){
-      const old = new Map(curP.sentences.map(s => [s.ko, s.best]));
-      const sentences = draft.map(s => ({ ko: s.ko.trim(), meaning: s.meaning.trim() })).filter(s => s.ko);
-      if (!sentences.length){ toast(L("Bài đọc cần ít nhất 1 câu", "A passage needs at least one sentence")); return; }
-      sentences.forEach(s => { const best = old.get(s.ko); if (best != null) s.best = best; });   // a changed sentence starts a fresh record
-      curP.sentences = sentences;
-      curP.title = title.trim() || curP.title; curP.titleMean = titleM.trim();
-      save(); closeRdEditor(); toast(L("Đã lưu", "Saved")); return;
-    }
-    draw();
-    if (a === "add"){ const last = $$("#rdEditor .es .ek").pop(); if (last) last.focus(); }
+  // same flat rows as the photo review: ⋮⋮ drag, ✕ delete
+  ed.innerHTML = `<div class="rd-lite">
+    <input id="edTitle" class="tt" lang="ko" value="${esc(curP.title)}" placeholder="${L("Tiêu đề", "Title")}"><input id="edTitleM" class="tm" value="${esc(curP.titleMean || "")}" placeholder="${L("Nghĩa tiêu đề", "Title translation")}">
+    <div id="edList"></div>
+    <div class="prev-cta"><button class="btn2" id="edAdd">＋ ${L("Thêm câu", "Add sentence")}</button><button class="btn" id="edSave">${L("Lưu", "Save")}</button></div></div>`;
+  curP.sentences.forEach(x => liteRow($("#edList"), x));
+  $$("#edList textarea").forEach(rdGrow);
+  $("#edAdd").onclick = () => liteAdd($("#edList"));
+  $("#edSave").onclick = () => {
+    const old = new Map(curP.sentences.map(s => [s.ko, s.best]));
+    const sentences = $$("#edList .es").map(el => ({ ko: el.querySelector(".ek").value.trim(), meaning: el.querySelector(".em").value.trim() })).filter(s => s.ko);
+    if (!sentences.length){ toast(L("Bài đọc cần ít nhất 1 câu", "A passage needs at least one sentence")); return; }
+    sentences.forEach(s => { const best = old.get(s.ko); if (best != null) s.best = best; });   // a changed sentence starts a fresh record
+    curP.sentences = sentences;
+    curP.title = $("#edTitle").value.trim() || curP.title; curP.titleMean = $("#edTitleM").value.trim();
+    save(); closeRdEditor(); toast(L("Đã lưu", "Saved"));
   };
 }
 function closeRdEditor(){
@@ -2705,7 +2705,9 @@ function applyReaderView(){
   $("#sentList").classList.toggle("hidek", $("#pHideK").checked);
 }
 $("#pHideM").onchange = applyReaderView; $("#pHideK").onchange = applyReaderView;
-$("#rdBack").onclick = () => { closeRdEditor(); stopPlayer(); if ("speechSynthesis" in window) speechSynthesis.cancel(); closeCoach(); curP = null; navSave({ p: "", y: 0 }); $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
+$("#rdBack").onclick = () => {
+  if (!$("#rdEditor").classList.contains("hidden")) return closeRdEditor();   // ← while editing = cancel, back to the passage
+  stopPlayer(); if ("speechSynthesis" in window) speechSynthesis.cancel(); closeCoach(); curP = null; navSave({ p: "", y: 0 }); $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
 $("#rdDel").onclick = () => {
   const b = $("#rdDel");
   if (!b.dataset.confirm){ b.dataset.confirm = "1"; b.textContent = "Delete?"; setTimeout(()=>{ delete b.dataset.confirm; b.textContent = "🗑️"; }, 2500); return; }
