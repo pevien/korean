@@ -506,18 +506,18 @@ body.ar-listening{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
 .pctl button.main{width:60px;height:60px;background:var(--accent);color:var(--on-accent);font-size:24px}
 .player .pctl button{width:40px;height:40px;font-size:15px}
 .player .pctl button.main{width:48px;height:48px;font-size:20px}
-/* ⏮ ▶ ⏭ sit in the true centre of the player (so the hint line below lines up with ▶); speed + ⚙️ hang off the right */
+/* ⏮ ▶ ⏭ sit in the true centre of the player (so the hint line below lines up with ▶); speed on the left, ⚙️ on the right balance it */
 .player .pctl{display:grid;grid-template-columns:1fr auto auto auto 1fr}
-.player .pctl #pPrev{grid-column:2}
-.player .pctl .pside{justify-self:end;display:flex;align-items:center;gap:4px}
+.player .pctl .prate{justify-self:start;margin-left:4px}
+.player .pctl .popt-btn{justify-self:end;margin-right:4px}
 .player .pctl .prate, .player .pctl .popt-btn{background-color:transparent;color:var(--text)}
-.prate{width:auto;border:0;padding:6px 20px 6px 6px;font-size:14px;font-weight:600;background-position:right 4px center;background-size:10px 7px}
+.prate{width:auto;border:0;padding:6px 18px 6px 6px;font-size:14px;font-weight:600;background-position:right 4px center;background-size:10px 7px}   /* ⌄ right after "1×" (the width follows the chosen speed) */
 .popt-btn[aria-expanded=true]{background:var(--accent-soft)!important}
 .player .turn{font-size:13px;min-height:0;margin:6px 0 0}
 .player .turn:empty{display:none}
 .popts{border-top:1px solid var(--line);margin:8px 4px 2px;padding-top:4px}
 .popts label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:8px 6px;color:var(--text);font-size:14px;font-weight:500;cursor:pointer}
-.popts select{width:auto;padding:4px 26px 4px 10px;font-size:14px;background-position:right 9px center;background-size:10px 7px}
+.popts select{width:84px;padding:4px 26px 4px 10px;font-size:14px;background-position:right 9px center;background-size:10px 7px}
 /* iOS-style switch */
 input.sw{appearance:none;-webkit-appearance:none;width:40px;height:24px;border-radius:99px;background:var(--line);position:relative;margin:0;flex:0 0 auto;cursor:pointer;transition:background .15s}
 input.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s}
@@ -785,17 +785,18 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       </div>
       <div class="player">
         <div class="pctl">
+          <select id="pRate" class="prate" title="Speed"><option value="0.6">0.6×</option><option value="0.75">0.75×</option><option value="0.85">0.85×</option><option value="1">1×</option></select>
           <button id="pPrev" title="Previous sentence">⏮</button>
           <button id="pPlay" class="main" title="Play / pause">▶</button>
           <button id="pNext" title="Next sentence">⏭</button>
-          <div class="pside"><select id="pRate" class="prate" title="Speed"><option value="0.6">0.6×</option><option value="0.75">0.75×</option><option value="0.85">0.85×</option><option value="1">1×</option></select>
-          <button id="pOptBtn" class="popt-btn" title="Options" aria-expanded="false" aria-controls="pOpts">⚙️</button></div>
+          <button id="pOptBtn" class="popt-btn" title="Options" aria-expanded="false" aria-controls="pOpts">⚙️</button>
         </div>
         <div class="turn" id="pTurn"></div>
         <p class="rd-hint" id="rdHint">Tap 🎙 to check your pronunciation</p>
         <div class="popts hidden" id="pOpts">
-          <label title="Pause after each sentence so you can repeat it"><span>🎤 Shadow mode</span><input type="checkbox" id="pShadow" class="sw"></label>
+          <label><span>Speed</span><select id="pRate2"></select></label>
           <label><span>Repeat</span><select id="pRep"><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option></select></label>
+          <label title="Pause after each sentence so you can repeat it"><span>Shadow mode</span><input type="checkbox" id="pShadow" class="sw"></label>
           <label><span>Hide Korean</span><input type="checkbox" id="pHideK" class="sw"></label>
           <label><span>Hide translation</span><input type="checkbox" id="pHideM" class="sw"></label>
         </div>
@@ -1008,7 +1009,7 @@ const VI = {
 "Length":"Độ dài","Short (~4 sentences)":"Ngắn (~4 câu)","Medium (~8)":"Vừa (~8 câu)","Long (~14)":"Dài (~14 câu)",
 "Use words I'm learning":"Dùng từ tôi đang học","✨ Generate passage":"✨ Tạo bài đọc","Title (optional)":"Tiêu đề (tuỳ chọn)",
 "Korean text":"Văn bản tiếng Hàn","Add translations (free auto-translate)":"Thêm bản dịch (tự dịch miễn phí)","Open in reader":"Mở để đọc",
-"My passages":"Bài đọc của tôi","← Back":"← Quay lại","🎤 Shadow mode":"🎤 Nói đuổi","Repeat":"Lặp lại","Speed":"Tốc độ",
+"My passages":"Bài đọc của tôi","← Back":"← Quay lại","Shadow mode":"Nói đuổi","Repeat":"Lặp lại","Speed":"Tốc độ",
 "1× native":"1× bản xứ","Translation":"Bản dịch","Hide Korean":"Ẩn tiếng Hàn","Hide translation":"Ẩn bản dịch","Tap 🎙 to check your pronunciation":"Chạm 🎙 để chấm điểm phát âm","⚡ Basic":"⚡ Cơ bản","Grading":"Chấm điểm","AI grading needs a Gemini key.":"Chấm bằng AI cần Gemini key.","Add key":"Thêm key","How your speaking practice is checked":"Cách chấm phần luyện nói","🎙 Speaking coach":"🎙 Luyện nói",
 "Tap a sentence to play from there. Press space to play/pause.":"Chạm vào câu để phát từ đó. Phím cách để phát/dừng.",
 "Key words":"Từ khoá","+ Add new words to flashcards":"+ Thêm từ mới vào flashcard","✨ Add now":"✨ Thêm ngay",
@@ -2927,8 +2928,18 @@ function syncPRate(){
     const after = [...sel.options].find(x => +x.value > r); sel.insertBefore(o, after || null);
   }
   sel.value = o.value;
+  const s2 = $("#pRate2"); s2.innerHTML = sel.innerHTML; s2.value = sel.value;   // same speeds in ⚙️
+  fitPRate();
 }
-$("#pRate").onchange = () => { S.settings.rate = +$("#pRate").value; save(); if (P.playing) { P.rep = 0; pausePlayer(); P.playing = true; setPlayIcon(); playCurrent(); } };
+// a <select> is as wide as its longest option (0.75×): size it to the chosen one so the ⌄ sits right after "1×"
+function fitPRate(){
+  const sel = $("#pRate"), cs = getComputedStyle(sel), g = (fitPRate.c ||= document.createElement("canvas")).getContext("2d");
+  g.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const t = sel.options[sel.selectedIndex]?.textContent || "";
+  sel.style.width = Math.ceil(g.measureText(t).width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2) + "px";
+}
+$("#pRate2").onchange = e => { $("#pRate").value = e.target.value; $("#pRate").onchange(); };
+$("#pRate").onchange = () => { S.settings.rate = +$("#pRate").value; $("#pRate2").value = $("#pRate").value; save(); fitPRate(); if (P.playing) { P.rep = 0; pausePlayer(); P.playing = true; setPlayIcon(); playCurrent(); } };
 document.addEventListener("keydown", e => {
   if ($("#reader").classList.contains("hidden") || $("#v-read").classList.contains("hidden")) return;
   if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
@@ -2987,6 +2998,7 @@ function cancelRec(){
 }
 /* explain *why* the mic is blocked (file://, Chrome app permission, site permission) */
 function micHelp(kind, el){
+  // only reached once opening the mic actually failed — a Mac in DevTools Android mode never gets here
   const blockedFile = location.protocol === "file:" && /Android/i.test(navigator.userAgent);
   let msg;
   if (kind === "insecure" || blockedFile)
@@ -3007,7 +3019,7 @@ async function micPermissionState(){
 async function startRec(){
   if (C.starting) return;
   if ("speechSynthesis" in window) speechSynthesis.cancel();
-  if ((location.protocol === "file:" && /Android/i.test(navigator.userAgent)) || (location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { micHelp("insecure"); return; }
+  if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { micHelp("insecure"); return; }
   if (await micPermissionState() === "denied") { micHelp("site-denied"); return; }
   const useAI = coachAI();
   if (!useAI && !SR) { toast("Needs a Gemini key (Settings) or Chrome/Safari"); return; }
@@ -4383,7 +4395,7 @@ function renderTalkChat(){
 async function talkRecStart(){
   if ("speechSynthesis" in window) speechSynthesis.cancel();   // don't record the AI's own voice
   const st = $("#tkStatus");
-  if ((location.protocol === "file:" && /Android/i.test(navigator.userAgent)) || (location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices || !window.MediaRecorder) return micHelp("insecure", st);
+  if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices || !window.MediaRecorder) return micHelp("insecure", st);
   if (TK.starting) return;
   const g = TK.gen; TK.starting = true;
   if (await micPermissionState() === "denied"){ TK.starting = false; return micHelp("site-denied", st); }
@@ -4951,7 +4963,7 @@ document.addEventListener("visibilitychange", () => { if (AR.on && document.visi
 
 async function arStart(){
   const eng = arEngine(); if (!eng || arSaveNow.busy) return;
-  if ((location.protocol === "file:" && /Android/i.test(navigator.userAgent)) || (location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { arUI(L("🎙 Cần mở app từ link https:// để dùng micro.", "🎙 Open the app from its https:// link to use the mic.")); return; }
+  if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { arUI(L("🎙 Cần mở app từ link https:// để dùng micro.", "🎙 Open the app from its https:// link to use the mic.")); return; }
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   AR.on = true; AR.engine = eng; AR.quota = 0;
   arUI();
