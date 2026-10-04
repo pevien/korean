@@ -15,7 +15,7 @@ The Vocab tab (`#v-study`) is a flashcard trainer that uses spaced repetition. I
 | Mastered (Đã thuộc) | Cards with an interval of 21 days or more |
 | Day streak (Chuỗi ngày) | Consecutive days with at least one review |
 
-Tapping one of the first three tiles opens My words filtered to that group.
+Tapping one of the first three tiles opens My words filtered to that group. Tapping the streak tile opens the streak calendar.
 
 **Auto-start:** tapping the Vocab tab when there is work goes straight to the first question. No Start screen is shown.
 
@@ -35,6 +35,11 @@ Tapping one of the first three tiles opens My words filtered to that group.
 ## Streaks and celebrations
 
 - Any graded answer counts toward today. Studying yesterday adds one to the streak. A missed day resets it to 1.
+- **Streak calendar** (tap the streak tile): three tiles — current streak, best streak (longest run of consecutive days) and total days studied — over a month calendar.
+  - Studied days are filled in the streak colour; consecutive days in the same week join into one band. Today has a ring.
+  - The arrows move between months, from the first studied month up to this month. Weeks start on Monday.
+  - Every studied day is kept in `streak.days`. Data from before the calendar only had the current run, so the history is rebuilt once from that run plus each word's last review day; older days may be missing.
+  - Tests: `tests/streak_test.py` (headless Chromium, same setup as [ielts.md](ielts.md#tests)).
 - **Milestones:** 7, 14, 30, 50, 100, 200 and 365 days, then every 100 days.
   - Reaching one plays a large confetti burst and shows a "🔥 N-day streak!" toast.
   - When a milestone is close, a countdown cheer appears: within 1 day for targets under 30, 2 days for 30 and up, 3 days for 100 and up.

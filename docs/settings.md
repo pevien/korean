@@ -117,7 +117,7 @@ Keeps words, progress, passages, conversations and settings (including the Gemin
 - **Settings:**
   - The newer copy wins.
   - Not synced: voice and course, which stay per device.
-- **Streak:** the later date wins.
+- **Streak:** the later date wins; the studied days from both devices are merged.
 - **Daily counts:** the higher number wins.
 
 **🗑 Disconnect** (two taps) turns off sync and signs out. Your data stays on the device, and the Drive file is not deleted.

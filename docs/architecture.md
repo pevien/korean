@@ -49,7 +49,7 @@ S
 ├─ lives[]     saved ARMY / interpreter transcripts
 ├─ settings    see below
 ├─ daily       { date, newCount, reviews, result, c: { <course>: {...} } }
-├─ streak      { last, count }
+├─ streak      { last, count, days: ["Y-M-D", …] }   // days: every studied day, for the calendar
 └─ deleted     { <id>: timestamp }   // tombstones used by sync
 ```
 

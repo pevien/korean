@@ -685,6 +685,22 @@ body.ar-conv-on{overflow:hidden}
 .cheer-tr{font-size:14px;margin:2px 0 14px}
 .cheer-ko.solo{margin-bottom:12px}   /* no translation line under it: keep the text below from touching */
 .stat.pop{animation:pop .6s ease}
+/* Streak calendar: studied days are filled; consecutive days join into one band within a week row */
+#v-cal .stats{grid-template-columns:repeat(3,1fr);margin-bottom:14px}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px}
+.cal-nav b{font-size:16px;font-weight:600}
+.cal-nav button{padding:6px 10px;font-size:18px}
+.cal-nav button:disabled{opacity:.3;cursor:default}
+.cal-nav .nx .caret{transform:rotate(180deg)}
+.cal-g{display:grid;grid-template-columns:repeat(7,1fr);row-gap:6px;text-align:center}
+.cal-g .wd{font-size:11px;color:var(--muted);padding-bottom:4px}
+.cal-g .cd{height:38px;display:flex;align-items:center;justify-content:center;font-size:14px;font-variant-numeric:tabular-nums}
+.cal-g .cd.on{background:var(--t-bg);color:var(--t-fg);font-weight:600;border-radius:var(--r-pill)}
+.cal-g .cd.on.jl{border-top-left-radius:0;border-bottom-left-radius:0}
+.cal-g .cd.on.jr{border-top-right-radius:0;border-bottom-right-radius:0}
+.cal-g .cd.fut{color:var(--muted);opacity:.5}
+.cal-g .cd.td span{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:var(--r-pill);box-shadow:inset 0 0 0 2px var(--t-fg)}
+.cal-sum{margin:12px 0 0;text-align:center}
 @keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(-4deg)}}
 @keyframes pop{40%{transform:scale(1.15)}}
 @media (prefers-reduced-motion: reduce){.cheer-m,.stat.pop{animation:none}}
@@ -870,12 +886,12 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   <!-- STUDY -->
   <section id="v-study">
     <div class="pg-head" id="studyHead"><span class="h hic"><svg class="i" aria-hidden="true"><use href="#i-cards-fill"/></svg></span><h2><span id="studyTitle" data-noi18n></span><span class="co-slot" data-noi18n></span></h2><button class="btn2 hidden" id="goAddTop">+ Add words</button></div>
-    <!-- the first three tiles open My words filtered to that group -->
+    <!-- the first three tiles open My words filtered to that group; the streak opens its calendar -->
     <div class="stats" style="margin-bottom:14px">
       <button class="stat tone t-amber st-go" data-f="today" title="See these words"><b id="sToday">0</b><span>Due today</span></button>
       <button class="stat tone t-learn st-go" data-f="learn" title="See these words"><b id="sLearn">0</b><span>Learning</span></button>
       <button class="stat tone t-master st-go" data-f="master" title="See these words"><b id="sMaster">0</b><span>Mastered</span></button>
-      <div class="stat tone t-streak"><b id="sStreak"><svg class="i" aria-hidden="true"><use href="#i-flame-fill"/></svg>0</b><span>Day streak</span></div>
+      <button class="stat tone t-streak" id="goCal" title="Streak calendar"><b id="sStreak"><svg class="i" aria-hidden="true"><use href="#i-flame-fill"/></svg>0</b><span>Day streak</span></button>
     </div>
     <div id="studyHome">
       <div class="card" id="homeCard"></div>
@@ -954,6 +970,9 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
       </div>
     </div>
   </section>
+
+  <!-- STREAK CALENDAR (a page of Study) -->
+  <section id="v-cal" class="hidden t-streak" data-noi18n></section>
 
   <!-- ALPHABET (a page of Add words) -->
   <section id="v-abc" class="hidden" data-noi18n></section>
@@ -1390,7 +1409,7 @@ ${JSON.stringify(bad.map(([o, k]) => String(o[k])))}`, null, { temperature: 0.2 
 }
 
 const VI = {
-"Due today":"Cần học","See these words":"Xem các từ này","Day streak":"Chuỗi ngày","Learning":"Đang học","Mastered":"Đã thuộc","End":"Kết thúc",
+"Due today":"Cần học","See these words":"Xem các từ này","Day streak":"Chuỗi ngày","Streak calendar":"Lịch học","Learning":"Đang học","Mastered":"Đã thuộc","End":"Kết thúc",
 "Single":"Từng từ","Paste list":"Danh sách","Screenshot":"Ảnh chụp",
 "Generate words by topic":"Tạo từ theo chủ đề","Topic":"Chủ đề","Level":"Trình độ","How many":"Số lượng",
 "Each word comes with an example sentence. Words already in your list are skipped automatically.":"Mỗi từ kèm một câu ví dụ. Từ đã có sẽ tự bỏ qua.",
@@ -2061,11 +2080,32 @@ function nextLabel(c, q){
   return iv >= 30 ? Math.round(iv/30) + " mo" : iv + (iv === 1 ? " day" : " days");
 }
 function bumpStreak(){
-  const t = todayStr();
+  const t = todayStr(), ds = streakDays();
+  if (!ds.has(t)) S.streak.days.push(t);
   if (S.streak.last === t) return;
   const y = new Date(Date.now()-DAY); const ys = y.getFullYear()+"-"+(y.getMonth()+1)+"-"+y.getDate();
   S.streak.count = (S.streak.last === ys) ? S.streak.count + 1 : 1;
   S.streak.last = t;
+}
+const dkey = d => d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();   // same "Y-M-D" (no padding) as todayStr
+const dord = k => { const [y, m, d] = k.split("-").map(Number); return Math.round(Date.UTC(y, m-1, d) / DAY); };   // day number, for runs
+// every day studied (S.streak.days). Older data only kept { last, count } → rebuilt once from the current run + each word's last review
+function streakDays(){
+  const st = S.streak;
+  if (!Array.isArray(st.days)){
+    const ds = new Set();
+    if (st.last && st.count){ const [y, m, d] = st.last.split("-").map(Number); for (let i = 0; i < st.count; i++) ds.add(dkey(new Date(y, m-1, d-i))); }
+    S.cards.forEach(c => c.last && ds.add(dkey(new Date(c.last))));
+    st.days = [...ds];
+  }
+  return new Set(st.days);
+}
+// longest run of consecutive days (at least the stored count, in case old history is incomplete)
+function streakBest(){
+  const o = [...streakDays()].map(dord).sort((a, b) => a - b);
+  let best = 0, run = 0;
+  o.forEach((x, i) => { run = i && x === o[i-1] + 1 ? run + 1 : 1; best = Math.max(best, run); });
+  return Math.max(best, S.streak.count || 0);
 }
 function streakNow(){
   const t = todayStr(); const y = new Date(Date.now()-DAY); const ys = y.getFullYear()+"-"+(y.getMonth()+1)+"-"+y.getDate();
@@ -2355,6 +2395,7 @@ function show(v){
   curView = v;
   if (v === "add"){ syncAbcPick(); shotTip(); }   // key may have been added in Settings meanwhile
   if (v === "abc") renderAbc();
+  if (v === "cal") renderCal();
   if (v === "study" && !session) refreshHome();
   document.body.classList.toggle("in-session", v === "study" && !!session);   // leaving via a link mid-session must bring the tab bar back
   if (v !== "read") { document.body.classList.remove("talking"); stopPlayer(); cancelRec(); talkStop(); ieStop(); if ("speechSynthesis" in window) speechSynthesis.cancel(); }
@@ -2367,7 +2408,7 @@ function show(v){
   window.scrollTo(0,0);
   navSave({ v, p: v === "read" && curP ? curP.id : "", y: 0 });
 }
-function navHi(v){ $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" || v === "words" || v === "abc" ? "study" : v))); }   // My words / Add words / Alphabet are pages of Study
+function navHi(v){ $$("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === (v === "add" || v === "words" || v === "abc" || v === "cal" ? "study" : v))); }   // My words / Add words / Alphabet are pages of Study
 /* remember the open tab / passage / scroll position so a reload lands on the same page */
 const NAV_KEY = "hangulCards.nav";
 function navGet(){ try { return JSON.parse(sessionStorage.getItem(NAV_KEY) || "{}"); } catch(e){ return {}; } }
@@ -2393,6 +2434,50 @@ $("#addBack").onclick = () => show(addFrom);
 $("#wordsBack").onclick = () => show("study");
 $("#goAddTop").onclick = () => show("add");
 $$("#v-study .st-go").forEach(b => b.onclick = () => { setFilter(b.dataset.f); show("words"); });
+$("#goCal").onclick = () => { calM = null; show("cal"); };
+
+/* ---------------- streak calendar ---------------- */
+let calM = null;   // first day of the month shown; null = this month
+function renderCal(){
+  const ds = streakDays(), now = new Date(), t = todayStr();
+  const thisM = new Date(now.getFullYear(), now.getMonth(), 1);
+  if (!calM) calM = thisM;
+  const first = [...ds].sort((a, b) => dord(a) - dord(b))[0];
+  const firstM = first ? (([y, m]) => new Date(y, m-1, 1))(first.split("-").map(Number)) : thisM;
+  const y = calM.getFullYear(), m = calM.getMonth(), n = new Date(y, m+1, 0).getDate(), lead = (calM.getDay() + 6) % 7;   // weeks start on Monday
+  const wd = UI === "vi" ? ["T2","T3","T4","T5","T6","T7","CN"] : ["Mo","Tu","We","Th","Fr","Sa","Su"];
+  let cells = "", inMonth = 0;
+  for (let d = 1; d <= n; d++){
+    const k = dkey(new Date(y, m, d)), on = ds.has(k), col = (lead + d - 1) % 7;
+    if (on) inMonth++;
+    const cls = ["cd", on && "on", on && col && d > 1 && ds.has(dkey(new Date(y, m, d-1))) && "jl", on && col < 6 && d < n && ds.has(dkey(new Date(y, m, d+1))) && "jr",
+      k === t && "td", new Date(y, m, d) > now && "fut"].filter(Boolean).join(" ");
+    cells += `<div class="${cls}"${d === 1 && lead ? ` style="grid-column-start:${lead + 1}"` : ""}><span>${d}</span></div>`;
+  }
+  const title = UI === "vi" ? `Tháng ${m + 1}, ${y}` : calM.toLocaleDateString("en", { month: "long", year: "numeric" });
+  const cur = streakNow();
+  $("#v-cal").innerHTML = `<div class="sub-head">
+      <div class="l"><button class="btn-ghost back" id="calBack" title="${L("Từ vựng", "Vocab")}" aria-label="${L("Quay lại", "Back")}"><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></div>
+      <div class="c"><h2>${ic("flame-fill")} ${L("Chuỗi ngày", "Day streak")}</h2></div><div class="r"></div></div>
+    <div class="stats">
+      <div class="stat tone t-streak"><b>${cur}</b><span>${L("Hiện tại", "Current")}</span></div>
+      <div class="stat tone t-streak"><b>${streakBest()}</b><span>${L("Kỷ lục", "Best")}</span></div>
+      <div class="stat tone t-streak"><b>${ds.size}</b><span>${L("Tổng số ngày học", "Days studied")}</span></div>
+    </div>
+    <div class="card">
+      <div class="cal-nav">
+        <button class="btn-ghost" id="calPrev" aria-label="${L("Tháng trước", "Previous month")}"${calM <= firstM ? " disabled" : ""}><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <b>${title}</b>
+        <button class="btn-ghost nx" id="calNext" aria-label="${L("Tháng sau", "Next month")}"${calM >= thisM ? " disabled" : ""}><svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      </div>
+      <div class="cal-g">${wd.map(w => `<div class="wd">${w}</div>`).join("")}${cells}</div>
+      <p class="small muted cal-sum">${inMonth ? L(`${inMonth} ngày học trong tháng`, `${inMonth} day${inMonth > 1 ? "s" : ""} studied this month`) : L("Chưa có ngày học nào trong tháng", "No study days this month")}</p>
+    </div>
+    <p class="small muted" style="text-align:center;margin:12px 4px 0">${cur && S.streak.last !== t ? L("Ôn ít nhất 1 từ hôm nay để giữ chuỗi nhé!", "Review at least one word today to keep your streak!") : L("Mỗi ngày ôn ít nhất 1 từ là được tính.", "A day counts once you review at least one word.")}</p>`;
+  $("#calBack").onclick = () => show("study");
+  $("#calPrev").onclick = () => { calM = new Date(y, m-1, 1); renderCal(); };
+  $("#calNext").onclick = () => { calM = new Date(y, m+1, 1); renderCal(); };
+}
 
 /* ---------------- home ---------------- */
 /* opening the Study tab drops straight into the first question; after "End" the home card waits for a tap */
@@ -4550,7 +4635,9 @@ function applyRemote(R){
     S.settings.modes = Object.assign({}, defaults().settings.modes, R.settings.modes || {});
   }
   if (R.streak){
-    if (dnum(R.streak.last) > dnum(S.streak.last) || (dnum(R.streak.last) === dnum(S.streak.last) && (R.streak.count||0) > (S.streak.count||0))) S.streak = R.streak;
+    const days = [...new Set([...streakDays(), ...(R.streak.days || [])])];   // studied days from both devices
+    if (dnum(R.streak.last) > dnum(S.streak.last) || (dnum(R.streak.last) === dnum(S.streak.last) && (R.streak.count||0) > (S.streak.count||0))) S.streak = Object.assign({}, R.streak);
+    S.streak.days = days;
   }
   if (R.daily && R.daily.date === S.daily.date){
     S.daily.newCount = Math.max(S.daily.newCount || 0, R.daily.newCount || 0);
