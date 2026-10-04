@@ -9,7 +9,7 @@
 | `manifest.webmanifest` | PWA manifest: name "Grow with PV", standalone display, theme `#4f46e5`, background `#12131a` |
 | `icon-*.png`, `apple-touch-icon.png` | App icons; the 512 px icon also has a maskable version |
 
-**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v19`). Old caches are then removed on activate.
+**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v20`). Old caches are then removed on activate.
 
 ## Views and navigation
 
@@ -106,7 +106,7 @@ S
 
 | Cache | Contents |
 |---|---|
-| `hangul-v19` | The app shell |
+| `hangul-v20` | The app shell |
 | `hangul-notify` | The snapshot of what is due (`./__notify-state`) that the service worker reads for reminders |
 
 ## Interface language (i18n)
@@ -132,12 +132,13 @@ S
 
 **Caching:**
 
-- On **install**, the app shell is pre-cached. Each file is cached separately, so one missing file doesn't break install.
+- On **install**, the app shell is pre-cached, bypassing the browser's HTTP cache (`cache: "reload"`). Each file is cached separately, so one missing file doesn't break install.
 - `skipWaiting` and `clients.claim` let a new service worker take over immediately.
 - **Fetch** handles same-origin GET requests only:
   - It answers from the cache first, so a weak connection never stalls the app.
   - Any page navigation, with or without a query string, gets `index.html`.
   - In the background it always fetches a fresh copy and updates the cache. **A new version therefore shows up the time after it has downloaded.**
+  - That background fetch uses `cache: "no-cache"`: the server is asked whether the file changed (a small 304 if not), so GitHub Pages' 10-minute HTTP cache doesn't delay updates.
 - **Not touched:** cross-origin requests, such as Gemini, the translation APIs and Google sign-in.
 - The service worker is registered only over https.
 

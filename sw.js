@@ -1,10 +1,11 @@
 // Grow with PV service worker: opens instantly from the cache (so a weak connection never
 // stalls the app), then fetches the latest files in the background — updates you push to
 // GitHub show up on the open after they're downloaded.
-const CACHE = "hangul-v19", NOTIFY_CACHE = "hangul-notify";
+const CACHE = "hangul-v20", NOTIFY_CACHE = "hangul-notify";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {})))));   // one missing file must not break install
+  // cache: "reload" skips the browser's HTTP cache (GitHub Pages keeps files 10 min), so a new install gets today's files
+  e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(new Request(u, { cache: "reload" })).catch(() => {})))));   // one missing file must not break install
   self.skipWaiting();
 });
 self.addEventListener("activate", e => {
@@ -16,7 +17,8 @@ self.addEventListener("fetch", e => {
   if (e.request.method !== "GET" || url.origin !== location.origin) return; // Gemini, translate, CDNs: untouched
   const nav = e.request.mode === "navigate";
   const key = nav ? "./index.html" : e.request;   // any page open (with ?query or not) is the one app shell
-  const fresh = fetch(e.request).then(r => {
+  // "no-cache": ask the server whether the file changed (a tiny 304 if not) instead of reusing a copy up to 10 min old
+  const fresh = fetch(nav ? url.href : e.request, { cache: "no-cache" }).then(r => {
     if (r.ok && !r.redirected) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(key, copy)); }
     return r;
   });
