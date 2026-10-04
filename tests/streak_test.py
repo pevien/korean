@@ -90,7 +90,9 @@ def C(b):
                             "cards": [card(i, due, due) for i in range(1, 6)] })
     saved = lambda: p.evaluate("() => JSON.parse(localStorage.getItem('hangulCards.v1')).streak.days")
     for _ in range(2):   # the round starts by itself on the home page; two answers → today still added once
-        p.wait_for_selector("#qBox .choice:not([disabled])"); p.click("#qBox .choice >> nth=0")
+        p.wait_for_selector("#qBox .choice:not([disabled])")
+        right = "nghĩa " + p.inner_text("#qBox .ko").strip().removeprefix("word")   # always pick a wrong one: the flow stays the same (✗ → Next)
+        p.locator("#qBox .choice", has_not_text=right).first.click()
         p.wait_for_timeout(300)
         nxt = p.locator("#qBox button:has-text('Tiếp'), #qBox button:has-text('Next')")
         if nxt.count(): nxt.first.click()

@@ -76,7 +76,7 @@ One AI call (`ieBegin`) writes the whole test before the first question, so movi
 | After an answer | On to the next question at once. Scoring runs in the background ("scoring {n}"). | Waits for the feedback, then **Try again** or **Next question** / **See results** |
 | Try again | — | Discards the answer, including one still being scored |
 
-**Submit** (top right, tap twice) ends the test early. At least one answer is needed.
+**Submit** (top right, tap twice) ends the test early. At least one answer is needed. It hides while an answer is being recorded.
 
 **← mid-test:**
 - Goes back to setup and keeps the test in memory, with recordings.

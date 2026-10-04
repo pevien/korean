@@ -117,6 +117,7 @@ Keeps words, progress, passages, conversations and settings (including the Gemin
 - **Settings:**
   - The newer copy wins.
   - Not synced: voice and course, which stay per device.
+  - The Gemini key has its own timestamp: the latest add or remove wins, so removing it on one device removes it everywhere, even if another device changed other settings later.
 - **Streak:** the later date wins; the studied days from both devices are merged.
 - **Daily counts:** the higher number wins.
 
@@ -148,13 +149,16 @@ Keeps words, progress, passages, conversations and settings (including the Gemin
 **Import** merges a backup into your current data:
 
 - Words, passages and conversations you don't already have are added.
-- Settings and streak are restored only if this device has no words yet. Your current key and course are kept.
+- Settings and streak are restored only if this device has no words yet. Your current key, course and voice are kept; question types missing from an old backup stay on.
+- A word with the same id as one you already have (e.g. edited since the backup) is skipped, so two words never share an id.
+- A file with a broken entry adds nothing at all ("Invalid backup file").
 
 **Delete all data** asks for a second tap within 4 s.
 
 - **With sync on:** it also deletes the Drive copy.
 - **If deleting the Drive copy fails:** nothing is deleted.
-- Your key and Drive connection are removed as well.
+- Your key and Drive connection are removed as well. The interface language and course stay.
+- Nothing is left behind for a later sync: connecting Drive again afterwards doesn't delete anything there or on other devices.
 
 ## Guide
 

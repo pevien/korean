@@ -24,7 +24,7 @@ Tapping one of the first three tiles opens My words filtered to that group. Tapp
 - **Empty deck:** a prompt to add words, plus buttons for the Alphabet and "+ Add words".
 - **Work pending:** "Ready to study", the count of reviews and new words, and "▶ Start".
 - **All done, some missed:** "X/Y correct — let's lock in the words you missed" with **Practice N missed words**. Each missed word comes up twice. This practice does not change the schedule.
-- **All done, none missed:** the time until the next review, plus **Extra practice** and **Learn 5 more**. Learn 5 more raises today's new-word allowance by 5.
+- **All done, none missed:** the time until the next review, plus **Extra practice** and **Learn 5 more**. Learn 5 more raises today's new-word allowance by 5 (kept as its own count, so a Drive sync doesn't undo it). A new word counts toward the allowance once its first question is answered, not when its intro card is seen. The day's counters start over at midnight even if the app stays open.
 
 **Nudge card** (`renderNudge`). At most one appears at a time:
 
@@ -40,7 +40,7 @@ Tapping one of the first three tiles opens My words filtered to that group. Tapp
   - The arrows move between months, from the first studied month up to this month. Weeks start on Monday.
   - Every studied day is kept in `streak.days`. Data from before the calendar only had the current run, so the history is rebuilt once from that run plus each word's last review day; older days may be missing.
   - Tests: `tests/streak_test.py` (headless Chromium, same setup as [ielts.md](ielts.md#tests)).
-- **Milestones:** 7, 14, 30, 50, 100, 200 and 365 days, then every 100 days.
+- **Milestones:** 7, 14, 30, 50, 100, 200 and 365 days, then every 100 days and every full year (730, 1095…).
   - Reaching one plays a large confetti burst and shows a "🔥 N-day streak!" toast.
   - When a milestone is close, a countdown cheer appears: within 1 day for targets under 30, 2 days for 30 and up, 3 days for 100 and up.
 - **Cheers** appear in the course language with a 🔊 button and a translation, plus a random BTS emoji. Korean has its own set ("보라해 💜").
@@ -84,10 +84,11 @@ In non-Korean courses, "Korean" in these labels is replaced by the course name.
 - One enabled type is picked at random for each card.
 - Speaking types are skipped when the browser can't record or recognise speech.
 - Meaning-based types are skipped for cards that have no meaning.
+- Multiple-choice types are skipped when fewer than 3 other different answers exist (e.g. a deck of 1–2 words): the card is typed or spoken instead.
 
 **Wrong choices (distractors):**
 
-- **Meaning questions:** 3 meanings from other cards. Letters are paired with letters and words with words.
+- **Meaning questions:** 3 different meanings from other cards (never two identical choices). Letters are paired with letters and words with words.
 - **"What you hear" questions:** sound-alikes (`soundAlikes`):
   - Deck words within an edit distance of 2.
   - For Korean, generated **minimal pairs** (`minimalPairs`). Each pair swaps one confusable sound, such as ㄱ/ㅋ/ㄲ, ㅓ/ㅗ or final consonants. Swaps that pronunciation rules would make sound identical are left out, for example tensing and nasalisation.
@@ -95,7 +96,8 @@ In non-Korean courses, "Korean" in these labels is replaced by the course name.
 
 **Typing:**
 
-- Answers are checked ignoring spaces, punctuation and case.
+- Answers are checked ignoring spaces, punctuation (including full-width ！？、 and curly ’ “ ” from phone keyboards) and case.
+- Japanese letters say whether to write them in Hiragana or Katakana; Korean ㅐ/ㅔ/ㅙ/ㅚ/ㅞ in dictation show their romanisation, since they sound alike.
 - **Hint** reveals the first characters and the length.
 - Using a hint removes the Easy grade for that card.
 
@@ -173,7 +175,7 @@ Open it from "+ Add words". It has four tabs. Before anything is added, a **prev
 **The preview** ("Review before adding"):
 
 - Each row has a checkbox, an editable word, an editable meaning, 🔊, and the example sentence if there is one.
-- Words that already exist are marked.
+- Words that already exist (ignoring upper/lower case and punctuation) show "Already in your list" and start unticked.
 - **Fill meanings** translates any rows that are missing a meaning.
 - **Add (N)** saves the ticked rows. Duplicates are skipped and counted in the confirmation message.
 

@@ -31,7 +31,7 @@ There are three sources:
 | Use words I'm learning | Mixes in up to 40 of your words that aren't mastered yet |
 
 - **What you get:** the title and its translation, the sentences with their translations, and 5–10 **key words**.
-- **Dialogue:** dialogue lines start with "Speaker:".
+- **Dialogue:** dialogue lines start with "Speaker:". The label is not read aloud and not scored by the pronunciation coach.
 - **Without a key:** this works through the copy/paste fallback.
 
 **Add my own**

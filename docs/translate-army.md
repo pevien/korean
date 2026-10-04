@@ -85,7 +85,8 @@ The mic is only open during a turn. It is paused while a translation is being re
 - **Saving** (💾):
   - The app waits up to 20 s for translations that are still coming in.
   - It stores the transcript as "💜 BTS Live · d/m hh:mm", or "🌐 Interpreter · …" for interpreter conversations.
-  - A saved conversation keeps updating while the live continues.
+  - Saving clears the screen: lines heard afterwards start a new transcript, saved separately next time.
+  - Tapping **Translate** while a save is finishing shows "Saving the conversation, one moment…" and opens the interpreter once it's done.
 - **The list:** two tabs, **BTS Live** and **🌐 Interpreter**.
 - **Opening a saved conversation:**
   - Tap the title to rename it.

@@ -555,6 +555,10 @@ body.ar-conv-on{overflow:hidden}
 .ko-line .ko{font-size:clamp(30px,11vw,44px)}
 /* card word: never split mid-word (accommodatio/n) — fitWord() shrinks it to the card width instead */
 #qBox .ko{overflow-wrap:normal}
+/* Japanese / Chinese have no spaces, so keep-all (meant for Korean) would never wrap them: let them break between characters.
+   The card word shrinks first (fitWord) and only breaks when it still doesn't fit */
+.cjk body, .cjk .ko, .cjk .ctarget{word-break:normal}
+.cjk #qBox .ko:not(.brk){word-break:keep-all}
 .ko-mean{text-align:center;font-size:20px;color:var(--muted);margin-top:2px}
 .mean{font-size:22px;font-weight:600}
 #qBox .ko-line + .mean{font-size:20px;font-weight:400;color:var(--muted);margin-top:2px}   /* new word: meaning right under the word, same look as the answer reveal (.ko-mean) */
@@ -1245,6 +1249,7 @@ const DAY = 86400000, MIN = 60000;
 const KEY = "hangulCards.v1";
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const todayStr = () => { const d = new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); };
+const yesterdayStr = () => { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); };   // by the calendar: now − 24 h is off by a day around a DST change
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const shuffle = a => { for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
 const HANGUL = /[가-힣ᄀ-ᇿ㄰-㆏]/;
@@ -1345,6 +1350,7 @@ const courseOf = d => { const c = (d.settings || {}).course; return COURSES[c] ?
 const CUR = (() => { try { return courseOf(JSON.parse(localStorage.getItem("hangulCards.v1") || "{}")); } catch(e){ return "ko"; } })();
 const CO = COURSES[CUR], TL = CUR === "zh" ? "zh-CN" : CUR;   // TL: the lang attribute for words in the course language
 const isKo = CUR === "ko";
+document.documentElement.classList.toggle("cjk", CUR === "ja" || CUR === "zh");   // no spaces between words: these may wrap between characters
 const lgOf = x => (x && x.lang) || "ko";
 const inCourse = x => lgOf(x) === CUR;
 const COURSE_CODE = { ko: "KOR", vi: "VIE", en: "ENG", zh: "CHN", ja: "JPN", th: "THA" };   // short name, like the Translate tab
@@ -1391,7 +1397,9 @@ const CHEERS = {
 const meanLang = () => CUR === "en" ? "vi" : "en";
 // per-course settings: Korean keeps the original top-level fields, the other courses live under .byCourse[code]
 const courseSet = () => isKo ? S.settings : ((S.settings.byCourse ||= {})[CUR] ||= {});
-const DY = () => isKo ? S.daily : ((S.daily.c ||= {})[CUR] ||= { newCount: 0, reviews: 0 });
+// today's counters; a new day starts them over even while the app stays open past midnight
+const rollDay = () => { if (S.daily.date !== todayStr()) S.daily = { date: todayStr(), newCount: 0, reviews: 0 }; };
+const DY = () => { rollDay(); return isKo ? S.daily : ((S.daily.c ||= {})[CUR] ||= { newCount: 0, reviews: 0 }); };
 // Keeps AI feedback in the interface language — prompts heavy with the course language otherwise make Gemini answer in it.
 const feedbackLangRule = () => isKo ? `Write every explanation (tips, "good", "overall") in ${uiLangName()}, NOT in Korean. Use Hangul only for the Korean words/syllables being discussed and for pronunciations in brackets. If for any reason you cannot write in ${uiLangName()}, you MUST answer in English. Never write explanations in Korean.`
   : CO.en === uiLangName() ? `Write every explanation (tips, "good", "overall") in ${uiLangName()}.`
@@ -1715,7 +1723,7 @@ function load(){
     const raw = localStorage.getItem(KEY);
     if (raw) { const d = JSON.parse(raw); S = Object.assign(defaults(), d); S.settings = Object.assign(defaults().settings, d.settings||{}); S.settings.modes = Object.assign(defaults().settings.modes, (d.settings||{}).modes||{}); }
   } catch(e) { console.warn("load failed", e); }
-  if (S.daily.date !== todayStr()) S.daily = { date: todayStr(), newCount: 0, reviews: 0 };
+  rollDay();
 }
 function save(){ try { autoSpeakModes(); track(); localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){ toast("⚠️ Could not save (storage blocked)"); } if (window.__syncChanged) window.__syncChanged(); if (window.__notifySnap) window.__notifySnap(); }
 
@@ -1743,18 +1751,21 @@ function track(){
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200); }
 
 /* ---------------- card helpers ---------------- */
+const norm = s => String(s).normalize("NFC").replace(/[\s\p{P}~]/gu, "").toLowerCase();   // any punctuation: full-width ！？、。 and curly ’ “ ” (iPhone smart punctuation) too — also what makes two words the same (Apple = apple)
+function setApiKey(v){ if (S.settings.apiKey !== v){ S.settings.apiKey = v; S.settings.keyMod = Date.now(); } }
+const noSpeaker = t => String(t).replace(/^[^\s:：]{1,12}[:：]\s*/, "");   // dialogue lines start with a speaker label "민수: "
 function newCard(ko, meaning, ex, exMean){ return { id: uid(), lang: CUR, ko: ko.trim(), meaning: (meaning||"").trim(), ex: (ex||"").trim(), exMean: (exMean||"").trim(), ease: 2.5, interval: 0, reps: 0, lapses: 0, due: 0, last: 0, created: Date.now() }; }
 function status(c){ if (!c.last) return "new"; if (c.interval >= 21) return "master"; return "learn"; }
 // the current course's cards (S.cards holds every course)
 const deck = () => S.cards.filter(inCourse);
 function addCards(list){
-  const existing = new Set(deck().map(c => c.ko));
+  const existing = new Set(deck().map(c => norm(c.ko)));   // "Apple" is already there when "apple" is
   let added = 0, dup = 0; const cards = [];
   for (const {ko, meaning, ex, exMean} of list){
     if (!ko || !ko.trim()) continue;
-    if (existing.has(ko.trim())) { dup++; continue; }
+    if (existing.has(norm(ko))) { dup++; continue; }
     const c = newCard(ko, meaning, ex, exMean);
-    S.cards.push(c); cards.push(c); existing.add(ko.trim()); added++;
+    S.cards.push(c); cards.push(c); existing.add(norm(ko)); added++;
   }
   save(); refreshHome();
   const noEx = cards.filter(c => !c.ex);
@@ -2076,6 +2087,7 @@ function grade(c, q){
     c.ease = Math.max(1.3, c.ease + 0.1 - (5-q)*(0.08 + (5-q)*0.02));
     c.due = now + c.interval*DAY;
   }
+  if (!c.last) DY().newCount++;   // a new word counts once it's answered, not when its intro card is seen
   c.last = now;
   DY().reviews++;
   bumpStreak();
@@ -2094,7 +2106,7 @@ function bumpStreak(){
   const t = todayStr(), ds = streakDays();
   if (!ds.has(t)) S.streak.days.push(t);
   if (S.streak.last === t) return;
-  const y = new Date(Date.now()-DAY); const ys = y.getFullYear()+"-"+(y.getMonth()+1)+"-"+y.getDate();
+  const ys = yesterdayStr();
   S.streak.count = (S.streak.last === ys) ? S.streak.count + 1 : 1;
   S.streak.last = t;
 }
@@ -2119,7 +2131,7 @@ function streakBest(){
   return Math.max(best, S.streak.count || 0);
 }
 function streakNow(){
-  const t = todayStr(); const y = new Date(Date.now()-DAY); const ys = y.getFullYear()+"-"+(y.getMonth()+1)+"-"+y.getDate();
+  const t = todayStr(); const ys = yesterdayStr();
   return (S.streak.last === t || S.streak.last === ys) ? S.streak.count : 0;
 }
 const dueCards = () => deck().filter(c => c.last && c.due <= Date.now()).sort((a,b)=>a.due-b.due);
@@ -2127,7 +2139,7 @@ const newCards = () => deck().filter(c => !c.last);
 // the next new cards to learn: alphabet letters first (in table order: basic vowels → consonants → …), then words oldest first
 const newPick = n => { const nw = newCards(), ord = Object.keys(ABC_SAY);
   return nw.filter(isLetter).sort((a, b) => ord.indexOf(a.ko) - ord.indexOf(b.ko)).concat(nw.filter(c => !isLetter(c)).sort((a, b) => a.created - b.created)).slice(0, n); };
-const newLeftToday = () => Math.max(0, S.settings.newPerDay - DY().newCount);
+const newLeftToday = () => Math.max(0, S.settings.newPerDay + (DY().extra || 0) - DY().newCount);   // extra: "Learn 5 more" taps today
 
 /* ---------------- speech ---------------- */
 let voices = [];
@@ -2210,7 +2222,7 @@ function speak(text, opts){
     return null;
   }
   // strip symbols some voices read aloud; keep . , ? ! for natural pauses & intonation
-  const clean = String(text).replace(/^[^\s:：]{1,12}[:：]\s*/, "")      // dialogue speaker label "민수: "
+  const clean = noSpeaker(text)      // dialogue speaker label "민수: "
     .replace(/[~*_#"“”'‘’()\[\]{}<>…·•\/\\|@^=+]/g, " ").replace(/\s+/g, " ").trim();
   const u = new SpeechSynthesisUtterance(clean || text);
   u.lang = v.lang || CO.tts; u.rate = S.settings.rate;   // every 🔊 follows Settings → Speed
@@ -2230,6 +2242,8 @@ const levelDesc = k => (LEVELS.find(l => l[0] === k) || LEVELS[1])[2];
 const curLevel = () => LEVELS.some(l => l[0] === courseSet().level) ? courseSet().level : LEVELS[1][0];
 const langName = () => meanLang() === "vi" ? "Vietnamese" : "English";
 
+// a list from an AI answer: anything else (a string, an object, nulls inside) would throw a raw JS error further on
+const arrOf = v => Array.isArray(v) ? v.filter(x => x != null) : [];
 function extractJSON(text){
   let t = String(text || "").replace(/```(?:json)?/gi, "").trim();
   const s = t.search(/[\[{]/); if (s < 0) throw new Error("No JSON found in the answer");
@@ -2350,10 +2364,11 @@ async function genExamples(cards, silent){
 Words: ${JSON.stringify(batch.map(c => ({ ko: c.ko, meaning: c.meaning })))}
 Return JSON exactly like: {"items":[{"ko":"<the word exactly as given>","ex":"<${CO.en} sentence>","exMean":"<translation>"}]}`;
     const j = await askAI(prompt, { silent });
-    const items = Array.isArray(j) ? j : (j.items || []);
+    const items = Array.isArray(j) ? j : arrOf(j.items);
     let n = 0;
     for (const it of items){
-      const c = batch.find(x => x.ko === String(it.ko||"").trim()) || batch[items.indexOf(it)];
+      // by the word itself; by position only when the AI returned exactly one item per word (a skipped or reordered one would shift every example)
+      const c = batch.find(x => norm(x.ko) === norm(it.ko || "")) || (items.length === batch.length ? batch[items.indexOf(it)] : null);
       if (c && it.ex && !c.ex){ c.ex = String(it.ex).trim(); c.exMean = String(it.exMean||"").trim(); if (!c.meaning && it.meaning) c.meaning = it.meaning; n++; }
     }
     save();
@@ -2428,7 +2443,7 @@ let navScrollT = null;
 addEventListener("scroll", () => { clearTimeout(navScrollT); navScrollT = setTimeout(() => navSave({ y: Math.round(scrollY) }), 200); }, { passive: true });
 addEventListener("pagehide", () => navSave({ y: Math.round(scrollY) }));
 // a tab always opens on its first page (Speak picker, ARMY menu, Study home…), never on a sub-page left open earlier
-$$("nav button").forEach(b => b.onclick = () => { if (b.dataset.v === "tr") return arInterpOpen(); navRoot(b.dataset.v); show(b.dataset.v); });   // Translate opens over whatever tab is open
+$$("nav button").forEach(b => b.onclick = () => { if (b.dataset.v === "tr") return arInterpOpen(); arInterpOpen.wait = false; navRoot(b.dataset.v); show(b.dataset.v); });   // Translate opens over whatever tab is open
 function navRoot(v){
   if (v === "study") homeAuto = true;   // after "End", Back / links return to the home card; only the tab starts a new round
   if (v === "read"){ spScreen = ""; rdNewOpen = false; TK.view = ""; TK.list = false; TK.histList = false; TK.showAll = false; }   // show() → spShow("") also closes an open passage
@@ -2560,7 +2575,7 @@ function refreshHome(noAuto){
     bindResult();
     if (retry) return;
     $("#pracBtn").onclick = () => startSession(true);
-    $("#moreNew").onclick = () => { if (!newCards().length) { toast("No new words left — add some!"); return; } DY().newCount = Math.max(0, DY().newCount - 5); save(); refreshHome(); };
+    $("#moreNew").onclick = () => { if (!newCards().length) { toast("No new words left — add some!"); return; } DY().extra = (DY().extra || 0) + 5; save(); refreshHome(); };   // its own count, so a sync (max of both devices) can't undo it
   }
 }
 const BTS = ["🐨","🐹","🐱","🐿️","🐣","🐯","🐰"]; // RM, Jin, Suga, J-Hope, Jimin, V, Jungkook — every course
@@ -2572,17 +2587,19 @@ const CHEER_START = !isKo ? CHEERS[CUR].start : [["오늘도 화이팅!","Hôm n
 const STREAK_MILESTONES = [7, 14, 30, 50, 100, 200, 365];
 let cheerTry = false;
 /* streak cheer for the "all done" card — only on a milestone day or a day or two before one, so it stays special */
-function nextMilestone(n){ return STREAK_MILESTONES.find(m => m > n) || (Math.floor(n/100) + 1) * 100; }
+// after a year: every 100 days (400, 500…) and every full year (730…)
+const isMilestone = n => STREAK_MILESTONES.includes(n) || (n > 365 && (n % 100 === 0 || n % 365 === 0));
+function nextMilestone(n){ return STREAK_MILESTONES.find(m => m > n) || Math.min((Math.floor(n/100) + 1) * 100, (Math.floor(n/365) + 1) * 365); }
 function streakCheer(){
   const s = streakNow();
   if (!s || S.streak.last !== todayStr()) return null;
   if (!isKo){
     const ch = CHEERS[CUR], m = nextMilestone(s), gap = m - s;
-    if (STREAK_MILESTONES.includes(s) || (s > 365 && s % 100 === 0)) return ch.streak(s);
+    if (isMilestone(s)) return ch.streak(s);
     if (gap > (m >= 100 ? 3 : m >= 30 ? 2 : 1)) return null;
     return gap === 1 ? ch.soon(m) : ch.far(m, gap);
   }
-  if (STREAK_MILESTONES.includes(s) || (s > 365 && s % 100 === 0))
+  if (isMilestone(s))
     return pickOne([[`${s}일 연속! 대박!`, `${s} ngày liên tiếp rồi! Đỉnh quá!`, `${s} days in a row! Amazing!`],
                     [`${s}일 연속 성공! 최고예요!`, `Chuỗi ${s} ngày — bạn đỉnh nhất!`, `A ${s}-day streak — you're the best!`],
                     [`${s}일 동안 매일 했어요! 보라해 💜`, `${s} ngày không nghỉ! Thương bạn 💜`, `${s} days without a break! Borahae 💜`]]);
@@ -2623,7 +2640,7 @@ function timeUntil(t){
   const d = t - Date.now(); if (d <= 0) return "";
   if (d < 3600000) return Math.ceil(d/MIN) + " min";
   if (d < DAY) return Math.round(d/3600000) + " h";
-  return Math.round(d/DAY) + " days";
+  const n = Math.round(d/DAY); return n + (n === 1 ? " day" : " days");
 }
 
 /* ---------------- study session ---------------- */
@@ -2683,7 +2700,7 @@ function endSession(summary){
   if (summary && s && s.answered){ DY().result = { correct: s.correct, answered: s.answered, missed: [...s.missed] }; save(); perfectRun = !s.missed.size; }
   cheerTry = !!(summary && s && s.missed.size); refreshHome(); cheerTry = false;
   // streak went up this session → bump the tile; milestones get the big burst, a perfect run a normal one
-  const streak = streakNow(), milestone = s && streak > s.streak0 && STREAK_MILESTONES.includes(streak);
+  const streak = streakNow(), milestone = s && streak > s.streak0 && isMilestone(streak);
   if (s && streak > s.streak0){ const tile = $("#sStreak").parentElement; tile.classList.remove("pop"); void tile.offsetWidth; tile.classList.add("pop"); }
   if (milestone){ confetti(160); toast(L(`🔥 ${streak} ngày liên tiếp! ${CO.wow}`, `🔥 ${streak}-day streak! ${CO.wow}`)); }
   else if (summary && s && s.answered && !s.missed.size) confetti();
@@ -2730,7 +2747,10 @@ function fitWord(el){
   const len = el.textContent.trim().length;
   if (len > 24) px = Math.min(px, 28); else if (len > 14) px = Math.min(px, 36);   // phrases: smaller start so they don't stack 3 lines
   el.style.fontSize = px + "px";
-  while (px > 22 && el.scrollWidth > el.clientWidth + 1){ px -= 2; el.style.fontSize = px + "px"; }
+  el.classList.remove("brk");
+  const min = document.documentElement.classList.contains("cjk") ? 18 : 22;
+  while (px > min && el.scrollWidth > el.clientWidth + 1){ px = Math.max(min, px - 2); el.style.fontSize = px + "px"; }
+  if (min === 18 && el.scrollWidth > el.clientWidth + 1) el.classList.add("brk");   // ja/zh: still too long at the smallest size → wrap between characters
 }
 function renderIntro(item){
   const c = item.card;
@@ -2747,7 +2767,6 @@ function renderIntro(item){
   $("#gotIt").onclick = () => {
     document.body.classList.remove("auto-session");
     session.queue.shift(); session.done++;
-    DY().newCount++; save();
     const pos = Math.min(session.queue.length, 2 + Math.floor(Math.random()*2));
     session.queue.splice(pos, 0, { card:c, kind:"quiz", fresh:true });
     session.total++;
@@ -2757,12 +2776,21 @@ function renderIntro(item){
 function pickMode(c, noSpeak){
   let modes = enabledModes();
   if (noSpeak || !canSpeakQ()) modes = modes.filter(m => !SPEAK_MODES.includes(m));
-  // multiple choice needs other words with meanings
-  const pool = deck().filter(x => x.id !== c.id && x.meaning);
-  if (pool.length < 1 || !c.meaning) modes = modes.filter(m => m === "m2ko" || m === "listen2ko" || m === "listen2kc" || SPEAK_MODES.includes(m));
+  // multiple choice needs 3 other answers (a 1–2 option question gives itself away): otherwise type or say it instead
+  const meanings = new Set(deck().filter(x => x.id !== c.id && x.meaning && x.meaning !== c.meaning).map(x => x.meaning));
+  if (meanings.size < 3 || !c.meaning) modes = modes.filter(m => m !== "ko2m" && m !== "listen2m");
+  if (modes.includes("listen2kc") && soundAlikes(c, 3).length < 3) modes = modes.filter(m => m !== "listen2kc");
   if (!c.meaning) modes = modes.filter(m => m !== "m2ko" && m !== "m2say");
   if (!modes.length) modes = ["listen2ko"];
   return modes[Math.floor(Math.random()*modes.length)];
+}
+// letters that share a meaning and a sound (あ/ア; ㅐ/ㅔ today): say which one to type, so the answer can be known
+function letterHint(c, mode){
+  if (!isLetter(c)) return "";
+  if (/^[\u3040-\u309f]/.test(c.ko)) return L("Viết bằng Hiragana", "Write it in Hiragana");
+  if (/^[\u30a0-\u30ff]/.test(c.ko)) return L("Viết bằng Katakana", "Write it in Katakana");
+  if (isKo && mode === "listen2ko" && "ㅐㅔㅙㅚㅞ".includes(c.ko)) return `${L("Gợi ý", "Hint")}: ${esc(c.meaning)}`;   // these sound alike: the romanisation tells them apart
+  return "";
 }
 function renderQuiz(item){
   const c = item.card, mode = item.mode || (item.mode = pickMode(c));
@@ -2771,11 +2799,13 @@ function renderQuiz(item){
   if (mode === "ko2m" || mode === "ko2say") prompt = `<div class="ko-line"><div><div class="ko" lang="${TL}">${esc(c.ko)}</div><button class="speak sm" id="qSpeak" title="Listen" aria-label="Listen">${ic("speaker-high")}</button></div></div>`;
   if (mode === "listen2m" || mode === "listen2ko" || mode === "listen2kc") prompt = `<button class="speak big" id="qSpeak">${ic("speaker-high")}</button><p class="small muted" style="margin:0">Tap to replay</p>`;
   if (mode === "m2ko" || mode === "m2say") prompt = `<div class="mean" style="font-size:28px">${esc(c.meaning)}</div>`;
+  if (mode === "m2ko" || mode === "listen2ko"){ const h = letterHint(c, mode); if (h) prompt += `<p class="small muted" style="margin:6px 0 0">${h}</p>`; }
   let answer = "";
   if (mode === "ko2m" || mode === "listen2m"){
     // letters vs letters, words vs words — "g / k" among word meanings would give the answer away
     const pool = deck().filter(x => x.id !== c.id && x.meaning && x.meaning !== c.meaning), same = pool.filter(x => isLetter(x) === isLetter(c));
-    const others = shuffle(same.length >= 3 ? same : pool).slice(0,3);
+    const seen = new Set([c.meaning]), uniq = xs => xs.filter(x => !seen.has(x.meaning) && seen.add(x.meaning));   // never two identical choices
+    const others = uniq(shuffle(same.length >= 3 ? same : pool)).concat(same.length >= 3 ? uniq(shuffle(pool)) : []).slice(0,3);
     const opts = shuffle([c, ...others]);
     item.opts = opts;
     answer = `<div class="choices">${opts.map((o,i)=>`<button class="choice" data-i="${i}"><span class="k">${i+1}</span><span>${esc(o.meaning)}</span></button>`).join("")}</div>`;
@@ -2895,7 +2925,6 @@ function soundAlikes(c, n){
   ranked.forEach(r => add(r.x));
   return picks;
 }
-const norm = s => String(s).normalize("NFC").replace(/[\s.,!?~·'"()\-]/g, "").toLowerCase();
 function answerChoice(item, i){
   if (item.answered) return; item.answered = true;
   const ok = item.opts[i].id === item.card.id;
@@ -3347,13 +3376,14 @@ function parseLinesOther(text){
 }
 function showPreview(items){
   if (!items.length){ toast(`No ${CO.en} words found`); return; }
-  const have = new Set(deck().map(c=>c.ko));
+  const have = new Set(deck().map(c => norm(c.ko))), dup = it => have.has(norm(it.ko));   // already in the list: shown on the row and left unticked
   $("#prevList").innerHTML = items.map((it,i)=>`<div class="prev" data-i="${i}">
-      <input type="checkbox" checked title="${have.has(it.ko) ? "Already added" : ""}">
+      <input type="checkbox" ${dup(it) ? "" : "checked"}>
       <input type="text" class="pk" lang="${TL}" value="${esc(it.ko)}">
       <input type="text" class="pm" value="${esc(it.meaning)}" placeholder="meaning">
       <button class="icon-btn ps" title="Listen">${ic("speaker-high")}</button>
       <input type="hidden" class="pe" value="${esc(it.ex||"")}"><input type="hidden" class="pem" value="${esc(it.exMean||"")}">
+      ${dup(it) ? `<div></div><div class="prev-ex">${L("Đã có trong danh sách", "Already in your list")}</div>` : ""}
       ${it.ex ? `<div></div><div class="prev-ex" lang="${TL}">${esc(it.ex)}<br>${esc(it.exMean||"")}</div>` : ""}</div>`).join("");
   $$("#prevList .ps").forEach(b => b.onclick = () => speak(b.parentNode.querySelector(".pk").value));
   prevCta();
@@ -3432,7 +3462,7 @@ async function geminiWords(file){
 Return JSON exactly like: {"items":[{"ko":"","meaning":"","ex":"","exMean":""}]}`;
   const parts = [{ inline_data: { mime_type: "image/jpeg", data: await imageB64(file) } }];
   const j = extractJSON(await gemini(prompt, parts, { temperature: 0 }));
-  return (Array.isArray(j) ? j : j.items || [])
+  return arrOf(Array.isArray(j) ? j : j.items)
     .map(it => ({ ko: String(it.ko || "").trim(), meaning: String(it.meaning || "").trim(), ex: String(it.ex || "").trim(), exMean: String(it.exMean || "").trim() }))
     .filter(it => CO.is(it.ko)).map(noDot);
 }
@@ -3476,7 +3506,7 @@ Return JSON exactly like: {"words":[{"ko":"","meaning":"","ex":"","exMean":""}]}
   const b = $("#genBtn"); busy(b, true, "Generating…");
   try {
     const j = await askAI(prompt);
-    const arr = Array.isArray(j) ? j : (j.words || j.items || []);
+    const arr = arrOf(Array.isArray(j) ? j : j.words || j.items);
     const have = new Set(known.map(norm)); const seen = new Set();
     const items = [];
     for (const w of arr){
@@ -3555,10 +3585,10 @@ Return JSON exactly like: {"title":"<short ${CO.en} title>","titleMean":"<${lang
   const b = $("#rdGen"); busy(b, true, "Writing passage…");
   try {
     const j = await askAI(prompt);
-    const sentences = (j.sentences || []).map(s => ({ ko: String(s.ko||"").trim(), meaning: String(s.meaning||"").trim() })).filter(s => s.ko);
+    const sentences = arrOf(j.sentences).map(s => ({ ko: String(s.ko||"").trim(), meaning: String(s.meaning||"").trim() })).filter(s => s.ko);
     if (!sentences.length) throw new Error("The answer had no sentences");
     const p = { id: uid(), lang: CUR, created: Date.now(), title: String(j.title || topic).trim(), titleMean: String(j.titleMean||"").trim(), level, prompt: topic,
-      sentences, vocab: (j.vocab || []).map(v => ({ ko: String(v.ko||"").trim(), meaning: String(v.meaning||"").trim() })).filter(v => v.ko) };
+      sentences, vocab: arrOf(j.vocab).map(v => ({ ko: String(v.ko||"").trim(), meaning: String(v.meaning||"").trim() })).filter(v => v.ko) };
     S.passages.push(p); save(); openNewPassage(p.id);
   } catch(e){ if (e.message !== "cancelled") toast("⚠️ " + e.message); }
   busy(b, false);
@@ -3585,7 +3615,7 @@ Return JSON exactly like: {"title":"","titleMean":"","sentences":[{"ko":"","mean
   const parts = [{ inline_data: { mime_type: "image/jpeg", data: await imageB64(file) } }];
   const j = extractJSON(await gemini(prompt, parts, { temperature: 0 }));
   return { title: String(j.title || "").trim(), titleMean: String(j.titleMean || "").trim(),
-    sentences: (j.sentences || []).map(x => ({ ko: String(x.ko || "").trim(), meaning: String(x.meaning || "").trim() })).filter(x => CO.is(x.ko)) };
+    sentences: arrOf(j.sentences).map(x => ({ ko: String(x.ko || "").trim(), meaning: String(x.meaning || "").trim() })).filter(x => CO.is(x.ko)) };
 }
 // pasted text: the sentences are already split here, so AI only gives each one its meaning (the translation in the text
 // if there is one) — it can't add or change Korean. Title only when asked.
@@ -3603,7 +3633,7 @@ ${raw}
 Sentences:
 ${sents.map((k, i) => `${i + 1}. ${k}`).join("\n")}`;
   const j = extractJSON(await gemini(prompt, undefined, { temperature: 0 }));
-  return { title: String(j.title || "").trim(), titleMean: String(j.titleMean || "").trim(), meanings: (j.meanings || []).map(m => String(m || "").trim()) };
+  return { title: String(j.title || "").trim(), titleMean: String(j.titleMean || "").trim(), meanings: arrOf(j.meanings).map(m => String(m || "").trim()) };
 }
 function liteRow(list, x){
   const d = document.createElement("div"); d.className = "es";
@@ -3838,7 +3868,8 @@ $("#rdBack").onclick = () => {
   if (!$("#rdEditor").classList.contains("hidden")) return closeRdEditor();   // ← while editing = cancel, back to the passage
   stopPlayer(); if ("speechSynthesis" in window) speechSynthesis.cancel(); closeCoach(); curP = null; navSave({ p: "", y: 0 }); $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
 $("#rdDel").onclick = e => confirmTap(e.currentTarget, ic("trash"), () => {
-  S.passages = S.passages.filter(p => p !== curP); save(); $("#rdBack").click(); toast("Passage deleted");
+  S.passages = S.passages.filter(p => p !== curP); save();
+  closeRdEditor(); $("#rdBack").click(); toast("Passage deleted");   // editor open or not: always back to the list
 }, ic("trash") + " " + L("Xoá?", "Delete?"));
 // key words: 🔊 | word over meaning | status badge (saved) or ＋ (not saved yet), all vertically centred
 function renderRdVocab(){
@@ -3981,7 +4012,7 @@ $("#cKeyLink").onclick = () => { closeCoach(); show("set"); $("#g-key").open = t
 function openCoach(i){
   if (!curP) return;
   pausePlayer(); cancelRec(); C.tok++; C.busy = false;
-  C.i = i; const s = curP.sentences[i];
+  C.i = i; const s = coachSent();
   $("#coach").classList.remove("hidden"); $("#rdHint").classList.add("hidden");
   $$("#sentList .sent.cur").forEach(x => x.classList.remove("cur"));   // playback is paused → drop its highlight, the coached row is the active one
   const el = placeCoach();
@@ -4002,7 +4033,7 @@ $("#cMine").onclick = () => { if (C.url) new Audio(C.url).play(); };
 $("#cRec").onclick = () => { if (C.busy) return; (C.rec && C.rec.state === "recording") || C.recog ? stopRec() : startRec(); };
 
 function cancelRec(){
-  clearTimeout(C.autoStop);
+  clearTimeout(C.autoStop); C.micTok = (C.micTok || 0) + 1;   // a mic still opening (permission prompt) is dropped once it arrives
   try { if (C.rec && C.rec.state === "recording") { C.rec.onstop = null; C.rec.stop(); } } catch(e){}
   try { if (C.recog) { C.recog.onend = null; C.recog.abort(); } } catch(e){}
   if (C.stream) C.stream.getTracks().forEach(t => t.stop());
@@ -4029,24 +4060,31 @@ async function micPermissionState(){
   try { if (navigator.permissions) return (await navigator.permissions.query({ name: "microphone" })).state; } catch(e){}
   return "unknown";
 }
+// busy from the first tap (before any await), so a double tap can't open a second recording
 async function startRec(){
   if (C.starting) return;
+  C.starting = true;
+  try { await startRec0(); } finally { C.starting = false; }
+}
+async function startRec0(){
+  const tok = C.tok, mt = C.micTok;
+  const gone = () => tok !== C.tok || mt !== C.micTok;   // coach closed / moved, or the tab left, while waiting
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { micHelp("insecure"); return; }
   if (await micPermissionState() === "denied") { micHelp("site-denied"); return; }
+  if (gone()) return;
   const useAI = coachAI();
   if (!useAI && !SR) { toast("Needs a Gemini key (Settings) or Chrome/Safari"); return; }
   C.heard = ""; C.srErr = ""; C.blob = null; $("#cResult").innerHTML = "";
-  if (curP && C.i >= 0) $("#cTarget").textContent = curP.sentences[C.i].ko;   // re-recording (the big 🎙 is the "try again") clears the old marks
+  if (curP && C.i >= 0) $("#cTarget").textContent = coachSent().ko;   // re-recording (the big 🎙 is the "try again") clears the old marks
   try {
     // Android Chrome can't feed the mic to MediaRecorder and SpeechRecognition at the same time:
     // the recorder wins and recognition hears silence. Without an AI key, use recognition only there.
     const srOnly = !useAI && SR && isAndroid;
     if (srOnly) { $("#cMine").disabled = true; }
     else if (navigator.mediaDevices && window.MediaRecorder){
-      const tok = C.tok; C.starting = true;
-      const st = await micWait($("#cRec"), navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })).finally(() => { C.starting = false; });
-      if (tok !== C.tok){ st.getTracks().forEach(t => t.stop()); return; }   // coach closed / moved while the mic was opening
+      const st = await micWait($("#cRec"), navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }));
+      if (gone()){ st.getTracks().forEach(t => t.stop()); return; }   // coach closed / moved, or the tab left, while the mic was opening
       C.stream = st; C.chunks = [];
       C.rec = new MediaRecorder(C.stream);
       C.rec.ondataavailable = e => { if (e.data.size) C.chunks.push(e.data); };
@@ -4141,8 +4179,10 @@ async function blobToWavB64(blob, stats){
   return btoa(bin);
 }
 
+// the sentence the coach grades: without a dialogue speaker label, which is never read out
+const coachSent = () => { const s = curP.sentences[C.i]; return { ...s, ko: noSpeaker(s.ko) }; };
 async function evaluateAI(){
-  const s = curP.sentences[C.i], tok = C.tok;
+  const s = coachSent(), tok = C.tok;
   C.busy = true; $("#cStatus").innerHTML = `<span class="spinner"></span>Coach is listening to your recording…`;
   try {
     const b64 = await blobToWavB64(C.blob);
@@ -4274,7 +4314,7 @@ function align(tg, hd){
   return { map, extra };
 }
 function evaluateLocal(){
-  const s = curP.sentences[C.i];
+  const s = coachSent();
   const heard = C.heard.trim();
   if (!heard){ $("#cStatus").textContent = C.srErr === "network" ? "Speech check needs internet (or isn't available in this browser — try Chrome), then try again."
     : "Didn't catch anything — speak a bit louder and closer to the mic, then try again."; return; }
@@ -4310,7 +4350,7 @@ function renderCoachResult(s, j, ai){
   const box = (k, label) => sc[k] == null ? `<div class="stat"><b class="muted">–</b><span>${label}</span></div>` : `<div class="stat ${cls(sc[k])}"><b>${Math.round(sc[k])}</b><span>${label}</span></div>`;
   // highlight target
   const chars = [...s.ko], flag = new Array(chars.length).fill(0), num = new Array(chars.length).fill(0);
-  const issues = (j.issues || []).filter(x => x && (x.part || x.idx != null));
+  const issues = arrOf(j.issues).filter(x => x && (x.part || x.idx != null));
   const pos = unitPos(s.ko);   // [first, end) characters of each syllable / word
   const mark = (u, v) => { const r = pos[u]; if (r) for (let k = r[0]; k < r[1]; k++) flag[k] = Math.max(flag[k], v); };
   if (j.local){
@@ -4363,7 +4403,8 @@ function renderCoachResult(s, j, ai){
     ${j.overall ? `<div class="box small">💡 ${esc(j.overall)}</div>` : ""}
     `;
   bindSay($("#cResult"));
-  if (overallScore && (s.best == null || overallScore > s.best)) { s.best = overallScore; save(); const el = $$("#sentList .sent")[C.i]; if (el) { const keep = C.i; renderSentences(); C.i = keep; } }
+  const orig = curP.sentences[C.i] || s;   // s is coachSent()'s copy: the best score belongs on the passage's own sentence
+  if (overallScore && (orig.best == null || overallScore > orig.best)) { orig.best = overallScore; save(); const el = $$("#sentList .sent")[C.i]; if (el) { const keep = C.i; renderSentences(); C.i = keep; } }
 }
 
 /* ---------------- words list ---------------- */
@@ -4441,7 +4482,10 @@ function editRow(li, c){
     <div style="display:grid;gap:6px"><button class="btn2 small" data-a="ok">Save</button><button class="btn-ghost small" data-a="no">Cancel</button><button class="btn-ghost small" data-a="rs" title="Reset progress">Reset</button></div>`;
   li.querySelector("[data-a=no]").onclick = () => renderWords();
   li.querySelectorAll("input").forEach(i => i.onkeydown = e => { if (e.key === "Enter" && !e.isComposing) li.querySelector("[data-a=ok]").click(); });
-  li.querySelector("[data-a=ok]").onclick = () => { c.ko = li.querySelector(".ek").value.trim() || c.ko; c.meaning = li.querySelector(".em").value.trim(); c.ex = li.querySelector(".ee").value.trim(); c.exMean = li.querySelector(".eem").value.trim(); save(); renderWords(); };
+  li.querySelector("[data-a=ok]").onclick = () => {
+    const ko = li.querySelector(".ek").value.trim() || c.ko;
+    if (deck().some(x => x !== c && norm(x.ko) === norm(ko))) { toast(L("Từ này đã có trong danh sách", "That word is already in your list")); li.querySelector(".ek").focus(); return; }
+    c.ko = ko; c.meaning = li.querySelector(".em").value.trim(); c.ex = li.querySelector(".ee").value.trim(); c.exMean = li.querySelector(".eem").value.trim(); save(); renderWords(); };
   li.querySelector("[data-a=rs]").onclick = () => { Object.assign(c, { ease:2.5, interval:0, reps:0, lapses:0, due:0, last:0 }); save(); renderWords(); toast("Progress reset"); };
 }
 
@@ -4476,7 +4520,7 @@ $$("input.secret").forEach(i => {
   i.addEventListener("focus", () => { if (i.dataset.masked) { i.value = ""; i.dataset.masked = ""; } });
   i.addEventListener("blur", () => { if (!i.value.trim()) showSecret(i, i.id === "setKey" ? S.settings.apiKey : SY.clientId); });
 });
-$("#setKey").onchange = e => { const v = e.target.value.trim(); if (!v || e.target.dataset.masked) return; S.settings.apiKey = v; save(); showSecret(e.target, v); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]); keyDelBtn(); keyLoad(); };
+$("#setKey").onchange = e => { const v = e.target.value.trim(); if (!v || e.target.dataset.masked) return; setApiKey(v); save(); showSecret(e.target, v); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]); keyDelBtn(); keyLoad(); };
 // 🗑 remove key: only once the key is known to work (a typo'd key is simply cleared from the box), tap twice to confirm
 const KEYOK_KEY = "hangulCards.keyOk";
 const keyFp = () => { const k = (S.settings.apiKey || "").trim(); return k ? k.length + ":" + k.slice(-6) : ""; };   // which key was verified, without a second copy of it
@@ -4497,12 +4541,12 @@ async function checkKey(){
   keyDelBtn();
 }
 $("#keyDel").onclick = e => confirmTap(e.currentTarget, ic("trash"), () => {
-  S.settings.apiKey = ""; save(); showSecret($("#setKey"), ""); try { localStorage.removeItem(KEYOK_KEY); } catch(e){} keyDelBtn(); toast(L("Đã gỡ Gemini key", "Gemini key removed"));
+  setApiKey(""); save(); showSecret($("#setKey"), ""); try { localStorage.removeItem(KEYOK_KEY); } catch(e){} keyDelBtn(); toast(L("Đã gỡ Gemini key", "Gemini key removed"));
 }, ic("trash") + " " + L("Gỡ?", "Remove?"));
 $("#setModel").onchange = e => { S.settings.model = e.target.value; save(); };
 $("#setAutoEx").onchange = e => { S.settings.autoEx = e.target.checked; save(); };
 $("#testAI").onclick = async () => {
-  const v = $("#setKey").value.trim(); if (v && !$("#setKey").dataset.masked) S.settings.apiKey = v;
+  const v = $("#setKey").value.trim(); if (v && !$("#setKey").dataset.masked) setApiKey(v);
   showSecret($("#setKey"), S.settings.apiKey);
   save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]);
   if (!S.settings.apiKey) { toast("Paste your Gemini key first"); return; }
@@ -4527,9 +4571,17 @@ $("#impFile").onchange = async e => {
     if (!Array.isArray(d.cards)) throw new Error();
     const wasEmpty = !S.cards.length;
     // the same word can be in two courses; a backup from before courses is all Korean
-    const kk = c => lgOf(c) + "|" + c.ko, ids = new Set(S.cards.map(kk)); let n = 0;
-    d.cards.forEach(c => { if (c && c.ko && !ids.has(kk(c))) { S.cards.push(Object.assign(newCard(c.ko, c.meaning||""), c, { lang: lgOf(c) })); ids.add(kk(c)); n++; } });
-    if (wasEmpty && d.settings) { const k = S.settings.apiKey, co = S.settings.course; S.settings = Object.assign(S.settings, d.settings); S.settings.apiKey = k; S.settings.course = co; if (d.streak) S.streak = d.streak; }
+    // read the whole file first (a bad card throws here), so a broken file adds nothing at all
+    // same id as a card already here (e.g. it was edited since the backup) → keep the one in use: two cards must never share an id
+    const kk = c => lgOf(c) + "|" + c.ko, ids = new Set(S.cards.map(kk)), cids = new Set(S.cards.map(c => c.id)), add = [];
+    d.cards.forEach(c => { if (c && c.ko && !ids.has(kk(c)) && !cids.has(c.id)) { add.push(Object.assign(newCard(c.ko, c.meaning||""), c, { lang: lgOf(c) })); ids.add(kk(c)); if (c.id) cids.add(c.id); } });
+    const n = add.length; S.cards.push(...add);
+    if (wasEmpty && d.settings && typeof d.settings === "object") {   // key, course and voices stay this device's; question types missing from an old backup keep their defaults
+      const { apiKey, keyMod, course, voice, voiceBy } = S.settings;
+      S.settings = Object.assign(S.settings, d.settings, { apiKey, keyMod, course, voice, voiceBy });
+      S.settings.modes = Object.assign({}, defaults().settings.modes, d.settings.modes || {});
+      if (d.streak) S.streak = d.streak;
+    }
     let np = 0; const pids = new Set(S.passages.map(p => p.id));
     (d.passages || []).forEach(p => { if (p && p.id && Array.isArray(p.sentences) && !pids.has(p.id)) { S.passages.push(Object.assign({ vocab: [] }, p)); np++; } });
     const lids = new Set(S.lives.map(x => x.id));
@@ -4571,7 +4623,10 @@ $("#resetBtn").onclick = async () => {
   }
   tok = null; saveTok();
   SY = { clientId: "", on: false, last: 0, fileId: "" }; try { localStorage.removeItem(SYNC_KEY); } catch(e){}
-  S = defaults(); save(); b.textContent = "Delete all data"; setCloud("off"); renderSettings(); toast(L("Đã xoá toàn bộ dữ liệu, đồng bộ Drive và key", "All data, Drive sync and key deleted"));
+  const keep = { uiLang: S.settings.uiLang, course: S.settings.course };   // this device's language + course stay
+  S = defaults(); Object.assign(S.settings, keep);
+  takeSnap(); save();   // fresh snapshot first, so the wipe leaves no tombstones that a later sync would spread
+  b.textContent = "Delete all data"; setCloud("off"); renderSettings(); toast(L("Đã xoá toàn bộ dữ liệu, đồng bộ Drive và key", "All data, Drive sync and key deleted"));
 };
 
 
@@ -4703,22 +4758,28 @@ function applyRemote(R){
     byKo.set(kk(c), keep); S.cards.splice(S.cards.indexOf(drop), 1); tomb[drop.id] = now;
   });
   if (R.settings && (!SY.last || (R.settings._mod || 0) > (S.settings._mod || 0))){
-    const keep = { voice: S.settings.voice, voiceBy: S.settings.voiceBy, course: S.settings.course || (!SY.last ? R.settings.course : undefined), apiKey: R.settings.apiKey || S.settings.apiKey };   // voices and the course are per device
+    const keep = { voice: S.settings.voice, voiceBy: S.settings.voiceBy, course: S.settings.course || (!SY.last ? R.settings.course : undefined), apiKey: S.settings.apiKey, keyMod: S.settings.keyMod };   // voices and the course are per device; the key is merged on its own below
     if ((S.settings._mod || 0) > (R.settings._mod || 0)) keep.uiLang = S.settings.uiLang;   // first sync: the language just picked here is the latest choice
     Object.assign(S.settings, R.settings, keep);
     S.settings.modes = Object.assign({}, defaults().settings.modes, R.settings.modes || {});
   }
+  // the Gemini key has its own stamp: the latest add/remove wins, even if the other device changed other settings later
+  if (R.settings && (R.settings.keyMod || 0) > (S.settings.keyMod || 0)){ S.settings.apiKey = R.settings.apiKey || ""; S.settings.keyMod = R.settings.keyMod; }
+  else if (R.settings && !S.settings.keyMod && !S.settings.apiKey && R.settings.apiKey) S.settings.apiKey = R.settings.apiKey;   // data from before the stamp
   if (R.streak){
     const days = [...new Set([...streakDays(), ...(R.streak.days || [])])];   // studied days from both devices
     if (dnum(R.streak.last) > dnum(S.streak.last) || (dnum(R.streak.last) === dnum(S.streak.last) && (R.streak.count||0) > (S.streak.count||0))) S.streak = Object.assign({}, R.streak);
     S.streak.days = days;
   }
+  rollDay();
   if (R.daily && R.daily.date === S.daily.date){
     S.daily.newCount = Math.max(S.daily.newCount || 0, R.daily.newCount || 0);
     S.daily.reviews = Math.max(S.daily.reviews || 0, R.daily.reviews || 0);
+    if (S.daily.extra || R.daily.extra) S.daily.extra = Math.max(S.daily.extra || 0, R.daily.extra || 0);
     Object.entries(R.daily.c || {}).forEach(([k, r]) => {   // the other courses' counts, same rule
       const l = (S.daily.c ||= {})[k] ||= { newCount: 0, reviews: 0 };
       l.newCount = Math.max(l.newCount || 0, r.newCount || 0); l.reviews = Math.max(l.reviews || 0, r.reviews || 0);
+      if (l.extra || r.extra) l.extra = Math.max(l.extra || 0, r.extra || 0);
     });
   }
   takeSnap();
@@ -4800,11 +4861,12 @@ window.__notifySnap = () => {
   if (!("caches" in window)) return;
   clearTimeout(notifyT);
   notifyT = setTimeout(() => {
+    rollDay();
     // every course counts: new words left per course, each with its own daily limit
     const courses = COURSE_ORDER.map(k => ({ n: S.cards.filter(c => lgOf(c) === k && !c.last).length,
-      c: (k === "ko" ? S.daily.newCount : ((S.daily.c || {})[k] || {}).newCount) || 0 })).filter(x => x.n);
+      c: (d => (d.newCount || 0) - (d.extra || 0))(k === "ko" ? S.daily : (S.daily.c || {})[k] || {}) })).filter(x => x.n);   // "Learn 5 more" raises that day's limit
     const snap = { on: notifyOn(), ui: UI, dues: S.cards.filter(c => c.last).map(c => c.due), courses,
-      newTotal: newCards().length, newPerDay: S.settings.newPerDay, date: S.daily.date, newCount: DY().newCount, at: Date.now() };
+      newTotal: newCards().length, newPerDay: S.settings.newPerDay, date: S.daily.date, newCount: DY().newCount - (DY().extra || 0), at: Date.now() };
     caches.open(NOTIFY_CACHE).then(c => c.put("./__notify-state", new Response(JSON.stringify(snap), { headers: { "Content-Type": "application/json" } }))).catch(() => {});
   }, 800);
 };
@@ -5178,7 +5240,9 @@ function arSyncSaved(){   // debounced: a busy live adds lines every few seconds
   arSyncT = setTimeout(() => { x.lines = AR.lines.map(arCopyLine); save(); }, 4000);
 }
 // save = file the transcript under "Saved conversations", clear this screen and go back there
-async function arSaveNow(){
+// Translate tapped while a save is finishing → it opens once the save is done
+async function arSaveNow(){ await arSaveNow0(); if (arInterpOpen.wait){ arInterpOpen.wait = false; arInterpOpen(); } }
+async function arSaveNow0(){
   if (arSaveNow.busy) return;
   const mode = AR.mode, was = AR.on;
   arSaveNow.busy = true; arLock();
@@ -5499,7 +5563,7 @@ The learner is stuck and doesn't know what to say next. Help them answer:
 Return JSON exactly like: {"ask":"","hints":[{"ko":"","mean":""}]}`, null, { temperature: 0.8 }));
     await fixFeedbackLang([[j, "ask"], ...(Array.isArray(j.hints) ? j.hints : []).map(h => [h, "mean"])]);
     if (S.talk !== t || t.done || !talkVisible()) return;
-    TK.hints = (j.hints || []).filter(h => h && h.ko).slice(0, 3);
+    TK.hints = arrOf(j.hints).filter(h => h && h.ko).slice(0, 3);
     TK.hintAsk = String(j.ask || "").trim();
     renderTalkChat();
     if (talkVisible()) requestAnimationFrame(() => scrollTo(0, document.body.scrollHeight));
@@ -5544,6 +5608,7 @@ $("#talk").addEventListener("click", e => {
 }, true);
 function renderTalkChat(){
   const t = S.talk; if (!t) return;
+  if (!talkVisible() || TK.view || TK.histList || TK.list) return;   // a reply landing after the chat was left: no redraw, so the tab bar isn't hidden off-screen
   const sc = talkScene(t), wasBottom = innerHeight + scrollY >= document.body.scrollHeight - 80;
   $("#talk").innerHTML = talkHead(`${sc.icon} ${esc(sc.name)}`, `<button id="tkEnd" class="tk-end" title="${L("Kết thúc hội thoại", "Finish the conversation")}">${L("Kết thúc", "Finish")}</button>`) + `
     <div class="tk-list" id="tkList">${t.turns.map(talkMsg).join("")}</div>
@@ -5562,7 +5627,7 @@ function renderTalkChat(){
     </div>`;
   $("#talk").classList.add("tk-chat"); document.body.classList.add("talking");   // hides the tab bar
   talkHeadStuck();
-  const rs = $("#tkRate"); rs.innerHTML = $("#pRate").innerHTML; rs.value = $("#pRate").value; fitPRate(rs);
+  const rs = $("#tkRate"); syncPRate();   // fills #tkRate from Settings → Speed (the reader's box may not be synced yet after a reload)
   rs.onchange = () => { $("#pRate").value = rs.value; $("#pRate").onchange(); fitPRate(rs); };
   if (TK.rec) talkRecUI(true);
   talkStatus(TK.status);
@@ -5761,6 +5826,7 @@ function ieHistBtn(){
 }
 
 function renderIelts(){
+  if (!ieVisible()) return;   // e.g. the test arrives after leaving: don't touch the tab bar of whatever is on screen now
   $("#ielts").classList.remove("tk-chat"); document.body.classList.remove("talking");
   const h = IE.view && (S.ielts || []).find(x => x.id === IE.view), t = IE.test;
   if (h) renderIeResult(h, true);
@@ -5819,7 +5885,7 @@ async function ieBegin(mode){
   IE.showQ = false;
   IE.test = { id: uid(), lang: CUR, created: Date.now(), mode, target: ieTarget(), card: null, qs: [], i: 0, notes: "", result: null };
   IE.phase = "gen"; renderIelts(); scrollTo(0, 0);
-  const t = IE.test;
+  const t = IE.test, g = IE.gen;
   // a new test every time: AI writes it fresh, steering away from what recent tests already asked
   const recent = myIelts().map(x => x.card && x.card.topic).filter(Boolean).slice(-15);
   const recentP1 = [...new Set(myIelts().slice(-8).flatMap(x => x.qs.filter(q => q.part === 1 && q.topic && !/work|study/i.test(q.topic)).map(q => q.topic)))];
@@ -5833,6 +5899,7 @@ ${recent.length ? `Do NOT reuse these recent Part 2 topics: ${JSON.stringify(rec
 ${recentP1.length ? `Pick Part 1 topics other than these recent ones: ${JSON.stringify(recentP1)}.` : ""}
 Return JSON exactly like: {"p1":[{"topic":"","q":""}],"card":{"topic":"","points":[""],"end":""},"follow":"","p3":[""]}`, null, { temperature: 1 });
     if (IE.test !== t) return;
+    if (IE.gen !== g){ IE.test = null; IE.phase = ""; return; }   // left while it was being written (ieStop bumps gen): drop it, no prep minute ticking off-screen
     // Gemini sometimes wraps a line in an object ({"q": …}, {"question": …}) where a plain string was asked for
     const s = v => String(v && typeof v === "object" ? v.q || v.question || v.text || v.point || v.topic || Object.values(v).find(x => typeof x === "string") || "" : v || "").trim();
     const arr = v => Array.isArray(v) ? v : [];
@@ -5846,8 +5913,8 @@ Return JSON exactly like: {"p1":[{"topic":"","q":""}],"card":{"topic":"","points
     ieGo();
   } catch(e){
     if (IE.test !== t) return;
-    IE.test = null; IE.phase = ""; renderIelts();
-    toast("⚠️ " + e.message);
+    IE.test = null; IE.phase = ""; if (IE.gen !== g) return;
+    renderIelts(); toast("⚠️ " + e.message);
   }
 }
 
@@ -5865,7 +5932,12 @@ function ieSpoken(t, i){
   if (x.part === 1 && i === 0) return `Good morning. In this first part, I'd like to ask you some questions about yourself. ${x.q}`;
   if (x.part === 1 && prev && prev.topic !== x.topic) return `Now let's talk about ${x.topic.toLowerCase()}. ${x.q}`;
   if (x.kind === "card") return `Now I'm going to give you a topic, and I'd like you to talk about it for one to two minutes. You have one minute to think about what you're going to say, and you can make some notes if you wish.`;
-  if (x.part === 3 && (!prev || prev.part !== 3)) return `We've been talking about ${t.card.topic.replace(/^describe\s+/i, "").replace(/\.$/, "")}. I'd like to discuss with you one or two more general questions related to this. ${x.q}`;
+  if (x.part === 3 && (!prev || prev.part !== 3)){
+    const topic = t.card.topic.replace(/^describe\s+/i, "").replace(/\.$/, "");
+    return t.mode === "3"   // Part 3 on its own: there was no Part 2 talk to refer back to
+      ? `In this part, I'd like to discuss with you some general questions related to ${topic}. ${x.q}`
+      : `We've been talking about ${topic}. I'd like to discuss with you one or two more general questions related to this. ${x.q}`;
+  }
   return x.q;
 }
 // listen first like in the real test; the words show on request — or at once when the device can't read them out
@@ -5875,7 +5947,7 @@ function ieSay(i){
 }
 // show the current question, read it out, and for the cue card start the minute to prepare
 function ieGo(){
-  const t = IE.test; if (!t) return;
+  const t = IE.test; if (!t || !ieVisible()) return;
   renderIelts(); scrollTo(0, 0);
   if (IE.phase === "ask") ieSay(t.i);
   if (IE.phase === "prep"){
@@ -5928,7 +6000,7 @@ function ieFbHTML(x, i, rec = true, tt = IE.test){
   </div>`;
 }
 function renderIeExam(){
-  const t = IE.test; if (!t) return;
+  const t = IE.test; if (!t || !ieVisible() || IE.view || IE.histList) return;
   if (IE.phase === "gen"){
     $("#ielts").innerHTML = ieHead(`${ic("graduation-cap")} ${ieMode(t.mode)}`) + `<div class="card" style="text-align:center"><span class="spinner"></span> ${L("Giám khảo đang chuẩn bị đề…", "The examiner is preparing your test…")}</div>`;
     return;
@@ -5940,8 +6012,9 @@ function renderIeExam(){
   const x = t.qs[t.i], card = x.kind === "card", ph = IE.phase, practise = !ieFull();
   const showFb = practise && ph === "done";
   const pending = t.qs.filter(q => q.busy).length;
+  // Submit hides while recording: submitting then would drop what was just said (like Talk's Finish)
   $("#ielts").innerHTML = ieHead(`Part ${x.part} <span class="muted ie-n">${t.i + 1}/${t.qs.length}</span>`,
-    `<button id="ieEnd" class="tk-end">${L("Nộp bài", "Submit")}</button>`) + `
+    `<button id="ieEnd" class="tk-end"${ph === "rec" ? ` style="visibility:hidden"` : ""}>${L("Nộp bài", "Submit")}</button>`) + `
     <div class="ie-prog"><i style="width:${Math.round(t.i / t.qs.length * 100)}%"></i></div>
     ${card ? `<div class="card ie-card">
         <div class="small muted">${ph === "prep" ? L("Chuẩn bị — có thể ghi chú", "Prepare — you can make notes") : L("Thẻ đề", "Cue card")}</div>
@@ -6107,7 +6180,7 @@ For each criterion — "fc" Fluency & Coherence, "lr" Lexical Resource, "gra" Gr
 "strengths": 2 short points in ${uiLangName()}. "next": the 3 most useful, concrete things to do to reach band ${t.target}, in ${uiLangName()}.
 ${feedbackLangRule()}
 Return JSON exactly like: {"fc":{"band":0,"note":""},"lr":{"band":0,"note":""},"gra":{"band":0,"note":""},"p":{"band":0,"note":""},"strengths":[""],"next":[""]}`, null, { temperature: 0.2, system: feedbackLangRule() });
-    const r = { strengths: (j.strengths || []).map(String).filter(Boolean).slice(0, 3), next: (j.next || []).map(String).filter(Boolean).slice(0, 4) };
+    const r = { strengths: arrOf(j.strengths).map(String).filter(Boolean).slice(0, 3), next: arrOf(j.next).map(String).filter(Boolean).slice(0, 4) };
     IE_CRIT.forEach(([k]) => { const c = j[k] || {}; r[k] = { band: Math.max(0, Math.min(9, Math.round((+c.band || 0) * 2) / 2)), note: String(c.note || "").trim() }; });
     await fixFeedbackLang([...IE_CRIT.map(([k]) => [r[k], "note"]), ...r.strengths.map((_, i) => [r.strengths, i]), ...r.next.map((_, i) => [r.next, i])]);
     r.overall = ieOverall(r);
@@ -6488,7 +6561,7 @@ Earlier lines for context (don't translate): ${ctx || "(none)"}
 Lines: ${JSON.stringify(batch.map(l => l.ko))}
 Return JSON exactly like: {"t":["<translation of line 1>", "..."]} with the same number of items, in order.`;
       const j = extractJSON(await gemini(prompt, []));   // [] = no attachment, but the low (factual) temperature
-      batch.forEach((l, i) => { const t = String((j.t || [])[i] || "").trim(); if (t){ l.tr = t; delete l.draft; arCachePut(l.ko, from, to, t); } });
+      batch.forEach((l, i) => { const t = String(arrOf(j.t)[i] || "").trim(); if (t){ l.tr = t; delete l.draft; arCachePut(l.ko, from, to, t); } });
     } catch(e){}
   }
   for (const l of batch) if (!l.tr) { try { l.tr = await arQuickTr(l.ko, from, to) || await arFreeTr(l.ko, from, to); arCachePut(l.ko, from, to, l.tr); } catch(e){ l.fail = true; } }
@@ -6620,8 +6693,9 @@ function arStartFree(){
     arInterimTr(); arRenderLive(); arCommitSoon(r);
   };
   r.onerror = ev => {
-    if (ev.error === "not-allowed" || ev.error === "service-not-allowed"){ arStop(); arUI(L("🎙 Micro bị chặn — cho phép micro cho trang này rồi thử lại (Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked — allow it for this site and try again (Settings → Voice → Microphone & speaking).")); }
-    else if (ev.error === "audio-capture"){ arStop(); arUI(L("🎙 Không tìm thấy micro hoặc app khác đang dùng.", "🎙 No microphone found, or another app is using it.")); }
+    const halt = () => arTalk() ? arEndTurn() : arStop();   // the interpreter stays open so its message can be seen; only the turn ends
+    if (ev.error === "not-allowed" || ev.error === "service-not-allowed"){ halt(); arUI(L("🎙 Micro bị chặn — cho phép micro cho trang này rồi thử lại (Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked — allow it for this site and try again (Settings → Voice → Microphone & speaking).")); }
+    else if (ev.error === "audio-capture"){ halt(); arUI(L("🎙 Không tìm thấy micro hoặc app khác đang dùng.", "🎙 No microphone found, or another app is using it.")); }
     else if (ev.error === "network") arUI(L("⚠️ Cần có mạng để nhận giọng nói", "⚠️ Speech recognition needs internet"));
   };
   r.onend = () => {
@@ -6706,14 +6780,20 @@ Return JSON exactly like: {"lines":[{"src":"<transcription>","tr":"<translation>
     const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }]));
     AR.quota = 0;
     const chunk = snap.c || Date.now();
-    (j.lines || []).forEach(l => { const src = String(l.src || l.ko || "").trim(); if (src) arAdd(src, String(l.tr || "").trim() || null, snap, chunk); });
+    arrOf(j.lines).forEach(l => { const src = String(l.src || l.ko || "").trim(); if (src) arAdd(src, String(l.tr || "").trim() || null, snap, chunk); });
     if (AR.on) arUI(arTalk() ? undefined : "");
   } catch(e){
     if (e.status === 429 && ++AR.quota >= 3 && AR.on){
       // out of free Gemini requests: keep going with the browser's recogniser when we can
-      if (SR && arSrc() === "mic"){ S.settings.armyEngine = "free"; save(); arRestart(); arUI(L("⚠️ Hết lượt Gemini — đã chuyển sang chế độ Cơ bản.", "⚠️ Out of Gemini requests — switched to Basic mode.")); }
-      else { arStop(); arUI("⚠️ " + e.message); }
-    } else if (AR.on) arUI("⚠️ " + e.message);
+      const msg = L("⚠️ Hết lượt Gemini — đã chuyển sang chế độ Cơ bản.", "⚠️ Out of Gemini requests — switched to Basic mode.");
+      if (arTalk()){   // the interpreter stays open: the next turn just uses Basic (like its AI toggle)
+        if (AR.turn) arEndTurn();
+        if (SR){ S.settings.armyEngine = "free"; save(); arMicOff(); AR.engine = arEngine(); renderConv(); arUI(msg); }
+        else arUI("⚠️ " + esc(e.message));
+      }
+      else if (SR && arSrc() === "mic"){ S.settings.armyEngine = "free"; save(); arRestart(); arUI(msg); }
+      else { arStop(); arUI("⚠️ " + esc(e.message)); }
+    } else if (AR.on) arUI("⚠️ " + esc(e.message));
   }
 }
 function arMeter(){
@@ -6798,7 +6878,8 @@ function arEndTurn(){
   AR.turn = ""; AR.interim = "";
   if (AR.rec){ const rec = AR.rec; AR.rec = null; if (rec.state === "recording") rec.stop(); }   // AI: the turn's recording goes to Gemini
   if (AR.engine === "ai") AR.waitTurn = id;   // until Gemini answers (or the recording turns out empty)
-  arLinesOf("talk").filter(l => l.c === id).forEach(arSayLine);   // read the turn out now, in order
+  // read the turn out now, in order — after any earlier turn's translation that landed while someone was speaking (opened this time only)
+  arLinesOf("talk").slice(AR.openAt || 0).filter(l => l.c === id || (l.tr && !l.spoken)).forEach(arSayLine);
   arUI(); arRenderLive();
 }
 function arTurnDone(id){ if (id && AR.waitTurn === id){ AR.waitTurn = 0; arRenderLive(); } }
@@ -6842,10 +6923,11 @@ function arConvHTML(can){
 const arGoKey = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
 function arInterpOpen(){
   if (AR.mode === "talk" && AR.on) return;
+  if (arSaveNow.busy){ arInterpOpen.wait = true; toast(L("⏳ Đang lưu hội thoại, đợi chút…", "⏳ Saving the conversation, one moment…")); return; }
   arStop();   // a BTS live listening in the ARMY tab stops first
   AR.prevMode = AR.mode; AR.mode = "talk"; arUseSess(); AR.flip = false;
   arConvFit(); requestAnimationFrame(arConvFit); navHi("tr"); renderConv(); arStart(); navSave({ tr: 1 });
-  AR.hideBefore = AR.lines.length; arRenderConv();   // opens clean (also after a reload): the old turns stay in the saved lines only
+  AR.hideBefore = AR.openAt = AR.lines.length; arRenderConv();   // opens clean (also after a reload): the old turns stay in the saved lines only
   if (!AR.on){
     toast(arEngine() ? L("🎙 Cần mở app từ link https:// để dùng micro.", "🎙 Open the app from its https:// link to use the mic.")
       : L("⚠️ Trình duyệt này không nhận giọng nói. Thêm Gemini key trong Cài đặt, hoặc dùng Chrome/Safari.", "⚠️ This browser can't recognise speech. Add a Gemini key in Settings, or use Chrome/Safari."));
