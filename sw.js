@@ -1,6 +1,7 @@
-// Grow with PV service worker: works offline, but always tries the network first
-// so updates you push to GitHub show up on the next open.
-const CACHE = "hangul-v18", NOTIFY_CACHE = "hangul-notify";
+// Grow with PV service worker: opens instantly from the cache (so a weak connection never
+// stalls the app), then fetches the latest files in the background — updates you push to
+// GitHub show up on the open after they're downloaded.
+const CACHE = "hangul-v19", NOTIFY_CACHE = "hangul-notify";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {})))));   // one missing file must not break install
@@ -13,9 +14,15 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return; // Gemini, translate, CDNs: untouched
+  const nav = e.request.mode === "navigate";
+  const key = nav ? "./index.html" : e.request;   // any page open (with ?query or not) is the one app shell
+  const fresh = fetch(e.request).then(r => {
+    if (r.ok && !r.redirected) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(key, copy)); }
+    return r;
+  });
+  e.waitUntil(fresh.catch(() => {}));   // keep the background update alive after we've answered
   e.respondWith(
-    fetch(e.request).then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r; })
-      .catch(() => caches.match(e.request).then(r => r || caches.match("./index.html")))
+    caches.match(key, { ignoreSearch: nav }).then(hit => hit || fresh.catch(() => caches.match("./index.html")))
   );
 });
 

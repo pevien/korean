@@ -53,7 +53,6 @@ header{display:none}   /* no app title bar: the course sits in the Vocabulary ti
 .t-sm{display:none}   /* course in page titles: full name on wide screens, code on phones ("Vocab: JPN") */
 @media (max-width:600px){ .t-lg{display:none} .t-sm{display:inline} }
 .pill{font-size:12px;color:var(--muted);background:var(--card);border:1px solid transparent;padding:4px 10px;border-radius:var(--r-pill)}
-#cloudBtn{white-space:nowrap;flex:0 0 auto}
 .co-btn{background:none;color:inherit;font-size:inherit;font-weight:inherit;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;
   padding:4px 8px;margin:-4px -8px -4px -6px;border-radius:var(--r-md);line-height:inherit}   /* the padding is a bigger tap area; the margin keeps the text where it was */
 .co-btn:hover{background:var(--accent-soft)}
@@ -76,7 +75,7 @@ header{display:none}   /* no app title bar: the course sits in the Vocabulary ti
 .co-set button{font-size:14px}   /* a value, like every other settings choice (14/400 scale) */
 .co-set button{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #gdStatus{background:var(--bg)}
-#cloudBtn[data-st="expired"],#cloudBtn[data-st="error"],#gdStatus[data-st="expired"],#gdStatus[data-st="error"]{color:var(--bad);background:var(--bad-soft);border-color:color-mix(in srgb, var(--bad) 35%, transparent);font-weight:600}
+#gdStatus[data-st="expired"],#gdStatus[data-st="error"]{color:var(--bad);background:var(--bad-soft);border-color:color-mix(in srgb, var(--bad) 35%, transparent);font-weight:600}
 /* surfaces separate by fill (+ light-mode shadow), not outlines — borders stay transparent so hover/state colours can still use them */
 .card{background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
 /* flat = lists and long reading text sit straight on the page: no box, full width for the content */
@@ -815,7 +814,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 
   <!-- STUDY -->
   <section id="v-study">
-    <div class="pg-head" id="studyHead"><span class="h hic"><svg class="i" aria-hidden="true"><use href="#i-cards-fill"/></svg></span><h2><span id="studyTitle" data-noi18n></span><span class="co-slot" data-noi18n></span></h2><button class="pill hidden" id="cloudBtn" style="cursor:pointer;font-weight:500" title="Google Drive sync">☁️</button><button class="btn2 hidden" id="goAddTop">+ Add words</button></div>
+    <div class="pg-head" id="studyHead"><span class="h hic"><svg class="i" aria-hidden="true"><use href="#i-cards-fill"/></svg></span><h2><span id="studyTitle" data-noi18n></span><span class="co-slot" data-noi18n></span></h2><button class="btn2 hidden" id="goAddTop">+ Add words</button></div>
     <!-- the first three tiles open My words filtered to that group -->
     <div class="stats" style="margin-bottom:14px">
       <button class="stat tone t-amber st-go" data-f="today" title="See these words"><b id="sToday">0</b><span>Due today</span></button>
@@ -4341,16 +4340,10 @@ const clientId = () => (GOOGLE_CLIENT_ID || SY.clientId || "").trim();
 const tokValid = () => !!(tok && tok.t && tok.exp > Date.now());
 let cloudState = "off";
 
-// Drive status, shown the same way on Home (top right) and in Settings: emoji only, the words live in the tooltip
+// Drive status lives in Settings only (a Home badge crowded the title row on phones): emoji only, the words live in the tooltip
 const CLOUD_BADGE = { ok: "☁️ ✅", busy: "☁️ …", expired: "☁️ ⚠️", error: "☁️ ⚠️" };   // idle / off: just ☁️
 function setCloud(st){
   cloudState = st;
-  const b = $("#cloudBtn");
-  b.classList.toggle("hidden", !SY.on);
-  // needs-action states turn the pill red with a ⚠️; the full reason lives in the tooltip. Same look as the Settings badge
-  b.textContent = CLOUD_BADGE[st] || "☁️";
-  b.dataset.st = st;
-  b.title = b.ariaLabel = { expired: L("Phiên đăng nhập Google đã hết hạn — chạm để đồng bộ tiếp", "Google sign-in expired — tap to keep syncing"), error: L("Đồng bộ lỗi — chạm để thử lại", "Sync failed — tap to retry") }[st] || "Google Drive sync";
   renderSyncCard();
 }
 function ago(t){
@@ -4364,7 +4357,7 @@ function renderSyncCard(){
   gdOffBtn();
   $("#gdConnect").classList.toggle("hidden", SY.on);   // once connected, the ☁️ badge above is the sync button
   const st = SY.on ? cloudState : "off", gs = $("#gdStatus");
-  gs.textContent = CLOUD_BADGE[st] || "☁️"; gs.dataset.st = st; gs.classList.toggle("hidden", !SY.on);   // like Home: nothing to show until Drive is connected
+  gs.textContent = CLOUD_BADGE[st] || "☁️"; gs.dataset.st = st; gs.classList.toggle("hidden", !SY.on);   // nothing to show until Drive is connected
   gs.title = gs.ariaLabel = !SY.on ? L("Chưa kết nối", "Not connected") :
     cloudState === "busy" ? L("Đang đồng bộ…", "Syncing…") :
     cloudState === "error" ? L("Đồng bộ lỗi — bấm để thử lại", "Last sync failed — tap to retry") :
@@ -4518,7 +4511,7 @@ window.__syncChanged = () => {
   if (!tokValid()){ if (cloudState !== "expired") setCloud("expired"); return; }
   clearTimeout(pushT); pushT = setTimeout(() => syncNow(false), 4000);
 };
-$("#cloudBtn").onclick = $("#gdStatus").onclick = () => syncNow(true);
+$("#gdStatus").onclick = () => syncNow(true);
 $("#gdConnect").onclick = () => {
   const v = $("#gdClient").value.trim();
   if (!GOOGLE_CLIENT_ID && v && !$("#gdClient").dataset.masked){ SY.clientId = v; saveSY(); showSecret($("#gdClient"), v); }
@@ -6254,7 +6247,7 @@ if (clientId()) loadGIS().catch(()=>{});
 setCloud(SY.on ? (tokValid() ? "ok" : "idle") : "off");
 // the ~1 h Google token ran out: renew it on the first tap (GIS needs a tap for its no-prompt popup), then sync
 document.addEventListener("click", e => {
-  if (!SY.on || tokValid() || syncing || renewTried || e.target.closest("#cloudBtn, #gdStatus, #gdConnect")) return;
+  if (!SY.on || tokValid() || syncing || renewTried || e.target.closest("#gdStatus, #gdConnect")) return;
   renewTried = true; getToken().then(() => syncNow(false), () => {});
 }, true);
 if (SY.on) syncNow(false);
