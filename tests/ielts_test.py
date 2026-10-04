@@ -3,7 +3,7 @@
 Drives the real index.html in headless Chromium. Gemini, the microphone and (in one
 scenario) the speech voice are faked, so it needs no key, no mic and no network.
 
-Run from the repo root:
+Run from the repo root (add scenario letters to run only those, e.g. `... ielts_test.py C U`):
     python3 -m venv .venv && .venv/bin/pip install playwright && .venv/bin/playwright install chromium
     .venv/bin/python tests/ielts_test.py
 
@@ -58,7 +58,9 @@ window.fetch = async (url, opts) => {
     else if (kind === "ans" && window.__mock.partial) out = { heard: "I work as a nurse.", fixes: [], upgrades: [], note: "", issues: [] };   // Gemini leaving fields out
     else if (kind === "ans") out = window.__mock.silent ? { heard: "" } : { heard: "um I am work in a software company since three years, uh it is very good job", fixes: [{ from: "I am work", to: "I work", why: "Không dùng 'am' trước động từ thường." }],
       upgrades: [{ from: "very good job", to: "a rewarding job", why: "Tự nhiên hơn." }], note: "Đúng ý nhưng hơi ngắn.", score: 72, issues: [{ part: "three", tip: "Âm /θ/: /θriː/" }],
-      sample: "I work as a software engineer and I find it really rewarding." };
+      sample: "I work as a software engineer and I find it really rewarding.",
+      checks: [{ key: "x0", ok: true, tip: "" }, { key: "x1", ok: false, tip: "Thêm một lý do vì sao bạn thích công việc này." }, { key: "x2", ok: true, tip: "" }, { key: "x3", ok: false, tip: "Nối ý bằng 'because', 'for example'." }, { key: "x4", ok: true, tip: "" }],
+      ideas: ["Kể thêm một dự án cụ thể bạn từng làm."] };
     else if (kind === "band") out = { fc: { band: 6, note: "Khá trôi chảy." }, lr: { band: 6.5, note: "Từ vựng ổn." }, gra: { band: 5.5, note: "Sai thì." }, p: { band: 6.5, note: "Dễ hiểu." },
       strengths: ["Đúng trọng tâm", "Phát âm rõ"], next: ["Luyện thì", "Mở rộng ý", "Giảm um/uh"] };
     else out = { t: [] };
@@ -74,7 +76,10 @@ results = []
 def check(name, cond, info=""):
     results.append((name, bool(cond), info))
 
+ONLY = {x.upper() for x in sys.argv[1:]}   # e.g. `tests/ielts_test.py C U` runs just those scenarios
+
 def run(pw, name, fn, **kw):
+    if ONLY and name not in ONLY: return
     b = pw.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
     page = b.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2)
     errs = []
@@ -340,6 +345,31 @@ def t_schema(page):
     t = txt(page, "#ielts")
     check("S. full answer → score + model answer shown", "72/100" in t and "rewarding" in t)
 
+# U. content & development checks, per part
+def t_content(page):
+    goto_ielts(page)
+    page.click('#ielts .sp-pick[data-m="full"]'); page.wait_for_timeout(900)
+    answer(page); answer(page); answer(page)
+    page.click("#ieReady"); page.wait_for_timeout(200); answer(page, 2000)
+    answer(page); answer(page); answer(page, wait=3000)
+    ap = page.evaluate("window.__ansSchema") or {}
+    check("U. schema requires checks + ideas", all(k in ap.get("required", []) for k in ["checks", "ideas"]))
+    for p in (1, 2, 3):
+        page.click(f"#ielts details[data-p='{p}'] summary"); page.wait_for_timeout(150)
+    t = txt(page, "#ielts")
+    check("U. 'Content & development' section shown", t.count("Nội dung & mạch ý") == 7)
+    check("U. Part 1 checks", "Trả lời thẳng vào câu hỏi" in t and "Mở rộng bằng lý do/chi tiết" in t)
+    check("U. Part 2 checks = each card point + structure", "Ý thẻ đề: where it is" in t and "Ý thẻ đề: what you did there" in t and "Có mở – thân – kết" in t)
+    check("U. Part 3 checks", all(k in t for k in ["Nêu rõ quan điểm", "Có ví dụ cụ thể", "Mạch ý logic", "không sa đà"]))
+    check("U. tip shown only for unmet checks + ideas", "Thêm một lý do" in t and "Kể thêm một dự án" in t)
+    check("U. content section sits above the corrections", t.index("Nội dung & mạch ý") < t.index("Sửa lỗi"))
+    # past test from history keeps its own card points
+    page.click("#ieRetake"); page.wait_for_timeout(500); page.click("#ieBack"); page.wait_for_timeout(200)
+    page.click("#ieHistOpen"); page.wait_for_timeout(200); page.click("#ieHist li"); page.wait_for_timeout(200)
+    page.click("#ielts details[data-p='2'] summary"); page.wait_for_timeout(150)
+    check("U. history view labels its own card points", "Ý thẻ đề: where it is" in txt(page, "#ielts"))
+    page.screenshot(path=os.path.join(SP, "t-content.png"), full_page=True)
+
 # L. English UI
 def t_en_ui(page):
     goto_ielts(page)
@@ -358,6 +388,7 @@ with sync_playwright() as pw:
     run(pw, "Q", t_objs, ui="en")
     run(pw, "R", t_listen)
     run(pw, "S", t_schema)
+    run(pw, "U", t_content)
     run(pw, "L", t_en_ui, ui="en")
 
 ok = sum(1 for r in results if r[1])

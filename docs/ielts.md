@@ -92,7 +92,9 @@ One AI call per answer (`ieScoreAnswer`) sends the WAV recording and returns the
 | Field | Shown as |
 |---|---|
 | `heard` | The transcript, mistakes and fillers (um, uh) kept |
-| `note` | One sentence on relevance and development |
+| `note` | One sentence overall |
+| `checks` | **Content & development**, shown first. Each check is ✓ or ! with a concrete tip when it isn't met. Part 1: answers directly · extends with a reason/detail · stays on topic. Part 2: each cue-card point · opening–body–wrap-up · on topic. Part 3: clear opinion · reasons · concrete example · logical flow/linking · no rambling. |
+| `ideas` | 0–2 ways to develop this answer: an example to add, or a part to cut |
 | `fixes` | Up to 4 corrections: ~~their words~~ → correct words, plus why |
 | `upgrades` | Up to 3 "Band {target}+ vocabulary" suggestions, plus when to use them |
 | `score`, `issues` | Pronunciation 0–100, with up to 2 tips (IPA). A missing score shows "—", never 0. |
@@ -137,7 +139,8 @@ For example, 6, 6.5, 5.5 and 6.5 give a mean of 6.125, which is reported as **6.
 - **Stats:** average wpm, total fillers, and the length of the Part 2 long turn against 2:00.
 - **Strengths, and steps to reach band {target}.**
 - **Each part:** folded into a section with every question and its full feedback.
-- **New test:** the purple main button. It starts the same mode again.
+- **Retake** (also on past tests): the same questions again, with no AI call for a new script, saved as a new test.
+- **New test:** the purple main button. It starts the same mode with a fresh script.
 
 **Colours against the target** (`ieTone`) apply to the big number, the criterion pills and the history list:
 
@@ -185,7 +188,8 @@ A full test makes about 10–20 calls, typically 1 + 13 + 1.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install playwright && .venv/bin/playwright install chromium
-.venv/bin/python tests/ielts_test.py        # prints PASS/FAIL per check, exit 1 on any failure
+.venv/bin/python tests/ielts_test.py        # all scenarios: PASS/FAIL per check, exit 1 on any failure
+.venv/bin/python tests/ielts_test.py C U    # only the scenarios a change touches
 ```
 
 | Scenario | Checks |
@@ -202,6 +206,8 @@ python3 -m venv .venv && .venv/bin/pip install playwright && .venv/bin/playwrigh
 | Q | Object-wrapped questions shown as text; no sideways scrolling |
 | R | Listen first (question hidden, then revealed, hidden again on the next one); broken JSON retried once, then the error with Try again; new tests avoid recent topics |
 | S | The answer schema requires every field; a missing score shows "—" |
+| T | Retake a past test: same questions, no new script, saved as a new test next to the old one |
+| U | Content & development checks per part (card points in Part 2), tips only for unmet checks, ideas, shown above the corrections, history uses its own card |
 | L | English interface labels |
 
 ---
