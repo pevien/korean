@@ -56,7 +56,7 @@ Tapping one of the first three tiles opens My words filtered to that group.
 
 ### New words
 
-A new word first appears as a **NEW WORD** card. It shows the word, 🔊, the meaning and an example. Tap **Got it →** to continue. The word comes back as a quiz 2–3 items later. Letters from the alphabet table are introduced before ordinary words, oldest first.
+A new word first appears as a **NEW WORD** card. It shows the word with 🔊 beside it (same row as on quiz cards), the meaning and an example. A long word shrinks to fit the card instead of breaking mid-word. Tap **Got it →** to continue. The word comes back as a quiz 2–3 items later. Letters from the alphabet table are introduced before ordinary words, oldest first.
 
 ### Question types
 

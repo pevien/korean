@@ -552,9 +552,13 @@ body.ar-conv-on{overflow:hidden}
 .ko-line{text-align:center;padding:0 52px}
 .ko-line > div{position:relative;display:inline-block;max-width:100%}
 .ko-line .speak.sm{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:12px}
-.ko-line .ko{overflow-wrap:anywhere;font-size:clamp(30px,11vw,44px)}
-.ko-mean{text-align:center;font-size:17px;color:var(--muted);margin-top:2px}
+.ko-line .ko{font-size:clamp(30px,11vw,44px)}
+/* card word: never split mid-word (accommodatio/n) — fitWord() shrinks it to the card width instead */
+#qBox .ko{overflow-wrap:normal}
+.ko-mean{text-align:center;font-size:20px;color:var(--muted);margin-top:2px}
 .mean{font-size:22px;font-weight:600}
+#qBox .ko-line + .mean{font-size:20px;font-weight:400;color:var(--muted);margin-top:2px}   /* new word: meaning right under the word, same look as the answer reveal (.ko-mean) */
+#typeIn{font-size:18px}   /* the answer reads at a real size; under 16px iOS also zooms the page on focus */
 .speak{background:var(--accent-soft);color:var(--accent);border-radius:var(--r-pill);width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
 .speak.big{width:96px;height:96px;font-size:40px}
 .speak.sm{background:var(--soft);color:var(--text);width:40px;height:40px;font-size:17px;margin:0}
@@ -591,7 +595,7 @@ body.ar-conv-on{overflow:hidden}
 .qfb #sayMine{flex:0 0 auto;margin:-4px -4px 0 0;padding:5px 10px;font-size:13px;white-space:nowrap}
 .qfb .small{color:var(--muted)}
 .qfb .small b{color:var(--fb)}
-.qfb .fb-heard,.qfb .fb-ans{margin-top:4px}
+.qfb .fb-heard,.qfb .fb-ans{margin-top:4px;font-size:15px}   /* what they wrote + the right word: the line to read when wrong, not a footnote */
 .qfb .fb-ans span{color:var(--text);font-weight:600}
 .qfb .wrong{color:var(--bad)}
 .qfb .ex{margin-top:12px;padding:12px 0 0;background:none;border-radius:0;border-top:1px solid var(--line)}   /* the example sits inside the result box, split off by a hairline */
@@ -686,8 +690,9 @@ body.ar-conv-on{overflow:hidden}
 @media (prefers-reduced-motion: reduce){.cheer-m,.stat.pop{animation:none}}
 /* examples */
 .ex{margin-top:12px;padding:10px 12px;background:var(--bg);border-radius:var(--r-md);text-align:left;display:flex;gap:10px;align-items:flex-start}
-.ex .exk{font-size:17px;line-height:1.5} .ex .exm{font-size:14px;color:var(--muted)}
-.ex .exm b{color:var(--text);font-weight:600}
+.ex > .speak.sm{flex:0 0 auto}   /* a round button, not squeezed into a pill by a long sentence */
+.ex .exk,.ex .exm{font-size:16px;line-height:1.35} .ex .exm{color:var(--muted);margin-top:4px}
+.ex .exm b{font-weight:600}   /* the meaning stands out by weight only, it stays muted like the rest of the translation */
 #rdVocab li{padding:8px 0}
 #rdVocab .t b{display:block;font-size:17px}
 #rdVocab .badge{flex:0 0 auto}
@@ -2621,15 +2626,25 @@ function nextQ(){
   $("#sessBar").style.width = Math.round(100*session.done/Math.max(session.total, session.done+session.queue.length)) + "%";
   if (item.kind === "intro") renderIntro(item); else renderQuiz(item);
 }
+// shrink the card word until its longest word fits the line (long English/Japanese words), never below 22px
+function fitWord(el){
+  if (!el) return;
+  el.style.fontSize = "";
+  let px = parseFloat(getComputedStyle(el).fontSize);
+  const len = el.textContent.trim().length;
+  if (len > 24) px = Math.min(px, 28); else if (len > 14) px = Math.min(px, 36);   // phrases: smaller start so they don't stack 3 lines
+  el.style.fontSize = px + "px";
+  while (px > 22 && el.scrollWidth > el.clientWidth + 1){ px -= 2; el.style.fontSize = px + "px"; }
+}
 function renderIntro(item){
   const c = item.card;
   $("#qBox").innerHTML = `<span class="newtag">NEW WORD</span>
-    <div class="ko" lang="${TL}">${esc(c.ko)}</div>
-    <button class="speak" id="qSpeak">${ic("speaker-high")}</button>
+    <div class="ko-line"><div><div class="ko" lang="${TL}">${esc(c.ko)}</div><button class="speak sm" id="qSpeak" title="Listen" aria-label="Listen">${ic("speaker-high")}</button></div></div>
     <div class="mean">${esc(c.meaning) || '<span class="muted">(no meaning)</span>'}</div>
     ${exampleHTML(c)}
     <p class="small muted cta-note" style="margin-top:14px">Listen, say it out loud, then continue.</p>
     <button class="btn" id="gotIt">Got it →</button>`;
+  fitWord($("#qBox .ko-line .ko"));
   $("#qSpeak").onclick = () => speak(c.ko);
   bindSay($("#qBox"));
   if (S.settings.autoPlay) setTimeout(()=>speak(c.ko), 250);
@@ -2685,6 +2700,7 @@ function renderQuiz(item){
       <p class="hint-box" id="typeHint">${ic("lightbulb")}<span id="hintTxt"></span></p></div>`;
   }
   $("#qBox").innerHTML = `<div class="qtype">${titles[mode]}</div>${prompt}${answer}<div id="fb"></div>`;
+  fitWord($("#qBox .ko-line .ko"));
   const sp = $("#qSpeak"); if (sp) sp.onclick = () => speak(c.ko);
   if (mode === "listen2m" || mode === "listen2ko" || mode === "listen2kc" || (mode === "ko2m" && S.settings.autoPlay)) setTimeout(()=>speak(c.ko), 250);
   if (item.opts){
