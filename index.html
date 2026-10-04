@@ -592,18 +592,24 @@ body.ar-conv-on{overflow:hidden}
 .feedback.qfb{color:var(--text);background:var(--bg);border-left:3px solid var(--fb)}   /* neutral box, a coloured edge says right / wrong */
 .feedback.qfb.ok{--fb:var(--ok)} .feedback.qfb.bad{--fb:var(--bad)}
 .qfb .fb-t{color:var(--fb);font-weight:600;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.qfb .fb-prev{font-size:13px;font-weight:400;color:var(--muted)}
 .qfb #sayMine{flex:0 0 auto;margin:-4px -4px 0 0;padding:5px 10px;font-size:13px;white-space:nowrap}
+.dock #sayAgain{width:100%;margin-bottom:8px}   /* say it again: a full row above the grade / Continue buttons */
+.dock #sayAgain.on{color:var(--bad)}
+.dock #sayAgainSt{text-align:center;margin:0 0 6px} .dock #sayAgainSt:empty{display:none}
 .qfb .small{color:var(--muted)}
 .qfb .small b{color:var(--fb)}
-.qfb .fb-heard,.qfb .fb-ans{margin-top:4px;font-size:15px}   /* what they wrote + the right word: the line to read when wrong, not a footnote */
+.qfb .fb-heard,.qfb .fb-ans,.qfb .fb-sc{margin-top:4px;font-size:15px}   /* the feedback lines (score, what they wrote, the right word, issues) share one size; 13px is only for side notes (graded by, issue type) */
 .qfb .fb-ans span{color:var(--text);font-weight:600}
+.qfb .fb-ans .pron{color:var(--muted);font-weight:400}
 .qfb .wrong{color:var(--bad)}
-.qfb .say-iss{margin-top:6px}   /* AI word check: every pronunciation issue, numbered */
-.qfb .say-iss .small{display:flex;gap:8px;padding:4px 0}
-.qfb .say-iss .n{flex:0 0 18px;height:18px;margin-top:1px;border-radius:var(--r-pill);background:var(--bad-soft);color:var(--bad);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.qfb .say-iss{margin-top:6px}   /* AI word check: every pronunciation issue, laid out like the reading coach's (.issue, same uppercase type label); text on this box's 15px */
+.qfb .say-iss .issue{font-size:15px}
+.qfb .say-iss .issue:first-child{padding-top:4px}
 .qfb .say-iss b{color:var(--text)}
-.qfb .say-iss .ty{font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.qfb .say-iss .tip{color:var(--muted);margin-top:3px}
 .qfb .ex{margin-top:12px;padding:12px 0 0;background:none;border-radius:0;border-top:1px solid var(--line)}   /* the example sits inside the result box, split off by a hairline */
+.qfb .ex .exk,.qfb .ex .exm{font-size:15px}   /* same size as the feedback lines above it; the new-word card keeps 16px */
 /* study hint ("Starts with: 밥 · 1 characters"): green text right by the Hint button, hidden until the first tap */
 .hint-box{display:flex;align-items:center;justify-content:center;gap:6px;max-width:100%;margin:12px auto 0;color:var(--ok);font-size:15px}   /* green, like the reader's "Tap 🎙 …" hint */
 .hint-box:has(#hintTxt:empty){display:none}
@@ -1512,7 +1518,7 @@ const VI = {
 "Texting a friend to meet up":"Nhắn tin hẹn gặp bạn","The answer had no sentences":"Câu trả lời không có câu nào",
 "This browser can't speak. Try Chrome or Safari.":"Trình duyệt này không đọc được. Thử Chrome hoặc Safari.","Transport":"Giao thông","Travel":"Du lịch",
 "Type it in Korean":"Gõ bằng tiếng Hàn","Upper-int. (TOPIK 4)":"Trung cấp 2 (TOPIK 4)","Weather and seasons":"Thời tiết & các mùa","Weather":"Thời tiết",
-"Work & office":"Công việc & văn phòng","✅ Correct!":"✅ Chính xác!","❌ Not quite":"❌ Chưa đúng","❌ Not quite.":"❌ Chưa đúng.","❌ Not quite — you wrote":"❌ Chưa đúng — bạn gõ","— you wrote":"— bạn gõ","❌ Not quite — we heard":"❌ Chưa đúng — app nghe được","— we heard":"— app nghe được",
+"Work & office":"Công việc & văn phòng","✅ Correct!":"✅ Chính xác!","❌ Not quite":"❌ Chưa đúng","❌ Incorrect":"❌ Chưa đúng","❌ Not quite.":"❌ Chưa đúng.","❌ Not quite — you wrote":"❌ Chưa đúng — bạn gõ","— you wrote":"— bạn gõ","❌ Not quite — we heard":"❌ Chưa đúng — app nghe được","— we heard":"— app nghe được",
 "🎙 Korean → read it aloud":"🎙 Tiếng Hàn → đọc to","🎙 Meaning → say it in Korean":"🎙 Nghĩa → nói tiếng Hàn","Read it aloud":"Đọc to từ này","Say it in Korean":"Nói bằng tiếng Hàn","Can't speak now":"Giờ không nói được","Tap 🎙 and say it":"Bấm 🎙 rồi nói","🔊 Test:":"🔊 Nghe thử:",
 "Continue":"Tiếp tục",
 "Extra practice":"Luyện thêm","Learn 5 more":"Học thêm 5 từ","🔁 Try again":"🔁 Thử lại","In list":"Đã có",
@@ -2907,7 +2913,8 @@ function answerTyped(item){
   finish(item, ok, v);
 }
 // what they said / typed, with the syllables that aren't in the answer in red (longest common subsequence, syllable by syllable)
-function markWrong(got, want){
+// …plus, for an AI speaking check, the parts its pronunciation issues name, numbered like the list below
+function markWrong(got, want, issues = []){
   const a = [...got], b = [...want], d = a.map(() => Array(b.length + 1).fill(0));
   const L2 = (i, j) => i < 0 ? 0 : d[i][j];
   a.forEach((x, i) => b.forEach((y, j) => { d[i][j+1] = x === y ? L2(i-1, j) + 1 : Math.max(L2(i-1, j+1), d[i][j]); }));
@@ -2915,46 +2922,67 @@ function markWrong(got, want){
   for (let i = a.length - 1, j = b.length; i >= 0 && j > 0;){
     if (a[i] === b[j-1]) { keep.add(i); i--; j--; } else if (L2(i-1, j) >= d[i][j-1]) i--; else j--;
   }
-  return a.map((x, i) => keep.has(i) || x === " " ? esc(x) : `<b class="wrong">${esc(x)}</b>`).join("");
+  const low = got.toLowerCase(), flag = new Set(), num = {};
+  let from = 0;
+  issues.forEach((x, n) => {
+    const part = (x.part || "").toLowerCase(); if (!part) return;
+    let at = low.indexOf(part, from); if (at < 0) at = low.indexOf(part); if (at < 0) return;
+    const k0 = [...got.slice(0, at)].length, len = [...x.part].length;
+    for (let k = k0; k < k0 + len; k++) flag.add(k);
+    num[k0 + len - 1] = (num[k0 + len - 1] ? num[k0 + len - 1] + "," : "") + (n + 1); from = at + part.length;
+  });
+  return a.map((x, i) => ((keep.has(i) && !flag.has(i)) || x === " " ? esc(x) : `<b class="wrong">${esc(x)}</b>`) + (num[i] ? `<sup class="wrong">${num[i]}</sup>` : "")).join("");
 }
+// what was heard / typed, the right word and the score notes. With a score line, what was heard gets its own line right under it
+// ("58/100", then "App nghe được: 필당"); when wrong, the right word comes right after that
+function fbNotes(item, notes, heard){
+  let n = notes, ans = item.reveal;
+  const line = heard ? `<div class="small fb-heard">${heard}</div>` : "";
+  if (heard && /<b>\d+\/100<\/b>/.test(n)) { n = n.replace("</div>", "</div>" + line + (!item.ok && ans ? ans : "")); if (!item.ok) ans = ""; heard = ""; }
+  return `<div class="fb-notes">${heard ? line : ""}${ans}${n}</div>`;
+}
+const heardHTML = (item, text) => `<span data-noi18n>${item.spoken ? L("App nghe được", "We heard") : L("Bạn gõ", "You wrote")}: <span lang="${TL}">${markWrong(text, item.card.ko, item.spoken && item.issues || [])}</span></span>`;
+// spoken with an AI score: under SAY_PASS counts as not known yet (see sayRecorded); a pass gets a title that says how well
+const SAY_PASS = 70;
+const sayTitle = (ok, sc) => !ok ? ["bad", "❌ " + L("Chưa đúng", "Incorrect")] : sc == null ? ["ok", "✅ " + L("Chính xác!", "Correct!")]
+  : sc >= 90 ? ["ok", "✅ " + L("Chính xác!", "Correct!")] : ["ok", "👍 " + L("Khá tốt", "Pretty good")];
+// the AI score rides on the title line ("👍 Khá tốt · 78/100"), plus the previous try when practicing again
+const sayScoreTag = item => item.score == null ? "" : ` · ${item.score}/100${item.prev != null ? `<span class="fb-prev"> · ${L("lần trước", "last time")} ${item.prev}</span>` : ""}`;
 function finish(item, ok, typed, extra){
   document.body.classList.remove("auto-session");   // they're studying now → focus mode, tab bar goes
   const c = item.card; session.answered++; if (ok) session.correct++; else session.missed.add(c.id);
   const choice = item.mode === "ko2m" || item.mode === "listen2m" || item.mode === "listen2kc";
   // Korean already big at the top (read aloud): the meaning appears right under it instead of being repeated in the box
   const top = !choice && $("#qBox .ko-line");
-  if (top && c.meaning) top.insertAdjacentHTML("afterend", `<div class="ko-mean">${esc(c.meaning)}</div>`);
+  // the standard pronunciation from the AI speaking check goes next to the word itself, not next to what was heard
+  const pron = item.pron ? `<span class="pron" lang="${TL}">${esc(item.pron)}</span>` : "";
+  if (top && (c.meaning || pron)) top.insertAdjacentHTML("afterend", `<div class="ko-mean">${pron}${pron && c.meaning ? " · " : ""}${esc(c.meaning || "")}</div>`);
   // word — meaning, same small size as the score line ("Từ đúng:" in front when the answer was wrong)
-  const reveal = top ? "" : `<div class="small fb-ans" data-noi18n>${ok ? "" : L("Từ đúng", "Correct") + ": "}<span lang="${TL}">${esc(c.ko)}</span> — ${esc(c.meaning)}</div>`;
+  const reveal = top ? "" : `<div class="small fb-ans" data-noi18n>${ok ? "" : L("Từ đúng", "Correct") + ": "}<span lang="${TL}">${esc(c.ko)}</span>${pron ? " " + pron : ""} — ${esc(c.meaning)}</div>`;
   const exBlock = exampleHTML(c);
   // one box: verdict, word + meaning, score notes, then the example. Multiple choice skips the word + meaning — the highlighted options already show it
   // "play my recording" rides on the verdict line (top right) instead of taking a row of its own
   const mine = ((extra || "").match(/<button[^>]*id="sayMine"[\s\S]*?<\/button>/) || [""])[0], notes = (extra || "").replace(mine, "");
-  // what was heard / typed: right after the score when there is one ("58/100 · App nghe được: 필당 · tip"), else its own line
-  const box = (cls, title, heard = "") => {
-    let n = notes;
-    if (heard && /<b>\d+\/100<\/b>/.test(n)) { n = n.replace(/(<b>\d+\/100<\/b>)/, `$1 · ${heard}`); heard = ""; }
-    // listen → meaning, wrong: they never saw the word written, so spell it out. The other choice modes already show the Korean (top or the green option)
-    const spell = !ok && (choice ? item.mode === "listen2m" : !!reveal);
-    let ans = choice && !spell ? "" : reveal;
-    // what they said comes first, then the right word: if "heard" went into the score line, the answer goes right after that line
-    if (!ok && ans && n !== notes) { n = n.replace("</div>", "</div>" + ans); ans = ""; }
-    return `<div class="feedback ${cls} qfb"><div class="fb-t"><span>${title}</span>${mine}</div>${heard ? `<div class="small fb-heard">${heard}</div>` : ""}${ans}${n}${exBlock}</div>`;
-  };
+  // listen → meaning, wrong: they never saw the word written, so spell it out. The other choice modes already show the Korean (top or the green option)
+  const spell = !ok && (choice ? item.mode === "listen2m" : !!reveal);
+  item.ok = ok; item.reveal = choice && !spell ? "" : reveal;
+  // speaking: say it again (top of the bottom dock, with its recording status) — graded again, the result replaces the notes; the verdict and the schedule keep the first try
+  const again = item.spoken ? `<p class="small muted" id="sayAgainSt"></p><button class="btn-ghost" id="sayAgain">${ic("microphone")} ${L("Luyện lại", "Practice again")}</button>` : "";
+  const box = (cls, title, heard = "") => `<div class="feedback ${cls} qfb"><div class="fb-t"><span>${title}${item.spoken ? sayScoreTag(item) : ""}</span>${mine}</div>${fbNotes(item, notes, heard)}${exBlock}</div>`;
   let html;
   if (ok){
-    html = box("ok", "✅ Correct!");
+    html = item.spoken ? box(...sayTitle(true, item.score)) : box("ok", "✅ Correct!");
     if (!session.practice){
       const base = item.fresh || item.hinted || item.failed ? [3,4] : [3,4,5];
-      html += `<div class="dock"><div class="grades" style="grid-template-columns:repeat(${base.length},1fr)">` + base.map(q => {
+      html += `<div class="dock">${again}<div class="grades" style="grid-template-columns:repeat(${base.length},1fr)">` + base.map(q => {
         const name = {3:"Hard",4:"Good",5:"Easy"}[q];
         const cls = q===4 ? "btn" : "btn2";
         return `<button class="${cls}" data-q="${q}">${name}<small>${nextLabel(c,q)}</small></button>`;
       }).join("") + `</div></div>`;
-    } else html += `<div class="dock"><button class="btn" id="contBtn">Continue</button></div>`;
+    } else html += `<div class="dock">${again}<button class="btn" id="contBtn">Continue</button></div>`;
   } else {
-    html = box("bad", "❌ Not quite", typed ? `<span data-noi18n>${item.spoken ? L("App nghe được", "We heard") : L("Bạn gõ", "You wrote")}: <span lang="${TL}">${markWrong(typed, c.ko)}</span></span>` : "") + `
-      <div class="dock"><div class="row">${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn" style="flex:0 0 auto;white-space:nowrap">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2 1 auto;white-space:nowrap">Continue</button></div></div>`;
+    html = box("bad", item.spoken ? sayTitle(false)[1] : "❌ Incorrect", typed ? heardHTML(item, typed) : "") + `
+      <div class="dock">${again}<div class="row">${typed || item.spoken ? `<button class="btn-ghost" id="typoBtn" style="flex:0 0 auto;white-space:nowrap">I was right</button>` : ""}<button class="btn" id="contBtn" style="flex:2 1 auto;white-space:nowrap">Continue</button></div></div>`;
   }
   $("#fb").innerHTML = html;
   bindSay($("#fb"));
@@ -2992,14 +3020,18 @@ function frCancel(){
   FR.rec = FR.recog = FR.stream = null;
   frBtn(false);
 }
-function frBtn(on){ const b = $("#sayRec"); if (b){ b.classList.toggle("on", on); b.innerHTML = ic(on ? "stop-fill" : "microphone"); } }
-function frSay(html){ const el = $("#sayStatus"); if (el) el.innerHTML = html; }
+function frBtn(on){
+  const b = $("#sayRec"); if (b){ b.classList.toggle("on", on); b.innerHTML = ic(on ? "stop-fill" : "microphone"); }
+  const a = $("#sayAgain"); if (a){ a.classList.toggle("on", on); a.innerHTML = ic(on ? "stop-fill" : "microphone") + " " + (on ? L("Dừng", "Stop") : L("Luyện lại", "Practice again")); }
+}
+// after the answer the dock is gone: recording status for "say it again" shows in the result box
+function frSay(html){ const el = $("#sayAgainSt") || $("#sayStatus"); if (el) el.innerHTML = html; }
 const frBlocked = () => L("🎙 Micro bị chặn. Cho phép micro cho trang này rồi thử lại (xem Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked. Allow it for this site and try again (see Settings → Voice → Microphone & speaking).");
 async function sayStart(item){
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   // the picked grading mode; Basic falls back to AI only when this browser has no speech recognition
   const useAI = hasKey() && navigator.mediaDevices && window.MediaRecorder && (coachAI() || !SR);
-  FR.heard = ""; FR.alts = []; FR.spoke = false; FR.stopping = false;
+  FR.heard = ""; FR.alts = []; FR.spoke = false; FR.stopping = false; item.pron = "";
   try {
     if (useAI){
       const g = FR.gen; FR.starting = true;
@@ -3057,7 +3089,7 @@ async function sayRecorded(item){
   const blob = new Blob(FR.chunks, { type: (FR.rec && FR.rec.mimeType) || "audio/webm" });
   FR.rec = null;
   if (Date.now() - FR.t0 < 400){ frSay(L("Ngắn quá — thử lại nhé.", "Too short — try again.")); return; }
-  const c = item.card, read = item.mode === "ko2say";
+  const c = item.card, read = item.mode === "ko2say" || item.answered;   // saying it again: the right word is on screen by now
   if (item.myUrl) URL.revokeObjectURL(item.myUrl);
   item.myUrl = URL.createObjectURL(blob);   // lets them replay their own attempt next to the feedback
   item.busy = true; frSay(`<span class="spinner"></span>` + L("Đang chấm…", "Checking…"));
@@ -3074,23 +3106,27 @@ Listen to the attached recording.
 Then judge the pronunciation like a strict native examiner. Listen very carefully and check every aspect:
 ${sayFocus()}
 "pron" = ${CO.pron} — for the expected word.
-"issues" = EVERY way the recording differs from a native speaker, even small ones (a slightly off vowel, weak or missing aspiration / tension, a final consonant released or dropped, a missed linking or sound rule, a wrong tone or pitch, a misplaced stress, a hesitation, choppy syllable-by-syllable reading, a stretched sound). One item per problem, most important first, max 6. "part" = the syllable / word / sound concerned, copied from the expected word when possible; "type" = sound|batchim|sound-rule|linking|tone|stress|intonation|pace|missing|extra; "tip" = in ${uiLangName()}: what you heard wrong, how to fix it (mouth / tongue / airflow / pitch), and the correct pronunciation written as in "pron". Use [] only when it is truly native-like — never invent problems you didn't hear.
+"issues" = EVERY way the recording differs from a native speaker, even small ones (a slightly off vowel, weak or missing aspiration / tension, a final consonant released or dropped, a missed linking or sound rule, a wrong tone or pitch, a misplaced stress, a hesitation, choppy syllable-by-syllable reading, a stretched sound). One item per problem, most important first, max 6. "part" = the syllable / word / sound concerned, copied from the expected word when possible; "type" = sound|batchim|sound-rule|linking|tone|stress|intonation|pace|missing|extra; "heard" = how that part actually sounded (${CO.script}, or a short description); "tip" = in ${uiLangName()}: what you heard wrong, how to fix it (mouth / tongue / airflow / pitch), and the correct pronunciation written as in "pron". Use [] only when it is truly native-like — never invent problems you didn't hear.
 "score" = strict pronunciation score 0–100. Start at 100 and deduct for each issue: a clearly wrong sound, tone or a missing syllable −15 to −25; a missed sound rule, linking or final consonant −10 to −15; wrong stress or intonation −8 to −12; hesitation, choppy or unnatural pace −5 to −10; a slight accent on one sound −3 to −6. 95–100 ONLY when it sounds native in every aspect; with any issue the score is at most 90. A different word scores under 40. Work the score out from the issues you list — it must match them.
 "good" = one short thing they did well, or "".
 ${feedbackLangRule()}
-Return JSON exactly like: {"heard":"","correct":false,"pron":"","score":0,"issues":[{"part":"","type":"","tip":""}],"good":""}`;
+Return JSON exactly like: {"heard":"","correct":false,"pron":"","score":0,"issues":[{"part":"","type":"","heard":"","tip":""}],"good":""}`;
     const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule(), temperature: 0.2 }));
-    const issues = (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 6).map(x => ({ part: String(x.part || "").trim(), type: String(x.type || "").trim(), tip: String(x.tip) }));
+    const issues = item.issues = (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 6).map(x => ({ part: String(x.part || "").trim(), type: String(x.type || "").trim(), heard: String(x.heard || "").trim(), tip: String(x.tip) }));
     await fixFeedbackLang([...issues.map(x => [x, "tip"]), [j, "good"]]);
     item.busy = false;
     if (!session || session.queue[0] !== item) return;
     const score = j.score === "" || j.score == null || isNaN(+j.score) ? null : Math.max(0, Math.min(100, Math.round(+j.score)));
     const pron = String(j.pron || "").trim(), good = String(j.good || "").trim();
-    const extra = (score != null ? `<div class="small" style="margin-top:6px">🎙 <b>${score}/100</b>${pron ? ` · ${L("Chuẩn", "Standard")}: <span lang="${TL}">${esc(pron)}</span>` : ""}</div>` : "")
-      + (issues.length ? `<div class="say-iss">${issues.map((x, n) => `<div class="small"><span class="n">${n + 1}</span><div>${x.part ? `<b lang="${TL}">${esc(x.part)}</b> ` : ""}${x.type ? `<span class="ty">${esc(sayType(x.type))}</span> ` : ""}${esc(x.tip)}</div></div>`).join("")}</div>`
-        : good ? `<div class="small" style="margin-top:4px">👍 ${esc(good)}</div>` : "")
+    item.pron = pron;   // shown next to the right word (finish), not on the score line where it read as the pronunciation of what was heard
+    item.prev = item.answered ? item.score : null; item.score = score;   // the score goes on the title line (sayScoreTag)
+    const extra = (issues.length ? `<div class="say-iss">${issues.map((x, n) => `<div class="issue"><span class="n">${n + 1}</span><div>
+          ${x.type ? `<div class="ty">${esc(sayType(x.type))}</div>` : ""}
+          ${x.part ? `<div><b lang="${TL}">${esc(x.part)}</b>${x.heard && x.heard.toLowerCase() !== x.part.toLowerCase() ? ` <span class="muted">${L("→ bạn đọc", "→ you said")}</span> <span lang="${TL}">${esc(x.heard)}</span>` : ""}</div>` : ""}
+          <div class="tip">${esc(x.tip)}</div></div></div>`).join("")}</div>`
+        : good ? `<div class="small fb-sc">👍 ${esc(good)}</div>` : "")
       + gradedBy(true) + `<button class="btn-ghost" id="sayMine">${ic("headphones")} ${L("Nghe lại", "Replay")}</button>`;
-    sayResult(item, !!j.correct, String(j.heard || "").trim(), extra);
+    sayResult(item, !!j.correct && (score == null || score >= SAY_PASS), String(j.heard || "").trim(), extra);   // right word but under 70 = not known yet
   } catch(e){
     item.busy = false;
     frSay("⚠️ " + esc(e.message));
@@ -3111,13 +3147,14 @@ const sayType = t => ({ sound: L("Âm", "Sound"), batchim: L("Patchim", "Final c
 const gradedBy = ai => `<div class="small" style="margin-top:4px;opacity:.75">${ai ? "✨ " + L("Chấm bởi AI", "Graded by AI") : "⚡ " + L("Chấm cơ bản", "Basic grading")}</div>`;
 function sayCheckLocal(item){
   if (!session || session.queue[0] !== item) return;
+  item.score = null;
   const heard = FR.heard.trim();
   if (!heard){
     if (!FR.spoke){ frSay(L("Chưa nghe thấy gì — nói to và gần micro hơn rồi thử lại.", "Didn't catch that — speak louder and closer to the mic, then try again.")); return; }
     // they spoke but no word came out: usually the pronunciation was off. One more try, then it counts as a miss
     item.srMiss = (item.srMiss || 0) + 1;
     if (item.srMiss < 2){ frSay(L("Máy chưa nhận ra từ bạn nói — nghe mẫu 🔊 rồi thử lại (còn 1 lần).", "Couldn't make out a word — listen 🔊 and try again (1 try left).")); return; }
-    sayResult(item, false, "", `<div class="small" style="margin-top:6px">🎙 ${L("Máy không nhận ra từ bạn nói — thường là do phát âm chưa rõ.", "The recogniser couldn't make out a word — usually the pronunciation was off.")}</div>` + gradedBy(false));
+    sayResult(item, false, "", `<div class="small fb-sc">🎙 ${L("Máy không nhận ra từ bạn nói — thường là do phát âm chưa rõ.", "The recogniser couldn't make out a word — usually the pronunciation was off.")}</div>` + gradedBy(false));
     return;
   }
   const t = norm(item.card.ko), cands = FR.alts.length ? FR.alts : [heard];
@@ -3127,7 +3164,7 @@ function sayCheckLocal(item){
     // how close the recogniser got, letter by letter (jamo), so a near miss reads as "almost" rather than just "wrong"
     const tj = jamo(t);
     const score = Math.max(0, ...cands.map(a => { const aj = jamo(norm(a)); return Math.round(100 * (1 - editDist(aj, tj) / Math.max(aj.length, tj.length, 1))); }));
-    extra = `<div class="small" style="margin-top:6px">🎙 ${L("Độ khớp", "Match")} <b>${score}/100</b>${score >= 70 ? " · " + L("gần đúng rồi, nghe mẫu 🔊 rồi thử lại nhé", "close — listen 🔊 and try again") : ""}</div>`;
+    extra = `<div class="small fb-sc">🎙 ${L("Độ khớp", "Match")} <b>${score}/100</b>${score >= 70 ? " · " + L("gần đúng rồi, nghe mẫu 🔊 rồi thử lại nhé", "close — listen 🔊 and try again") : ""}</div>`;
   }
   sayResult(item, ok, heard, extra + gradedBy(false));
 }
@@ -3151,13 +3188,24 @@ function saidLetter(letter, heard){
   return l === 11 && ok.has(VOWELS[v]);
 }
 function sayResult(item, ok, heard, extra){
-  if (item.answered) return;
+  if (item.answered){   // said it again: new notes in place, the verdict and grade buttons stay from the first try
+    frSay("");
+    const el = $("#fb .fb-notes"); if (!el) return;
+    extra = extra.replace(/<button[^>]*id="sayMine"[\s\S]*?<\/button>/, "");
+    if (ok && item.score == null && !/\/100<\/b>/.test(extra)) extra = `<div class="small fb-sc">🎙 ${L("Lần này máy nhận đúng từ ✓", "Recognised this time ✓")}</div>` + extra;
+    el.outerHTML = fbNotes(item, extra, ok || !heard ? "" : heardHTML(item, heard));
+    // the title follows the latest try, same rule as the first one; the grade / Continue buttons (the schedule) stay from the first try
+    const fb = $("#fb .qfb");
+    if (fb){ const [cls, title] = sayTitle(ok, item.score); fb.classList.remove("ok", "bad"); fb.classList.add(cls); fb.querySelector(".fb-t > span").innerHTML = esc(title) + sayScoreTag(item); }
+    return;
+  }
   item.answered = true; item.spoken = true;
   ["#sayRec", "#saySkip", "#hintBtn"].forEach(id => { const b = $(id); if (b) b.disabled = true; });
   frSay("");
   const dock = $("#sayDock"); if (dock) dock.classList.add("hidden");   // answered → the feedback + Continue take over
   finish(item, ok, heard, extra);
   const mine = $("#sayMine"); if (mine) mine.onclick = () => { if ("speechSynthesis" in window) speechSynthesis.cancel(); new Audio(item.myUrl).play().catch(() => {}); };
+  const ag = $("#sayAgain"); if (ag) ag.onclick = () => { if (item.busy || FR.starting) return; FR.rec || FR.recog ? sayStop() : sayStart(item); };
 }
 
 document.addEventListener("keydown", e => {
