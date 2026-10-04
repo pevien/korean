@@ -598,6 +598,11 @@ body.ar-conv-on{overflow:hidden}
 .qfb .fb-heard,.qfb .fb-ans{margin-top:4px;font-size:15px}   /* what they wrote + the right word: the line to read when wrong, not a footnote */
 .qfb .fb-ans span{color:var(--text);font-weight:600}
 .qfb .wrong{color:var(--bad)}
+.qfb .say-iss{margin-top:6px}   /* AI word check: every pronunciation issue, numbered */
+.qfb .say-iss .small{display:flex;gap:8px;padding:4px 0}
+.qfb .say-iss .n{flex:0 0 18px;height:18px;margin-top:1px;border-radius:var(--r-pill);background:var(--bad-soft);color:var(--bad);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.qfb .say-iss b{color:var(--text)}
+.qfb .say-iss .ty{font-size:11px;text-transform:uppercase;letter-spacing:.05em}
 .qfb .ex{margin-top:12px;padding:12px 0 0;background:none;border-radius:0;border-top:1px solid var(--line)}   /* the example sits inside the result box, split off by a hairline */
 /* study hint ("Starts with: 밥 · 1 characters"): green text right by the Hint button, hidden until the first tap */
 .hint-box{display:flex;align-items:center;justify-content:center;gap:6px;max-width:100%;margin:12px auto 0;color:var(--ok);font-size:15px}   /* green, like the reader's "Tap 🎙 …" hint */
@@ -3058,23 +3063,32 @@ async function sayRecorded(item){
   item.busy = true; frSay(`<span class="spinner"></span>` + L("Đang chấm…", "Checking…"));
   try {
     const b64 = await blobToWavB64(blob);
-    const prompt = `You are a friendly ${CO.en} teacher. A ${uiLangName()}-speaking learner was ${isLetter(c)
+    const prompt = `You are a ${CO.en} teacher and a strict pronunciation examiner. A ${uiLangName()}-speaking learner was ${isLetter(c)
       ? isKo ? `${read ? `shown the Hangul letter "${c.ko}"` : `shown "${c.meaning}" (the sound of a Hangul letter)`} and asked to say the letter "${c.ko}" — its name "${ABC_SAY[c.ko]}" or its sound (e.g. the letter + ㅏ for a consonant) both count`
       : `${read ? `shown the ${CUR === "zh" ? "pinyin" : CO.en + " letter"} "${c.ko}"` : `shown "${c.meaning}" (the sound of a ${CUR === "zh" ? "pinyin sound" : CO.en + " letter"})`} and asked to say it — "${ABC_SAY[c.ko]}"${ABC_BY[c.ko][6] ? `, its name "${ABC_BY[c.ko][6]}"` : ""} or its sound${CUR === "zh" ? " (any syllable with it, e.g. the example " + c.ex + ")" : ""} all count`
       : read ? `shown the ${CO.en} word "${c.ko}" and asked to read it aloud`
       : `shown the meaning "${c.meaning}" and asked to say the ${CO.en} word for it. Expected answer: "${c.ko}"`}.
 Listen to the attached recording.
 "heard" = what the learner said, ${CO.script} ("" if silent or unclear).
-"correct" = true if they said ${read ? "the word" : `the expected word (or an equally correct ${CO.en} word for that meaning)`} clearly enough that a native ${CO.en} listener would understand it. Small accent issues are fine.${CUR === "zh" || CUR === "th" || CUR === "vi" ? " Tones matter: a wrong tone that changes the word is not correct." : ""}
-"score" = pronunciation score 0–100, realistic.
-"tip" = one short, concrete pronunciation tip in ${uiLangName()}, or "" if none is needed.
+"correct" = true if they said ${read ? "the word" : `the expected word (or an equally correct ${CO.en} word for that meaning)`} clearly enough that a native ${CO.en} listener would understand it. Small accent issues are fine for "correct" — but NOT for the score.${CUR === "zh" || CUR === "th" || CUR === "vi" ? " Tones matter: a wrong tone that changes the word is not correct." : ""}
+Then judge the pronunciation like a strict native examiner. Listen very carefully and check every aspect:
+${sayFocus()}
+"pron" = ${CO.pron} — for the expected word.
+"issues" = EVERY way the recording differs from a native speaker, even small ones (a slightly off vowel, weak or missing aspiration / tension, a final consonant released or dropped, a missed linking or sound rule, a wrong tone or pitch, a misplaced stress, a hesitation, choppy syllable-by-syllable reading, a stretched sound). One item per problem, most important first, max 6. "part" = the syllable / word / sound concerned, copied from the expected word when possible; "type" = sound|batchim|sound-rule|linking|tone|stress|intonation|pace|missing|extra; "tip" = in ${uiLangName()}: what you heard wrong, how to fix it (mouth / tongue / airflow / pitch), and the correct pronunciation written as in "pron". Use [] only when it is truly native-like — never invent problems you didn't hear.
+"score" = strict pronunciation score 0–100. Start at 100 and deduct for each issue: a clearly wrong sound, tone or a missing syllable −15 to −25; a missed sound rule, linking or final consonant −10 to −15; wrong stress or intonation −8 to −12; hesitation, choppy or unnatural pace −5 to −10; a slight accent on one sound −3 to −6. 95–100 ONLY when it sounds native in every aspect; with any issue the score is at most 90. A different word scores under 40. Work the score out from the issues you list — it must match them.
+"good" = one short thing they did well, or "".
 ${feedbackLangRule()}
-Return JSON exactly like: {"heard":"","correct":false,"score":0,"tip":""}`;
-    const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule() }));
-    await fixFeedbackLang([[j, "tip"]]);
+Return JSON exactly like: {"heard":"","correct":false,"pron":"","score":0,"issues":[{"part":"","type":"","tip":""}],"good":""}`;
+    const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule(), temperature: 0.2 }));
+    const issues = (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 6).map(x => ({ part: String(x.part || "").trim(), type: String(x.type || "").trim(), tip: String(x.tip) }));
+    await fixFeedbackLang([...issues.map(x => [x, "tip"]), [j, "good"]]);
     item.busy = false;
     if (!session || session.queue[0] !== item) return;
-    const extra = ((j.score != null || j.tip) ? `<div class="small" style="margin-top:6px">🎙 ${j.score != null ? `<b>${Math.round(j.score)}/100</b>` : ""}${j.tip ? " · " + esc(j.tip) : ""}</div>` : "")
+    const score = j.score === "" || j.score == null || isNaN(+j.score) ? null : Math.max(0, Math.min(100, Math.round(+j.score)));
+    const pron = String(j.pron || "").trim(), good = String(j.good || "").trim();
+    const extra = (score != null ? `<div class="small" style="margin-top:6px">🎙 <b>${score}/100</b>${pron ? ` · ${L("Chuẩn", "Standard")}: <span lang="${TL}">${esc(pron)}</span>` : ""}</div>` : "")
+      + (issues.length ? `<div class="say-iss">${issues.map((x, n) => `<div class="small"><span class="n">${n + 1}</span><div>${x.part ? `<b lang="${TL}">${esc(x.part)}</b> ` : ""}${x.type ? `<span class="ty">${esc(sayType(x.type))}</span> ` : ""}${esc(x.tip)}</div></div>`).join("")}</div>`
+        : good ? `<div class="small" style="margin-top:4px">👍 ${esc(good)}</div>` : "")
       + gradedBy(true) + `<button class="btn-ghost" id="sayMine">${ic("headphones")} ${L("Nghe lại", "Replay")}</button>`;
     sayResult(item, !!j.correct, String(j.heard || "").trim(), extra);
   } catch(e){
@@ -3082,6 +3096,17 @@ Return JSON exactly like: {"heard":"","correct":false,"score":0,"tip":""}`;
     frSay("⚠️ " + esc(e.message));
   }
 }
+// what the strict word check listens for, per course (the reader's coach has the same lists for whole sentences)
+function sayFocus(){
+  if (isKo) return `- sounds: plain / aspirated / tense consonants (ㄱㅋㄲ, ㄷㅌㄸ, ㅂㅍㅃ, ㅈㅊㅉ, ㅅㅆ), vowels (ㅓ/ㅗ, ㅡ/ㅜ, ㅢ, ㅐ/ㅔ…), final consonants (받침: unreleased ㄱ/ㄷ/ㅂ, ㄴ vs ㅇ vs ㅁ, ㄹ).
+- linking & sound rules inside the word: 연음 (a final consonant carried onto a following ㅇ), 비음화, 경음화, 격음화, 유음화, 구개음화, ㅎ 탈락 — reading it letter by letter is an issue.
+- intonation: a natural, fairly even Korean pitch; flag English-like stress on one syllable, a stretched syllable, or a rising end on a statement.
+- pace: hesitation, restarts, choppy syllable-by-syllable reading, unnatural pauses, much too slow.`;
+  const [acc, flu, into] = COACH[CUR];
+  return `- sounds: ${acc}\n- linking & pace: ${flu} Also flag reading it syllable by syllable, restarts, or much too slow.\n- ${CO.words ? "stress & intonation" : "pitch & intonation"}: ${into}`;
+}
+const sayType = t => ({ sound: L("Âm", "Sound"), batchim: L("Patchim", "Final consonant"), "sound-rule": L("Biến âm", "Sound rule"), linking: L("Nối âm", "Linking"), tone: L("Thanh điệu", "Tone"),
+  stress: L("Trọng âm", "Stress"), intonation: L("Ngữ điệu", "Intonation"), pace: L("Tốc độ", "Pace"), missing: L("Thiếu âm", "Missing"), extra: L("Thừa âm", "Extra"), "vowel-length": L("Độ dài nguyên âm", "Vowel length") }[t] || t);
 // one quiet line under the result saying which grader was used
 const gradedBy = ai => `<div class="small" style="margin-top:4px;opacity:.75">${ai ? "✨ " + L("Chấm bởi AI", "Graded by AI") : "⚡ " + L("Chấm cơ bản", "Basic grading")}</div>`;
 function sayCheckLocal(item){
@@ -4073,22 +4098,9 @@ async function evaluateAI(){
   C.busy = true; $("#cStatus").innerHTML = `<span class="spinner"></span>Coach is listening to your recording…`;
   try {
     const b64 = await blobToWavB64(C.blob);
-    const prompt = !isKo ? coachPrompt(s) : `You are an expert, honest and encouraging Korean pronunciation coach (standard Seoul Korean). A ${uiLangName()}-speaking learner read this sentence aloud:
-TARGET: "${s.ko}"
-Listen carefully to the attached recording and evaluate it like a native Korean teacher:
-- accuracy: consonants (plain / aspirated / tense: ㄱㅋㄲ, ㄷㅌㄸ, ㅂㅍㅃ, ㅈㅊㅉ, ㅅㅆ), vowels (ㅓ/ㅗ, ㅐ/ㅔ, ㅡ/ㅜ, ㅢ…), final consonants (받침), and required sound-change rules (연음, 비음화, 경음화, 격음화, 유음화, 구개음화, ㅎ 탈락…).
-- fluency: smoothness, pace, unnatural pauses, hesitation, chunking into natural phrases.
-- intonation: natural pitch contour; Korean has no strong word stress — flag syllables that are unnaturally stressed or lengthened, and wrong sentence-final intonation (statement ↓ vs question ↑).
-- native: overall, how close to a native Seoul speaker.
-Scores are 0–100 and must be realistic (typical beginners 40–75; only near-native gets 90+).
-For each problem: "part" MUST be copied exactly from TARGET (a syllable or word); "heard" = how it sounded (Hangul or description); "tip" = concrete fix in ${uiLangName()}: mouth/tongue/airflow, the sound rule if any, and the correct pronunciation in brackets like [머거요]. Max 6 issues, most important first.
-"pron" = standard pronunciation of the whole TARGET written in Hangul in brackets (apply sound-change rules).
-"heard" = what the learner actually said, transcribed in Hangul.
-If the audio is silent or unrelated to the target, return heard "" and all scores 0.
-${feedbackLangRule()}
-Return JSON exactly like: {"heard":"","pron":"","scores":{"accuracy":0,"fluency":0,"intonation":0,"native":0},"issues":[{"part":"","type":"sound|batchim|sound-rule|intonation|stress|pace|missing|extra","heard":"","tip":""}],"good":"","overall":""}`;
-    const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule() }));
-    await fixFeedbackLang([[j, "good"], [j, "overall"], ...(Array.isArray(j.issues) ? j.issues : []).map(x => [x, "tip"])]);
+    const prompt = coachPrompt(s);
+    const j = coachClean(extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule(), temperature: 0.2 })));
+    await fixFeedbackLang([[j, "good"], [j, "overall"], ...j.issues.map(x => [x, "tip"])]);
     if (tok === C.tok) renderCoachResult(s, j, true);   // moved to another sentence meanwhile: drop it
   } catch(e){
     if (tok === C.tok) $("#cStatus").textContent = "⚠️ " + e.message;
@@ -4096,8 +4108,11 @@ Return JSON exactly like: {"heard":"","pron":"","scores":{"accuracy":0,"fluency"
   if (tok === C.tok) C.busy = false;
 }
 
-// the same coach for the other courses: what to listen for in each language
+// what the coach listens for in each language: [accuracy, fluency, intonation]
 const COACH = {
+  ko: [`consonants (plain / aspirated / tense: ㄱㅋㄲ, ㄷㅌㄸ, ㅂㅍㅃ, ㅈㅊㅉ, ㅅㅆ), vowels (ㅓ/ㅗ, ㅐ/ㅔ, ㅡ/ㅜ, ㅢ…), final consonants (받침), and required sound-change rules (연음 linking across syllables and words, 비음화, 경음화, 격음화, 유음화, 구개음화, ㅎ 탈락…).`,
+       `smoothness, pace, unnatural pauses, hesitation, chunking into natural phrases; reading syllable by syllable or word by word is a problem.`,
+       `natural pitch contour; Korean has no strong word stress — flag syllables that are unnaturally stressed or lengthened, and wrong sentence-final intonation (statement ↓ vs question ↑).`],
   en: [`consonants (th /θ ð/, v/w, r/l, s/ʃ/z, final consonants and clusters — often dropped — and the -s / -ed endings), vowels (short vs long: ship/sheep, full/fool; cat/cut/cart) and diphthongs.`,
        `smoothness, pace, unnatural pauses, hesitation, linking between words and weak forms (to, of, and, a).`,
        `word stress on the right syllable, sentence stress on the content words, English stress-timed rhythm, and rising / falling intonation.`],
@@ -4116,20 +4131,31 @@ const COACH = {
 };
 function coachPrompt(s){
   const [acc, flu, into] = COACH[CUR];
-  return `You are an expert, honest and encouraging ${CO.en} pronunciation coach (${CO.standard}). A ${uiLangName()}-speaking learner read this sentence aloud:
+  return `You are an expert ${CO.en} pronunciation coach (${CO.standard}) and a strict examiner. A ${uiLangName()}-speaking learner read this sentence aloud:
 TARGET: "${s.ko}"
-Listen carefully to the attached recording and evaluate it like a native ${CO.en} teacher:
+Listen very carefully to the attached recording and evaluate it like a strict native ${CO.en} teacher:
 - accuracy: ${acc}
 - fluency: ${flu}
 - intonation: ${into}
 - native: overall, how close to a native speaker of ${CO.standard}.
-Scores are 0–100 and must be realistic (typical beginners 40–75; only near-native gets 90+).
-For each problem: "part" MUST be copied exactly from TARGET (a ${CO.words ? "word" : "syllable or word"}); "heard" = how it sounded (${CO.script}, or a description); "tip" = concrete fix in ${uiLangName()}: mouth/tongue/airflow${/zh|th|vi/.test(CUR) ? ", the tone" : ""}, and the correct pronunciation written as in "pron". Max 6 issues, most important first.
+"issues" = EVERY way the recording differs from a native speaker, even small ones (a slightly off vowel, weak or missing aspiration / tension, a final consonant released or dropped, a missed linking or sound rule, a wrong tone or pitch, a misplaced stress, a hesitation or unnatural pause, choppy word-by-word reading, a stretched sound). One item per problem, most important first, max 10. "part" MUST be copied exactly from TARGET (a ${CO.words ? "word" : "syllable or word"}); "type" = one of the types below; "heard" = how it sounded (${CO.script}, or a description); "tip" = concrete fix in ${uiLangName()}: mouth/tongue/airflow${/zh|th|vi/.test(CUR) ? ", the tone" : ""}${isKo ? ", the sound rule if any" : ""}, and the correct pronunciation written as in "pron". Use [] only when it is truly native-like — never invent problems you didn't hear.
+Scores are 0–100 and strict. Each starts at 100; deduct for every issue in that area:
+- accuracy: a clearly wrong sound or tone, a missing or extra syllable −10 to −20; a missed sound rule, linking or final consonant −6 to −12; a slight accent on one sound −3 to −5.
+- fluency: each hesitation, restart or unnatural pause −5 to −10; choppy word-by-word reading or much too slow −10 to −20.
+- intonation: wrong sentence-final contour −10 to −15; flat, sing-song or misplaced stress / pitch −5 to −10.
+- native: overall impression; never more than 10 above the lowest of the other three.
+95–100 ONLY when that aspect sounds native; with any issue in an aspect, its score is at most 90. Typical learners score 40–80. Work each score out from the issues you list — they must match.
 "pron" = ${CO.pron} — for the whole TARGET.
 "heard" = what the learner actually said, transcribed ${CO.script}.
 If the audio is silent or unrelated to the target, return heard "" and all scores 0.
 ${feedbackLangRule()}
-Return JSON exactly like: {"heard":"","pron":"","scores":{"accuracy":0,"fluency":0,"intonation":0,"native":0},"issues":[{"part":"","type":"sound|tone|vowel-length|stress|intonation|linking|pace|missing|extra","heard":"","tip":""}],"good":"","overall":""}`;
+Return JSON exactly like: {"heard":"","pron":"","scores":{"accuracy":0,"fluency":0,"intonation":0,"native":0},"issues":[{"part":"","type":"${isKo ? "sound|batchim|sound-rule|linking" : "sound|tone|vowel-length|linking"}|stress|intonation|pace|missing|extra","heard":"","tip":""}],"good":"","overall":""}`;
+}
+// the scores are the AI's own; only drop empty issues and keep at most 10
+function coachClean(j){
+  j.issues = (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 10);
+  j.scores = j.scores && typeof j.scores === "object" ? j.scores : {};
+  return j;
 }
 
 /* ---- free local check (browser speech recognition + Korean sound-rule hints) ---- */
@@ -4271,7 +4297,7 @@ function renderCoachResult(s, j, ai){
   $("#cTarget").innerHTML = html;
 
   const overallScore = Math.round(["accuracy","fluency","intonation","native"].map(k => sc[k]).filter(v => v != null).reduce((a,b,_,arr) => a + b/arr.length, 0));
-  const typeName = t => ({ sound:"Sound", batchim:"Final consonant", "sound-rule":"Sound rule", intonation:"Intonation", stress:"Stress", pace:"Pace", missing:"Missing", extra:"Extra", tone:"Tone", "vowel-length":"Vowel length", linking:"Linking" }[t] || t || "Tip");
+  const typeName = t => t ? sayType(t) : "Tip";
   $("#cStatus").textContent = overallScore >= 85 ? "🌟 Excellent!" : overallScore >= 70 ? "👍 Good — a few things to polish" : overallScore >= 50 ? "💪 Getting there — see the tips" : "Keep practicing — listen 🔊 and try again";
   // what was heard, how it should sound and what to fix: one block, split by thin lines
   const secs = [

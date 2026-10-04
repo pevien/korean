@@ -136,9 +136,10 @@ Tap 🎙 on a sentence to open the coach underneath it. The coach has:
 
 **✨ AI in detail:**
 
-- The Korean prompt checks consonant series, vowels, 받침, sound-change rules, fluency and intonation. Other languages have their own focus points.
-- Scores are meant to be realistic: beginners land at 40–75, and 90+ only for near-native speech.
-- You get up to 6 issues, the standard pronunciation, what was heard, and an overall comment in your UI language.
+- All courses share one prompt (`coachPrompt`) with a per-language checklist (`COACH`). For Korean that's consonant series, vowels, 받침, sound-change rules including 연음 across words, fluency (word-by-word reading counts) and intonation.
+- **Strict grading.** Gemini lists every deviation from a native speaker, small ones included (up to 10), and each score starts at 100 with deductions per issue. 95+ is only for native-like speech, and an aspect with any issue gets at most 90.
+- The prompt spells out the deductions per score (e.g. a wrong sound −10 to −20 on Accuracy, each hesitation −5 to −10 on Fluency), says Native-like can't be more than 10 above the lowest of the other three, and that the scores must match the issues listed. The scores shown are Gemini's own — the app doesn't adjust them.
+- You also get the standard pronunciation, what was heard, and an overall comment in your UI language. Issue types are labelled in the UI language (Nối âm, Patchim, Tốc độ…).
 
 **The result shows:**
 

@@ -107,7 +107,9 @@ In non-Korean courses, "Korean" in these labels is replaced by the course name.
 | Grading | How it works | What you see |
 |---|---|---|
 | ⚡ Basic | The browser's speech recognition. It accepts any of its top 5 guesses that contains the word. If speech was detected but not understood, you get one retry. | A miss shows "Match N/100"; 70 or more adds a "close" hint. |
-| ✨ AI | Needs a key. The recording is sent to Gemini. Tones count for Chinese, Thai and Vietnamese. | "N/100" with a tip, and a Replay button for your own recording |
+| ✨ AI | Needs a key. The recording is sent to Gemini. Tones count for Chinese, Thai and Vietnamese. | "N/100", the standard pronunciation, every pronunciation issue as a numbered list, and a Replay button for your own recording |
+
+- **AI score is strict.** Whether the answer counts as right only needs a native listener to understand it. The score is separate: Gemini checks sounds, final consonants, linking and sound rules, tone/stress/intonation and pace, and lists every deviation, small ones included (up to 6), each with its type and a fix. It starts at 100 and deducts per issue by a fixed rubric in the prompt; 95+ is only for native-like speech, any issue means at most 90, and the score must match the issues listed. The score shown is Gemini's own — the app doesn't adjust it.
 
 - **Letters:** the letter's name or its sound is accepted. Korean vowels that have merged in speech count as equal: ㅐ/ㅔ, ㅒ/ㅖ and ㅙ/ㅚ/ㅞ.
 - **Can't speak now** switches the card to a question type that doesn't need speaking.
