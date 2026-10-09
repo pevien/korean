@@ -695,7 +695,7 @@ body.ar-conv-on{overflow:hidden}
 .cheer-m{font-size:52px;line-height:1;display:inline-block;animation:bob 1.6s ease-in-out infinite}
 .cheer-ko{font-size:22px;font-weight:800;margin-top:10px;text-align:center}
 /* the phrase stays centred (lined up with the translation); the speaker hangs off its right edge */
-.cheer-ko>span{position:relative;display:inline-block}
+.cheer-ko>span{position:relative;display:inline-block;max-width:calc(100% - 84px)}   /* leave room for the 34px speaker + 8px gap on both sides, so a long phrase wraps instead of pushing it out of the card */
 .cheer-ko .speak.sm{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:8px;width:34px;height:34px;font-size:15px}
 .cheer-tr{font-size:14px;margin:2px 0 14px}
 .cheer-ko.solo{margin-bottom:12px}   /* no translation line under it: keep the text below from touching */
