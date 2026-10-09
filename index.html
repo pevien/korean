@@ -2203,15 +2203,32 @@ function loadVoices(){
   $("#voiceWarn").textContent = !("speechSynthesis" in window) ? "This browser can't speak. Try Chrome or Safari."
     : voices.length ? "" : `No ${CO.en} voice found yet. On iPhone: Settings → Accessibility → Spoken Content → Voices → ${CO.en}. On Android: install ${CO.en} in Google Text-to-Speech. Windows: add ${CO.en} speech in Settings → Time & language → Speech.`;
 }
-let lastU = null;
+let lastU = null, sayTimer = null, lastSaid = 0, wakeAC = null;
+// stop reading aloud, including a word still waiting to start (see speak)
+function ttsCancel(){ clearTimeout(sayTimer); sayTimer = null; if ("speechSynthesis" in window) speechSynthesis.cancel(); }
+// after a few seconds of silence the speakers / Bluetooth headphones doze off and swallow the first syllable:
+// a short silent sound wakes them before the voice starts
+function wakeAudio(){
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
+    wakeAC ||= new AC();
+    if (wakeAC.state === "suspended") wakeAC.resume().catch(() => {});
+    const src = wakeAC.createBufferSource();
+    src.buffer = wakeAC.createBuffer(1, Math.ceil(wakeAC.sampleRate * 0.3), wakeAC.sampleRate);
+    src.connect(wakeAC.destination); src.start();
+    return true;
+  } catch(e){ return false; }
+}
 function speak(text, opts){
   opts = opts || {};
   // the Translate screen covers the tab underneath: a card there must not read itself aloud (e.g. a round that opened on reload)
   if (document.body.classList.contains("ar-conv-on")) { if (opts.onend) setTimeout(opts.onend, 0); return null; }
   if (Object.hasOwn(ABC_SAY, text)) text = ABC_SAY[text];   // a letter: its name or sound (ㄱ → 기역, B b → B, ก → กอ ไก่, b → 玻)
   if (!("speechSynthesis" in window) || !text) { if (opts.onend) setTimeout(opts.onend, 800); return null; }
+  // speaking right after cancel() cuts off the start of the new word (Chrome, Safari): give the old one time to stop
+  const busy = speechSynthesis.speaking || speechSynthesis.pending || !!sayTimer;
   if (!opts.keepPlayer && typeof stopPlayer === "function") stopPlayer(true);
-  speechSynthesis.cancel();
+  if (busy) ttsCancel();
   if (!voices.length) loadVoices();               // voices can appear late or change after device settings change
   const v = voices.find(v => v.name === curVoice()) || voices[0];
   if (!v){
@@ -2229,10 +2246,13 @@ function speak(text, opts){
   // a lone word of 1–3 syllables is over before the speed change is audible: read it a bit slower still
   if ((isKo ? (clean.match(/[\uac00-\ud7a3]/g) || []).length : units(clean).length) <= 3 && !/\s/.test(clean)) u.rate = Math.max(0.5, S.settings.rate * 0.8);
   u.voice = v;
-  if (opts.onend) { u.onend = opts.onend; u.onerror = opts.onend; }
+  u.onend = u.onerror = e => { lastSaid = Date.now(); if (opts.onend) opts.onend(e); };
   if (opts.onstart) u.onstart = opts.onstart;
   lastU = u; // keep a reference (Chrome may drop events otherwise)
-  speechSynthesis.speak(u);
+  const idle = !busy && Date.now() - lastSaid > 5000 && wakeAudio();
+  const wait = Math.max(busy ? 80 : 0, idle ? 150 : 0);
+  if (wait) sayTimer = setTimeout(() => { sayTimer = null; speechSynthesis.speak(u); }, wait);
+  else speechSynthesis.speak(u);
   return u;
 }
 
@@ -2424,7 +2444,7 @@ function show(v){
   if (v === "cal") renderCal();
   if (v === "study" && !session) refreshHome();
   document.body.classList.toggle("in-session", v === "study" && !!session);   // leaving via a link mid-session must bring the tab bar back
-  if (v !== "read") { document.body.classList.remove("talking"); stopPlayer(); cancelRec(); talkStop(); ieStop(); if ("speechSynthesis" in window) speechSynthesis.cancel(); }
+  if (v !== "read") { document.body.classList.remove("talking"); stopPlayer(); cancelRec(); talkStop(); ieStop(); ttsCancel(); }
   if (v !== "study") frCancel();
   if (v !== "army") arStop();
   if (v === "army") renderArmy();
@@ -3057,7 +3077,7 @@ function frBtn(on){
 function frSay(html){ const el = $("#sayAgainSt") || $("#sayStatus"); if (el) el.innerHTML = html; }
 const frBlocked = () => L("🎙 Micro bị chặn. Cho phép micro cho trang này rồi thử lại (xem Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked. Allow it for this site and try again (see Settings → Voice → Microphone & speaking).");
 async function sayStart(item){
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  ttsCancel();
   // the picked grading mode; Basic falls back to AI only when this browser has no speech recognition
   const useAI = hasKey() && navigator.mediaDevices && window.MediaRecorder && (coachAI() || !SR);
   FR.heard = ""; FR.alts = []; FR.spoke = false; FR.stopping = false; item.pron = "";
@@ -3233,7 +3253,7 @@ function sayResult(item, ok, heard, extra){
   frSay("");
   const dock = $("#sayDock"); if (dock) dock.classList.add("hidden");   // answered → the feedback + Continue take over
   finish(item, ok, heard, extra);
-  const mine = $("#sayMine"); if (mine) mine.onclick = () => { if ("speechSynthesis" in window) speechSynthesis.cancel(); new Audio(item.myUrl).play().catch(() => {}); };
+  const mine = $("#sayMine"); if (mine) mine.onclick = () => { ttsCancel(); new Audio(item.myUrl).play().catch(() => {}); };
   const ag = $("#sayAgain"); if (ag) ag.onclick = () => { if (item.busy || FR.starting) return; FR.rec || FR.recog ? sayStop() : sayStart(item); };
 }
 
@@ -3866,7 +3886,7 @@ function applyReaderView(){
 $("#pHideM").onchange = applyReaderView; $("#pHideK").onchange = applyReaderView;
 $("#rdBack").onclick = () => {
   if (!$("#rdEditor").classList.contains("hidden")) return closeRdEditor();   // ← while editing = cancel, back to the passage
-  stopPlayer(); if ("speechSynthesis" in window) speechSynthesis.cancel(); closeCoach(); curP = null; navSave({ p: "", y: 0 }); $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
+  stopPlayer(); ttsCancel(); closeCoach(); curP = null; navSave({ p: "", y: 0 }); $("#reader").classList.add("hidden"); $("#readHome").classList.remove("hidden"); renderPassList(); };
 $("#rdDel").onclick = e => confirmTap(e.currentTarget, ic("trash"), () => {
   S.passages = S.passages.filter(p => p !== curP); save();
   closeRdEditor(); $("#rdBack").click(); toast("Passage deleted");   // editor open or not: always back to the list
@@ -3906,11 +3926,11 @@ function clearTimers(){ clearTimeout(P.timer); clearInterval(P.tick); P.timer = 
 function stopPlayer(){
   const was = P.playing || P.timer;
   P.token++; P.playing = false; clearTimers();
-  if (was && "speechSynthesis" in window) speechSynthesis.cancel();
+  if (was) ttsCancel();
   P.idx = 0; P.rep = 0; $$("#sentList .sent").forEach(el => el.classList.remove("cur"));
   setPlayIcon();
 }
-function pausePlayer(){ P.token++; P.playing = false; clearTimers(); if ("speechSynthesis" in window) speechSynthesis.cancel(); setPlayIcon(); }
+function pausePlayer(){ P.token++; P.playing = false; clearTimers(); ttsCancel(); setPlayIcon(); }
 // single: a tapped sentence plays just itself (repeats/shadow included) and stops; ▶ ⏮ ⏭ keep going through the passage
 function playFrom(i, single){
   if (!curP) return;
@@ -4069,7 +4089,7 @@ async function startRec(){
 async function startRec0(){
   const tok = C.tok, mt = C.micTok;
   const gone = () => tok !== C.tok || mt !== C.micTok;   // coach closed / moved, or the tab left, while waiting
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  ttsCancel();
   if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { micHelp("insecure"); return; }
   if (await micPermissionState() === "denied") { micHelp("site-denied"); return; }
   if (gone()) return;
@@ -5292,7 +5312,7 @@ let spScreen = navGet().sp || "";   // "" = the picker, "read", "talk" — survi
 const BACK_SVG = `<svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>`;
 function spShow(scr){
   spScreen = scr;
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  ttsCancel();
   if (scr !== "read" && curP){ closeRdEditor(); stopPlayer(); closeCoach(); curP = null; }
   if (scr !== "talk"){ talkStop(); document.body.classList.remove("talking"); }
   if (scr === "talk" && S.talk && S.talk.done){ S.talk = null; talkDropUrls(); save(); }   // it's in 🕘 history already
@@ -5633,7 +5653,7 @@ function renderTalkChat(){
   talkStatus(TK.status);
   const ttsBtn = () => { const b = $("#tkTts"); b.innerHTML = ic(talkTts() ? "speaker-high" : "speaker-slash"); b.setAttribute("aria-label", talkTts() ? L("Đọc to", "Read aloud") : L("Tắt tiếng", "Muted")); b.title = talkTts() ? L("AI đang đọc to — chạm để tắt", "AI reads aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); };
   ttsBtn();
-  $("#tkTts").onclick = () => { S.settings.talkTts = !talkTts(); save(); ttsBtn(); if (!talkTts() && "speechSynthesis" in window) speechSynthesis.cancel(); };
+  $("#tkTts").onclick = () => { S.settings.talkTts = !talkTts(); save(); ttsBtn(); if (!talkTts()) ttsCancel(); };
   $("#tkHint").onclick = talkHint;
   if ($("#tkRetry")) $("#tkRetry").onclick = () => { TK.status = ""; talkOpening(); };
   $("#tkRec").onclick = () => { if (TK.busy || t.turns.some(x => x.pending)) return; TK.rec ? talkRecStop() : talkRecStart(); };
@@ -5659,7 +5679,7 @@ function renderTalkChat(){
   if (talkVisible() && (wasBottom || t.turns.some(x => x.pending))) requestAnimationFrame(() => scrollTo(0, document.body.scrollHeight));
 }
 async function talkRecStart(){
-  if ("speechSynthesis" in window) speechSynthesis.cancel();   // don't record the AI's own voice
+  ttsCancel();   // don't record the AI's own voice
   const st = $("#tkStatus");
   if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices || !window.MediaRecorder) return micHelp("insecure", st);
   if (TK.starting) return;
@@ -5837,7 +5857,7 @@ function renderIelts(){
   if ($("#ieHistOpen")) $("#ieHistOpen").onclick = () => { IE.histList = true; renderIelts(); scrollTo(0, 0); };
   $("#ieBack").onclick = h ? () => { IE.view = ""; renderIelts(); scrollTo(0, 0); }
     : IE.histList ? () => { IE.histList = false; renderIelts(); scrollTo(0, 0); }
-    : t && !t.result && IE.phase && !["list", "gen", "score"].includes(IE.phase) ? () => { ieStop(); if ("speechSynthesis" in window) speechSynthesis.cancel(); IE.phase = "list"; renderIelts(); scrollTo(0, 0); }
+    : t && !t.result && IE.phase && !["list", "gen", "score"].includes(IE.phase) ? () => { ieStop(); ttsCancel(); IE.phase = "list"; renderIelts(); scrollTo(0, 0); }
     : () => { spShow(""); scrollTo(0, 0); };
 }
 
@@ -6067,7 +6087,7 @@ function ieTickRec(){
   IE.tick = setInterval(() => { const c = $("#ieClock"); if (c) c.textContent = ieClock(Date.now() - IE.t0); }, 250);
 }
 async function ieRecStart(){
-  if ("speechSynthesis" in window) speechSynthesis.cancel();   // don't record the examiner's voice
+  ttsCancel();   // don't record the examiner's voice
   const st = $("#ieStatus");
   if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices || !window.MediaRecorder) return micHelp("insecure", st);
   if (IE.starting) return;
@@ -6157,7 +6177,7 @@ Return JSON exactly like: {"heard":"","note":"","checks":[{"key":"","ok":true,"t
 /* ---- scoring the whole test ---- */
 async function ieFinish(){
   const t = IE.test; if (!t) return;
-  ieStop(); if ("speechSynthesis" in window) speechSynthesis.cancel();
+  ieStop(); ttsCancel();
   IE.phase = "score"; renderIelts(); scrollTo(0, 0);
   await Promise.all(Object.values(IE.jobs));
   // answers that failed (e.g. the per-minute limit) get one more try, a few seconds apart
@@ -6315,7 +6335,7 @@ function renderArmy(){
     b.title = b.ariaLabel = arTts() ? L("Đang đọc to bản dịch — chạm để tắt", "Reading translations aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); } };
   if ($("#arMiniTts")) $("#arMiniTts").onclick = () => {
     S.settings.armyTts = !arTts(); save(); ttsBtn();
-    if (!arTts() && "speechSynthesis" in window){ speechSynthesis.cancel(); AR.saying = 0; arResumeEars(); }
+    if (!arTts()){ ttsCancel(); AR.saying = 0; arResumeEars(); }
   };
   ttsBtn();
   $$("#arEng button").forEach(b => { b.classList.toggle("on", b.dataset.e === (aiAsk ? "ai" : eng)); b.onclick = () => { S.settings.armyEngine = b.dataset.e; save(); arRestart(); }; });
@@ -6841,7 +6861,7 @@ async function arTurn(lang){
   if (AR.turn === lang) return arEndTurn();   // tapped again: done speaking
   if (AR.turn) arEndTurn();
   AR.dir = lang;
-  if ("speechSynthesis" in window) speechSynthesis.cancel();   // someone starts talking: stop reading the last one
+  ttsCancel();   // someone starts talking: stop reading the last one
   AR.saying = 0; AR.taint = false;
   if (!AR.on){ await arStart(); if (!AR.on) return; }
   AR.turn = lang; AR.turnId = Date.now(); AR.turnHeard = false;
@@ -6988,7 +7008,7 @@ function arConvWire(aiAsk, goKey){
   $("#arConvFlip").onclick = () => { AR.flip = !AR.flip; c.classList.toggle("flip", AR.flip); arConvUI(); };
   $("#arConvTts").onclick = () => {
     S.settings.armyTts = !arTts(); save(); arConvUI(); arVoiceCheck();
-    if (!arTts() && "speechSynthesis" in window){ speechSynthesis.cancel(); AR.saying = 0; }
+    if (!arTts()){ ttsCancel(); AR.saying = 0; }
   };
 
 }
@@ -7040,7 +7060,7 @@ function arRenderConv(){
 async function arStart(){
   const eng = arEngine(); if (!eng || arSaveNow.busy) return;
   if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { arUI(L("🎙 Cần mở app từ link https:// để dùng micro.", "🎙 Open the app from its https:// link to use the mic.")); return; }
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  ttsCancel();
   AR.on = true; AR.engine = eng; AR.quota = 0; AR.hideBefore = 0; AR.waitTurn = 0;
   arUI();
   arOnDevice(arIn(), arOut(), true); if (arTalk()) arOnDevice(arOut(), arIn(), true);   // both ways: talk mode swaps turns
@@ -7068,7 +7088,7 @@ function arStop(){
   if (AR.ac) { try { AR.ac.close(); } catch(e){} AR.ac = null; }
   AR.vad = null;
   AR.interim = ""; AR.saying = 0; AR.taint = false; clearTimeout(arStableT);
-  if (arTalk() && "speechSynthesis" in window) speechSynthesis.cancel();
+  if (arTalk()) ttsCancel();
   arWake(false); arUI(""); arRender(); arFlushSaved();
 }
 
