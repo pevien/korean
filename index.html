@@ -3137,20 +3137,22 @@ async function sayRecorded(item){
   FR.stream = null;
   const blob = new Blob(FR.chunks, { type: (FR.rec && FR.rec.mimeType) || "audio/webm" });
   FR.rec = null;
-  if (Date.now() - FR.t0 < 400){ frSay(L("Ngắn quá — thử lại nhé.", "Too short — try again.")); return; }
+  const dur = Date.now() - FR.t0;
+  if (dur < 400){ frSay(L("Ngắn quá — thử lại nhé.", "Too short — try again.")); return; }
   const c = item.card, read = item.mode === "ko2say" || item.answered;   // saying it again: the right word is on screen by now
   if (item.myUrl) URL.revokeObjectURL(item.myUrl);
   item.myUrl = URL.createObjectURL(blob);   // lets them replay their own attempt next to the feedback
   item.busy = true; frSay(`<span class="spinner"></span>` + L("Đang chấm…", "Checking…"));
   try {
-    const b64 = await blobToWavB64(blob);
+    const audio = [{ inline_data: { mime_type: "audio/wav", data: await blobToWavB64(blob) } }];
+    const heard = await aiHear(audio, dur);
+    if (!heard){ item.busy = false; if (session && session.queue[0] === item) frSay(L("Không nghe rõ — nói to và gần micro hơn rồi thử lại.", "Didn't catch that — speak a bit louder and closer to the mic, then try again.")); return; }
     const prompt = `You are a ${CO.en} teacher and a strict pronunciation examiner. A ${uiLangName()}-speaking learner was ${isLetter(c)
       ? isKo ? `${read ? `shown the Hangul letter "${c.ko}"` : `shown "${c.meaning}" (the sound of a Hangul letter)`} and asked to say the letter "${c.ko}" — its name "${ABC_SAY[c.ko]}" or its sound (e.g. the letter + ㅏ for a consonant) both count`
       : `${read ? `shown the ${CUR === "zh" ? "pinyin" : CO.en + " letter"} "${c.ko}"` : `shown "${c.meaning}" (the sound of a ${CUR === "zh" ? "pinyin sound" : CO.en + " letter"})`} and asked to say it — "${ABC_SAY[c.ko]}"${ABC_BY[c.ko][6] ? `, its name "${ABC_BY[c.ko][6]}"` : ""} or its sound${CUR === "zh" ? " (any syllable with it, e.g. the example " + c.ex + ")" : ""} all count`
       : read ? `shown the ${CO.en} word "${c.ko}" and asked to read it aloud`
       : `shown the meaning "${c.meaning}" and asked to say the ${CO.en} word for it. Expected answer: "${c.ko}"`}.
-Listen to the attached recording.
-"heard" = what the learner said, ${CO.script} ("" if silent or unclear).
+Listen to the attached recording. ${heardRule(heard)}
 "correct" = true if they said ${read ? "the word" : `the expected word (or an equally correct ${CO.en} word for that meaning)`} clearly enough that a native ${CO.en} listener would understand it. Small accent issues are fine for "correct" — but NOT for the score.${CUR === "zh" || CUR === "th" || CUR === "vi" ? " Tones matter: a wrong tone that changes the word is not correct." : ""}
 Then judge the pronunciation like a strict native examiner. Listen very carefully and check every aspect:
 ${sayFocus()}
@@ -3159,8 +3161,8 @@ ${sayFocus()}
 "score" = strict pronunciation score 0–100. Start at 100 and deduct for each issue: a clearly wrong sound, tone or a missing syllable −15 to −25; a missed sound rule, linking or final consonant −10 to −15; wrong stress or intonation −8 to −12; hesitation, choppy or unnatural pace −5 to −10; a slight accent on one sound −3 to −6. 95–100 ONLY when it sounds native in every aspect; with any issue the score is at most 90. A different word scores under 40. Work the score out from the issues you list — it must match them.
 "good" = one short thing they did well, or "".
 ${feedbackLangRule()}
-Return JSON exactly like: {"heard":"","correct":false,"pron":"","score":0,"issues":[{"part":"","type":"","heard":"","tip":""}],"good":""}`;
-    const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule(), temperature: 0.2 }));
+Return JSON exactly like: {"correct":false,"pron":"","score":0,"issues":[{"part":"","type":"","heard":"","tip":""}],"good":""}`;
+    const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule(), temperature: 0.2 }));
     const issues = item.issues = (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 6).map(x => ({ part: String(x.part || "").trim(), type: String(x.type || "").trim(), heard: String(x.heard || "").trim(), tip: String(x.tip) }));
     await fixFeedbackLang([...issues.map(x => [x, "tip"]), [j, "good"]]);
     item.busy = false;
@@ -3175,7 +3177,7 @@ Return JSON exactly like: {"heard":"","correct":false,"pron":"","score":0,"issue
           <div class="tip">${esc(x.tip)}</div></div></div>`).join("")}</div>`
         : good ? `<div class="small fb-sc">👍 ${esc(good)}</div>` : "")
       + gradedBy(true) + `<button class="btn-ghost" id="sayMine">${ic("headphones")} ${L("Nghe lại", "Replay")}</button>`;
-    sayResult(item, !!j.correct && (score == null || score >= SAY_PASS), String(j.heard || "").trim(), extra);   // right word but under 70 = not known yet
+    sayResult(item, !!j.correct && (score == null || score >= SAY_PASS), heard, extra);   // right word but under 70 = not known yet
   } catch(e){
     item.busy = false;
     frSay("⚠️ " + esc(e.message));
@@ -4198,6 +4200,23 @@ async function blobToWavB64(blob, stats){
   for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   return btoa(bin);
 }
+// what the learner said, transcribed blind: with the expected word / sentence / conversation in view the model "hears" that
+// instead — fills in missing words, swaps in a similar-sounding phrase — so it gets the audio alone, and the grading
+// call that follows takes this transcript as final ("" = silence or noise)
+async function aiHear(audio, dur, opts = {}){
+  const j = extractJSON(await gemini(`Transcribe this ${(dur / 1000).toFixed(1)} s recording of a ${CO.en} learner speaking, verbatim, ${CO.script}.
+- Write ONLY the words actually spoken, in the order spoken. Never add, complete, guess or "repair" words; never fix grammar, particles or endings.
+- If a word is unclear, mispronounced or cut off, write your best phonetic guess of what was actually said — don't substitute a similar-sounding common word or phrase.
+- If the learner stopped mid-sentence, the transcript stops there too.
+- ${opts.fillers ? "Keep hesitation fillers (um, uh, er) exactly where they were said" : "Leave out hesitation sounds (um, uh, 음, 어)"}; leave out any background voices.
+- If the audio is silent, just noise, or not ${CO.en}, return "heard":"".
+Return JSON exactly like: {"heard":""}`, audio, { temperature: 0 }));
+  return String(j.heard || "").trim();
+}
+// the line every grading prompt gets after aiHear
+const heardRule = heard => `The recording was transcribed word for word, without knowing what was expected, as:
+HEARD: "${heard}"
+That transcript is final — grade exactly those words (use the audio only to judge how they sounded). Never assume the learner said words that aren't in it, even if it looks unfinished or doesn't match what was expected: missing, extra or different words are their mistakes.${CO.words ? "" : " A different spelling of the same sounds (e.g. other characters for a homophone) is not a mistake."}`;
 
 // the sentence the coach grades: without a dialogue speaker label, which is never read out
 const coachSent = () => { const s = curP.sentences[C.i]; return { ...s, ko: noSpeaker(s.ko) }; };
@@ -4205,9 +4224,12 @@ async function evaluateAI(){
   const s = coachSent(), tok = C.tok;
   C.busy = true; $("#cStatus").innerHTML = `<span class="spinner"></span>Coach is listening to your recording…`;
   try {
-    const b64 = await blobToWavB64(C.blob);
-    const prompt = coachPrompt(s);
-    const j = coachClean(extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule(), temperature: 0.2 })));
+    const audio = [{ inline_data: { mime_type: "audio/wav", data: await blobToWavB64(C.blob) } }];
+    const heard = await aiHear(audio, C.dur);
+    if (tok !== C.tok) return;
+    if (!heard){ C.busy = false; $("#cStatus").textContent = "Didn't catch that — speak a bit louder and closer to the mic, then try again."; return; }
+    const j = coachClean(extractJSON(await gemini(coachPrompt(s, heard), audio, { system: feedbackLangRule(), temperature: 0.2 })));
+    j.heard = heard;
     await fixFeedbackLang([[j, "good"], [j, "overall"], ...j.issues.map(x => [x, "tip"])]);
     if (tok === C.tok) renderCoachResult(s, j, true);   // moved to another sentence meanwhile: drop it
   } catch(e){
@@ -4237,10 +4259,11 @@ const COACH = {
        `smoothness, pace, unnatural pauses, hesitation; Vietnamese is syllable-timed — every syllable gets its full tone.`,
        `the tones in context and natural sentence intonation and final particles (nhé, ạ, à).`]
 };
-function coachPrompt(s){
+function coachPrompt(s, heard){
   const [acc, flu, into] = COACH[CUR];
   return `You are an expert ${CO.en} pronunciation coach (${CO.standard}) and a strict examiner. A ${uiLangName()}-speaking learner read this sentence aloud:
 TARGET: "${s.ko}"
+${heardRule(heard)}
 Listen very carefully to the attached recording and evaluate it like a strict native ${CO.en} teacher:
 - accuracy: ${acc}
 - fluency: ${flu}
@@ -4254,10 +4277,9 @@ Scores are 0–100 and strict. Each starts at 100; deduct for every issue in tha
 - native: overall impression; never more than 10 above the lowest of the other three.
 95–100 ONLY when that aspect sounds native; with any issue in an aspect, its score is at most 90. Typical learners score 40–80. Work each score out from the issues you list — they must match.
 "pron" = ${CO.pron} — for the whole TARGET.
-"heard" = what the learner actually said, transcribed ${CO.script}.
-If the audio is silent or unrelated to the target, return heard "" and all scores 0.
+If HEARD is unrelated to the target, return all scores 0.
 ${feedbackLangRule()}
-Return JSON exactly like: {"heard":"","pron":"","scores":{"accuracy":0,"fluency":0,"intonation":0,"native":0},"issues":[{"part":"","type":"${isKo ? "sound|batchim|sound-rule|linking" : "sound|tone|vowel-length|linking"}|stress|intonation|pace|missing|extra","heard":"","tip":""}],"good":"","overall":""}`;
+Return JSON exactly like: {"pron":"","scores":{"accuracy":0,"fluency":0,"intonation":0,"native":0},"issues":[{"part":"","type":"${isKo ? "sound|batchim|sound-rule|linking" : "sound|tone|vowel-length|linking"}|stress|intonation|pace|missing|extra","heard":"","tip":""}],"good":"","overall":""}`;
 }
 // the scores are the AI's own; only drop empty issues and keep at most 10
 function coachClean(j){
@@ -5533,26 +5555,27 @@ async function talkTurn(blob, dur){
   renderTalkChat();
   try {
     const b64 = await blobToWavB64(blob);
+    const audio = [{ inline_data: { mime_type: "audio/wav", data: b64 } }];
+    const heard = await aiHear(audio, dur);
+    if (S.talk !== t) return;
+    if (!heard){ t.turns = t.turns.filter(x => x !== me); TK.busy = false; renderTalkChat(); talkStatus(L("Không nghe rõ — nói to và gần micro hơn rồi thử lại.", "Didn't catch that — speak a bit louder and closer to the mic, then try again.")); return; }
     const prompt = `${talkContext(t)}
-The attached recording is the learner's next turn (${(dur / 1000).toFixed(1)} s). Listen carefully, then:
-- "heard": exactly what the learner said, transcribed ${CO.script} — keep their grammar mistakes, don't fix them. If the audio is silent, just noise, or not an attempt at ${CO.en}, return "heard":"" and leave everything else empty.
+The attached recording is the learner's next turn (${(dur / 1000).toFixed(1)} s). ${heardRule(heard)} If it doesn't fit the conversation, reply to what they actually said.
 - "ok": true if the sentence is grammatically correct AND natural in this situation (minor accent doesn't make it false).
 - "fix": if not ok, the corrected, natural ${CO.en} sentence that keeps their meaning; otherwise "".
 - "why": if not ok, ONE short explanation in ${uiLangName()} of the main mistake; otherwise "".
-- "mean": translation in ${uiLangName()} of what the learner meant (of "fix" if there is one, else of "heard").
+- "mean": translation in ${uiLangName()} of what the learner meant (of "fix" if there is one, else of their transcript).
 - "score": pronunciation score 0–100 — realistic (typical beginners 40–75, only near-native 90+).
 - "pron": ${isKo ? "standard pronunciation of their sentence in Hangul brackets, applying sound-change rules, e.g. [감사함니다]" : `${CO.pron} — for their sentence`}.
-- "issues": the 0–2 most important pronunciation problems: "part" = the syllable/word from "heard", "tip" = a short concrete fix in ${uiLangName()} with the correct pronunciation in brackets. Empty array if pronunciation was fine.
+- "issues": the 0–2 most important pronunciation problems: "part" = the syllable/word from their transcript, "tip" = a short concrete fix in ${uiLangName()} with the correct pronunciation in brackets. Empty array if pronunciation was fine.
 - "ko": your in-character reply in ${CO.en} — respond to what the learner MEANT, even if it had mistakes. 1–2 short sentences.
 - "koMean": translation of your reply in ${uiLangName()}.
 ${feedbackLangRule()}
-Return JSON exactly like: {"heard":"","ok":true,"fix":"","why":"","mean":"","score":0,"pron":"","issues":[{"part":"","tip":""}],"ko":"","koMean":""}`;
-    const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule() }));
+Return JSON exactly like: {"ok":true,"fix":"","why":"","mean":"","score":0,"pron":"","issues":[{"part":"","tip":""}],"ko":"","koMean":""}`;
+    const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule() }));
     await fixFeedbackLang([[j, "why"], [j, "mean"], [j, "koMean"], ...(Array.isArray(j.issues) ? j.issues : []).map(x => [x, "tip"])]);
     if (S.talk !== t) return;
-    const heard = String(j.heard || "").trim();
     t.turns = t.turns.filter(x => x !== me);
-    if (!heard){ TK.busy = false; renderTalkChat(); talkStatus(L("Không nghe rõ — nói to và gần micro hơn rồi thử lại.", "Didn't catch that — speak a bit louder and closer to the mic, then try again.")); return; }
     const fix = String(j.fix || "").trim();
     const turn = { who: "me", heard, ok: !!j.ok && !fix, fix: fix === heard ? "" : fix, why: String(j.why || "").trim(), mean: String(j.mean || "").trim(),
       score: Math.max(0, Math.min(100, Math.round(+j.score || 0))), pron: String(j.pron || "").trim(),
@@ -5811,10 +5834,10 @@ const IE_SCHEMA = {
   gen: { type: "OBJECT", properties: { p1: { type: "ARRAY", items: { type: "OBJECT", properties: { topic: IE_STR, q: IE_STR }, required: ["topic", "q"] } },
     card: { type: "OBJECT", properties: { topic: IE_STR, points: { type: "ARRAY", items: IE_STR }, end: IE_STR }, required: ["topic", "points", "end"] },
     follow: IE_STR, p3: { type: "ARRAY", items: IE_STR } }, required: ["p1", "card", "follow", "p3"] },
-  ans: { type: "OBJECT", properties: { heard: IE_STR, fixes: IE_PAIRS, upgrades: IE_PAIRS, note: IE_STR, score: { type: "NUMBER" },
+  ans: { type: "OBJECT", properties: { fixes: IE_PAIRS, upgrades: IE_PAIRS, note: IE_STR, score: { type: "NUMBER" },
     issues: { type: "ARRAY", items: { type: "OBJECT", properties: { part: IE_STR, tip: IE_STR }, required: ["part", "tip"] } }, sample: IE_STR,
     checks: { type: "ARRAY", items: { type: "OBJECT", properties: { key: IE_STR, ok: { type: "BOOLEAN" }, tip: IE_STR }, required: ["key", "ok", "tip"] } }, ideas: { type: "ARRAY", items: IE_STR } },
-    required: ["heard", "fixes", "upgrades", "note", "checks", "ideas", "score", "issues", "sample"], propertyOrdering: ["heard", "note", "checks", "ideas", "fixes", "upgrades", "score", "issues", "sample"] },
+    required: ["fixes", "upgrades", "note", "checks", "ideas", "score", "issues", "sample"], propertyOrdering: ["note", "checks", "ideas", "fixes", "upgrades", "score", "issues", "sample"] },
   band: { type: "OBJECT", properties: { fc: IE_CRIT_S, lr: IE_CRIT_S, gra: IE_CRIT_S, p: IE_CRIT_S, strengths: { type: "ARRAY", items: IE_STR }, next: { type: "ARRAY", items: IE_STR } },
     required: ["fc", "lr", "gra", "p", "strengths", "next"] }
 };
@@ -6142,30 +6165,30 @@ async function ieScoreAnswer(t, i, blob, dur){
   x.busy = true; x.err = "";
   const len = { 1: "2–4 natural sentences", 2: "a full long turn of about 200–250 words covering every point on the card", 3: "4–6 sentences with a clear opinion, reasons and an example" }[x.part];
   try {
-    const b64 = await blobToWavB64(blob);
+    const audio = [{ inline_data: { mime_type: "audio/wav", data: await blobToWavB64(blob) } }];
+    const heard = await aiHear(audio, dur, { fillers: true });
+    if (!heard){ if (x.seq === seq){ x.a = { heard: "", dur, fixes: [], upgrades: [], note: "", score: null, issues: [], sample: "", band: t.target, checks: [], ideas: [], wpm: 0, fillers: 0 }; x.busy = false; } return; }
     const j = await ieAsk("ans", `You are a certified IELTS Speaking examiner and coach. A ${uiLangName()}-speaking candidate aiming for band ${t.target} answered this IELTS Speaking Part ${x.part} question:
 "${x.q}"${x.kind === "card" ? `\nCue card — You should say: ${t.card.points.join("; ")}; ${t.card.end}` : ""}
-The attached recording is their answer (${(dur / 1000).toFixed(0)} s). Listen carefully, then:
-- "heard": exactly what they said in English — keep their grammar mistakes and hesitation fillers (um, uh, er) as spoken. If the audio is silent, just noise, or not an attempt to answer, return "heard":"" and leave everything else empty.
-- "fixes": up to 4 grammar or word-choice mistakes: "from" = their words exactly as in "heard", "to" = the corrected words, "why" = a short explanation in ${uiLangName()}.
+The attached recording is their answer (${(dur / 1000).toFixed(0)} s). ${heardRule(heard)} If it drifts off the question, judge it as it is.
+- "fixes": up to 4 grammar or word-choice mistakes: "from" = their words exactly as in HEARD, "to" = the corrected words, "why" = a short explanation in ${uiLangName()}.
 - "upgrades": up to 3 places where a more precise, band ${t.target}+ word, collocation or idiomatic phrase would fit naturally: "from" = their words, "to" = the better wording, "why" = a short note in ${uiLangName()} on when to use it.
 - "note": ONE sentence in ${uiLangName()}: overall, how well the answer addresses the question and is developed for Part ${x.part}.
 - "checks": judge how the answer is DEVELOPED (content and logic, not grammar), one item for each of these keys, in this order: ${ieCheckKeys(x, t).map(k => `"${k}" = ${k.startsWith("pt") ? `covers the card point "${t.card.points[+k.slice(2)]}"` : IE_CHECKS[k][0]}`).join("; ")}. "ok" = true/false; "tip" = when not ok, ONE short concrete suggestion in ${uiLangName()} that refers to what they actually said (e.g. which idea to explain, where they drifted off topic); "" when ok.
 - "ideas": 0–2 concrete ways in ${uiLangName()} to develop THIS answer better — e.g. a specific example they could add, or which part to cut because it drifts off the question. Empty if already well developed.
 - "score": pronunciation score 0–100 — realistic (only near-native 90+).
-- "issues": the 0–2 most important pronunciation problems: "part" = the word from "heard", "tip" = a short concrete fix in ${uiLangName()} with the IPA in slashes. Empty array if pronunciation was fine.
+- "issues": the 0–2 most important pronunciation problems: "part" = the word from HEARD, "tip" = a short concrete fix in ${uiLangName()} with the IPA in slashes. Empty array if pronunciation was fine.
 - "sample": a model answer to the same question at IELTS band ${t.target} — natural spoken English, reusing the candidate's ideas where possible, ${len}.
 ${feedbackLangRule()}
-Return JSON exactly like: {"heard":"","note":"","checks":[{"key":"","ok":true,"tip":""}],"ideas":[""],"fixes":[{"from":"","to":"","why":""}],"upgrades":[{"from":"","to":"","why":""}],"score":0,"issues":[{"part":"","tip":""}],"sample":""}`,
-      [{ inline_data: { mime_type: "audio/wav", data: b64 } }], { system: feedbackLangRule() });
+Return JSON exactly like: {"note":"","checks":[{"key":"","ok":true,"tip":""}],"ideas":[""],"fixes":[{"from":"","to":"","why":""}],"upgrades":[{"from":"","to":"","why":""}],"score":0,"issues":[{"part":"","tip":""}],"sample":""}`,
+      audio, { system: feedbackLangRule() });
     const s = v => String(v || "").trim();
     const pairs = v => (Array.isArray(v) ? v : []).filter(f => f && f.from && f.to && s(f.from) !== s(f.to)).map(f => ({ from: s(f.from), to: s(f.to), why: s(f.why) }));
-    const a = { heard: s(j.heard), dur, fixes: pairs(j.fixes).slice(0, 4), upgrades: pairs(j.upgrades).slice(0, 3), note: s(j.note),
+    const a = { heard, dur, fixes: pairs(j.fixes).slice(0, 4), upgrades: pairs(j.upgrades).slice(0, 3), note: s(j.note),
       score: j.score === "" || j.score == null || isNaN(+j.score) ? null : Math.max(0, Math.min(100, Math.round(+j.score))), issues: (Array.isArray(j.issues) ? j.issues : []).filter(y => y && y.tip).slice(0, 2).map(y => ({ part: s(y.part), tip: s(y.tip) })),
       sample: s(j.sample), band: t.target };
     const keys = ieCheckKeys(x, t), got = Array.isArray(j.checks) ? j.checks : [];
     a.checks = keys.map((k, n) => { const c = got.find(y => y && s(y.key) === k) || got[n]; return c ? { key: k, ok: c.ok !== false && c.ok !== "false", tip: s(c.tip) } : null; }).filter(Boolean);
-    if (!a.heard) a.checks = [];
     a.ideas = (Array.isArray(j.ideas) ? j.ideas : []).map(s).filter(Boolean).slice(0, 2);
     await fixFeedbackLang([...a.checks.map(c => [c, "tip"]), ...a.ideas.map((_, n) => [a.ideas, n]), [a, "note"], ...a.fixes.map(f => [f, "why"]), ...a.upgrades.map(f => [f, "why"]), ...a.issues.map(y => [y, "tip"])]);
     a.wpm = Math.round(ieWords(a.heard) / (dur / 60000)); a.fillers = ieFillers(a.heard);

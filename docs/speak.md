@@ -118,7 +118,7 @@ Tap 🎙 on a sentence to open the coach underneath it. The coach has:
 |---|---|---|
 | Needs | A browser with speech recognition (Chrome/Safari). Speech recognition itself may need internet. | A Gemini key |
 | Scores | Accuracy and fluency | Accuracy, fluency, intonation, native-like (0–100) |
-| How | Lines up what was heard against the sentence, then applies built-in rules | The recording (16 kHz WAV) goes to Gemini with a prompt for the language |
+| How | Lines up what was heard against the sentence, then applies built-in rules | The recording (16 kHz WAV) goes to Gemini twice: first transcribed blind (without the sentence, so it can't "hear" the target instead of what you said), then graded against the sentence using that transcript as is |
 
 **⚡ Basic in detail:**
 
@@ -194,7 +194,7 @@ Tap 🎙 on a sentence to open the coach underneath it. The coach has:
   - It sees the last 14 turns.
 - **Your turn:** tap 🎙, speak, then tap again. Recording stops by itself after 30 s.
 - **What the AI sends back for each turn:**
-  - What it heard, word for word, mistakes included.
+  - What it heard, word for word, mistakes included. The recording is transcribed on its own first, without the conversation, so the AI can't fill in words from its own last line; the grading and reply then use that transcript as is. Nothing heard → "Didn't catch that", try again.
   - ✅ "Correct and natural!", or ✏️ a corrected sentence with a one-line reason.
   - A translation.
   - A **pronunciation** score with up to 2 issues. Tap the score to expand it, with "My recording" and "Model" playback.

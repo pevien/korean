@@ -36,7 +36,7 @@ window.fetch = async (url, opts) => {
     const body = JSON.parse(opts.body), p = body.contents[0].parts[0].text;
     window.__prompts.push(p); window.__temp = body.generationConfig.temperature;
     await new Promise(r => setTimeout(r, 150));
-    const out = p.includes("attached recording") ? %s : { t: [] };
+    const ans = %s, out = p.startsWith("Transcribe this") ? { heard: ans.heard || "" } : p.includes("attached recording") ? ans : { t: [] };
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(out) }] } }] }));
   }
   return realFetch(url, opts);
@@ -94,6 +94,9 @@ def A(page):
     check("A: status no longer 'Excellent'", "Excellent" not in page.inner_text("#cStatus") and "Xuất sắc" not in page.inner_text("#cStatus"), page.inner_text("#cStatus"))
     check("A: best saved from the average", page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).passages[0].sentences[0].best") == 79)
     check("A: Korean prompt lists sound rules", "연음" in p and "비음화" in p and "batchim|sound-rule|linking" in p)
+    tr = page.evaluate("window.__prompts.find(p => p.startsWith('Transcribe this'))") or ""
+    check("A: transcribed blind, without the target sentence", tr and "음악" not in tr, tr)
+    check("A: grading takes that transcript as final", 'HEARD: "저는 음악을 좋아해요"' in p and "transcript is final" in p, p[:300])
     check("A: strict prompt", "EVERY way" in p and "max 10" in p and "at most 90" in p and "they must match" in p and "encouraging" not in p)
     check("A: low temperature", page.evaluate("window.__temp") == 0.2)
 

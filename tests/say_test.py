@@ -41,7 +41,9 @@ window.fetch = async (url, opts) => {
     window.__prompts.push(p); window.__temp = body.generationConfig.temperature;
     await new Promise(r => setTimeout(r, 150));
     const ans = %s, n = window.__prompts.filter(x => x.includes("attached recording")).length - 1;
-    const out = p.includes("attached recording") ? (Array.isArray(ans) ? ans[Math.min(n, ans.length - 1)] : ans) : { t: [] };
+    const pick = i => Array.isArray(ans) ? ans[Math.min(i, ans.length - 1)] : ans;
+    const out = p.startsWith("Transcribe this") ? { heard: pick(n + 1).heard || "" }   // the blind transcription before each grading call
+      : p.includes("attached recording") ? pick(n) : { t: [] };
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(out) }] } }] }));
   }
   return realFetch(url, opts);
@@ -95,6 +97,9 @@ def A(page):
     check("A: standard pronunciation next to the word on top", "[으막]" in page.inner_text("#qBox .ko-mean") and "[으막]" not in page.inner_text("#fb .fb-t"), page.inner_text("#qBox .ko-mean"))
     check("A: issue shows how it sounded", "음 → bạn đọc 음.악" in text, text)
     check("A: prompt asks how each part sounded", '"heard" = how that part actually sounded' in p)
+    tr = page.evaluate("window.__prompts.find(p => p.startsWith('Transcribe this'))") or ""
+    check("A: transcribed blind, without the expected word", tr and "음악" not in tr and "âm nhạc" not in tr, tr)
+    check("A: grading takes that transcript as final", 'HEARD: "음악"' in p and "transcript is final" in p, p[:300])
     check("A: all 3 issues listed", page.eval_on_selector_all("#fb .say-iss .issue", "e => e.length") == 3)
     check("A: issue types labelled in Vietnamese", all(t in text.lower() for t in ["nối âm", "patchim", "tốc độ"]), text)
     check("A: prompt checks linking & sound rules", "연음" in p and "비음화" in p and "EVERY way" in p)

@@ -40,11 +40,12 @@ window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
     if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     const body = JSON.parse(opts.body), p = body.contents[0].parts[0].text;
-    const kind = p.includes("preparing a realistic") ? "gen" : p.includes("attached recording") ? "ans" : p.includes("strict IELTS") ? "band" : "other";
+    const kind = p.startsWith("Transcribe this") ? "hear" : p.includes("preparing a realistic") ? "gen" : p.includes("attached recording") ? "ans" : p.includes("strict IELTS") ? "band" : "other";
     window.__calls.push(kind);
     if (kind === "ans") window.__ansSchema = body.generationConfig.responseSchema;
     if (kind === "band") window.__bandPrompt = p;
     if (kind === "gen") window.__genPrompt = p;
+    if (kind === "hear") window.__hearPrompt = p;
     await new Promise(r => setTimeout(r, 200));
     if (kind === "band" && window.__mock.bad > 0) { window.__mock.bad--; return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '{"fc":{"band":6,"note":"x"}, "lr" {"band"' + '}' }] } }] })); }
     if (kind === "ans" && window.__mock.fail > 0) { window.__mock.fail--; return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 }); }
@@ -55,6 +56,7 @@ window.fetch = async (url, opts) => {
     else if (kind === "gen") out = { p1: [{ topic: "Work or study", q: "Do you work or are you a student?" }, { topic: "Music", q: "What kind of music do you like?" }, { topic: "Music", q: "Did you learn an instrument as a child?" }],
       card: { topic: "Describe a place you visited that you would like to go back to.", points: ["where it is", "when you went there", "what you did there"], end: "and explain why you would like to go back." },
       follow: "Do you often travel?", p3: ["Why do people like to travel?", "How has tourism changed in your country?"] };
+    else if (kind === "hear") out = { heard: window.__mock.silent ? "" : window.__mock.partial ? "I work as a nurse." : "um I am work in a software company since three years, uh it is very good job" };   // the blind transcription before grading
     else if (kind === "ans" && window.__mock.partial) out = { heard: "I work as a nurse.", fixes: [], upgrades: [], note: "", issues: [] };   // Gemini leaving fields out
     else if (kind === "ans") out = window.__mock.silent ? { heard: "" } : { heard: "um I am work in a software company since three years, uh it is very good job", fixes: [{ from: "I am work", to: "I work", why: "Không dùng 'am' trước động từ thường." }],
       upgrades: [{ from: "very good job", to: "a rewarding job", why: "Tự nhiên hơn." }], note: "Đúng ý nhưng hơi ngắn.", score: 72, issues: [{ part: "three", tip: "Âm /θ/: /θriː/" }],
@@ -140,7 +142,8 @@ def t_full(page):
     check("C. Part 3 reached", "Part 3" in txt(page, "#ielts .sub-head"))
     answer(page); answer(page, wait=4000)
     c = calls(page)
-    check("C. AI calls: 1 gen + 7 answers + 1 band", c.count("gen") == 1 and c.count("ans") == 7 and c.count("band") == 1, str(c))
+    check("C. AI calls: 1 gen + 7 answers (each transcribed first) + 1 band", c.count("gen") == 1 and c.count("hear") == 7 and c.count("ans") == 7 and c.count("band") == 1, str(c))
+    check("C. transcribed blind, without the question", "?" not in page.evaluate("window.__hearPrompt || ''") and "fillers" in page.evaluate("window.__hearPrompt || ''"))
     s = saved(page)
     check("C. test saved once", len(s) == 1)
     if s:
@@ -335,7 +338,7 @@ def t_schema(page):
     page.evaluate("window.__mock.partial = true")
     answer(page, 1500, 1500)
     req = page.evaluate("(window.__ansSchema || {}).required || []")
-    check("S. schema requires every answer field", all(k in req for k in ["heard", "fixes", "upgrades", "note", "score", "issues", "sample"]), str(req))
+    check("S. schema requires every answer field", all(k in req for k in ["fixes", "upgrades", "note", "score", "issues", "sample"]), str(req))
     t = txt(page, "#ielts")
     check("S. missing score → '—/100', not 0/100", "—/100" in t and "0/100" not in t, t[-300:])
     check("S. no 'Model answer' label when there is none", "Câu trả lời mẫu" not in t)
