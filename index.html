@@ -900,7 +900,10 @@ body.tu-on .toast{z-index:36}
 .tu-head{display:flex;align-items:center;gap:10px;padding:10px 8px 10px 14px;border-bottom:1px solid var(--line)}
 .tu-head .h{flex:1;min-width:0;line-height:1.25}
 .tu-head .h b{display:block;font-size:15px}
-.tu-head .h span{font-size:12px;color:var(--muted)}
+/* level dropdown under the name, changeable without leaving the chat (the course is the flag after the name; it's switched from the app header, since that reloads) */
+.tu-sub{display:flex;margin-top:3px;min-width:0}
+.tu-sub select{width:auto;min-width:0;max-width:100%;flex:0 1 auto;font-size:12px;color:var(--muted);background-color:transparent;border:0;border-radius:0;
+  padding:2px 14px 2px 0;background-position:right 1px center;background-size:9px 6px;text-overflow:ellipsis}
 .tu-av{flex:0 0 auto;width:34px;height:34px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:19px}
 .tu-list{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
 .tu-m{max-width:86%;padding:9px 12px;border-radius:var(--r-md);font-size:14.5px;line-height:1.5;overflow-wrap:anywhere}
@@ -913,11 +916,12 @@ body.tu-on .toast{z-index:36}
 .tu-m b.say{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
 .tu-m img{display:block;max-width:100%;max-height:200px;border-radius:var(--r-sm);margin-bottom:6px}
 .tu-m audio{display:block;width:220px;max-width:100%;height:36px;margin-bottom:4px}
+.tu-m .heard{padding:0 4px}   /* what the tutor heard in a voice message */
 .tu-m.tu-wait{color:var(--muted)}
 .tu-err{align-self:center;font-size:13px;color:var(--bad);text-align:center}
 .tu-hi{margin:auto 0;text-align:center;padding:8px 6px}
 .tu-hi .tu-av{width:52px;height:52px;font-size:28px;margin:0 auto 8px}
-.tu-hi p{margin:6px 0 14px}
+.tu-hi .tu-chips{margin-top:14px}
 .tu-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .tu-chips button{background:var(--bg);color:var(--text);border:1px solid var(--line);padding:8px 12px;font-size:13px;font-weight:500}
 .tu-note{margin:0;padding:6px 14px 0;font-size:12.5px;color:var(--muted)}
@@ -1266,8 +1270,8 @@ body.tu-on .toast{z-index:36}
 <!-- AI tutor: floating chat to ask while studying; only shown with a Gemini key -->
 <button class="tu-fab hidden" id="tuFab" data-noi18n><svg class="i" aria-hidden="true"><use href="#i-chat-circle-dots"/></svg></button>
 <div class="tu hidden" id="tu" role="dialog" data-noi18n>
-  <div class="tu-head"><span class="tu-av"><svg class="i" aria-hidden="true"><use href="#i-graduation-cap"/></svg></span><div class="h"><b id="tuTitle"></b><span id="tuSub"></span></div>
-    <button class="icon-btn" id="tuNew"><svg class="i" aria-hidden="true"><use href="#i-arrow-clockwise"/></svg></button>
+  <div class="tu-head"><span class="tu-av"><svg class="i" aria-hidden="true"><use href="#i-graduation-cap"/></svg></span><div class="h"><b id="tuTitle"></b><div class="tu-sub"><select id="tuLv"></select></div></div>
+    <button class="icon-btn" id="tuNew"><svg class="i" aria-hidden="true"><use href="#i-note-pencil"/></svg></button>
     <button class="icon-btn" id="tuClose"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button></div>
   <div class="tu-list" id="tuList"></div>
   <div class="tu-att hidden" id="tuAtt"></div>
@@ -7191,7 +7195,30 @@ function arStop(){
 /* ---------------- init ---------------- */
 load();
 /* ---------------- AI tutor: a floating chat to ask anything while studying — type, record or send a photo (needs a Gemini key) ---------------- */
-const TU = { msgs: [], busy: false, err: "", att: null, rec: null, chunks: [], t0: 0, gen: 0 };
+const TU = { msgs: [], busy: false, err: "", att: null, rec: null, chunks: [], t0: 0, gen: 0, idol: null };
+// Korean course: each chat is with a random BTS member (never the same one twice in a row) — friendlier than a faceless tutor
+const TU_BTS = [
+  { name: "RM", emoji: "🐨", vibe: "the thoughtful leader who loves words, books and languages; explains clearly, sometimes adds a fun fact about where a word comes from" },
+  { name: "Jin", emoji: "🐹", vibe: "\"Worldwide Handsome\", cheerful and confident; loves a corny dad joke or pun, laughs at his own jokes" },
+  { name: "SUGA", emoji: "🐱", vibe: "calm and to the point with dry, gentle humour; short answers, quietly caring" },
+  { name: "j-hope", emoji: "🐿️", vibe: "bright and energetic (\"I'm your hope!\"); cheers every small win, lots of positive energy" },
+  { name: "Jimin", emoji: "🐥", vibe: "sweet, warm and encouraging; very patient, makes the learner feel safe to make mistakes" },
+  { name: "V", emoji: "🐻", vibe: "playful, a bit quirky and artistic; uses vivid images to explain, ends warmly with 💜 (\"I purple you\")" },
+  { name: "Jung Kook", emoji: "🐰", vibe: "the golden maknae, playful and competitive; loves turning practice into a little challenge or game" },
+];
+function tuPickIdol(){
+  if (CUR !== "ko") return TU.idol = null;
+  const pool = TU_BTS.filter(m => m !== TU.idol);
+  TU.idol = pool[Math.floor(Math.random() * pool.length)];
+  tuHead();
+}
+const tuAskHint = () => TU.idol ? L(`Hỏi ${TU.idol.name}…`, `Ask ${TU.idol.name}…`) : L("Hỏi gia sư…", "Ask your tutor…");
+function tuHead(){
+  const m = TU.idol;
+  if (!TU.rec) $("#tuIn").placeholder = tuAskHint();
+  $("#tuTitle").textContent = `${m ? m.name : L("Gia sư AI", "AI tutor")} ${CO.flag}`;   // the flag stands for the course
+  $("#tu .tu-head .tu-av").innerHTML = m ? m.emoji : ic("graduation-cap");
+}
 const tuIsOpen = () => !$("#tu").classList.contains("hidden");
 function tuSync(){   // the bubble only exists while there's a key
   const on = hasKey();
@@ -7221,15 +7248,17 @@ function tuScreen(){
   const sec = $("#arConv") || $$("section[id^=v-]").find(s => !s.classList.contains("hidden"));
   return sec ? sec.innerText.replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n").trim().slice(0, 2500) : "";
 }
-const tuLevel = () => (LEVELS.find(l => l[0] === curLevel()) || [])[1] || "";
-const tuSystem = () => `You are a warm, patient ${CO.en} teacher inside the learning app "Grow with PV", helping a ${levelDesc(curLevel())} learner — like a private tutor sitting next to them while they study.
+const tuPersona = m => m ? `You are ${m.name} of BTS, playing a private ${CO.en} tutor for an ARMY (BTS fan) — ${m.vibe}. Stay in character: talk like ${m.name} would, friendly and close, with an emoji now and then, and sign as ${m.name} when it feels natural. Only mention well-known public facts about BTS; never make up private details, and if asked, admit with a wink that you're an AI tutor playing ${m.name}. Teaching always comes first.
+` : "";
+const tuSystem = () => `${tuPersona(TU.idol)}You are a warm, patient ${CO.en} teacher inside the learning app "Grow with PV", helping a ${levelDesc(curLevel())} learner — like a private tutor sitting next to them while they study.
 - Reply in ${uiLangName()}${CO.en === uiLangName() ? "" : `, never in ${CO.en}: use ${CO.en} only for the words, phrases and examples being taught`}. Write ${CO.en} ${CO.script}${CO.words ? "" : " and add the pronunciation in Latin letters in (parentheses) after new words"}. Put each ${CO.en} word or phrase in **bold**.
 - Be short and clear: a few sentences or a short list (under ~120 words) unless they ask for more. Simple Markdown only: **bold**, *italic*, "- " lists. No tables, no headings.
 - Explain at their level; give 1–2 example sentences with a ${uiLangName()} translation when useful.
-- A voice message may be a question (in ${uiLangName()} or ${CO.en}) or them practising ${CO.en}: answer the question, or write what you heard and kindly correct pronunciation and grammar.
+- A voice message may be a question (in ${uiLangName()} or ${CO.en}) or them practising ${CO.en}. When the latest message is a voice message, the FIRST line of your reply must be "HEARD: " + exactly what they said, word for word, in the language they spoke (the app shows it under their recording). Then answer the question, or kindly correct their pronunciation and grammar — no need to repeat what they said.
 - A photo (textbook, sign, menu, screenshot, homework…): read it and answer what they ask; if they ask nothing, explain the ${CO.en} in it.
 - If they are in the middle of a quiz question, give hints first; give the answer straight away only when they ask for it.
 - Off-topic questions: answer briefly, then steer back to ${CO.en}.
+- Just answer and stop: never end a reply with a follow-up question or offer ("Want more examples?", "Shall we practise…?", "Anything else?") — the learner will ask when they want more. Only ask something when you need it to answer, or in a quiz they asked for.
 What the app is showing them right now (context only — it may be unrelated to the question):
 """
 ${tuScreen() || "(nothing)"}
@@ -7253,14 +7282,14 @@ function tuMd(s){
 function tuHello(){
   const chips = [L("Giải thích phần trên màn hình", "Explain what's on my screen"), L("Cho mình thêm ví dụ", "Give me more examples"),
     L("Mẹo để nhớ từ này", "A trick to remember this word"), L("Đố mình 3 câu nhanh", "Quiz me with 3 quick questions")];
-  return `<div class="tu-hi"><div class="tu-av">${ic("graduation-cap")}</div><b>${L("Chào bạn! Mình là gia sư AI", "Hi! I'm your AI tutor")}</b>
-    <p class="small muted">${L(`Hỏi bất cứ gì về tiếng ${CO.viS} — gõ, ghi âm hoặc gửi ảnh. Mình xem được màn hình bạn đang học.`, `Ask anything about ${CO.en} — type, record or send a photo. I can see the screen you're studying.`)}</p>
+  const m = TU.idol;
+  return `<div class="tu-hi"><div class="tu-av">${m ? m.emoji : ic("graduation-cap")}</div><b>${m ? L(`안녕! Mình là ${m.name} ${m.emoji}`, `안녕! I'm ${m.name} ${m.emoji}`) : L("Chào bạn! Mình là gia sư AI", "Hi! I'm your AI tutor")}</b>
     <div class="tu-chips">${chips.map(c => `<button data-q="${esc(c)}">${esc(c)}</button>`).join("")}</div></div>`;
 }
 function tuRender(){
   const list = $("#tuList");
   list.innerHTML = (TU.msgs.length ? TU.msgs.map(m => m.role === "user"
-      ? `<div class="tu-m me">${m.img ? `<img src="${m.img}" alt="">` : ""}${m.audio ? `<audio controls src="${m.audio}"></audio>` : ""}${m.text ? `<div class="t">${esc(m.text)}</div>` : ""}</div>`
+      ? `<div class="tu-m me">${m.img ? `<img src="${m.img}" alt="">` : ""}${m.audio ? `<audio controls src="${m.audio}"></audio>` : ""}${m.heard ? `<div class="t heard" lang="${TL}">${esc(m.heard)}</div>` : ""}${m.text ? `<div class="t">${esc(m.text)}</div>` : ""}</div>`
       : `<div class="tu-m ai">${tuMd(m.text)}</div>`).join("") : tuHello())
     + (TU.busy ? `<div class="tu-m ai tu-wait"><span class="spinner"></span>${L("Đang nghĩ…", "Thinking…")}</div>` : "")
     + (TU.err && !TU.busy ? `<div class="tu-err">⚠️ ${esc(TU.err)} <button class="linkbtn" id="tuRetry">${L("Thử lại", "Try again")}</button></div>` : "");
@@ -7319,9 +7348,11 @@ async function tuAsk(){
     // the last 20 messages, starting on a learner turn; photos and recordings only for the latest few (they're big)
     let h = TU.msgs.slice(-20); while (h.length && h[0].role !== "user") h = h.slice(1);
     const contents = h.map((m, i) => ({ role: m.role, parts: i >= h.length - 6 ? m.parts
-      : m.parts.map(p => p.inline_data ? { text: p.inline_data.mime_type.startsWith("audio") ? "[earlier voice message]" : "[earlier photo]" } : p) }));
-    const ans = (await gemini("", undefined, { contents, system: tuSystem(), text: true, temperature: 0.6 })).trim();
+      : m.parts.map(p => p.inline_data ? { text: p.inline_data.mime_type.startsWith("audio") ? (m.heard ? `[earlier voice message: "${m.heard}"]` : "[earlier voice message]") : "[earlier photo]" } : p) }));
+    let ans = (await gemini("", undefined, { contents, system: tuSystem(), text: true, temperature: 0.6 })).trim();
     if (g !== TU.gen) return;
+    const last = TU.msgs[TU.msgs.length - 1], hd = ans.match(/^\**HEARD:?\**:?\s*(.*)(?:\n|$)/i);
+    if (hd){ ans = ans.slice(hd[0].length).trim(); if (last.audio) last.heard = hd[1].replace(/\*+/g, "").replace(/^["“]|["”]$/g, "").trim(); }
     TU.msgs.push({ role: "model", text: ans, parts: [{ text: ans }] });
   } catch(e){ if (g === TU.gen) TU.err = e.message || String(e); }
   finally { if (g === TU.gen){ TU.busy = false; tuRender(); } }
@@ -7365,7 +7396,7 @@ function tuRecUI(on){
   const b = $("#tuMic");
   b.classList.toggle("on", on); b.innerHTML = ic(on ? "stop-fill" : "microphone");
   b.title = b.ariaLabel = on ? L("Dừng và gửi", "Stop and send") : L("Hỏi bằng giọng nói", "Ask by voice");
-  $("#tuIn").placeholder = on ? L("Đang ghi âm… chạm ⏹ để gửi", "Recording… tap ⏹ to send") : L("Hỏi gia sư…", "Ask your tutor…");
+  $("#tuIn").placeholder = on ? L("Đang ghi âm…", "Recording…") : tuAskHint();
   $("#tuIn").disabled = $("#tuPic").disabled = $("#tuSend").disabled = on;
   if (!on) tuRender();
 }
@@ -7373,9 +7404,26 @@ $("#tuMic").onclick = () => TU.rec ? tuRecStop() : tuRecStart();
 
 function tuOpen(){
   $("#tu").classList.remove("hidden"); document.body.classList.add("tu-on");
-  $("#tuSub").textContent = `${CO.flag} ${UI === "vi" ? "Tiếng " + CO.viS : CO.en}${tuLevel() ? " · " + tuLevel() : ""}`;
+  tuPickers();
   tuSync(); tuRender();
   if (matchMedia("(hover: hover)").matches) $("#tuIn").focus();   // phones: no keyboard popping over the chat right away
+}
+// the level is the app-wide one, changeable right here (next answers follow it)
+// a select is as wide as its longest option: size it to the chosen one so the arrow sits right after the text
+function tuFitLv(){
+  const lv = $("#tuLv"), cs = getComputedStyle(lv), c = document.createElement("canvas").getContext("2d");
+  c.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  lv.style.width = Math.ceil(c.measureText(lv.selectedOptions[0] ? lv.selectedOptions[0].text : "").width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2) + "px";
+}
+function tuPickers(){
+  const lv = $("#tuLv");
+  lv.innerHTML = LEVELS.map(l => `<option value="${l[0]}">${esc(UI === "vi" ? trLevels(l[1]) : l[1])}</option>`).join("");
+  lv.value = curLevel(); tuFitLv();
+  lv.onchange = () => {
+    courseSet().level = lv.value; save(); tuFitLv();
+    $$("#genLevel,#rdLevel,#tkLevel").forEach(x => x.value = lv.value);
+    tuNote(L("Đã đổi trình độ — các câu trả lời sau sẽ theo trình độ mới.", "Level changed — the next answers follow it."));
+  };
 }
 function tuClose(){
   tuRecStop(true);
@@ -7387,14 +7435,15 @@ $("#tuClose").onclick = tuClose;
 $("#tuNew").onclick = () => {   // new chat: drop the history (and an answer still on its way)
   TU.gen++; TU.busy = false; TU.err = "";
   TU.msgs.forEach(m => { if (m.img) URL.revokeObjectURL(m.img); if (m.audio) URL.revokeObjectURL(m.audio); });
-  TU.msgs = []; tuNote(""); tuRender();
+  TU.msgs = []; tuNote(""); tuPickIdol(); tuRender();
 };
 document.addEventListener("keydown", e => { if (e.key === "Escape" && tuIsOpen() && !$(".modal:not(.hidden)")) tuClose(); });
 (() => {
   const set = (id, t) => { const b = $(id); b.title = b.ariaLabel = t; };
   set("#tuFab", L("Hỏi gia sư AI", "Ask the AI tutor")); set("#tuClose", L("Đóng", "Close")); set("#tuNew", L("Cuộc trò chuyện mới", "New chat"));
   set("#tuPic", L("Gửi ảnh", "Send a photo")); set("#tuSend", L("Gửi", "Send"));
-  $("#tuTitle").textContent = L("Gia sư AI", "AI tutor");
+  set("#tuLv", L("Trình độ", "Level"));
+  tuPickIdol(); tuHead();
   tuRecUI(false);
 })();
 

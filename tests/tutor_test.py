@@ -40,7 +40,8 @@ window.fetch = async (url, opts) => {
     const body = JSON.parse(opts.body);
     if (body.generationConfig.responseMimeType === "text/plain") window.__bodies.push(body);
     await new Promise(r => setTimeout(r, 150));
-    const txt = body.generationConfig.responseMimeType === "text/plain" ? %s : "{}";
+    const lastParts = body.contents[body.contents.length - 1].parts, voice = lastParts.some(p => p.inline_data && p.inline_data.mime_type === "audio/wav");
+    const txt = body.generationConfig.responseMimeType === "text/plain" ? (voice ? "HEARD: \"안녕하세요\"\n" : "") + %s : "{}";
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: txt }] } }] }));
   }
   return realFetch(url, opts);
@@ -88,8 +89,13 @@ def B(page):
     page.click("#tuFab")
     check("B: panel open, bubble hidden", page.is_visible("#tu") and page.is_hidden("#tuFab"))
     check("B: welcome chips", page.eval_on_selector_all("#tuList .tu-chips button", "e => e.length") == 4)
+    idol = page.inner_text("#tuTitle").split(" ")[0]
+    check("B: Korean tutor is a BTS member", idol in ("RM", "Jin", "SUGA", "j-hope", "Jimin", "V", "Jung") and idol in page.inner_text("#tuList .tu-hi b"), page.inner_text("#tuTitle"))
     body = ask(page, "사과 là gì?")
     sysp = body["systemInstruction"]["parts"][0]["text"]
+    check("B: input asks that member", page.get_attribute("#tuIn", "placeholder") == f"Hỏi {page.inner_text('#tuTitle').rsplit(' ', 1)[0]}…", page.get_attribute("#tuIn", "placeholder"))
+    check("B: system prompt plays that member", f"of BTS" in sysp and idol in sysp, sysp[:200])
+    check("B: no follow-up question at the end", "never end a reply with a follow-up question" in sysp)
     check("B: plain-text answer requested", body["generationConfig"]["responseMimeType"] == "text/plain")
     check("B: system prompt has course, level and UI language", "Korean teacher" in sysp and "Vietnamese" in sysp and "beginner" in sysp, sysp[:200])
     check("B: system prompt has the screen the learner is on", "What the app is showing them" in sysp and len(sysp.split('"""')[1].strip()) > 10, sysp[-300:])
@@ -101,6 +107,11 @@ def B(page):
     check("B: second turn sends the history", roles == ["user", "model", "user"], roles)
     page.click("#tuNew"); page.wait_for_timeout(100)
     check("B: new chat clears", page.query_selector("#tuList .tu-hi") and not page.query_selector("#tuList .tu-m"))
+    check("B: new chat → another member", page.inner_text("#tuTitle").split(" ")[0] != idol, page.inner_text("#tuTitle"))
+    check("B: header shows the flag and level picker", page.inner_text("#tuTitle").endswith("🇰🇷") and page.input_value("#tuLv") == page.input_value("#genLevel"), page.input_value("#tuLv"))
+    page.select_option("#tuLv", index=2); lv = page.input_value("#tuLv")
+    check("B: level picker saves the app level", page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).settings.level") == lv, lv)
+    page.screenshot(path=f"{SP}/B-pickers.png")
     page.click("#tuClose")
     check("B: close → bubble back", page.is_hidden("#tu") and page.is_visible("#tuFab"))
 
@@ -115,6 +126,10 @@ def C(page):
     check("C: audio part sent", any(p.get("inline_data", {}).get("mime_type") == "audio/wav" for p in parts), str([list(p) for p in parts]))
     check("C: player in the learner bubble", page.query_selector("#tuList .tu-m.me audio"))
     check("C: answer shown", page.query_selector("#tuList .tu-m.ai"))
+    heard = page.query_selector("#tuList .tu-m.me .heard")
+    check("C: transcript under the recording", heard and heard.inner_text() == "안녕하세요", heard and heard.inner_text())
+    check("C: HEARD line not in the answer", "HEARD" not in page.inner_text("#tuList .tu-m.ai"))
+    page.screenshot(path=f"{SP}/C-voice.png")
 
 def D(page):
     """Photo question: attach, preview, sent as JPEG with the typed text."""
