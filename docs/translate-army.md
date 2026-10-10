@@ -64,6 +64,7 @@ The mic is only open during a turn. It is paused while a translation is being re
 
 - **ARMY Borahae** banner.
 - **BTS Live:** "Live subs for BTS lives."
+- **🎵 BTS Songs:** sing along and understand a song (see below).
 - **💾 Saved conversations (n):** review a saved conversation, or turn it into a reading passage.
 
 ### BTS Live
@@ -127,3 +128,25 @@ The mic is only open during a turn. It is paused while a translation is being re
 
 - Each mode keeps at most **3000 lines**. After that the oldest lines are dropped, and a toast suggests saving.
 - The live transcript is kept on the device (localStorage `hangulCards.army`).
+
+---
+
+## 🎵 BTS Songs
+
+Lets a fan learn a song: who sings each line, the original, its romanization and its meaning, plus the story behind the song. Songs are kept in `S.songs` and sync like saved conversations.
+
+- **The lyrics always come from the fan.** They type the title, tap **🔍 Find the lyrics on Genius**, copy the lyrics and paste them. AI never writes the lyrics: it misremembers them, and Gemini cuts off quoted lyrics.
+- **Paste cleanup (`songParse`):**
+  - Anything above the first `[section]` line is dropped (Genius contributors, translations, blurb), and so are junk lines ("You might also like", "…Embed").
+  - `[Chorus: Jimin & Jung Kook]` sets the singers of the lines that follow. A header with no names leaves the line's singer unknown, for AI to guess.
+- **✨ Analyse (`songAnalyze`, needs a key):** the lines go to Gemini numbered, 40 at a time.
+  - Gemini returns only `rom` (as sung, Korean lines only), `mean` (in the app's language, not the course's meaning language), and `who` for unknown singers.
+  - It never repeats the lyrics.
+  - A run that stops halfway keeps what's done, and **✨ Finish analysing** carries on.
+- **Lyrics tab:**
+  - A colour bar per member, and a chip where the singer changes. `?` after a name means AI guessed it; tap the chip to fix that run of lines.
+  - **Original / Romanized / Meaning** toggles hide layers for practice (`settings.songHide`).
+- **Story tab (`songStory`):** about, origin & inspiration, meaning, theories and fun facts, written by AI in the app's language without quoting the lyrics. It carries a "may not be accurate" note.
+- **Without a key:** the AI buttons show 🔒 and lead to the key setup. Songs analysed earlier stay readable.
+
+Test: `.venv/bin/python tests/songs_test.py` (Gemini faked, placeholder lyrics).

@@ -524,6 +524,20 @@ body.ar-conv-on{overflow:hidden}
 .ar-hist .tr{font-size:calc(16px * var(--ar-fs,1));line-height:1.45}
 .ar-hist .ko{font-size:calc(13px * var(--ar-fs,1));color:var(--muted);line-height:1.45;margin-bottom:2px}
 .ar-hist time{font-size:11px;color:var(--muted);float:right;margin-left:8px}
+/* ARMY → 🎵 BTS Songs: one line per lyric, a colour bar per singer, layers the fan can hide to practise */
+.sg-ly{list-style:none;margin:0;padding:0}
+.sg-l{padding:6px 0 6px 12px;border-left:3px solid var(--c);margin-bottom:4px}
+.sg-l.sg-sec{margin-top:16px}
+.sg-who{display:inline-block;margin:0 0 4px;padding:2px 10px;border:none;border-radius:var(--r-pill);background:var(--c);color:#fff;font-size:12px;font-weight:600;cursor:pointer}
+.sg-pick{width:auto;padding:4px 8px;margin-bottom:4px;font-size:13px}
+.sg-o{font-size:16px;line-height:1.45;font-weight:500}
+.sg-r{font-size:13px;color:var(--accent);line-height:1.4;font-style:italic}
+.sg-m{font-size:14px;color:var(--muted);line-height:1.45}
+.sg-ly.no-o .sg-o, .sg-ly.no-r .sg-r, .sg-ly.no-m .sg-m{display:none}
+.sg-story p, .sg-story li{line-height:1.55}
+.sg-story ul{padding-left:20px;margin:0 0 8px}
+.sg-h{font-size:15px;margin:14px 0 4px}
+.sg-h:first-child{margin-top:0}
 .ar-noko .ko{display:none}
 .ar-tools{display:flex;gap:6px;flex-wrap:wrap}
 /* saved conversation name: reads as a heading, still editable in place */
@@ -1778,6 +1792,7 @@ const defaults = () => ({
     apiKey:"", model:"", autoEx:true, level:"b1", uiLang:"vi" },
   passages: [],
   lives: [],   // saved ARMY live transcripts
+  songs: [],   // ARMY 🎵 BTS songs: lyrics the fan pasted + AI romanization/translation/story
   talks: [],   // finished 💬 Talk conversations (text only), for reviewing corrections later
   ielts: [],   // finished 🎓 IELTS mock tests (text only)
   daily: { date: todayStr(), newCount: 0, reviews: 0 },
@@ -1798,14 +1813,14 @@ let SNAP = null;
 const fp = o => { const { mod, ...r } = o; return JSON.stringify(r); };
 const fpSettings = () => { const { _mod, voice, voiceBy, course, allVoices, ...r } = S.settings; return JSON.stringify(r); };   // allVoices: retired setting, may linger in old data
 function takeSnap(){
-  SNAP = { cards: new Map(S.cards.map(c => [c.id, fp(c)])), passages: new Map((S.passages||[]).map(x => [x.id, fp(x)])), lives: new Map((S.lives||[]).map(x => [x.id, fp(x)])), talks: new Map((S.talks||[]).map(x => [x.id, fp(x)])), ielts: new Map((S.ielts||[]).map(x => [x.id, fp(x)])),
+  SNAP = { cards: new Map(S.cards.map(c => [c.id, fp(c)])), passages: new Map((S.passages||[]).map(x => [x.id, fp(x)])), lives: new Map((S.lives||[]).map(x => [x.id, fp(x)])), songs: new Map((S.songs||[]).map(x => [x.id, fp(x)])), talks: new Map((S.talks||[]).map(x => [x.id, fp(x)])), ielts: new Map((S.ielts||[]).map(x => [x.id, fp(x)])),
            settings: fpSettings(), deleted: Object.assign({}, S.deleted || {}) };
 }
 function track(){
   if (!SNAP) { takeSnap(); return; }
   const now = Date.now();
   S.deleted = Object.assign({}, SNAP.deleted, S.deleted || {});
-  [["cards", S.cards], ["passages", S.passages || []], ["lives", S.lives || []], ["talks", S.talks || []], ["ielts", S.ielts || []]].forEach(([k, arr]) => {
+  [["cards", S.cards], ["passages", S.passages || []], ["lives", S.lives || []], ["songs", S.songs || []], ["talks", S.talks || []], ["ielts", S.ielts || []]].forEach(([k, arr]) => {
     const seen = new Set();
     arr.forEach(x => { if (!x.id) x.id = uid(); seen.add(x.id); if (SNAP[k].get(x.id) !== fp(x)) x.mod = now; });
     SNAP[k].forEach((_, id) => { if (!seen.has(id)) S.deleted[id] = now; });
@@ -2544,7 +2559,7 @@ $$("nav button").forEach(b => b.onclick = () => { if (b.dataset.v === "tr") retu
 function navRoot(v){
   if (v === "study") homeAuto = true;   // after "End", Back / links return to the home card; only the tab starts a new round
   if (v === "read"){ spScreen = ""; rdNewOpen = false; TK.view = ""; TK.list = false; TK.histList = false; TK.showAll = false; }   // show() → spShow("") also closes an open passage
-  if (v === "army"){ arStop(); AR.view = ""; AR.screen = "home"; arPersist(); }
+  if (v === "army"){ arStop(); AR.view = ""; AR.song = ""; AR.screen = "home"; arPersist(); }
 }
 $("#navSpeak").textContent = L("Luyện nói", "Speak");
 $("#navTr").textContent = L("Dịch", "Translate");   // "Speak" alone translates to "Nói" (the quiz type), too vague for a tab
@@ -4714,6 +4729,9 @@ $("#impFile").onchange = async e => {
     (d.passages || []).forEach(p => { if (p && p.id && Array.isArray(p.sentences) && !pids.has(p.id)) { S.passages.push(Object.assign({ vocab: [] }, p)); np++; } });
     const lids = new Set(S.lives.map(x => x.id));
     (d.lives || []).forEach(x => { if (x && x.id && Array.isArray(x.lines) && !lids.has(x.id)) S.lives.push(x); });
+    if (!Array.isArray(S.songs)) S.songs = [];
+    const gids = new Set(S.songs.map(x => x.id));
+    (d.songs || []).forEach(x => { if (x && x.id && Array.isArray(x.lines) && !gids.has(x.id)) S.songs.push(x); });
     if (!Array.isArray(S.talks)) S.talks = [];
     const tids = new Set(S.talks.map(x => x.id));
     (d.talks || []).forEach(x => { if (x && x.id && Array.isArray(x.turns) && !tids.has(x.id)) S.talks.push(x); });
@@ -4873,6 +4891,8 @@ function applyRemote(R){
   mergeList(S.passages, R.passages, tomb);
   if (!Array.isArray(S.lives)) S.lives = [];
   mergeList(S.lives, R.lives, tomb);
+  if (!Array.isArray(S.songs)) S.songs = [];
+  mergeList(S.songs, R.songs, tomb);
   if (!Array.isArray(S.talks)) S.talks = [];
   mergeList(S.talks, R.talks, tomb);
   if (!Array.isArray(S.ielts)) S.ielts = [];
@@ -6383,6 +6403,7 @@ function renderArmy(){
   if (AR.view && !(S.lives || []).some(x => x.id === AR.view)) AR.view = "";
   if (AR.view) return renderArmyView();
   if (AR.screen === "saved") return renderArmySaved();
+  if (AR.screen === "songs") return renderSongs();
   if (arTalk()){ AR.mode = "bts"; arUseSess(); }   // the interpreter lives in its own tab now
   if (AR.screen !== "mode") return renderArmyHome();
   const sec = $("#v-army"), eng = arEngine(), src = arSrc(), [icon, title] = AR_MODES[arMode()];
@@ -6475,6 +6496,7 @@ function renderArmyHome(){
   $("#v-army").innerHTML = `
     <div class="ar-hero" style="margin:2px 2px 14px"><span class="h">${ic("heart-sparkle")}</span><div><h2 style="margin:0">ARMY Borahae</h2></div></div>
     ${pick("bts")}
+    <button class="ar-pick" id="arSongsOpen"><span class="i">🎵</span><span class="tx"><b>BTS Songs${(S.songs || []).length ? ` (${S.songs.length})` : ""}</b><span class="d">${L("Hát theo, hiểu nghĩa và chuyện đằng sau bài hát.", "Sing along, understand it, and the story behind it.")}</span></span><span class="muted">›</span></button>
     <button class="ar-pick" id="arSavedOpen"><span class="i">${ic("floppy-disk")}</span><span class="tx"><b>${L("Hội thoại đã lưu", "Saved conversations")}${n ? ` (${n})` : ""}</b><span class="d">${n
       ? L("Xem lại hoặc lưu thành bài đọc.", "Review or turn into a reading passage.")
       : L("Chưa có — bấm 💾 Lưu sau khi nghe dịch.", "None yet — tap 💾 Save after listening.")}</span></span><span class="muted">›</span></button>`;
@@ -6482,6 +6504,7 @@ function renderArmyHome(){
     AR.mode = b.dataset.m; AR.screen = "mode"; arUseSess(); arPersist();
     renderArmy(); scrollTo(0, 0);
   });
+  $("#arSongsOpen").onclick = () => { AR.screen = "songs"; AR.song = ""; AR.songAdd = false; renderArmy(); scrollTo(0, 0); };
   $("#arSavedOpen").onclick = () => { AR.screen = "saved"; AR.savedFrom = ""; AR.savedTab = ""; renderArmy(); scrollTo(0, 0); };
 }
 // saved conversations get their own screen: ARMY → 💾 card → this list → one conversation
@@ -6549,6 +6572,209 @@ function renderArmyView(){
     save(); AR.view = ""; AR.screen = "saved"; renderArmy(); toast(L("Đã xoá hội thoại", "Conversation deleted"));
   });
   arStyle();
+}
+/* ---------------- ARMY → 🎵 BTS Songs: the fan pastes the lyrics, AI adds who sings, romanization, meaning and the song's story ---------------- */
+// the lyrics always come from the fan's paste: AI never writes them (it misremembers lines, and Gemini cuts off quoted lyrics)
+// meanings follow the app's language (not the course's meaning language): a Vietnamese fan reads them in Vietnamese
+const songLang = () => UI === "vi" ? "Vietnamese" : "English";
+const SONG_MEMBERS = ["RM", "Jin", "SUGA", "j-hope", "Jimin", "V", "Jung Kook", "All"];
+const SONG_COLOR = { RM: "#3b82f6", Jin: "#ec4899", SUGA: "#64748b", "j-hope": "#f97316", Jimin: "#ca8a04", V: "#16a34a", "Jung Kook": "#8b5cf6", All: "var(--accent)" };
+const SONG_ALIAS = [[/^(rm|rap ?monster|namjoon|kim namjoon|남준|알엠)$/i, "RM"], [/^(jin|seokjin|kim seokjin|석진|진)$/i, "Jin"], [/^(suga|yoongi|min yoongi|agust ?d|슈가|윤기)$/i, "SUGA"],
+  [/^(j-?hope|hoseok|jung hoseok|제이홉|호석)$/i, "j-hope"], [/^(jimin|park jimin|지민)$/i, "Jimin"], [/^(v|taehyung|kim taehyung|뷔|태형)$/i, "V"],
+  [/^(jung ?kook|jeon jungkook|jk|정국)$/i, "Jung Kook"], [/^(all|bts|everyone|방탄소년단|다같이|전원)$/i, "All"]];
+// "Jimin & Jung Kook", "RM, SUGA" → stage names; anything unknown is dropped
+const songWho = s => [...new Set(String(s || "").split(/\s*(?:,|&|\+|\/|\band\b|\bwith\b)\s*/i).map(p => {
+  p = p.replace(/[*()[\]]/g, "").trim(); const a = SONG_ALIAS.find(([r]) => r.test(p)); return a ? a[1] : "";
+}).filter(Boolean))];
+const SONG_TITLES = ["Spring Day", "Dynamite", "Butter", "Permission to Dance", "Life Goes On", "Black Swan", "ON", "Boy With Luv", "DNA", "FAKE LOVE", "IDOL",
+  "Blood Sweat & Tears", "Fire", "Save ME", "I NEED U", "RUN", "Dope", "Euphoria", "Magic Shop", "Mikrokosmos", "Answer: Love Myself", "Epiphany", "Serendipity",
+  "Singularity", "Make It Right", "Dionysus", "Louder than bombs", "Blue & Grey", "Telepathy", "Film out", "Yet To Come", "Run BTS", "For Youth",
+  "Butterfly", "Young Forever", "Not Today", "Mic Drop", "Anpanman", "Love Maze", "Moon", "Stay", "Zero O'Clock", "Pied Piper", "2!3!", "Lights"];
+// the fan's paste (often a whole Genius page) → lyric lines; "[Chorus: Jimin & V]" headers set who sings what follows
+function songParse(raw){
+  let rows = String(raw || "").replace(/\r/g, "").split("\n").map(t => t.trim());
+  const first = rows.findIndex(t => /^\[[^\]]+\]$/.test(t));
+  if (first > 0) rows = rows.slice(first);   // Genius: contributors, translations and the blurb sit above the first [section]
+  const junk = /^(\d+\s*contributors?.*|translations?|you might also like|embed|see .* live|get tickets.*|.* lyrics)$/i;
+  const out = []; let who = [], sec = 0, gap = false;
+  rows.forEach(t => {
+    t = t.replace(/\d*Embed$/, "").trim();
+    if (!t){ gap = true; return; }
+    const h = t.match(/^\[([^\]]*)\]$/);
+    if (h){ const m = h[1].split(":"); who = m.length > 1 ? songWho(m.slice(1).join(":")) : []; sec++; gap = false; return; }
+    if (junk.test(t)) return;
+    if (gap && out.length){ sec++; }
+    gap = false;
+    out.push({ t, who: who.slice(), g: !who.length, sec, rom: "", mean: "" });
+  });
+  return out.slice(0, 200);
+}
+const songHasKo = t => /[가-힣]/.test(t);
+const songDone = x => x.lines.every(l => l.mean || l.mean === "-");
+// romanization (as sung), meaning in the app's language, and a best guess at the singer when the paste didn't say — in chunks, so long songs stay reliable
+async function songAnalyze(x, onStep){
+  const todo = x.lines.map((l, i) => i).filter(i => !x.lines[i].mean);
+  for (let k = 0; k < todo.length; k += 40){
+    const part = todo.slice(k, k + 40);
+    const prompt = `You help a BTS fan study the song "${x.title}" by BTS: sing along and understand it. The fan pasted the lyrics; some lines are below, numbered, each with its singer in brackets ("?" = not given).
+For each number return:
+- "rom": if the line has Korean (Hangul), how it is sung in romanization (Revised Romanization with the sound changes, e.g. 했어 → haesseo; syllables of a word joined, words separated by spaces; English words in the line stay as they are). Otherwise "".
+- "mean": a natural ${songLang()} translation of the line, faithful to its meaning and mood, read in the context of the whole song. If the line is already in ${songLang()}, "-".
+- "who": only for lines whose singer is "?": who sings it in this song — stage names only (${SONG_MEMBERS.join(", ")}), several joined with ", ". "" if you don't know. For other lines "".
+Do not repeat the lyric lines. Return exactly ${part.length} items, in order: {"items":[{"n":1,"rom":"","mean":"","who":""}]}
+
+${part.map((i, j) => `${j + 1}. [${x.lines[i].g ? "?" : x.lines[i].who.join(", ")}] ${x.lines[i].t}`).join("\n")}`;
+    const j = extractJSON(await gemini(prompt, undefined, { temperature: 0.2 }));
+    const items = arrOf(j.items || j);
+    part.forEach((i, j2) => {
+      const it = items.find(v => +v.n === j2 + 1) || (items.length === part.length ? items[j2] : null);
+      if (!it) return;
+      const l = x.lines[i];
+      l.rom = songHasKo(l.t) ? String(it.rom || "").trim() : "";
+      l.mean = String(it.mean || "").trim();
+      if (l.g){ const w = songWho(it.who); if (w.length) l.who = w; }
+    });
+    save(); if (onStep) onStep(Math.min(k + 40, todo.length), todo.length);
+  }
+  x.lang = songLang(); save();
+}
+// the story behind the song: written by AI, never quoting the lyrics
+async function songStory(x){
+  const prompt = `A BTS fan is studying the song "${x.title}" by BTS. In ${songLang()}, tell them about it, in a warm fan-friendly tone.
+Return JSON: {"known":true,"about":"1–2 sentences: album, release year, who wrote/produced it","origin":"how the song came to be: the inspiration and story behind the writing","meaning":"its message and themes, what the members have said about it","theories":["popular fan theories or connections (e.g. to the BU storyline, other songs, the MV), each clearly framed as a theory"],"facts":["3–5 fun facts: records, performances, behind-the-scenes"]}
+Paraphrase — do not quote the lyrics. Only include what you are fairly sure of; leave out anything you would have to guess. If you don't know this song, return {"known":false}.`;
+  const j = extractJSON(await gemini(prompt, undefined, { temperature: 0.4 }));
+  x.story = j.known === false ? { unknown: true } : { about: String(j.about || ""), origin: String(j.origin || ""), meaning: String(j.meaning || ""),
+    theories: arrOf(j.theories).map(String), facts: arrOf(j.facts).map(String) };
+  x.story.lang = songLang(); save();
+}
+const songGoKey = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
+const songKeyNote = () => hasKey() ? "" : `<p class="small muted" style="margin:8px 0 0">🔒 ${L("Phân tích bài hát cần <b>Gemini key</b> (tạo trong ~1 phút).", "Analysing a song needs a <b>Gemini key</b> (takes ~1 minute to create).")} <button class="linkbtn sg-key">${L("Thêm key", "Add key")}</button></p>`;
+const songHead = (id, title, right = "") => `<div class="sub-head">
+      <div class="l"><button class="btn-ghost back" id="${id}" aria-label="${L("Quay lại", "Back")}">${BACK_SVG}</button></div>
+      <div class="c"><h2>${title}</h2></div><div class="r">${right}</div>
+    </div>`;
+function renderSongs(){
+  if (AR.song && !(S.songs || []).some(x => x.id === AR.song)) AR.song = "";
+  if (AR.song) return renderSongView();
+  if (AR.songAdd) return renderSongAdd();
+  const list = (S.songs || []).slice().sort((a, b) => b.created - a.created);
+  $("#v-army").innerHTML = `${songHead("sgBack", "🎵 BTS Songs", `<button class="btn2" id="sgNew">＋ ${L("Thêm bài", "Add song")}</button>`)}
+    <div class="card flat">${list.length ? `<ul class="wl" id="sgList">${list.map(x => `<li data-id="${x.id}" style="cursor:pointer"><div class="t"><b style="font-size:15px">${esc(x.title)}</b><div>${
+        L(`${x.lines.length} câu`, `${x.lines.length} line${x.lines.length === 1 ? "" : "s"}`)}${songDone(x) ? "" : " · " + L("chưa phân tích xong", "not fully analysed")}</div></div><span class="muted">›</span></li>`).join("")}</ul>`
+      : `<p class="muted" style="text-align:center">${L("Chưa có bài nào — bấm ＋ Thêm bài, dán lời vào, AI lo phần còn lại.", "No songs yet — tap ＋ Add song, paste the lyrics, AI does the rest.")}</p>`}
+      ${songKeyNote()}</div>`;
+  $("#sgBack").onclick = () => { AR.screen = "home"; renderArmy(); scrollTo(0, 0); };
+  $("#sgNew").onclick = () => { AR.songAdd = true; renderArmy(); scrollTo(0, 0); };
+  $$("#sgList li").forEach(li => li.onclick = () => { AR.song = li.dataset.id; AR.songTab = "ly"; renderArmy(); scrollTo(0, 0); });
+  $$("#v-army .sg-key").forEach(b => b.onclick = songGoKey);
+}
+function renderSongAdd(){
+  $("#v-army").innerHTML = `${songHead("sgBack", "＋ " + L("Thêm bài hát", "Add a song"))}
+    <div class="card">
+      <label style="margin-top:0">${L("Tên bài", "Song title")}</label>
+      <input id="sgTitle" list="sgTitles" autocomplete="off" placeholder="${L("VD: Spring Day", "e.g. Spring Day")}">
+      <datalist id="sgTitles">${[...new Set(SONG_TITLES)].map(t => `<option value="${esc(t)}">`).join("")}</datalist>
+      <button class="btn-ghost" id="sgFind" style="margin-top:10px">🔍 ${L("Tìm lời trên Genius", "Find the lyrics on Genius")}</button>
+      <label>${L("Lời bài hát", "Lyrics")}</label>
+      <textarea id="sgRaw" rows="8" placeholder="${L("Dán lời vào đây", "Paste the lyrics here")}"></textarea>
+      <p class="small muted" style="margin:6px 0 0">${L("Dán nguyên trang cũng được — app tự bỏ dòng thừa. Dòng như <b>[Chorus: Jimin]</b> giúp biết chính xác ai hát; không có thì AI đoán.", "Pasting the whole page is fine — extra lines are dropped. Lines like <b>[Chorus: Jimin]</b> tell exactly who sings; without them AI guesses.")}</p>
+      <button class="btn" id="sgGo" style="margin-top:12px;width:100%">✨ ${L("Phân tích", "Analyse")}${hasKey() ? "" : " 🔒"}</button>
+      <p class="small muted hidden" id="sgStatus" style="margin:8px 0 0"></p>
+      ${songKeyNote()}
+    </div>`;
+  $("#sgBack").onclick = () => { AR.songAdd = false; renderArmy(); scrollTo(0, 0); };
+  $$("#v-army .sg-key").forEach(b => b.onclick = songGoKey);
+  $("#sgFind").onclick = () => window.open("https://genius.com/search?q=" + encodeURIComponent("BTS " + ($("#sgTitle").value.trim())), "_blank", "noopener");
+  $("#sgGo").onclick = async () => {
+    if (!hasKey()) return songGoKey();
+    const title = $("#sgTitle").value.trim(), lines = songParse($("#sgRaw").value);
+    if (!title){ toast(L("Nhập tên bài trước", "Enter the song title first")); $("#sgTitle").focus(); return; }
+    if (lines.length < 2){ toast(L("Dán lời bài hát vào trước", "Paste the lyrics first")); $("#sgRaw").focus(); return; }
+    const x = { id: uid(), title, created: Date.now(), lines };
+    S.songs.push(x); save();
+    const b = $("#sgGo"), st = $("#sgStatus");
+    busy(b, true, L("Đang phân tích…", "Analysing…")); st.classList.remove("hidden");
+    try { await songAnalyze(x, (n, all) => { if (st.isConnected) st.textContent = L(`Đã xong ${n}/${all} câu`, `${n}/${all} lines done`); }); }
+    catch(e){ toast(L("Chưa phân tích xong: ", "Analysis stopped: ") + e.message); }
+    AR.songAdd = false; AR.song = x.id; AR.songTab = "ly";
+    if (curView === "army" && AR.screen === "songs") { renderArmy(); scrollTo(0, 0); }
+  };
+}
+// a member chip opens on a run of lines sung by the same people; tapping it lets the fan fix the singer of that run
+const songWhoKey = l => l.who.join(",");
+function songLine(l, i, prev){
+  const c = SONG_COLOR[l.who[0]] || "var(--line)";
+  const chip = !prev || songWhoKey(prev) !== songWhoKey(l) ? `<button class="sg-who" data-i="${i}" style="--c:${c}" title="${l.g ? L("AI đoán — chạm để sửa", "AI's guess — tap to fix") : L("Chạm để sửa", "Tap to fix")}">${l.who.length ? esc(l.who.join(" & ")) : "?"}${l.g && l.who.length ? " ?" : ""}</button>` : "";
+  return `<li class="sg-l${prev && prev.sec !== l.sec ? " sg-sec" : ""}" style="--c:${c}">${chip}
+    <div class="sg-o"${songHasKo(l.t) ? ' lang="ko"' : ""}>${esc(l.t)}</div>${l.rom ? `<div class="sg-r">${esc(l.rom)}</div>` : ""}${l.mean && l.mean !== "-" ? `<div class="sg-m">${esc(l.mean)}</div>` : ""}</li>`;
+}
+function renderSongView(){
+  const x = S.songs.find(v => v.id === AR.song), sec = $("#v-army"), tab = AR.songTab || "ly";
+  const hide = S.settings.songHide || {};
+  sec.innerHTML = `${songHead("sgBack", `<input id="sgName" class="av-title" type="text" value="${esc(x.title)}" aria-label="${L("Tên bài", "Song title")}" title="${L("Chạm để đổi tên", "Tap to rename")}">`)}
+    <div class="seg" id="sgTabs" style="margin-bottom:10px"><button data-t="ly">🎤 ${L("Lời", "Lyrics")}</button><button data-t="st">💡 ${L("Câu chuyện", "Story")}</button></div>
+    <div id="sgBody"></div>`;
+  $("#sgBack").onclick = () => { AR.song = ""; renderArmy(); scrollTo(0, 0); };
+  $("#sgName").onchange = e => { const v = e.target.value.trim(); if (v){ x.title = v; save(); } else e.target.value = x.title; };
+  $$("#sgTabs button").forEach(b => { b.classList.toggle("on", b.dataset.t === tab); b.onclick = () => { AR.songTab = b.dataset.t; renderSongView(); }; });
+  const body = $("#sgBody");
+  if (tab === "st") return songStoryUI(x, body);
+  body.innerHTML = `<div class="card flat">
+      <div class="ar-disp sg-layers">
+        <button data-k="o">${L("Lời gốc", "Original")}</button><button data-k="r">${L("Phiên âm", "Romanized")}</button><button data-k="m">${L("Nghĩa", "Meaning")}</button>
+      </div>
+      <ul class="sg-ly${hide.o ? " no-o" : ""}${hide.r ? " no-r" : ""}${hide.m ? " no-m" : ""}">${x.lines.map((l, i) => songLine(l, i, x.lines[i - 1])).join("")}</ul>
+    </div>
+    <div class="ar-tools" style="margin-top:12px">
+      <button class="btn-ghost" id="sgRedo">✨ ${songDone(x) ? L("Phân tích lại", "Analyse again") : L("Phân tích tiếp", "Finish analysing")}${hasKey() ? "" : " 🔒"}</button>
+      <button class="btn-danger" id="sgDel">🗑 ${L("Xoá bài", "Delete song")}</button>
+    </div>`;
+  $$(".sg-layers button").forEach(b => { b.classList.toggle("on", !hide[b.dataset.k]); b.onclick = () => {
+    const h = Object.assign({}, S.settings.songHide); h[b.dataset.k] = !h[b.dataset.k];
+    if (h.o && h.r && h.m) return toast(L("Cần hiện ít nhất 1 lớp", "Keep at least one layer on"));
+    S.settings.songHide = h; save(); renderSongView();
+  }; });
+  $$(".sg-who").forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, sel = document.createElement("select");
+    sel.className = "sg-pick";
+    sel.innerHTML = `<option value="">?</option>` + SONG_MEMBERS.map(m => `<option>${m}</option>`).join("") + (x.lines[i].who.length > 1 ? `<option selected>${esc(x.lines[i].who.join(", "))}</option>` : "");
+    if (x.lines[i].who.length === 1) sel.value = x.lines[i].who[0];
+    b.replaceWith(sel); sel.focus();
+    sel.onchange = sel.onblur = () => {
+      const key = songWhoKey(x.lines[i]), w = songWho(sel.value);
+      for (let k = i; k < x.lines.length && songWhoKey(x.lines[k]) === key; k++){ x.lines[k].who = w; x.lines[k].g = !w.length; }
+      save(); renderSongView();
+    };
+  });
+  $("#sgRedo").onclick = async e => {
+    if (!hasKey()) return songGoKey();
+    const b = e.currentTarget;
+    if (songDone(x)) x.lines.forEach(l => { l.mean = ""; l.rom = ""; });
+    busy(b, true, L("Đang phân tích…", "Analysing…"));
+    try { await songAnalyze(x); } catch(err){ toast(L("Chưa phân tích xong: ", "Analysis stopped: ") + err.message); }
+    if (b.isConnected) renderSongView();
+  };
+  $("#sgDel").onclick = e => confirmTap(e.currentTarget, `🗑 ${L("Xoá bài", "Delete song")}`, () => {
+    S.songs = S.songs.filter(v => v !== x); save(); AR.song = ""; renderArmy(); toast(L("Đã xoá bài hát", "Song deleted"));
+  });
+}
+function songStoryUI(x, body){
+  const s = x.story, para = (h, t) => t ? `<h3 class="sg-h">${h}</h3><p>${esc(t)}</p>` : "";
+  const list = (h, a) => a && a.length ? `<h3 class="sg-h">${h}</h3><ul>${a.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : "";
+  body.innerHTML = `<div class="card sg-story">${!s ? `<p class="muted" style="margin-top:0">${L("Nguồn gốc, cảm hứng sáng tác, theory và fun fact của bài — do AI tổng hợp.", "Origin, inspiration, theories and fun facts — put together by AI.")}</p>`
+      : s.unknown ? `<p class="muted" style="margin-top:0">${L("AI không biết đủ về bài này để kể chính xác.", "AI doesn't know enough about this song to tell it accurately.")}</p>`
+      : para("📀 " + L("Giới thiệu", "About"), s.about) + para("✍️ " + L("Nguồn gốc & cảm hứng", "Origin & inspiration"), s.origin) + para("💜 " + L("Ý nghĩa", "Meaning"), s.meaning)
+        + list("🔮 Theory", s.theories) + list("✨ Fun facts", s.facts)
+        + `<p class="small muted">${L("AI tổng hợp từ những gì nó biết — có thể chưa chính xác.", "Put together by AI from what it knows — may not be fully accurate.")}</p>`}
+      <button class="${s ? "btn-ghost" : "btn"}" id="sgStory" style="width:100%">✨ ${s ? L("Viết lại", "Rewrite") : L("Kể chuyện bài hát", "Tell me about this song")}${hasKey() ? "" : " 🔒"}</button>
+    </div>`;
+  $("#sgStory").onclick = async e => {
+    if (!hasKey()) return songGoKey();
+    const b = e.currentTarget; busy(b, true, L("Đang viết…", "Writing…"));
+    try { await songStory(x); } catch(err){ toast(err.message); }
+    if (b.isConnected) renderSongView();
+  };
 }
 function arSwapLangs(){ arSetLangs(arOut(), arIn()); arRestart(); }
 function arRestart(){ const was = AR.on; arStop(); renderArmy(); if (was) arStart(); }
@@ -7261,14 +7487,14 @@ function tuScreen(){
 const tuPersona = m => m ? `You are ${m.name} of BTS, playing a private ${CO.en} tutor for an ARMY (BTS fan) — ${m.vibe}. Stay in character: talk like ${m.name} would, friendly and close, with an emoji now and then. Never sign your messages with your name — the app already shows who is talking. Only mention well-known public facts about BTS; never make up private details, and if asked, admit with a wink that you're an AI tutor playing ${m.name}. Teaching always comes first.
 ` : "";
 const tuSystem = () => `${tuPersona(TU.idol)}You are a warm, patient ${CO.en} teacher inside the learning app "Grow with PV", helping a ${levelDesc(curLevel())} learner — like a private tutor sitting next to them while they study.
-- Reply in ${uiLangName()}${CO.en === uiLangName() ? "" : `, never in ${CO.en}: use ${CO.en} only for the words, phrases and examples being taught`}. Write ${CO.en} ${CO.script}${CO.words ? "" : " and add the pronunciation in Latin letters in (parentheses) after new words"}. Put each ${CO.en} word or phrase in **bold**.
+- Language: follow the learner, message by message. Reply in the language they write or speak in (${uiLangName()}, ${CO.en}, English…) or the one they ask for; if unclear, use ${uiLangName()}. When they chat in ${CO.en} to practise, answer in simple ${CO.en} at their level. Write ${CO.en} ${CO.script}${CO.words ? "" : `; when explaining a new ${CO.en} word, add its pronunciation in Latin letters in (parentheses)`}. Put each ${CO.en} word or phrase in **bold**.
 - Be short and clear: a few sentences or a short list (under ~120 words) unless they ask for more. Simple Markdown only: **bold**, *italic*, "- " lists. No tables, no headings.
 - Explain at their level; give 1–2 example sentences with a ${uiLangName()} translation when useful.
 - A voice message may be a question (in ${uiLangName()} or ${CO.en}) or them practising ${CO.en}. When the latest message is a voice message, the FIRST line of your reply must be "HEARD: " + exactly what they said, word for word, in the language they spoke (the app shows it under their recording). Then answer the question, or kindly correct their pronunciation and grammar — no need to repeat what they said.
 - A photo (textbook, sign, menu, screenshot, homework…): read it and answer what they ask; if they ask nothing, explain the ${CO.en} in it.
 - If they are in the middle of a quiz question, give hints first; give the answer straight away only when they ask for it.
 - Off-topic questions: answer briefly, then steer back to ${CO.en}.
-- Drills: when they ask you to quiz them, ask them questions one by one, or give sentences to translate, run it as a series: one question at a time; after each answer, briefly say if it's right (and the fix if not), then give the next question in the same message right away — don't wait to be asked. Keep going until the number they asked for is done (say which one it is, e.g. 3/5), or, if they gave no number, until they say stop or switch topic.
+- Drills: when they ask you to quiz them, ask them questions one by one, or give sentences to translate, run it as a series: one question at a time; after each answer, briefly say if it's right (and the fix if not), then give the next question in the same message right away — don't wait to be asked. Keep going until the number they asked for is done (say which one it is, e.g. 3/5), or, if they gave no number, until they say stop or switch topic. Follow the direction they ask for: if they want to be asked in ${uiLangName()} and answer in ${CO.en}, write the question only in ${uiLangName()} — no ${CO.en} word, pronunciation or hint that gives the answer away (and the other way round).
 What the app is showing them right now (context only — it may be unrelated to the question):
 """
 ${tuScreen() || "(nothing)"}
@@ -7463,6 +7689,7 @@ takeSnap();
 if (!S.settings.speakAuto && S.settings.apiKey && S.settings.apiKey.trim()) save();   // existing key → speaking questions on (once)
 if (!Array.isArray(S.passages)) S.passages = [];
 if (!Array.isArray(S.lives)) S.lives = [];
+if (!Array.isArray(S.songs)) S.songs = [];
 if (!Array.isArray(S.talks)) S.talks = [];
 if (!Array.isArray(S.ielts)) S.ielts = [];
 if (S.talk && S.talk.done) talkArchive(S.talk);   // finished before history existed → keep it reviewable
