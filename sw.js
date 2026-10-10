@@ -1,7 +1,7 @@
 // Grow with PV service worker: opens instantly from the cache (so a weak connection never
 // stalls the app), then fetches the latest files in the background — updates you push to
 // GitHub show up on the open after they're downloaded.
-const CACHE = "hangul-v32", NOTIFY_CACHE = "hangul-notify";
+const CACHE = "hangul-v33", NOTIFY_CACHE = "hangul-notify";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", e => {
   // cache: "reload" skips the browser's HTTP cache (GitHub Pages keeps files 10 min), so a new install gets today's files

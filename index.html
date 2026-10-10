@@ -1578,7 +1578,7 @@ const VI = {
 "Nothing selected":"Chưa chọn gì","Nothing to study":"Chưa có gì để học","Passage deleted":"Đã xoá bài đọc",
 "Paste some Korean text first":"Hãy dán văn bản tiếng Hàn trước","Paste your Gemini key first":"Hãy dán Gemini key trước",
 "Paste your Google Client ID first":"Hãy dán Google Client ID trước","Preparing…":"Đang chuẩn bị…","Progress reset":"Đã đặt lại tiến độ",
-"Prompt copied":"Đã copy câu lệnh","Prompt selected — copy it":"Đã chọn câu lệnh — hãy copy","Tap again to delete everything":"Chạm lần nữa để xoá hết",
+"Prompt copied":"Đã copy câu lệnh","Prompt selected — copy it":"Đã chọn câu lệnh — hãy copy","Tap again to delete everything":"Chạm để xoá hết",
 "Testing…":"Đang kiểm tra…","That doesn't look like Korean":"Đây không phải tiếng Hàn","That doesn't look like a Google Client ID":"Đây không phải Google Client ID",
 "That was too short — try again.":"Ngắn quá — thử lại nhé.","Translation unavailable — type it yourself":"Không dịch được — hãy tự gõ",
 "Type a Korean word first":"Hãy gõ từ tiếng Hàn trước","Writing passage…":"Đang viết bài…","Writing…":"Đang viết…","☁️ Synced":"☁️ Đã đồng bộ",
@@ -4750,7 +4750,7 @@ $("#impFile").onchange = async e => {
 $("#resetBtn").onclick = async () => {
   const b = $("#resetBtn");
   if (!b.dataset.confirm){
-    b.dataset.confirm = "1"; b.textContent = SY.on ? L("Bấm lần nữa để xoá hết, cả bản trên Drive", "Tap again to delete everything, Drive copy too") : "Tap again to delete everything";
+    b.dataset.confirm = "1"; b.textContent = SY.on ? L("Chạm để xoá hết, cả bản trên Drive", "Tap again to delete everything, Drive copy too") : "Tap again to delete everything";
     setTimeout(() => { if (b.dataset.confirm){ delete b.dataset.confirm; b.textContent = "Delete all data"; } }, 4000); return;
   }
   delete b.dataset.confirm;
@@ -6204,7 +6204,7 @@ function renderIeExam(){
   if ($("#ieRedo")) $("#ieRedo").onclick = () => { x.a = null; x.busy = false; x.seq = (x.seq || 0) + 1; IE.phase = card ? "ready" : "ask"; IE.status = ""; renderIeExam(); };
   $("#ieEnd").onclick = e => {
     if (!t.qs.some(q => q.a || q.busy || q.err)) return toast(L("Trả lời ít nhất 1 câu đã", "Answer at least one question first"));
-    confirmTap(e.currentTarget, L("Nộp bài", "Submit"), ieFinish, L("Chạm lần nữa để nộp", "Tap again to submit"));
+    confirmTap(e.currentTarget, L("Nộp bài", "Submit"), ieFinish, L("Chạm để nộp", "Tap again to submit"));
   };
   $("#ielts").onclick = e => {
     const a = e.target.closest("[data-a]"); if (!a) return;
