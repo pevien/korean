@@ -904,6 +904,8 @@ body.tu-on .toast{z-index:36}
 .tu-head .h b{display:block;font-size:15px}
 /* level dropdown under the name, changeable without leaving the chat (the course is the flag after the name; it's switched from the app header, since that reloads) */
 .tu-sub{display:flex;margin-top:3px;min-width:0}
+.tu-sub select:focus{outline:none}   /* no accent ring after a tap or a pick; the keyboard ring is the soft fill below */
+.tu-sub select:focus-visible{background-color:var(--soft);border-radius:4px}
 .tu-sub select{width:auto;min-width:0;max-width:100%;flex:0 1 auto;font-size:12px;color:var(--muted);background-color:transparent;border:0;border-radius:0;
   padding:2px 14px 2px 0;background-position:right 1px center;background-size:9px 6px;text-overflow:ellipsis}
 .tu-av{flex:0 0 auto;width:34px;height:34px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:19px}
@@ -7361,6 +7363,8 @@ async function tuAsk(){
     if (g !== TU.gen) return;
     const last = TU.msgs[TU.msgs.length - 1], hd = ans.match(/^\**HEARD:?\**:?\s*(.*)(?:\n|$)/i);
     if (hd){ ans = ans.slice(hd[0].length).trim(); if (last.audio) last.heard = hd[1].replace(/\*+/g, "").replace(/^["“]|["”]$/g, "").trim(); }
+    // a sign-off line ("Jin", "— Jimin 💜") is dropped: the header already says who is talking
+    if (TU.idol) ans = ans.replace(new RegExp(`\\n+[\\s*_—–~-]*${TU.idol.name.replace(/[-\s]/g, "[-\\s]?")}[\\s*_.!~\\p{Extended_Pictographic}\\uFE0F]*$`, "iu"), "").trim();
     TU.msgs.push({ role: "model", text: ans, parts: [{ text: ans }] });
   } catch(e){ if (g === TU.gen) TU.err = e.message || String(e); }
   finally { if (g === TU.gen){ TU.busy = false; tuRender(); } }
@@ -7428,7 +7432,7 @@ function tuPickers(){
   lv.innerHTML = LEVELS.map(l => `<option value="${l[0]}">${esc(UI === "vi" ? trLevels(l[1]) : l[1])}</option>`).join("");
   lv.value = curLevel(); tuFitLv();
   lv.onchange = () => {
-    courseSet().level = lv.value; save(); tuFitLv();
+    courseSet().level = lv.value; save(); tuFitLv(); lv.blur();
     $$("#genLevel,#rdLevel,#tkLevel").forEach(x => x.value = lv.value);
     tuNote(L("Đã đổi trình độ — các câu trả lời sau sẽ theo trình độ mới.", "Level changed — the next answers follow it."));
   };
