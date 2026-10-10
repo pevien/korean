@@ -21,7 +21,7 @@ URL = f"http://127.0.0.1:{_srv.server_address[1]}/index.html"
 
 MODES = { m: False for m in ["ko2m", "listen2m", "listen2kc", "m2ko", "listen2ko", "m2say"] }
 
-def init(course, word, meaning, answer, ui="vi", mode="ko2say"):
+def init(course, word, meaning, answer, ui="vi", mode="ko2say", quota=False):
     st = { "cards": [{ "id": "c1", "lang": course, "ko": word, "meaning": meaning, "ex": f"Example with {word}.", "exMean": "Câu ví dụ.", "ease": 2.5, "interval": 1,
                        "reps": 1, "lapses": 0, "due": 1, "last": 1, "created": 1 }],
            "settings": { "course": course, "apiKey": "FAKE", "uiLang": ui, "model": "gemini-2.5-flash-lite", "newPerDay": 0,
@@ -32,12 +32,14 @@ if (!sessionStorage.getItem("seeded")) {
   localStorage.setItem("hangulCards.v1", %s);
   localStorage.setItem("hangulCards.welcomed", "1");
 }
-window.__prompts = [];
+window.__prompts = []; window.__models = [];
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
     if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
-    const body = JSON.parse(opts.body), p = body.contents[0].parts[0].text;
+    const body = JSON.parse(opts.body), p = body.contents[0].parts[0].text, model = decodeURIComponent(String(url).match(/models\/([^:]+):/)[1]);
+    window.__models.push([model, p.startsWith("Transcribe this") ? "hear" : "grade"]);
+    if (%s && model === "gemini-2.5-flash") return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 });
     window.__prompts.push(p); window.__temp = body.generationConfig.temperature;
     await new Promise(r => setTimeout(r, 150));
     const ans = %s, n = window.__prompts.filter(x => x.includes("attached recording")).length - 1;
@@ -50,7 +52,7 @@ window.fetch = async (url, opts) => {
 };
 navigator.mediaDevices.getUserMedia = async () => { const ac = new AudioContext(), o = ac.createOscillator(), d = ac.createMediaStreamDestination(); o.connect(d); o.start(); return d.stream; };
 if (navigator.permissions) { const q = navigator.permissions.query.bind(navigator.permissions); navigator.permissions.query = d => d && d.name === "microphone" ? Promise.resolve({ state: "granted" }) : q(d); }
-""" % (json.dumps(json.dumps(st)), json.dumps(answer))
+""" % (json.dumps(json.dumps(st)), "true" if quota else "false", json.dumps(answer))
 
 results = []
 def check(name, cond, info=""): results.append((name, bool(cond), info))
@@ -107,6 +109,15 @@ def A(page):
     check("A: low temperature", page.evaluate("window.__temp") == 0.2)
     check("A: example sentence still shown", "Example with 음악." in text, text)
     check("A: Say again button", page.is_visible("#sayAgain"))
+    m = page.evaluate("window.__models")
+    check("A: transcription on Flash, grading on the chosen Lite", m == [["gemini-2.5-flash", "hear"], ["gemini-2.5-flash-lite", "grade"]], m)
+
+def J(page):
+    """Flash out of quota (429): the transcription falls back to the chosen Lite model and grading still works."""
+    text, _ = say(page, "J-quota")
+    m = page.evaluate("window.__models")
+    check("J: Flash tried, then Lite", m[:3] == [["gemini-2.5-flash", "hear"], ["gemini-2.5-flash-lite", "hear"], ["gemini-2.5-flash-lite", "grade"]], m)
+    check("J: score still shown", "78/100" in text, text[:120])
 
 def B(page):
     """No issues: a native-like 98 is kept and the 'good' line shows instead of a list."""
@@ -215,6 +226,8 @@ with sync_playwright() as pw:
                 { "heard": "음악", "correct": True, "pron": "[으막]", "score": 55, "issues": ISSUES, "good": "" }])
     run(pw, "I", I, course="en", word="board", meaning="lên tàu xe máy bay", mode="m2say", ui="en",
         answer={ "heard": "get on", "correct": False, "pron": "/bɔːrd/", "score": 20, "issues": [], "good": "" })
+    run(pw, "J", J, course="ko", word="음악", meaning="âm nhạc", quota=True,
+        answer={ "heard": "음악", "correct": True, "pron": "[으막]", "score": 78, "issues": [], "good": "" })
     run(pw, "D", D, course="ko", word="음악", meaning="âm nhạc", answer={ "heard": "음악", "correct": True })
 
 ok = sum(1 for r in results if r[1])

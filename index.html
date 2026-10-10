@@ -603,6 +603,7 @@ body.ar-conv-on{overflow:hidden}
 .qfb .fb-heard,.qfb .fb-ans,.qfb .fb-sc{margin-top:4px;font-size:15px}   /* the feedback lines (score, what they wrote, the right word, issues) share one size; 13px is only for side notes (graded by, issue type) */
 .qfb .fb-ans span{color:var(--text);font-weight:600}
 .qfb .fb-ans .pron{color:var(--muted);font-weight:400}
+.qfb .fb-ans .fb-say{display:inline-flex;width:30px;height:30px;font-size:14px;vertical-align:middle;margin:-4px 0 0}   /* model pronunciation of the revealed word */
 .qfb .wrong{color:var(--bad)}
 .qfb .say-iss{margin-top:6px}   /* AI word check: every pronunciation issue, laid out like the reading coach's (.issue, same uppercase type label); text on this box's 15px */
 .qfb .say-iss .issue{font-size:15px}
@@ -2345,6 +2346,8 @@ const isLite = id => /flash-lite/.test(id), isPreview = id => /preview|exp/.test
 const modelRank = (a, b) => (isLite(b) - isLite(a)) || (isPreview(a) - isPreview(b)) || (modelVer(b) - modelVer(a)) || a.localeCompare(b);
 const modelList = () => MODELS.length ? MODELS : MODEL_FALLBACK;
 const curModel = () => (S.settings.model || "").trim() || modelList()[0];
+// transcribing a recording needs a sharper ear: Lite tends to "repair" what was said, so it gets the newest stable Flash
+const hearModel = () => { const cur = curModel(); return !isLite(cur) ? cur : modelList().find(m => !isLite(m) && !isPreview(m)) || "gemini-2.5-flash"; };
 async function loadModels(){
   const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000", { headers: { "x-goog-api-key": S.settings.apiKey.trim() } });
   if (!r.ok) throw new Error("HTTP " + r.status);
@@ -2371,8 +2374,8 @@ async function refreshModels(sel){
   if (S.settings.apiKey && S.settings.apiKey.trim()) { try { await loadModels(); } catch(e){} }
   fillModelSelect(sel);
 }
-const MODEL_HINT = () => L("Flash-Lite: rẻ nhất, nhiều lượt miễn phí nhất — đủ cho học và ARMY. Flash: chính xác hơn nhưng ít lượt miễn phí.",
-  "Flash-Lite: cheapest, most free requests — fine for studying and ARMY. Flash: more accurate but fewer free requests.");
+const MODEL_HINT = () => L("Flash-Lite: rẻ nhất, nhiều lượt miễn phí nhất — đủ cho học và ARMY. Flash: chính xác hơn nhưng ít lượt miễn phí. Chép lời ghi âm luôn dùng Flash để nghe chính xác (tự lùi về Lite khi hết lượt).",
+  "Flash-Lite: cheapest, most free requests — fine for studying and ARMY. Flash: more accurate but fewer free requests. Recording transcription always uses Flash for accuracy (falls back to Lite when out of quota).");
 // opts.contents: a whole multi-turn chat instead of one prompt; opts.text: a plain-text answer instead of JSON
 async function gemini(prompt, extraParts, opts = {}){
   const tryModel = async (model) => {
@@ -2391,12 +2394,13 @@ async function gemini(prompt, extraParts, opts = {}){
     if (!txt) throw new Error("Empty answer from AI");
     return txt;
   };
-  const model = curModel();
+  const model = opts.model || curModel();
   try { return await tryModel(model); }
   catch(e){
-    // retired (404) or overloaded (503) model: try the next suitable one once
-    const alt = modelList().find(m => m !== model);
-    if (alt && (e.status === 404 || e.status === 503 || e.status === 400 && /not found|not supported/i.test(e.message))) return await tryModel(alt);
+    // retired (404) or overloaded (503) model: try the next suitable one once;
+    // a model picked per call (opts.model) also falls back to the usual one when its quota runs out (429)
+    const alt = opts.model && opts.model !== curModel() ? curModel() : modelList().find(m => m !== model);
+    if (alt && (e.status === 404 || e.status === 503 || opts.model && e.status === 429 || e.status === 400 && /not found|not supported/i.test(e.message))) return await tryModel(alt);
     throw e;
   }
 }
@@ -3072,7 +3076,7 @@ function finish(item, ok, typed, extra){
   const pron = item.pron ? `<span class="pron" lang="${TL}">${esc(item.pron)}</span>` : "";
   if (top && (c.meaning || pron)) top.insertAdjacentHTML("afterend", `<div class="ko-mean">${pron}${pron && c.meaning ? " · " : ""}${esc(c.meaning || "")}</div>`);
   // word — meaning, same small size as the score line ("Từ đúng:" in front when the answer was wrong)
-  const reveal = top ? "" : `<div class="small fb-ans" data-noi18n>${ok ? "" : L("Từ đúng", "Correct") + ": "}<span lang="${TL}">${esc(c.ko)}</span>${pron ? " " + pron : ""} — ${esc(c.meaning)}</div>`;
+  const reveal = top ? "" : `<div class="small fb-ans" data-noi18n>${ok ? "" : L("Từ đúng", "Correct") + ": "}<span lang="${TL}">${esc(c.ko)}</span>${pron ? " " + pron : ""} <button class="speak sm fb-say" title="${L("Nghe phát âm mẫu", "Listen")}" aria-label="${L("Nghe phát âm mẫu", "Listen")}">${ic("speaker-high")}</button> — ${esc(c.meaning)}</div>`;
   const exBlock = exampleHTML(c);
   // one box: verdict, word + meaning, score notes, then the example. Multiple choice skips the word + meaning — the highlighted options already show it
   // "play my recording" rides on the verdict line (top right) instead of taking a row of its own
@@ -3102,6 +3106,8 @@ function finish(item, ok, typed, extra){
   bindSay($("#fb"));
   speak(c.ko);
   $$("#fb .grades button").forEach(b => b.onclick = () => done(item, +b.dataset.q));
+  // 🔊 next to the revealed word — delegated, since saying it again re-renders the notes (and the reveal with them)
+  $("#fb").onclick = e => { if (e.target.closest(".fb-say")) speak(c.ko); };
   const cb = $("#contBtn"); if (cb) cb.onclick = () => done(item, ok ? 4 : 1);
   const tb = $("#typoBtn"); if (tb) tb.onclick = () => { session.correct++; if (!item.failed) session.missed.delete(c.id); done(item, 3); };
 }
@@ -4277,7 +4283,7 @@ async function aiHear(audio, dur, opts = {}){
 - If the learner stopped mid-sentence, the transcript stops there too.
 - ${opts.fillers ? "Keep hesitation fillers (um, uh, er) exactly where they were said" : "Leave out hesitation sounds (um, uh, 음, 어)"}; leave out any background voices.
 - If the audio is silent, just noise, or not ${CO.en}, return "heard":"".
-Return JSON exactly like: {"heard":""}`, audio, { temperature: 0 }));
+Return JSON exactly like: {"heard":""}`, audio, { temperature: 0, model: hearModel() }));
   return String(j.heard || "").trim();
 }
 // the line every grading prompt gets after aiHear
@@ -4544,7 +4550,7 @@ function renderWords(){
   $("#wordList").innerHTML = list.length ? list.map(c => {
     const s = status(c), [t, cls] = lab[s];
     const due = s !== "new" ? (c.due <= Date.now() ? "due now" : "in " + timeUntil(c.due)) : "";
-    const iv = s === "learn" ? `${c.interval || 0}/21 ${L("ngày", "d")}` : s === "master" ? `${c.interval} ${L("ngày", "d")}` : "";
+    const iv = s === "learn" ? `${c.interval || 0}/21 ${L("ngày", "d")}` : s === "master" ? (c.due <= Date.now() ? L("ôn ngay", "due now") : L("ôn sau " + viTime(timeUntil(c.due)), "review in " + timeUntil(c.due))) : "";   // mastered: when it comes back (the interval read as "days studied")
     return `<li data-id="${c.id}">
       <div class="t"><div class="wh"><button class="speak sm" data-a="say" title="${L("Nghe", "Listen")}">${ic("speaker-high")}</button><b lang="${TL}">${esc(c.ko)}</b><span class="badge ${cls}" title="${esc(s === "new" ? due : (s === "learn" ? L("Đang học", "Learning") : L("Đã thuộc", "Mastered")) + " · " + due)}">${s === "new" ? t : ""}<span class="iv">${iv}</span></span></div>
         <div>${esc(c.meaning) || "<i>no meaning</i>"}</div>${c.ex ? `<div class="exl" lang="${TL}">${esc(c.ex)} <span>· ${esc(c.exMean)}</span></div>` : EXGEN.has(c.id) ? `<div class="exl"><span class="spinner"></span>${L("Đang viết câu ví dụ…", "Writing an example…")}</div>` : ""}</div>

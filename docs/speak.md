@@ -118,7 +118,7 @@ Tap 🎙 on a sentence to open the coach underneath it. The coach has:
 |---|---|---|
 | Needs | A browser with speech recognition (Chrome/Safari). Speech recognition itself may need internet. | A Gemini key |
 | Scores | Accuracy and fluency | Accuracy, fluency, intonation, native-like (0–100) |
-| How | Lines up what was heard against the sentence, then applies built-in rules | The recording (16 kHz WAV) goes to Gemini twice: first transcribed blind (without the sentence, so it can't "hear" the target instead of what you said), then graded against the sentence using that transcript as is |
+| How | Lines up what was heard against the sentence, then applies built-in rules | The recording (16 kHz WAV) goes to Gemini twice: first transcribed blind (without the sentence, so it can't "hear" the target instead of what you said) on Gemini Flash, which hears more precisely than Flash-Lite (back to the chosen model when Flash is out of quota), then graded against the sentence using that transcript as is |
 
 **⚡ Basic in detail:**
 
