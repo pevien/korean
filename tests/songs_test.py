@@ -56,7 +56,7 @@ window.fetch = async (url, opts) => {
     if (p.includes("For EVERY line marked")) window.__singBody = body;
     await new Promise(r => setTimeout(r, 100));
     let out;
-    if (p.includes("tell them about it")) out = { known: true, about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] };
+    if (p.includes("tell them about it")) { window.__storyBody = JSON.parse(opts.body); out = { album: "Album thử", released: "13/2/2017", about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] }; }
     else if (p.includes("For EVERY line marked")) out = { who: [{ n: 7, who: "V" }, { n: 8, who: "Jin" }] };
     else {
       // a chunk holding the 4th line is "blocked as recitation": no text, like the real API
@@ -87,6 +87,7 @@ with sync_playwright() as pw:
     page.click("#arSongsOpen"); page.wait_for_timeout(200)
     check("empty list", "Chưa có bài nào" in page.inner_text("#v-army"))
     page.click("#sgNew"); page.wait_for_timeout(200)
+    check("title is free text, no suggestion list", page.get_attribute("#sgTitle", "list") is None and page.locator("#sgTitles").count() == 0)
     page.fill("#sgTitle", "Test Song")
     page.click("#sgFind")
     check("finds lyrics on Google", page.evaluate("__opened[0]").startswith("https://www.google.com/search?q=BTS%20Test%20Song%20lyrics"), page.evaluate("__opened"))
@@ -135,6 +136,8 @@ with sync_playwright() as pw:
     page.click("#sgStory"); page.wait_for_selector(".sg-h", timeout=5000)
     page.screenshot(path=os.path.join(SP, "story.png"), full_page=True)
     st = page.inner_text("#sgBody")
+    check("story shows album and release date", "Album thử" in st and "phát hành 13/2/2017" in st, st)
+    check("story looked up on Google", page.evaluate("__storyBody.tools") == [{"google_search": {}}])
     check("story shown", "Nguồn gốc thử" in st and "Fact 2" in st and "Theory thử" in st, st)
     check("story prompt doesn't quote lyrics", "do not quote the lyrics" in page.evaluate("__prompts[__prompts.length-1]"))
 

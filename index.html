@@ -6589,10 +6589,6 @@ const SONG_ALIAS = [["rm|rap ?monster|namjoon|kim namjoon|남준|알엠|김남�
 // "Jimin & Jung Kook", "Verse 1 - RM", "V (뷔)" → stage names in the order they appear; anything unknown is dropped
 const songWho = s => { s = String(s || ""); return [...new Set(SONG_ALIAS.map(([r, m]) => { const k = s.search(r); return k < 0 ? null : [k, m]; })
   .filter(Boolean).sort((a, b) => a[0] - b[0]).map(a => a[1]))]; };
-const SONG_TITLES = ["Spring Day", "Dynamite", "Butter", "Permission to Dance", "Life Goes On", "Black Swan", "ON", "Boy With Luv", "DNA", "FAKE LOVE", "IDOL",
-  "Blood Sweat & Tears", "Fire", "Save ME", "I NEED U", "RUN", "Dope", "Euphoria", "Magic Shop", "Mikrokosmos", "Answer: Love Myself", "Epiphany", "Serendipity",
-  "Singularity", "Make It Right", "Dionysus", "Louder than bombs", "Blue & Grey", "Telepathy", "Film out", "Yet To Come", "Run BTS", "For Youth",
-  "Butterfly", "Young Forever", "Not Today", "Mic Drop", "Anpanman", "Love Maze", "Moon", "Stay", "Zero O'Clock", "Pied Piper", "2!3!", "Lights"];
 // the fan's paste (often a whole Genius page) → lyric lines; "[Chorus: Jimin & V]" headers set who sings what follows
 function songParse(raw){
   let rows = String(raw || "").replace(/\r/g, "").split("\n").map(t => t.trim());
@@ -6715,13 +6711,16 @@ function songSay(t){
   const u = new SpeechSynthesisUtterance(t); u.voice = v; u.lang = v.lang; u.rate = S.settings.rate;
   songSay.u = u; speechSynthesis.speak(u);
 }
-// the story behind the song: written by AI, never quoting the lyrics
+// the story behind the song: looked up on Google so the album and release date are always found; never quoting the lyrics
 async function songStory(x){
-  const prompt = `A BTS fan is studying the song "${x.title}" by BTS. In ${songLang()}, tell them about it, in a warm fan-friendly tone.
-Return JSON: {"known":true,"about":"1–2 sentences: album, release year, who wrote/produced it","origin":"how the song came to be: the inspiration and story behind the writing","meaning":"its message and themes, what the members have said about it","theories":["popular fan theories or connections (e.g. to the BU storyline, other songs, the MV), each clearly framed as a theory"],"facts":["3–5 fun facts: records, performances, behind-the-scenes"]}
-Paraphrase — do not quote the lyrics. Only include what you are fairly sure of; leave out anything you would have to guess. If you don't know this song, return {"known":false}.`;
-  const j = extractJSON(await gemini(prompt, undefined, { temperature: 0.4 }));
-  x.story = j.known === false ? { unknown: true } : { about: String(j.about || ""), origin: String(j.origin || ""), meaning: String(j.meaning || ""),
+  const prompt = `A BTS fan is studying the song "${x.title}" by BTS (it may be a solo or sub-unit song by a member). Search the web for it first, then in ${songLang()} tell them about it, in a warm fan-friendly tone.
+Return only JSON: {"album":"the album/single it was released on","released":"release date (day month year if known)","about":"1–2 sentences: who wrote/produced it, what kind of song it is","origin":"how the song came to be: the inspiration and story behind the writing","meaning":"its message and themes, what the members have said about it","theories":["popular fan theories or connections (e.g. to the BU storyline, other songs, the MV), each clearly framed as a theory"],"facts":["3–5 fun facts: records, performances, behind-the-scenes"]}
+"album" and "released" are always required — the search will find them. Paraphrase — do not quote the lyrics. For the other fields, only include what you are fairly sure of; leave out anything you would have to guess.`;
+  let txt;
+  try { txt = await gemini(prompt, undefined, { temperature: 0.3, search: true, model: hearModel() }); }
+  catch(e){ if (e.status === 429 || e.status === 403) throw e; txt = await gemini(prompt, undefined, { temperature: 0.4 }); }   // no search on this model/key: answer from memory
+  const j = extractJSON(txt);
+  x.story = { album: String(j.album || ""), released: String(j.released || ""), about: String(j.about || ""), origin: String(j.origin || ""), meaning: String(j.meaning || ""),
     theories: arrOf(j.theories).map(String), facts: arrOf(j.facts).map(String) };
   x.story.lang = songLang(); save();
 }
@@ -6750,8 +6749,7 @@ function renderSongAdd(){
   $("#v-army").innerHTML = `${songHead("sgBack", ic("music-notes") + " " + L("Thêm bài hát", "Add a song"))}
     <div class="card">
       <label style="margin-top:0">${L("Tên bài", "Song title")}</label>
-      <input id="sgTitle" list="sgTitles" autocomplete="off" placeholder="${L("VD: Spring Day", "e.g. Spring Day")}">
-      <datalist id="sgTitles">${[...new Set(SONG_TITLES)].map(t => `<option value="${esc(t)}">`).join("")}</datalist>
+      <input id="sgTitle" autocomplete="off" placeholder="${L("VD: Spring Day", "e.g. Spring Day")}">
       <button class="btn-ghost" id="sgFind" style="margin-top:10px;width:100%">${ic("magnifying-glass")} ${L("Tìm lời trên Google", "Find the lyrics on Google")}</button>
       <label>${L("Lời bài hát", "Lyrics")}</label>
       <textarea id="sgRaw" rows="8" placeholder="${L("Dán lời vào đây", "Paste the lyrics here")}"></textarea>
@@ -6842,9 +6840,10 @@ function songStoryUI(x, body){
   const list = (h, a) => a && a.length ? `<h3 class="sg-h">${h}</h3><ul>${a.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : "";
   body.innerHTML = `<div class="card sg-story">${!s ? `<p class="muted" style="margin-top:0">${L("Nguồn gốc, cảm hứng sáng tác, theory và fun fact của bài — do AI tổng hợp.", "Origin, inspiration, theories and fun facts — put together by AI.")}</p>`
       : s.unknown ? `<p class="muted" style="margin-top:0">${L("AI không biết đủ về bài này để kể chính xác.", "AI doesn't know enough about this song to tell it accurately.")}</p>`
-      : para("📀 " + L("Giới thiệu", "About"), s.about) + para("✍️ " + L("Nguồn gốc & cảm hứng", "Origin & inspiration"), s.origin) + para("💜 " + L("Ý nghĩa", "Meaning"), s.meaning)
+      : (s.album || s.released ? `<h3 class="sg-h">💿 ${L("Album", "Album")}</h3><p>${esc(s.album || "?")}${s.released ? ` · ${L("phát hành", "released")} ${esc(s.released)}` : ""}</p>` : "")
+        + para("📀 " + L("Giới thiệu", "About"), s.about) + para("✍️ " + L("Nguồn gốc & cảm hứng", "Origin & inspiration"), s.origin) + para("💜 " + L("Ý nghĩa", "Meaning"), s.meaning)
         + list("🔮 Theory", s.theories) + list("✨ Fun facts", s.facts)
-        + `<p class="small muted">${L("AI tổng hợp từ những gì nó biết — có thể chưa chính xác.", "Put together by AI from what it knows — may not be fully accurate.")}</p>`}
+        + `<p class="small muted">${L("AI tổng hợp từ Google — có thể chưa chính xác.", "Put together by AI from Google — may not be fully accurate.")}</p>`}
       <button class="${s ? "btn-ghost" : "btn"}" id="sgStory" style="width:100%">✨ ${s ? L("Viết lại", "Rewrite") : L("Kể chuyện bài hát", "Tell me about this song")}${hasKey() ? "" : " 🔒"}</button>
     </div>`;
   $("#sgStory").onclick = async e => {
