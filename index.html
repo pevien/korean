@@ -5434,7 +5434,7 @@ function arToPassage(lines, title){
 // two-tap delete: the first tap arms the button (solid red + "tap again"), the second runs fn; it disarms by itself after 3 s.
 // Icon-only buttons pass a short armed label so they don't grow too wide
 function confirmTap(b, label, fn, armed){
-  if (!b.dataset.confirm){ b.dataset.confirm = 1; b.innerHTML = armed || L("Chạm lần nữa để xoá", "Tap again to delete"); setTimeout(() => { if (b.dataset.confirm){ delete b.dataset.confirm; b.innerHTML = label; } }, 3000); return; }
+  if (!b.dataset.confirm){ b.dataset.confirm = 1; b.innerHTML = armed || L("Chạm để xoá", "Tap again to delete"); setTimeout(() => { if (b.dataset.confirm){ delete b.dataset.confirm; b.innerHTML = label; } }, 3000); return; }
   delete b.dataset.confirm; b.innerHTML = label; fn();
 }
 
