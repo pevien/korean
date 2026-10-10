@@ -57,7 +57,8 @@ window.fetch = async (url, opts) => {
     let out;
     if (window.__quota && !p.includes("tell them about it")) return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 });
     if (window.__searchQuota && body.tools) { window.__searchFails = (window.__searchFails || 0) + 1; return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 }); }
-    if (p.includes("tell them about it")) { window.__storyBody = JSON.parse(opts.body); window.__storyModel = window.__models[window.__models.length - 1]; window.__stories = (window.__stories || 0) + 1; out = { album: "Album thử", released: "13/2/2017", about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] }; }
+    if (body.tools) { window.__searchBody = body; return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "NOTES: album Album thử, released 13 Feb 2017, written by RM." }] } }] })); }
+    if (p.includes("tell them about it")) { window.__storyBody = JSON.parse(opts.body); (window.__storyBodies = window.__storyBodies || []).push(window.__storyBody); window.__storyModel = window.__models[window.__models.length - 1]; window.__stories = (window.__stories || 0) + 1; out = { album: "Album thử", released: "13/2/2017", about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] }; }
     else {
       // a chunk holding the 4th line is "blocked as recitation": no text, like the real API
       if (p.includes("마지막 줄이에요")) return new Response(JSON.stringify({ candidates: [{ finishReason: "RECITATION" }] }));
@@ -159,16 +160,23 @@ with sync_playwright() as pw:
     page.screenshot(path=os.path.join(SP, "story.png"), full_page=True)
     st = page.inner_text("#sgBody")
     check("story shows album and release date", "Album thử" in st and "phát hành 13/2/2017" in st, st)
-    check("story prompt asks for every field", "Fill EVERY field" in page.evaluate("JSON.stringify(__storyBody)"))
+    check("story prompt asks for album and release date", "are always required" in page.evaluate("__storyBody.contents[0].parts[0].text"))
     check("story on the model picked in Settings", page.evaluate("__storyModel") == "gemini-2.5-flash")
-    check("story looked up on Google", page.evaluate("__storyBody.tools") == [{"google_search": {}}])
+    sb = page.evaluate("__searchBody")
+    check("story: step 1 searches Google for free-text notes", sb.get("tools") == [{"google_search": {}}] and sb["generationConfig"]["responseMimeType"] == "text/plain" and "research" in sb["contents"][0]["parts"][0]["text"])
+    first = page.evaluate("__storyBodies[0]")   # Test Song's story, written while search worked
+    check("story: step 2 writes the fields from the notes, without search", "tools" not in first and "NOTES: album Album thử" in first["contents"][0]["parts"][0]["text"] and "<notes>" in first["contents"][0]["parts"][0]["text"])
+    check("story: saved as searched", page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs.find(s => s.title === 'Test Song').story.searched") is True)
+    check("story from Google: normal note", "AI tổng hợp từ Google" in st)
     check("story shown", "Nguồn gốc thử" in st and "Fact 2" in st and "Theory thử" in st, st)
     # Google Search quota used up (plain calls still fine): the story is still written, and search is skipped next time
     page.evaluate("() => { window.__searchQuota = true; window.__stories = 0; }")
     page.click("#sgStory"); page.wait_for_function("__stories >= 1 && !document.querySelector('#sgStory').disabled", timeout=5000); page.wait_for_timeout(100)
-    check("search quota: story still written without search", page.evaluate("__stories") == 1 and page.evaluate("__storyBody.tools") is None and "Album thử" in page.inner_text("#sgBody"))
-    page.click("#sgStory"); page.wait_for_function("__stories >= 2 && !document.querySelector('#sgStory').disabled", timeout=5000)
-    check("search quota: search skipped on the next story", page.evaluate("__searchFails") == 1)
+    check("search quota: story still written from memory", page.evaluate("__stories") == 1 and "<notes>" not in page.evaluate("JSON.stringify(__storyBody)") and "Album thử" in page.inner_text("#sgBody"))
+    check("search quota: the story says it wasn't searched", "chưa tra được Google" in page.inner_text("#sgBody"), page.inner_text("#sgBody"))
+    page.evaluate("() => { window.__searchQuota = false; }")
+    page.click("#sgStory"); page.wait_for_function("__stories >= 2 && !document.querySelector('#sgStory').disabled", timeout=5000); page.wait_for_timeout(100)
+    check("search back: rewrite searches again", "chưa tra được Google" not in page.inner_text("#sgBody") and "<notes>" in page.evaluate("JSON.stringify(__storyBody)"))
     check("story prompt doesn't quote lyrics", "do not quote the lyrics" in page.evaluate("__prompts[__prompts.length-1]"))
 
     # survives a reload; list shows it

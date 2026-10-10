@@ -6691,23 +6691,33 @@ function songSay(t){
   const u = new SpeechSynthesisUtterance(t); u.voice = v; u.lang = v.lang; u.rate = S.settings.rate;
   songSay.u = u; speechSynthesis.speak(u);
 }
-// the story behind the song: looked up on Google (Search grounding) so the album and release date are always found; never quoting the lyrics.
-// Google Search has its own free quota (per day): once it's used up the search call keeps failing with 429 while plain calls still work,
-// so the story is then written from what the model knows, and the search is skipped for a while instead of failing first every time
-let songNoSearchUntil = 0;
+// the story behind the song, in two calls like the Gemini app: (1) a Google-grounded search that only gathers notes, in free text —
+// asking for search + strict JSON + translation in one go made Gemini skip or skim the search and answer from memory;
+// (2) a plain call that turns the notes into the story's fields in the app's language. Never quoting the lyrics.
+// Google Search has its own free quota: if it's out (429) or unavailable, step 2 works from memory and the story says so (searched: false)
 async function songStory(x){
-  const prompt = `A BTS fan is studying the song "${x.title}" by BTS (it may be a solo or sub-unit song by a member). Search the web for it first, then in ${songLang()} tell them about it, in a warm fan-friendly tone.
-Return only JSON: {"album":"the album/single it was released on","released":"release date (day month year if known)","about":"1–2 sentences: who wrote/produced it, what kind of song it is","origin":"how the song came to be: the inspiration and story behind the writing","meaning":"its message and themes, what the members have said about it","theories":["popular fan theories or connections (e.g. to the BU storyline, other songs, the MV), each clearly framed as a theory"],"facts":["3–5 fun facts: records, performances, behind-the-scenes"]}
-Fill EVERY field from what the search turns up (interviews, album liner notes, Weverse/V Live talks, articles, fan wikis) and what you know — the fan wants the full story. "album" and "released" are always required. Leave a field empty only when nothing at all can be found for it; never invent. Paraphrase — do not quote the lyrics.`;
-  let txt;
-  if (Date.now() >= songNoSearchUntil){
-    try { txt = await gemini(prompt, undefined, { temperature: 0.3, search: true }); }
-    catch(e){ if (e.status === 403) throw e; if (e.status === 429) songNoSearchUntil = Date.now() + 30 * 60000; }
-  }
-  if (!txt) txt = await gemini(prompt, undefined, { temperature: 0.4 });   // search unavailable (quota, model, key): answer from memory
-  const j = extractJSON(txt);
+  let notes = "";
+  try {
+    notes = (await gemini(`Use Google Search to research the song "${x.title}" by BTS (it may be a BTS member's solo or sub-unit song — search for that too). Search several times if needed: Genius, Wikipedia, Namu Wiki, K-pop news sites, interviews.
+Write detailed notes in English with every concrete fact you find:
+- the album or single it is on, and its exact release date
+- writers, composers, producers
+- how the song came about: inspiration, what the members said when making it (interviews, Weverse, V Live, documentaries, album notes)
+- what it means: themes, message
+- popular fan theories and connections (BU storyline, other songs, the MV)
+- notable facts: charts, records, awards, performances, MV, behind-the-scenes
+Only write what the sources say. Do not quote the lyrics.`, undefined, { temperature: 0.2, search: true })).trim();
+  } catch(e){ if (e.status === 403) throw e; }   // out of search quota / no search on this model: write from memory
+  const prompt = `A BTS fan is studying the song "${x.title}" by BTS (it may be a solo or sub-unit song by a member). In ${songLang()}, tell them about it, in a warm fan-friendly tone.
+${notes ? `Base every field on these research notes from Google Search — keep their facts (names, dates, numbers) exactly, and fill every field the notes cover:
+<notes>
+${notes}
+</notes>` : `Use what you know about this song.`}
+Return only JSON: {"album":"the album/single it was released on","released":"release date (day month year)","about":"1–2 sentences: who wrote/produced it, what kind of song it is","origin":"how the song came to be: the inspiration and story behind the writing","meaning":"its message and themes, what the members have said about it","theories":["popular fan theories or connections, each clearly framed as a theory"],"facts":["3–5 fun facts: records, performances, behind-the-scenes"]}
+"album" and "released" are always required. Leave another field empty only when nothing is known for it; never invent. Paraphrase — do not quote the lyrics.`;
+  const j = extractJSON(await gemini(prompt, undefined, { temperature: 0.3 }));
   x.story = { album: String(j.album || ""), released: String(j.released || ""), about: String(j.about || ""), origin: String(j.origin || ""), meaning: String(j.meaning || ""),
-    theories: arrOf(j.theories).map(String), facts: arrOf(j.facts).map(String) };
+    theories: arrOf(j.theories).map(String), facts: arrOf(j.facts).map(String), searched: !!notes };
   x.story.lang = songLang(); save();
 }
 const songGoKey = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
@@ -6815,7 +6825,8 @@ function songStoryUI(x, body){
         + para("📀 " + L("Giới thiệu", "About"), s.about) + para("✍️ " + L("Nguồn gốc & cảm hứng", "Origin & inspiration"), s.origin) + para("💜 " + L("Ý nghĩa", "Meaning"), s.meaning)
         + list("🔮 Theory", s.theories) + list("✨ Fun facts", s.facts)
         + (s.origin || s.meaning || (s.theories || []).length || (s.facts || []).length ? "" : `<p class="muted">${L("Chưa tìm thấy thêm câu chuyện nào về bài này — mới có thông tin cơ bản ở trên.", "No more story found for this song yet — just the basics above.")}</p>`)
-        + `<p class="small muted">${L("AI tổng hợp từ Google — có thể chưa chính xác.", "Put together by AI from Google — may not be fully accurate.")}</p>`}
+        + `<p class="small muted">${s.searched === false ? "⚠️ " + L("Lần này chưa tra được Google (hết lượt tra miễn phí) nên AI viết theo trí nhớ — có thể thiếu hoặc sai. Bấm <b>Viết lại</b> sau để tra lại.", "Google Search wasn't available this time (free search quota used up), so AI wrote from memory — it may be incomplete or wrong. Tap <b>Rewrite</b> later to search again.")
+          : L("AI tổng hợp từ Google — có thể chưa chính xác.", "Put together by AI from Google — may not be fully accurate.")}</p>`}
       <button class="${s ? "btn-ghost" : "btn"}" id="sgStory" style="width:100%"${SONG_BUSY.has(x.id) ? " disabled" : ""}>${SONG_BUSY.has(x.id) ? `<span class="spinner"></span>${L("Đang phân tích…", "Analysing…")}`
         : `✨ ${s ? L("Viết lại", "Rewrite") : L("Kể chuyện bài hát", "Tell me about this song")}${hasKey() ? "" : " 🔒"}`}</button>
     </div>`;
