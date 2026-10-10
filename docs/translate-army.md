@@ -147,7 +147,7 @@ Lets a fan learn a song: who sings each line, the original, its romanization and
   - A colour bar per member, and a chip where the singer changes. Tap the chip to fix that run of lines.
   - A 🔊 on every Korean line reads it with a Korean voice (`arVoiceFor("ko")`), whatever course is open, for pronunciation practice.
   - **Original / Romanized / Meaning** toggles hide layers for practice (`settings.songHide`).
-- **Story tab (`songStory`):** looked up on Google first (Search grounding, Flash; falls back to memory if searching fails), so the album and release date are always given and shown at the top. Then about, origin & inspiration, meaning, theories and fun facts, written by AI in the app's language without quoting the lyrics. It carries a "may not be accurate" note.
+- **Story tab (`songStory`):** looked up on Google first (Search grounding, Flash; falls back to memory if searching fails), so every section is filled from what it finds; the album and release date are always given and shown at the top, and if nothing else turns up only those basics show, with a note. Sections: about, origin & inspiration, meaning, theories and fun facts, written by AI in the app's language without quoting the lyrics. It carries a "may not be accurate" note.
 - **Without a key:** the AI buttons show 🔒 and lead to the key setup. Songs analysed earlier stay readable.
 
 Test: `.venv/bin/python tests/songs_test.py` (Gemini faked, placeholder lyrics).

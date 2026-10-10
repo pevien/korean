@@ -137,6 +137,7 @@ with sync_playwright() as pw:
     page.screenshot(path=os.path.join(SP, "story.png"), full_page=True)
     st = page.inner_text("#sgBody")
     check("story shows album and release date", "Album thử" in st and "phát hành 13/2/2017" in st, st)
+    check("story prompt asks for every field", "Fill EVERY field" in page.evaluate("JSON.stringify(__storyBody)"))
     check("story looked up on Google", page.evaluate("__storyBody.tools") == [{"google_search": {}}])
     check("story shown", "Nguồn gốc thử" in st and "Fact 2" in st and "Theory thử" in st, st)
     check("story prompt doesn't quote lyrics", "do not quote the lyrics" in page.evaluate("__prompts[__prompts.length-1]"))

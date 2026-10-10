@@ -6715,7 +6715,7 @@ function songSay(t){
 async function songStory(x){
   const prompt = `A BTS fan is studying the song "${x.title}" by BTS (it may be a solo or sub-unit song by a member). Search the web for it first, then in ${songLang()} tell them about it, in a warm fan-friendly tone.
 Return only JSON: {"album":"the album/single it was released on","released":"release date (day month year if known)","about":"1–2 sentences: who wrote/produced it, what kind of song it is","origin":"how the song came to be: the inspiration and story behind the writing","meaning":"its message and themes, what the members have said about it","theories":["popular fan theories or connections (e.g. to the BU storyline, other songs, the MV), each clearly framed as a theory"],"facts":["3–5 fun facts: records, performances, behind-the-scenes"]}
-"album" and "released" are always required — the search will find them. Paraphrase — do not quote the lyrics. For the other fields, only include what you are fairly sure of; leave out anything you would have to guess.`;
+Fill EVERY field from what the search turns up (interviews, album liner notes, Weverse/V Live talks, articles, fan wikis) and what you know — the fan wants the full story. "album" and "released" are always required. Leave a field empty only when nothing at all can be found for it; never invent. Paraphrase — do not quote the lyrics.`;
   let txt;
   try { txt = await gemini(prompt, undefined, { temperature: 0.3, search: true, model: hearModel() }); }
   catch(e){ if (e.status === 429 || e.status === 403) throw e; txt = await gemini(prompt, undefined, { temperature: 0.4 }); }   // no search on this model/key: answer from memory
@@ -6843,6 +6843,7 @@ function songStoryUI(x, body){
       : (s.album || s.released ? `<h3 class="sg-h">💿 ${L("Album", "Album")}</h3><p>${esc(s.album || "?")}${s.released ? ` · ${L("phát hành", "released")} ${esc(s.released)}` : ""}</p>` : "")
         + para("📀 " + L("Giới thiệu", "About"), s.about) + para("✍️ " + L("Nguồn gốc & cảm hứng", "Origin & inspiration"), s.origin) + para("💜 " + L("Ý nghĩa", "Meaning"), s.meaning)
         + list("🔮 Theory", s.theories) + list("✨ Fun facts", s.facts)
+        + (s.origin || s.meaning || (s.theories || []).length || (s.facts || []).length ? "" : `<p class="muted">${L("Chưa tìm thấy thêm câu chuyện nào về bài này — mới có thông tin cơ bản ở trên.", "No more story found for this song yet — just the basics above.")}</p>`)
         + `<p class="small muted">${L("AI tổng hợp từ Google — có thể chưa chính xác.", "Put together by AI from Google — may not be fully accurate.")}</p>`}
       <button class="${s ? "btn-ghost" : "btn"}" id="sgStory" style="width:100%">✨ ${s ? L("Viết lại", "Rewrite") : L("Kể chuyện bài hát", "Tell me about this song")}${hasKey() ? "" : " 🔒"}</button>
     </div>`;
