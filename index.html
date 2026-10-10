@@ -1327,7 +1327,7 @@ const COURSES = {
     is: s => HANGUL.test(s), unit: /[가-힣]/g, pace: 4.5, native: "5–7", unitName: ["âm tiết", "syllables"],
     word: "사과", hello: "안녕하세요", hello2: "안녕하세요. 만나서 반가워요!", wow: "대박!",
     script: "in Hangul", standard: "standard Seoul Korean", form: "- Verbs and adjectives in dictionary form (e.g. 먹다, 예쁘다).",
-    pron: `standard pronunciation written in Hangul in brackets, applying sound-change rules, e.g. [머거요]`,
+    pron: `the standard pronunciation (표준 발음) written in Hangul in brackets — spell the sounds a native actually says, NOT the spelling: apply every sound-change rule (linking 먹어요→[머거요], tensification 숟가락→[숟까락] 학교→[학꾜], nasalization 국물→[궁물] 합니다→[함니다], aspiration 좋다→[조타], liquidization 신라→[실라], palatalization 같이→[가치], ㄴ-insertion 한여름→[한녀름]); it is the same as the spelling only when no rule applies (e.g. 사과→[사과])`,
     spacing: " with correct spacing (띄어쓰기)", titleEx: "(e.g. 나의 취미, 주말 아침, 세 마리 곰) — never a sentence, no verb ending like 입니다/해요, no final punctuation",
     speaker: "민수", pattern: "저는 ___예요/이에요", city: "Seoul", topicX: "K-drama phrases",
     levels: [
@@ -2326,7 +2326,14 @@ function extractJSON(text){
   const s = t.search(/[\[{]/); if (s < 0) throw new Error("No JSON found in the answer");
   const open = t[s], close = open === "{" ? "}" : "]";
   const e = t.lastIndexOf(close); if (e < s) throw new Error("Answer looks incomplete");
-  return JSON.parse(t.slice(s, e + 1));
+  const j = t.slice(s, e + 1);
+  try { return JSON.parse(j); }
+  catch(err){
+    // models sometimes write a broken escape ("\u" without 4 hex digits, "\k"…): keep the backslash as a literal and retry
+    const fixed = j.replace(/\\(["\\\/bfnrt]|u[0-9a-fA-F]{4})|\\/g, (m, ok) => ok ? m : "\\\\");
+    if (fixed === j) throw err;
+    return JSON.parse(fixed);
+  }
 }
 /* ---- Gemini models: listed live with the user's key; the cheapest suitable one is the default ---- */
 const MODELS_KEY = "hangulCards.models";
@@ -3227,7 +3234,9 @@ Return JSON exactly like: {"correct":false,"pron":"","score":0,"issues":[{"part"
     if (!session || session.queue[0] !== item) return;
     const score = j.score === "" || j.score == null || isNaN(+j.score) ? null : Math.max(0, Math.min(100, Math.round(+j.score)));
     const pron = String(j.pron || "").trim(), good = String(j.good || "").trim();
-    item.pron = pron;   // shown next to the right word (finish), not on the score line where it read as the pronunciation of what was heard
+    // shown next to the right word (finish), not on the score line where it read as the pronunciation of what was heard;
+    // a bracket that only repeats the spelling tells nothing, so it is left out
+    item.pron = pron.replace(/[\[\]\/\s.]/g, "") === String(c.ko).replace(/[\s.]/g, "") ? "" : pron;
     item.prev = item.answered ? item.score : null; item.score = score;   // the score goes on the title line (sayScoreTag)
     const extra = (issues.length ? `<div class="say-iss">${issues.map((x, n) => `<div class="issue"><span class="n">${n + 1}</span><div>
           ${x.type ? `<div class="ty">${esc(sayType(x.type))}</div>` : ""}
@@ -5624,7 +5633,7 @@ The attached recording is the learner's next turn (${(dur / 1000).toFixed(1)} s)
 - "why": if not ok, ONE short explanation in ${uiLangName()} of the main mistake; otherwise "".
 - "mean": translation in ${uiLangName()} of what the learner meant (of "fix" if there is one, else of their transcript).
 - "score": pronunciation score 0–100 — realistic (typical beginners 40–75, only near-native 90+).
-- "pron": ${isKo ? "standard pronunciation of their sentence in Hangul brackets, applying sound-change rules, e.g. [감사함니다]" : `${CO.pron} — for their sentence`}.
+- "pron": ${CO.pron} — for their sentence.
 - "issues": the 0–2 most important pronunciation problems: "part" = the syllable/word from their transcript, "tip" = a short concrete fix in ${uiLangName()} with the correct pronunciation in brackets. Empty array if pronunciation was fine.
 - "ko": your in-character reply in ${CO.en} — respond to what the learner MEANT, even if it had mistakes. 1–2 short sentences.
 - "koMean": translation of your reply in ${uiLangName()}.
