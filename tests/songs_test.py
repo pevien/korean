@@ -56,7 +56,7 @@ window.fetch = async (url, opts) => {
     await new Promise(r => setTimeout(r, 100));
     let out;
     if (window.__quota && !p.includes("tell them about it")) return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 });
-    if (p.includes("tell them about it")) { window.__storyBody = JSON.parse(opts.body); out = { album: "Album thử", released: "13/2/2017", about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] }; }
+    if (p.includes("tell them about it")) { window.__storyBody = JSON.parse(opts.body); window.__storyModel = window.__models[window.__models.length - 1]; window.__stories = (window.__stories || 0) + 1; out = { album: "Album thử", released: "13/2/2017", about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] }; }
     else {
       // a chunk holding the 4th line is "blocked as recitation": no text, like the real API
       if (p.includes("마지막 줄이에요")) return new Response(JSON.stringify({ candidates: [{ finishReason: "RECITATION" }] }));
@@ -98,6 +98,7 @@ with sync_playwright() as pw:
     page.screenshot(path=os.path.join(SP, "lyrics.png"), full_page=True)
 
     song = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs[0]")
+    check("analysing also writes the story", song.get("story", {}).get("album") == "Album thử" and page.evaluate("__stories") == 1, song.get("story"))
     texts = [l["t"] for l in song["lines"]]
     check("paste cleaned", texts == ["우리는 테스트 노래", "Hello test line", "노래를 불러요", "지민 줄", "슈가 줄", "뷔 줄", "마지막 줄이에요", "Last english line"], texts)
     check("no singers kept or asked", not any("who" in l for l in song["lines"]) and not any("sings" in p for p in page.evaluate("__prompts")), song["lines"][0])
@@ -152,12 +153,13 @@ with sync_playwright() as pw:
 
     # story tab
     page.click('#sgTabs button[data-t="st"]'); page.wait_for_timeout(100)
-    page.click("#sgStory"); page.wait_for_selector(".sg-h", timeout=5000)
+    check("story already there, no extra tap", page.locator(".sg-h").count() > 0)
+    check("re-analysing doesn't rewrite the story", page.evaluate("__stories") == 2)   # once per song: Test Song + Quota Song
     page.screenshot(path=os.path.join(SP, "story.png"), full_page=True)
     st = page.inner_text("#sgBody")
     check("story shows album and release date", "Album thử" in st and "phát hành 13/2/2017" in st, st)
     check("story prompt asks for every field", "Fill EVERY field" in page.evaluate("JSON.stringify(__storyBody)"))
-    check("story on the model picked in Settings", page.evaluate("__models[__models.length-1]") == "gemini-2.5-flash")
+    check("story on the model picked in Settings", page.evaluate("__storyModel") == "gemini-2.5-flash")
     check("story looked up on Google", page.evaluate("__storyBody.tools") == [{"google_search": {}}])
     check("story shown", "Nguồn gốc thử" in st and "Fact 2" in st and "Theory thử" in st, st)
     check("story prompt doesn't quote lyrics", "do not quote the lyrics" in page.evaluate("__prompts[__prompts.length-1]"))

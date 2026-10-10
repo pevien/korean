@@ -6668,7 +6668,7 @@ const SONG_BUSY = new Set();
 async function songAnalyze(x, onStep){
   SONG_BUSY.add(x.id);
   try { await songAnalyzeRun(x, onStep); }
-  finally { SONG_BUSY.delete(x.id); if (curView === "army" && AR.screen === "songs" && AR.song === x.id && (AR.songTab || "ly") === "ly") renderSongView(); }
+  finally { SONG_BUSY.delete(x.id); if (curView === "army" && AR.screen === "songs" && AR.song === x.id) renderSongView(); }
 }
 async function songAnalyzeRun(x, onStep){
   x.noAI = x.waited = false;
@@ -6678,6 +6678,8 @@ async function songAnalyzeRun(x, onStep){
     save(); if (onStep) onStep(Math.min(k + 20, todo.length), todo.length);
   }
   delete x.noAI; delete x.waited; x.lines.forEach(l => delete l.old); x.lang = songLang(); save();
+  // the story comes with the first analysis (one more call); if it fails, the Story tab still has its own button
+  if (!x.story || x.story.unknown){ if (onStep) onStep(null); try { await songStory(x); } catch(e){} }
   if (x.lines.some(l => !l.mean && l.mean !== "-")) throw new Error(L("một số câu chưa dịch được", "some lines couldn't be translated"));
 }
 // read a Korean line aloud with a Korean voice, whatever course is open
@@ -6747,7 +6749,7 @@ function renderSongAdd(){
     S.songs.push(x); save();
     const b = $("#sgGo"), st = $("#sgStatus");
     busy(b, true, L("Đang phân tích…", "Analysing…")); st.classList.remove("hidden");
-    try { await songAnalyze(x, (n, all) => { if (st.isConnected) st.textContent = L(`Đã xong ${n}/${all} câu`, `${n}/${all} lines done`); }); }
+    try { await songAnalyze(x, (n, all) => { if (st.isConnected) st.textContent = n == null ? L("Đang viết câu chuyện bài hát…", "Writing the song's story…") : L(`Đã xong ${n}/${all} câu`, `${n}/${all} lines done`); }); }
     catch(e){ toast(L("Chưa phân tích xong: ", "Analysis stopped: ") + e.message + (e.reason ? ` (${e.reason})` : "")); }
     AR.songAdd = false; AR.song = x.id; AR.songTab = "ly";
     if (curView === "army" && AR.screen === "songs") { renderArmy(); scrollTo(0, 0); }
@@ -6808,7 +6810,8 @@ function songStoryUI(x, body){
         + list("🔮 Theory", s.theories) + list("✨ Fun facts", s.facts)
         + (s.origin || s.meaning || (s.theories || []).length || (s.facts || []).length ? "" : `<p class="muted">${L("Chưa tìm thấy thêm câu chuyện nào về bài này — mới có thông tin cơ bản ở trên.", "No more story found for this song yet — just the basics above.")}</p>`)
         + `<p class="small muted">${L("AI tổng hợp từ Google — có thể chưa chính xác.", "Put together by AI from Google — may not be fully accurate.")}</p>`}
-      <button class="${s ? "btn-ghost" : "btn"}" id="sgStory" style="width:100%">✨ ${s ? L("Viết lại", "Rewrite") : L("Kể chuyện bài hát", "Tell me about this song")}${hasKey() ? "" : " 🔒"}</button>
+      <button class="${s ? "btn-ghost" : "btn"}" id="sgStory" style="width:100%"${SONG_BUSY.has(x.id) ? " disabled" : ""}>${SONG_BUSY.has(x.id) ? `<span class="spinner"></span>${L("Đang phân tích…", "Analysing…")}`
+        : `✨ ${s ? L("Viết lại", "Rewrite") : L("Kể chuyện bài hát", "Tell me about this song")}${hasKey() ? "" : " 🔒"}`}</button>
     </div>`;
   $("#sgStory").onclick = async e => {
     if (!hasKey()) return songGoKey();
