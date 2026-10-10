@@ -71,9 +71,6 @@ header{display:none}   /* no app title bar: the course sits in the Vocabulary ti
 /* small phones: a flag + "Vietnamese" side by side no longer fit half the row, so the flag goes on top and the name gets the full width */
 .co-grid{container-type:inline-size}
 @container (max-width:300px){ .co-grid button{flex-direction:column;gap:4px;text-align:center;padding:10px 6px} }
-.co-set{margin:0}
-.co-set button{font-size:14px}   /* a value, like every other settings choice (14/400 scale) */
-.co-set button{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #gdStatus{background:var(--bg)}
 #gdStatus[data-st="expired"],#gdStatus[data-st="error"]{color:var(--bad);background:var(--bad-soft);border-color:color-mix(in srgb, var(--bad) 35%, transparent);font-weight:600}
 /* surfaces separate by fill (+ light-mode shadow), not outlines — borders stay transparent so hover/state colours can still use them */
@@ -674,11 +671,12 @@ body.ar-conv-on{overflow:hidden}
 .set-inline > label{flex:1;margin:0;font-size:14px;color:var(--text)}
 .set-inline > label.ui-lab{font-size:16px;font-weight:600}   /* the app-language row is a card of its own: titled like the other cards (h2) */
 .set-inline > input{flex:0 0 84px;text-align:center}
-.set-lab{font-size:14px;font-weight:600;color:var(--text);margin:22px 0 10px}   /* a settings row title, same look as the .set-inline labels */
-.qrow{display:flex;align-items:flex-start;gap:6px;margin:0 0 8px}
-.qlab{flex:0 0 58px;font-size:12px;font-weight:400;color:var(--muted);padding-top:11px}
-.qchips{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px}   /* wrapped chips stay in their own column, not under the label */
-.qt{position:relative;display:inline-flex;align-items:center;gap:5px;margin:0;padding:7px 12px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--bg);
+.set-inline > select{flex:0 0 auto;width:auto}   /* the course: as wide as its name, on the right like the number box */
+.set-lab{font-size:14px;font-weight:600;color:var(--text);margin:20px 0 8px}   /* a settings row title, same look as the .set-inline labels */
+.qrow{margin:0 0 12px}   /* group name above its chips: the chips get the card's full width and sit several to a row */
+.qlab{display:block;font-size:12px;font-weight:400;color:var(--muted);margin:0 0 6px}
+.qchips{display:flex;flex-wrap:wrap;gap:6px}
+.qt{position:relative;display:inline-flex;align-items:center;gap:5px;margin:0;padding:6px 11px;white-space:nowrap;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--bg);
   color:var(--muted);font-size:14px;cursor:pointer;user-select:none}
 .qt input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}   /* hidden box must not stretch the page (global input width:100%) */
 .qt:has(input:checked){background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
@@ -1183,7 +1181,7 @@ body.tu-on .toast{z-index:36}
       <!-- the course being learned, every option in view (the course button in the Vocab/Speak titles opens the same choice) -->
       <div id="setCourseCard" data-noi18n></div>
       <!-- study settings for the chosen course, in the same card -->
-      <div class="row set-inline" style="margin-top:20px"><label for="setNew">New words per day</label><input id="setNew" type="number" min="1" max="100"></div>
+      <div class="row set-inline" style="margin-top:12px"><label for="setNew">New words per day</label><input id="setNew" type="number" min="1" max="100"></div>
       <label class="set-lab">Question types</label>
       <!-- grouped by how you answer; each chip is a checkbox -->
       <div class="qrow"><span class="qlab">Choose</span><div class="qchips">
@@ -1196,7 +1194,7 @@ body.tu-on .toast{z-index:36}
       <div class="qrow"><span class="qlab">Speak</span><div class="qchips">
         <label class="qt"><input type="checkbox" data-mode="ko2say"><svg class="i" aria-hidden="true"><use href="#i-microphone"/></svg> Read aloud</label>
         <label class="qt"><input type="checkbox" data-mode="m2say"><svg class="i" aria-hidden="true"><use href="#i-microphone"/></svg> From meaning</label></div></div>
-      <label class="check"><input type="checkbox" id="setAuto"> Auto-play audio for Korean vocabulary</label>
+      <label class="check" style="margin-top:16px"><input type="checkbox" id="setAuto"> Auto-play audio for Korean vocabulary</label>
     </div>
     <div class="card">
       <h2>Voice</h2>
@@ -5046,7 +5044,7 @@ function setCourse(k){
   // or the Hangul page belong to the old course, so those fall back to their list / Add words
   navSave({ v: curView === "abc" ? "add" : curView, p: "", y: Math.round(scrollY) });
   if (!$("#welcome").classList.contains("hidden")) try { sessionStorage.setItem("wStep", wStep); } catch(e){}
-  $$(".co-pick, #setCourseCard button, #wCourse button").forEach(b => b.classList.toggle("on", b.dataset.k === k));   // the ✓ moves right away
+  $$(".co-pick, #wCourse button").forEach(b => b.classList.toggle("on", b.dataset.k === k));   // the ✓ moves right away
   reloadTo(L(`Đang chuyển sang ${courseName(k).toLowerCase()} ${COURSES[k].flag}…`, `Switching to ${courseName(k)} ${COURSES[k].flag}…`));
 }
 // one row per course (flag, name, word count, ✓ on the current one) — the header sheet and Settings show the same list
@@ -5065,11 +5063,11 @@ function openCourses(){
   bindCourseRows($("#courseSheet"));
   $("#coClose").onclick = closeCourses;
 }
-// Settings: the same choice as two columns of flags, at the top of the study settings — short codes (VIE) on phones, like the header
+// Settings: the same choice as one dropdown, at the top of the study settings
 function renderCourseCard(){
   if (!$("#setCourseCard")) return;
-  $("#setCourseCard").innerHTML = `<h2>${COURSE_TITLE()}</h2><div class="co-grid co-set">${COURSE_ORDER.map(k => `<button data-k="${k}" class="${k === CUR ? "on" : ""}" aria-pressed="${k === CUR}" title="${courseName(k)}"><span class="f">${COURSES[k].flag}</span>${courseName(k)}</button>`).join("")}</div>`;
-  $$("#setCourseCard button").forEach(b => b.onclick = () => setCourse(b.dataset.k));
+  $("#setCourseCard").innerHTML = `<div class="row set-inline"><label for="setCourse">${COURSE_TITLE()}</label><select id="setCourse">${COURSE_ORDER.map(k => `<option value="${k}"${k === CUR ? " selected" : ""}>${COURSES[k].flag}  ${courseName(k)}</option>`).join("")}</select></div>`;
+  $("#setCourse").onchange = e => setCourse(e.target.value);
 }
 function closeCourses(){ $("#courseModal").classList.add("hidden"); }
 $("#courseModal").onclick = e => { if (e.target === $("#courseModal")) closeCourses(); };   // tap on the dimmed backdrop = ✕
