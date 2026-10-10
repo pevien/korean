@@ -50,14 +50,20 @@ window.fetch = async (url, opts) => {
     await new Promise(r => setTimeout(r, 100));
     let out;
     if (p.includes("tell them about it")) out = { known: true, about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] };
+    else if (p.includes("For EVERY line marked")) out = { who: [{ n: 4, who: "V" }, { n: 5, who: "Jin" }] };
     else {
-      const n = (p.match(/^\d+\. \[/gm) || []).length;
-      out = { items: Array.from({ length: n }, (_, i) => ({ n: i + 1, rom: "rom " + (i + 1), mean: "nghĩa " + (i + 1), who: i === 3 ? "V" : "" })) };
+      // a chunk holding the 4th line is "blocked as recitation": no text, like the real API
+      if (p.includes("마지막 줄이에요")) return new Response(JSON.stringify({ candidates: [{ finishReason: "RECITATION" }] }));
+      const n = (p.match(/^\d+\. /gm) || []).length;
+      out = { items: Array.from({ length: n }, (_, i) => ({ n: i + 1, mean: "nghĩa " + (i + 1) })) };
     }
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(out) }] } }] }));
   }
+  if (String(url).includes("translate.googleapis")) { window.__free = (window.__free || 0) + 1; return new Response(JSON.stringify([[["dịch google", "x"]]])); }
   return realFetch(url, opts);
 };
+window.__opened = [];
+window.open = u => { window.__opened.push(u); return null; };
 """
 
 results = []
@@ -74,7 +80,10 @@ with sync_playwright() as pw:
     page.click("#arSongsOpen"); page.wait_for_timeout(200)
     check("empty list", "Chưa có bài nào" in page.inner_text("#v-army"))
     page.click("#sgNew"); page.wait_for_timeout(200)
-    page.fill("#sgTitle", "Test Song"); page.fill("#sgRaw", PASTE)
+    page.fill("#sgTitle", "Test Song")
+    page.click("#sgFind")
+    check("finds lyrics on Google", page.evaluate("__opened[0]").startswith("https://www.google.com/search?q=BTS%20Test%20Song%20lyrics"), page.evaluate("__opened"))
+    page.fill("#sgRaw", PASTE)
     page.click("#sgGo"); page.wait_for_selector(".sg-ly", timeout=5000); page.wait_for_timeout(200)
     page.screenshot(path=os.path.join(SP, "lyrics.png"), full_page=True)
 
@@ -82,13 +91,24 @@ with sync_playwright() as pw:
     texts = [l["t"] for l in song["lines"]]
     check("paste cleaned", texts == ["우리는 테스트 노래", "Hello test line", "노래를 불러요", "마지막 줄이에요", "Last english line"], texts)
     check("header singers", [l["who"] for l in song["lines"][:3]] == [["RM"], ["RM"], ["Jimin", "Jung Kook"]], [l["who"] for l in song["lines"]])
-    check("AI guesses singer of [Bridge] line", song["lines"][3]["who"] == ["V"] and song["lines"][3]["g"], song["lines"][3])
-    check("romanization only on Korean lines", song["lines"][0]["rom"] == "rom 1" and song["lines"][1]["rom"] == "", song["lines"][1])
-    check("meanings filled", all(l["mean"] for l in song["lines"]))
-    pr = page.evaluate("__prompts[0]")
-    check("prompt marks unknown singer with ?", "[?] 마지막 줄이에요" in pr and "[RM] 우리는" in pr, pr[-300:])
-    check("prompt asks Vietnamese", "Vietnamese translation" in pr)
+    check("AI picks a singer for every unknown line", [l["who"] for l in song["lines"][3:]] == [["V"], ["Jin"]] and all(l.get("gw") for l in song["lines"][3:]), song["lines"][3:])
+    check("no line left without a singer", all(l["who"] for l in song["lines"]))
+    rom = page.locator(".sg-r").all_inner_texts()
+    check("romanization worked out on Korean lines", rom == ["urineun teseuteu norae", "noraereul bulleoyo", "majimak jurieyo"], rom)
+    check("meanings filled", all(l["mean"] for l in song["lines"]), [l["mean"] for l in song["lines"]])
+    check("blocked line falls back to Google Translate, others from AI", song["lines"][3]["mean"] == "dịch google" and song["lines"][0]["mean"].startswith("nghĩa") and page.evaluate("__free") == 1,
+          [l["mean"] for l in song["lines"]])
+    pw_ = page.evaluate("__prompts")
+    sing = next(p for p in pw_ if "For EVERY line marked" in p)
+    check("singer prompt marks unknown lines with ?", "[?] 마지막 줄이에요" in sing and "[RM] 우리는" in sing and "Never leave it empty" in sing)
+    mean = next(p for p in pw_ if "translation of that line" in p)
+    check("meaning prompt asks Vietnamese, no romanization", "Vietnamese translation" in mean and "rom" not in mean.split("Return")[0].lower().replace("from", ""))
     check("chips per singer run", page.locator(".sg-who").count() == 4, page.locator(".sg-who").all_inner_texts())
+    check("speaker only on Korean lines", page.locator(".sg-say").count() == 3)
+    page.evaluate("() => { window.__said = []; speechSynthesis.speak = u => __said.push(u.text); }")
+    page.locator(".sg-say").first.click(); page.wait_for_timeout(100)
+    said = page.evaluate("__said")
+    check("speaker reads the Korean line (or says no voice)", said == ["우리는 테스트 노래"] or "giọng" in page.inner_text("#toast"), said)
 
     # hide meaning layer
     page.click('.sg-layers button[data-k="m"]'); page.wait_for_timeout(150)
@@ -98,7 +118,7 @@ with sync_playwright() as pw:
     # fix the guessed singer
     page.locator(".sg-who").nth(2).click(); page.select_option(".sg-pick", "SUGA"); page.wait_for_timeout(150)
     l3 = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs[0].lines[3]")
-    check("singer edited", l3["who"] == ["SUGA"] and not l3["g"], l3)
+    check("singer edited", l3["who"] == ["SUGA"] and not l3["g"] and not l3.get("gw"), l3)
 
     # story tab
     page.click('#sgTabs button[data-t="st"]'); page.wait_for_timeout(100)

@@ -135,16 +135,17 @@ The mic is only open during a turn. It is paused while a translation is being re
 
 Lets a fan learn a song: who sings each line, the original, its romanization and its meaning, plus the story behind the song. Songs are kept in `S.songs` and sync like saved conversations.
 
-- **The lyrics always come from the fan.** They type the title, tap **🔍 Find the lyrics on Genius**, copy the lyrics and paste them. AI never writes the lyrics: it misremembers them, and Gemini cuts off quoted lyrics.
+- **The lyrics always come from the fan.** They type the title, tap **🔍 Find the lyrics on Google**, copy the lyrics and paste them. AI never writes the lyrics: it misremembers them, and Gemini blocks quoted lyrics.
 - **Paste cleanup (`songParse`):**
-  - Anything above the first `[section]` line is dropped (Genius contributors, translations, blurb), and so are junk lines ("You might also like", "…Embed").
-  - `[Chorus: Jimin & Jung Kook]` sets the singers of the lines that follow. A header with no names leaves the line's singer unknown, for AI to guess.
-- **✨ Analyse (`songAnalyze`, needs a key):** the lines go to Gemini numbered, 40 at a time.
-  - Gemini returns only `rom` (as sung, Korean lines only), `mean` (in the app's language, not the course's meaning language), and `who` for unknown singers.
-  - It never repeats the lyrics.
-  - A run that stops halfway keeps what's done, and **✨ Finish analysing** carries on.
+  - Anything above the first `[section]` line is dropped (contributors, translations, blurb), and so are junk lines ("You might also like", "…Embed").
+  - `[Chorus: Jimin & Jung Kook]` sets the singers of the lines that follow.
+- **Romanization (`songRom`)** is worked out in code, never by AI: Revised Romanization with the common sound changes (했어 → haesseo, 합니다 → hamnida, 같이 → gachi). It is computed from each line when shown.
+- **✨ Analyse (`songAnalyze`, needs a key)** makes two kinds of calls, so one failure can't wipe out everything:
+  - **Singers (`songSingers`):** the whole song goes in, and the answer is names only for the lines marked `?`. AI must always pick a member, guessing from the song's structure if unsure. A second round asks again for any still missing. Guesses are kept as `gw` and shown with `?`.
+  - **Meanings (`songMeanings`):** 20 lines per call, in the app's language (not the course's meaning language). Gemini can block an answer that matches published text (`finishReason: RECITATION`, shown in the error toast), so a refused chunk is split in half and retried. A single line it still refuses gets its meaning from free Google Translate.
 - **Lyrics tab:**
-  - A colour bar per member, and a chip where the singer changes. `?` after a name means AI guessed it; tap the chip to fix that run of lines.
+  - A colour bar per member, and a chip where the singer changes. Tap the chip to fix that run of lines.
+  - A 🔊 on every Korean line reads it with a Korean voice (`arVoiceFor("ko")`), whatever course is open, for pronunciation practice.
   - **Original / Romanized / Meaning** toggles hide layers for practice (`settings.songHide`).
 - **Story tab (`songStory`):** about, origin & inspiration, meaning, theories and fun facts, written by AI in the app's language without quoting the lyrics. It carries a "may not be accurate" note.
 - **Without a key:** the AI buttons show 🔒 and lead to the key setup. Songs analysed earlier stay readable.
