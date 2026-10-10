@@ -597,7 +597,7 @@ body.ar-conv-on{overflow:hidden}
 .qfb #sayMine{flex:0 0 auto;margin:-4px -4px 0 0;padding:5px 10px;font-size:13px;white-space:nowrap}
 .dock #sayAgain{width:100%;margin-bottom:8px}   /* say it again: a full row above the grade / Continue buttons */
 .dock #sayAgain.on{color:var(--bad)}
-.dock #sayAgainSt{text-align:center;margin:0 0 6px} .dock #sayAgainSt:empty{display:none}
+.dock #sayAgainSt{text-align:center;margin:0 0 6px} .dock #sayAgainSt:empty, #sayStatus:empty{display:none}
 .qfb .small{color:var(--muted)}
 .qfb .small b{color:var(--fb)}
 .qfb .fb-heard,.qfb .fb-ans,.qfb .fb-sc{margin-top:4px;font-size:15px}   /* the feedback lines (score, what they wrote, the right word, issues) share one size; 13px is only for side notes (graded by, issue type) */
@@ -807,6 +807,7 @@ input.sw:checked{background:var(--accent)}
 input.sw:checked::after{transform:translateX(16px)}
 input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .turn{text-align:center;font-size:14px;font-weight:600;color:var(--ok);min-height:20px;margin-top:8px}
+#cStatus:empty{display:none}
 .sent{padding:12px;border-radius:var(--r-md);cursor:pointer;border:1px solid transparent;margin-bottom:4px}
 .sent:not(.coaching):hover{background:var(--bg)}
 .sent.cur{background:var(--accent-soft);border-color:var(--accent)}
@@ -899,6 +900,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 body.tu-on .toast{z-index:36}
 .tu-head{display:flex;align-items:center;gap:10px;padding:10px 8px 10px 14px;border-bottom:1px solid var(--line)}
 .tu-head .h{flex:1;min-width:0;line-height:1.25}
+.tu-head .icon-btn + .icon-btn{margin-left:-10px}   /* new chat and close sit together */
 .tu-head .h b{display:block;font-size:15px}
 /* level dropdown under the name, changeable without leaving the chat (the course is the flag after the name; it's switched from the app header, since that reloads) */
 .tu-sub{display:flex;margin-top:3px;min-width:0}
@@ -2908,7 +2910,7 @@ function renderQuiz(item){
     answer = `<div class="choices">${opts.map((o,i)=>`<button class="choice" data-i="${i}"><span class="k">${i+1}</span><span lang="${TL}" style="font-size:20px">${esc(o.ko)}</span></button>`).join("")}</div>`;
   } else if (SPEAK_MODES.includes(mode)){
     answer = `<div class="dock" id="sayDock"><button class="speak big rec" id="sayRec" title="Record">${ic("microphone")}</button>
-      <p class="small muted" id="sayStatus" style="margin:0;text-align:center">Tap 🎙 and say it</p>
+      <p class="small muted" id="sayStatus" style="margin:0;text-align:center"></p>
       <div class="cgrade-row"><span class="small muted">Grading</span><div class="seg cgrade" id="sayGrade"><button data-g="basic" title="${L("Nhận giọng nói của trình duyệt: chỉ xem máy có nhận ra đúng từ không", "Browser speech recognition: only checks whether the word was recognised")}">⚡ Basic</button><button data-g="ai" title="${L("Gemini nghe giọng bạn: chấm điểm phát âm và gợi ý cách sửa", "Gemini listens to you: pronunciation score and tips")}">✨ AI</button></div></div>
       <p class="small muted hidden" id="sayNote" style="text-align:center;margin:6px 0 0">AI grading needs a Gemini key. <button class="linkbtn" id="sayKeyLink">Add key</button></p>
       <p class="hint-box">${ic("lightbulb")}<span id="hintTxt"></span></p>
@@ -3144,22 +3146,26 @@ function frCancel(){
   FR.rec = FR.recog = FR.stream = null;
   frBtn(false);
 }
+// the mic button carries the state (idle / true = recording / "busy" = grading); the line above it is only for errors and live text
 function frBtn(on){
-  const b = $("#sayRec"); if (b){ b.classList.toggle("on", on); b.innerHTML = ic(on ? "stop-fill" : "microphone"); }
-  const a = $("#sayAgain"); if (a){ a.classList.toggle("on", on); a.innerHTML = ic(on ? "stop-fill" : "microphone") + " " + (on ? L("Dừng", "Stop") : L("Luyện lại", "Practice again")); }
+  const busy = on === "busy", spin = `<span class="spinner" style="margin:0"></span>`;
+  on = on === true;
+  const b = $("#sayRec"); if (b){ b.classList.toggle("on", on); b.disabled = busy; b.innerHTML = busy ? spin : ic(on ? "stop-fill" : "microphone"); }
+  const a = $("#sayAgain"); if (a){ a.classList.toggle("on", on); a.disabled = busy;
+    a.innerHTML = busy ? spin + " " + L("Đang chấm…", "Checking…") : ic(on ? "stop-fill" : "microphone") + " " + (on ? L("Đang ghi…", "Recording…") : L("Luyện lại", "Practice again")); }
 }
-// after the answer the dock is gone: recording status for "say it again" shows in the result box
-function frSay(html){ const el = $("#sayAgainSt") || $("#sayStatus"); if (el) el.innerHTML = html; }
+// after the answer the dock is gone: messages for "say it again" show in the result box; any message after a try puts the button back
+function frSay(html){ const el = $("#sayAgainSt") || $("#sayStatus"); if (el) el.innerHTML = html; if (!FR.rec && !FR.recog) frBtn(false); }
 const frBlocked = () => L("🎙 Micro bị chặn. Cho phép micro cho trang này rồi thử lại (xem Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked. Allow it for this site and try again (see Settings → Voice → Microphone & speaking).");
 async function sayStart(item){
-  ttsCancel();
+  ttsCancel(); frSay("");
   // the picked grading mode; Basic falls back to AI only when this browser has no speech recognition
   const useAI = hasKey() && navigator.mediaDevices && window.MediaRecorder && (coachAI() || !SR);
   FR.heard = ""; FR.alts = []; FR.spoke = false; FR.stopping = false; item.pron = "";
   try {
     if (useAI){
       const g = FR.gen; FR.starting = true;
-      const st = await micWait($("#sayRec"), navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })).finally(() => { FR.starting = false; });
+      const st = await micWait($("#sayAgain") || $("#sayRec"), navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })).finally(() => { FR.starting = false; });
       if (g !== FR.gen){ st.getTracks().forEach(t => t.stop()); return; }   // left the question / tab while the mic was opening
       FR.stream = st; FR.chunks = [];
       FR.rec = new MediaRecorder(FR.stream);
@@ -3199,7 +3205,6 @@ async function sayStart(item){
     return;
   }
   FR.t0 = Date.now(); frBtn(true);
-  frSay(L("🔴 Đang ghi… nói xong bấm ⏹", "🔴 Recording… tap ⏹ when done"));
   FR.timer = setTimeout(sayStop, 8000);
 }
 function sayStop(){
@@ -3217,7 +3222,7 @@ async function sayRecorded(item){
   const c = item.card, read = item.mode === "ko2say" || item.answered;   // saying it again: the right word is on screen by now
   if (item.myUrl) URL.revokeObjectURL(item.myUrl);
   item.myUrl = URL.createObjectURL(blob);   // lets them replay their own attempt next to the feedback
-  item.busy = true; frSay(`<span class="spinner"></span>` + L("Đang chấm…", "Checking…"));
+  item.busy = true; frSay(""); frBtn("busy");
   try {
     const audio = [{ inline_data: { mime_type: "audio/wav", data: await blobToWavB64(blob) } }];
     const heard = await aiHear(audio, dur);
@@ -4117,7 +4122,7 @@ function openCoach(i){
   const el = placeCoach();
   $("#cTarget").textContent = s.ko; $("#cTargetM").textContent = s.meaning || "";
   $("#cResult").innerHTML = ""; $("#cMine").disabled = true;
-  $("#cStatus").textContent = coachAI() || SR ? "Tap 🎙 and read aloud. Tap again to stop."
+  $("#cStatus").textContent = coachAI() || SR ? ""
     : "⚠️ This browser can't check speech without AI. Add a Gemini key in Settings, or use Chrome/Safari.";
   syncGrade();
   // the sticky player sits on top of whatever scrolls to the top edge → stop just below it so 🔊/🎙 stay tappable
@@ -4137,8 +4142,10 @@ function cancelRec(){
   try { if (C.recog) { C.recog.onend = null; C.recog.abort(); } } catch(e){}
   if (C.stream) C.stream.getTracks().forEach(t => t.stop());
   C.rec = C.recog = C.stream = null;
-  const b = $("#cRec"); if (b) { b.classList.remove("on"); b.innerHTML = ic("microphone"); }
+  cBusy(false);
 }
+// grading: the 🎙 button turns into a spinner (the status line under it is only for errors and live text)
+function cBusy(on){ C.busy = on; const b = $("#cRec"); if (!b) return; b.classList.remove("on"); b.disabled = on; b.innerHTML = on ? `<span class="spinner" style="margin:0"></span>` : ic("microphone"); }
 /* explain *why* the mic is blocked (file://, Chrome app permission, site permission) */
 function micHelp(kind, el){
   // only reached once opening the mic actually failed — a Mac in DevTools Android mode never gets here
@@ -4209,7 +4216,7 @@ async function startRec0(){
         // Android Chrome often can't share the mic between the recorder and speech recognition:
         // keep the recording going instead of failing, and just skip live transcription.
         if (C.rec && C.rec.state === "recording" && (ev.error === "audio-capture" || ev.error === "not-allowed" || ev.error === "service-not-allowed")) {
-          C.recog = null; $("#cStatus").textContent = "🔴 Recording… (live check unavailable on this device — tap ⏹ when done)"; return;
+          C.recog = null; $("#cStatus").textContent = ""; return;
         }
         C.srErr = ev.error;
         if (ev.error === "not-allowed" || ev.error === "service-not-allowed") micHelp("denied");
@@ -4220,7 +4227,7 @@ async function startRec0(){
         if (!C.recog) return;
         // recognition that dies right away (network error, busy mic…) shouldn't cut the recording to "too short"
         if (C.rec && C.rec.state === "recording" && !C.heard && Date.now() - C.t0 < 1500) {
-          C.recog = null; $("#cStatus").textContent = "🔴 Recording… (live check unavailable — tap ⏹ when done)"; return;
+          C.recog = null; $("#cStatus").textContent = ""; return;
         }
         if (["not-allowed", "service-not-allowed", "audio-capture", "network"].includes(C.srErr)) return stopRec();
         base = C.heard;
@@ -4231,7 +4238,7 @@ async function startRec0(){
   }
   C.t0 = Date.now();
   const b = $("#cRec"); b.classList.add("on"); b.innerHTML = ic("stop-fill");
-  $("#cStatus").textContent = "🔴 Recording… read the sentence, then tap ⏹";
+  $("#cStatus").textContent = "";
   C.autoStop = setTimeout(stopRec, 30000);
 }
 function stopRec(){
@@ -4299,12 +4306,12 @@ That transcript is final — grade exactly those words (use the audio only to ju
 const coachSent = () => { const s = curP.sentences[C.i]; return { ...s, ko: noSpeaker(s.ko) }; };
 async function evaluateAI(){
   const s = coachSent(), tok = C.tok;
-  C.busy = true; $("#cStatus").innerHTML = `<span class="spinner"></span>Coach is listening to your recording…`;
+  cBusy(true); $("#cStatus").textContent = "";
   try {
     const audio = [{ inline_data: { mime_type: "audio/wav", data: await blobToWavB64(C.blob) } }];
     const heard = await aiHear(audio, C.dur);
     if (tok !== C.tok) return;
-    if (!heard){ C.busy = false; $("#cStatus").textContent = "Didn't catch that — speak a bit louder and closer to the mic, then try again."; return; }
+    if (!heard){ cBusy(false); $("#cStatus").textContent = "Didn't catch that — speak a bit louder and closer to the mic, then try again."; return; }
     const j = coachClean(extractJSON(await gemini(coachPrompt(s, heard), audio, { system: feedbackLangRule(), temperature: 0.2 })));
     j.heard = heard;
     await fixFeedbackLang([[j, "good"], [j, "overall"], ...j.issues.map(x => [x, "tip"])]);
@@ -4312,7 +4319,7 @@ async function evaluateAI(){
   } catch(e){
     if (tok === C.tok) $("#cStatus").textContent = "⚠️ " + e.message;
   }
-  if (tok === C.tok) C.busy = false;
+  if (tok === C.tok) cBusy(false);
 }
 
 // what the coach listens for in each language: [accuracy, fluency, intonation]
@@ -5627,7 +5634,7 @@ Return JSON exactly like: {"ko":"","mean":""}`, null, { temperature: 0.8 }));
 }
 async function talkTurn(blob, dur){
   const t = S.talk; if (!t) return;
-  TK.busy = true; TK.hints = null; TK.status = `<span class="spinner"></span>${L("Đang nghe bạn nói…", "Listening to you…")}`;
+  TK.busy = true; TK.hints = null; TK.status = "";   // the 🎙 button shows the spinner (renderTalkChat)
   const me = { who: "me", pending: true }; t.turns.push(me);
   renderTalkChat();
   try {
@@ -5750,6 +5757,7 @@ function renderTalkChat(){
   const rs = $("#tkRate"); syncPRate();   // fills #tkRate from Settings → Speed (the reader's box may not be synced yet after a reload)
   rs.onchange = () => { $("#pRate").value = rs.value; $("#pRate").onchange(); fitPRate(rs); };
   if (TK.rec) talkRecUI(true);
+  if (TK.busy){ const b = $("#tkRec"); b.disabled = true; b.innerHTML = `<span class="spinner" style="margin:0"></span>`; }   // grading what was just said
   talkStatus(TK.status);
   const ttsBtn = () => { const b = $("#tkTts"); b.innerHTML = ic(talkTts() ? "speaker-high" : "speaker-slash"); b.setAttribute("aria-label", talkTts() ? L("Đọc to", "Read aloud") : L("Tắt tiếng", "Muted")); b.title = talkTts() ? L("AI đang đọc to — chạm để tắt", "AI reads aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); };
   ttsBtn();
@@ -6161,7 +6169,7 @@ function renderIeExam(){
       </div>
     </div>`;
   $("#ielts").classList.add("tk-chat"); document.body.classList.add("talking");   // the tab bar steps aside like in Talk
-  ieStatus(IE.status || (ph === "ask" ? L("Chạm 🎙 để trả lời, nói xong chạm ⏹.", "Tap 🎙 to answer, ⏹ when you're done.") : ph === "ready" ? L("Chạm 🎙 và nói 1–2 phút.", "Tap 🎙 and talk for 1–2 minutes.") : ""));
+  ieStatus(IE.status);   // only errors: the 🎙 button shows recording / scoring
   if ($("#ieSay")) $("#ieSay").onclick = () => speak(x.q);
   if ($("#ieShowQ")) $("#ieShowQ").onclick = () => { IE.showQ = true; renderIeExam(); };
   if ($("#ieNotes")) $("#ieNotes").oninput = e => { t.notes = e.target.value; };
@@ -7248,7 +7256,7 @@ function tuScreen(){
   const sec = $("#arConv") || $$("section[id^=v-]").find(s => !s.classList.contains("hidden"));
   return sec ? sec.innerText.replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n").trim().slice(0, 2500) : "";
 }
-const tuPersona = m => m ? `You are ${m.name} of BTS, playing a private ${CO.en} tutor for an ARMY (BTS fan) — ${m.vibe}. Stay in character: talk like ${m.name} would, friendly and close, with an emoji now and then, and sign as ${m.name} when it feels natural. Only mention well-known public facts about BTS; never make up private details, and if asked, admit with a wink that you're an AI tutor playing ${m.name}. Teaching always comes first.
+const tuPersona = m => m ? `You are ${m.name} of BTS, playing a private ${CO.en} tutor for an ARMY (BTS fan) — ${m.vibe}. Stay in character: talk like ${m.name} would, friendly and close, with an emoji now and then. Never sign your messages with your name — the app already shows who is talking. Only mention well-known public facts about BTS; never make up private details, and if asked, admit with a wink that you're an AI tutor playing ${m.name}. Teaching always comes first.
 ` : "";
 const tuSystem = () => `${tuPersona(TU.idol)}You are a warm, patient ${CO.en} teacher inside the learning app "Grow with PV", helping a ${levelDesc(curLevel())} learner — like a private tutor sitting next to them while they study.
 - Reply in ${uiLangName()}${CO.en === uiLangName() ? "" : `, never in ${CO.en}: use ${CO.en} only for the words, phrases and examples being taught`}. Write ${CO.en} ${CO.script}${CO.words ? "" : " and add the pronunciation in Latin letters in (parentheses) after new words"}. Put each ${CO.en} word or phrase in **bold**.
