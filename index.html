@@ -6691,14 +6691,20 @@ function songSay(t){
   const u = new SpeechSynthesisUtterance(t); u.voice = v; u.lang = v.lang; u.rate = S.settings.rate;
   songSay.u = u; speechSynthesis.speak(u);
 }
-// the story behind the song: looked up on Google (Search grounding) so the album and release date are always found; never quoting the lyrics
+// the story behind the song: looked up on Google (Search grounding) so the album and release date are always found; never quoting the lyrics.
+// Google Search has its own free quota (per day): once it's used up the search call keeps failing with 429 while plain calls still work,
+// so the story is then written from what the model knows, and the search is skipped for a while instead of failing first every time
+let songNoSearchUntil = 0;
 async function songStory(x){
   const prompt = `A BTS fan is studying the song "${x.title}" by BTS (it may be a solo or sub-unit song by a member). Search the web for it first, then in ${songLang()} tell them about it, in a warm fan-friendly tone.
 Return only JSON: {"album":"the album/single it was released on","released":"release date (day month year if known)","about":"1–2 sentences: who wrote/produced it, what kind of song it is","origin":"how the song came to be: the inspiration and story behind the writing","meaning":"its message and themes, what the members have said about it","theories":["popular fan theories or connections (e.g. to the BU storyline, other songs, the MV), each clearly framed as a theory"],"facts":["3–5 fun facts: records, performances, behind-the-scenes"]}
 Fill EVERY field from what the search turns up (interviews, album liner notes, Weverse/V Live talks, articles, fan wikis) and what you know — the fan wants the full story. "album" and "released" are always required. Leave a field empty only when nothing at all can be found for it; never invent. Paraphrase — do not quote the lyrics.`;
   let txt;
-  try { txt = await gemini(prompt, undefined, { temperature: 0.3, search: true }); }
-  catch(e){ if (e.status === 429 || e.status === 403) throw e; txt = await gemini(prompt, undefined, { temperature: 0.4 }); }   // no search on this model/key: answer from memory
+  if (Date.now() >= songNoSearchUntil){
+    try { txt = await gemini(prompt, undefined, { temperature: 0.3, search: true }); }
+    catch(e){ if (e.status === 403) throw e; if (e.status === 429) songNoSearchUntil = Date.now() + 30 * 60000; }
+  }
+  if (!txt) txt = await gemini(prompt, undefined, { temperature: 0.4 });   // search unavailable (quota, model, key): answer from memory
   const j = extractJSON(txt);
   x.story = { album: String(j.album || ""), released: String(j.released || ""), about: String(j.about || ""), origin: String(j.origin || ""), meaning: String(j.meaning || ""),
     theories: arrOf(j.theories).map(String), facts: arrOf(j.facts).map(String) };

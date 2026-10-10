@@ -56,6 +56,7 @@ window.fetch = async (url, opts) => {
     await new Promise(r => setTimeout(r, 100));
     let out;
     if (window.__quota && !p.includes("tell them about it")) return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 });
+    if (window.__searchQuota && body.tools) { window.__searchFails = (window.__searchFails || 0) + 1; return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 }); }
     if (p.includes("tell them about it")) { window.__storyBody = JSON.parse(opts.body); window.__storyModel = window.__models[window.__models.length - 1]; window.__stories = (window.__stories || 0) + 1; out = { album: "Album thử", released: "13/2/2017", about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] }; }
     else {
       // a chunk holding the 4th line is "blocked as recitation": no text, like the real API
@@ -162,6 +163,12 @@ with sync_playwright() as pw:
     check("story on the model picked in Settings", page.evaluate("__storyModel") == "gemini-2.5-flash")
     check("story looked up on Google", page.evaluate("__storyBody.tools") == [{"google_search": {}}])
     check("story shown", "Nguồn gốc thử" in st and "Fact 2" in st and "Theory thử" in st, st)
+    # Google Search quota used up (plain calls still fine): the story is still written, and search is skipped next time
+    page.evaluate("() => { window.__searchQuota = true; window.__stories = 0; }")
+    page.click("#sgStory"); page.wait_for_function("__stories >= 1 && !document.querySelector('#sgStory').disabled", timeout=5000); page.wait_for_timeout(100)
+    check("search quota: story still written without search", page.evaluate("__stories") == 1 and page.evaluate("__storyBody.tools") is None and "Album thử" in page.inner_text("#sgBody"))
+    page.click("#sgStory"); page.wait_for_function("__stories >= 2 && !document.querySelector('#sgStory').disabled", timeout=5000)
+    check("search quota: search skipped on the next story", page.evaluate("__searchFails") == 1)
     check("story prompt doesn't quote lyrics", "do not quote the lyrics" in page.evaluate("__prompts[__prompts.length-1]"))
 
     # survives a reload; list shows it
