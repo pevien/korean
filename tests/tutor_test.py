@@ -95,7 +95,7 @@ def B(page):
     sysp = body["systemInstruction"]["parts"][0]["text"]
     check("B: input asks that member", page.get_attribute("#tuIn", "placeholder") == f"Hỏi {page.inner_text('#tuTitle').rsplit(' ', 1)[0]}…", page.get_attribute("#tuIn", "placeholder"))
     check("B: system prompt plays that member", f"of BTS" in sysp and idol in sysp, sysp[:200])
-    check("B: no follow-up question at the end", "never end a reply with a follow-up question" in sysp)
+    check("B: drills keep going question by question", "give the next question in the same message" in sysp)
     check("B: plain-text answer requested", body["generationConfig"]["responseMimeType"] == "text/plain")
     check("B: system prompt has course, level and UI language", "Korean teacher" in sysp and "Vietnamese" in sysp and "beginner" in sysp, sysp[:200])
     check("B: system prompt has the screen the learner is on", "What the app is showing them" in sysp and len(sysp.split('"""')[1].strip()) > 10, sysp[-300:])
