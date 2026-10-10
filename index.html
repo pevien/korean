@@ -524,14 +524,13 @@ body.ar-conv-on{overflow:hidden}
 .ar-hist .tr{font-size:calc(16px * var(--ar-fs,1));line-height:1.45}
 .ar-hist .ko{font-size:calc(13px * var(--ar-fs,1));color:var(--muted);line-height:1.45;margin-bottom:2px}
 .ar-hist time{font-size:11px;color:var(--muted);float:right;margin-left:8px}
-/* ARMY → 🎵 BTS Songs: one line per lyric, a colour bar per singer, layers the fan can hide to practise */
+/* ARMY → 🎵 BTS Songs: one line per lyric, layers the fan can hide to practise */
+#sgDel{width:43px;height:43px;padding:0;border-radius:50%;display:grid;place-items:center;align-self:center}   /* round icon button beside the analyse button */
+#sgDel[data-confirm]{width:auto;padding:0 16px;border-radius:999px}   /* armed: grows into a pill to fit "Chạm để xoá" */
 .sg-ly{list-style:none;margin:0;padding:0}
-.sg-l{position:relative;padding:6px 44px 6px 12px;border-left:3px solid var(--c);margin-bottom:4px;min-height:40px}
+.sg-l{position:relative;padding:6px 44px 6px 12px;border-left:3px solid var(--line);margin-bottom:4px;min-height:40px}
 .sg-say{position:absolute;right:0;top:4px;padding:8px;line-height:1;background:none;color:var(--accent)}
 .sg-l.sg-sec{margin-top:16px}
-.sg-who.none{background:var(--soft);color:var(--muted)}
-.sg-who{display:inline-block;margin:0 0 4px;padding:2px 10px;border:none;border-radius:var(--r-pill);background:var(--c);color:#fff;font-size:12px;font-weight:600;cursor:pointer}
-.sg-pick{width:auto;padding:4px 8px;margin-bottom:4px;font-size:13px}
 .sg-o{font-size:16px;line-height:1.45;font-weight:500}
 .sg-r{font-size:13px;color:var(--accent);line-height:1.4;font-style:italic}
 .sg-m{font-size:14px;color:var(--muted);line-height:1.45}
@@ -6576,35 +6575,26 @@ function renderArmyView(){
   });
   arStyle();
 }
-/* ---------------- ARMY → 🎵 BTS Songs: the fan pastes the lyrics, AI adds who sings, romanization, meaning and the song's story ---------------- */
+/* ---------------- ARMY → 🎵 BTS Songs: the fan pastes the lyrics, AI adds romanization, meaning and the song's story ---------------- */
 // the lyrics always come from the fan's paste: AI never writes them (it misremembers lines, and Gemini cuts off quoted lyrics)
 // meanings follow the app's language (not the course's meaning language): a Vietnamese fan reads them in Vietnamese
 const songLang = () => UI === "vi" ? "Vietnamese" : "English";
-const SONG_MEMBERS = ["RM", "Jin", "SUGA", "j-hope", "Jimin", "V", "Jung Kook", "All"];
-const SONG_COLOR = { RM: "#3b82f6", Jin: "#ec4899", SUGA: "#64748b", "j-hope": "#f97316", Jimin: "#ca8a04", V: "#16a34a", "Jung Kook": "#8b5cf6", All: "var(--accent)" };
-const SONG_ALIAS = [["rm|rap ?monster|namjoon|kim namjoon|남준|알엠|김남준", "RM"], ["jin|seokjin|kim seokjin|석진|진|김석진", "Jin"], ["suga|yoongi|min yoongi|agust ?d|슈가|윤기|민윤기", "SUGA"],
-  ["j-?hope|hoseok|jung hoseok|hobi|제이홉|호석|정호석", "j-hope"], ["jimin|park jimin|지민|박지민", "Jimin"], ["v|taehyung|kim taehyung|뷔|태형|김태형", "V"],
-  ["jung ?kook|jeon jung ?kook|jk|정국|전정국", "Jung Kook"], ["all|bts|everyone|방탄소년단|다같이|모두|전원", "All"]]
-  .map(([a, m]) => [new RegExp(`(?<![\\p{L}\\p{N}-])(?:${a})(?![\\p{L}\\p{N}-])`, "iu"), m]);
-// "Jimin & Jung Kook", "Verse 1 - RM", "V (뷔)" → stage names in the order they appear; anything unknown is dropped
-const songWho = s => { s = String(s || ""); return [...new Set(SONG_ALIAS.map(([r, m]) => { const k = s.search(r); return k < 0 ? null : [k, m]; })
-  .filter(Boolean).sort((a, b) => a[0] - b[0]).map(a => a[1]))]; };
-// the fan's paste (often a whole Genius page) → lyric lines; "[Chorus: Jimin & V]" headers set who sings what follows
+// the fan's paste (often a whole Genius page) → lyric lines; "[Chorus]"-style headers only start a new section
 function songParse(raw){
   let rows = String(raw || "").replace(/\r/g, "").split("\n").map(t => t.trim());
   const first = rows.findIndex(t => /^\[[^\]]+\]$/.test(t));
   if (first > 0) rows = rows.slice(first);   // Genius: contributors, translations and the blurb sit above the first [section]
   const junk = /^(\d+\s*contributors?.*|translations?|you might also like|embed|see .* live|get tickets.*|.* lyrics)$/i;
-  const out = []; let who = [], sec = 0, gap = false;
+  const out = []; let sec = 0, gap = false;
   rows.forEach(t => {
     t = t.replace(/\d*Embed$/, "").trim();
     if (!t){ gap = true; return; }
     const h = t.match(/^\[([^\]]*)\]$/);
-    if (h){ const k = h[1].indexOf(":"); who = songWho(k < 0 ? h[1] : h[1].slice(k + 1)); sec++; gap = false; return; }   // [Chorus: Jimin & V], [Jimin], [Verse 1 - RM]
+    if (h){ sec++; gap = false; return; }
     if (junk.test(t)) return;
     if (gap && out.length){ sec++; }
     gap = false;
-    out.push({ t, who: who.slice(), g: !who.length, sec, mean: "" });
+    out.push({ t, sec, mean: "" });
   });
   return out.slice(0, 200);
 }
@@ -6644,39 +6634,17 @@ function songRom(text){
   });
 }
 // meaning when AI can't give one: free Google Translate, from whatever language the line is in
-async function songTranslateFree(t){
+async function songTranslateFree(t, retry = 1){
   try {
     const r = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&dt=t&tl=" + (UI === "vi" ? "vi" : "en") + "&q=" + encodeURIComponent(t));
     return ((await r.json())[0] || []).map(x => x[0]).join("").trim();
-  } catch(e){ return ""; }
+  } catch(e){ return retry ? (await new Promise(r => setTimeout(r, 800)), songTranslateFree(t, retry - 1)) : ""; }
 }
-// who sings the lines the paste didn't say: a short answer of its own (names only), so a blocked translation can't take it down too.
-// Memory alone gets the line distribution wrong, so Gemini first looks the song up on Google (Genius [Verse: member] tags,
-// colour-coded lyrics) with Flash rather than Lite; only if searching fails does it answer from what it knows
-async function songSingers(x){
-  const ask = x.lines.map((l, i) => i).filter(i => x.lines[i].g);
-  for (let round = 0; round < 2 && ask.some(i => x.lines[i].g); round++){
-    const prompt = `The BTS song "${x.title}". Below are its lines, numbered, each with its singer in brackets; "?" = not known yet.
-For EVERY line marked "?", say who sings it in the official studio recording.
-First search the web for this song's member line distribution — Genius lyrics with [Verse/Chorus: member] tags, colour-coded lyrics, line distribution videos — and follow it line by line, matching each line here to its line there (they may be in Korean, romanized or translated). Lines marked with a singer are certain: use them to keep your place in the song.
-A part that repeats keeps its singers unless the source says otherwise. Only if nothing can be found, give your best guess from the song's structure (a rap verse → RM, SUGA or j-hope). Never leave a line empty.
-Stage names only: ${SONG_MEMBERS.join(", ")}; several singers joined with ", "; "All" only when the whole group sings. Do not repeat the lines.
-Return only JSON: {"who":[{"n":1,"who":"Jimin"}]} — one item per "?" line.
-
-${x.lines.map((l, i) => `${i + 1}. [${l.g ? "?" : l.who.join(", ") || "?"}] ${l.t}`).join("\n")}`;
-    let txt;
-    try { txt = await gemini(prompt, undefined, { temperature: 0, search: true, model: hearModel() }); }
-    catch(e){ if (e.status === 429 || e.status === 403) throw e; txt = await gemini(prompt, undefined, { temperature: 0.2 }); }   // no search on this model/key: answer from memory
-    const j = extractJSON(txt);
-    arrOf(j.who || j.items || j).forEach(it => {
-      const l = x.lines[+it.n - 1], w = songWho(it.who);
-      if (l && l.g && w.length){ l.who = w; l.gw = true; l.g = false; }   // gw: AI's guess, shown with "?"
-    });
-  }
-  save();
-}
-// meaning in the app's language, a few lines at a time; a chunk Gemini refuses is split smaller, and a single line it still refuses goes to Google Translate
-async function songMeanings(x, idx){
+// meaning in the app's language, a few lines at a time. A chunk Gemini refuses (RECITATION) is split smaller at most twice (20 → 10 → 5),
+// then what's still missing goes to free Google Translate — endless splitting burnt the free quota. Out of quota (429): the rest of the
+// song goes to Google Translate too (x.noAI for this run), so the analysis always finishes
+async function songMeanings(x, idx, depth = 0){
+  if (x.noAI){ for (const i of idx) if (!x.lines[i].mean) x.lines[i].mean = x.lines[i].old?.mean || await songTranslateFree(x.lines[i].t); return; }
   const prompt = `You help a BTS fan understand the song "${x.title}" by BTS. The fan pasted the lyrics; some lines are below, numbered.
 For each number give a natural ${songLang()} translation of that line, faithful to its meaning and mood, read in the context of the song. If a line is already in ${songLang()}, "-".
 Return exactly ${idx.length} items, in order: {"items":[{"n":1,"mean":""}]}
@@ -6686,10 +6654,14 @@ ${idx.map((i, j) => `${j + 1}. ${x.lines[i].t}`).join("\n")}`;
     const items = arrOf((j => j.items || j)(extractJSON(await gemini(prompt, undefined, { temperature: 0.3 }))));
     idx.forEach((i, j) => { const it = items.find(v => +v.n === j + 1) || (items.length === idx.length ? items[j] : null); if (it && it.mean) x.lines[i].mean = String(it.mean).trim(); });
   } catch(e){
-    if (e.status === 429 || e.status === 400 || e.status === 403) throw e;   // quota or key: splitting won't help
-    if (idx.length > 1){ const h = Math.ceil(idx.length / 2); await songMeanings(x, idx.slice(0, h)); await songMeanings(x, idx.slice(h)); return; }
+    if (e.status === 400 || e.status === 403) throw e;   // key problem: Google Translate can't fix that silently
+    if (e.status === 429 && !x.waited){   // the free tier counts requests per minute: wait once, then try again
+      x.waited = true; await new Promise(r => setTimeout(r, window.__songWaitMs ?? 20000)); return songMeanings(x, idx, depth);
+    }
+    if (e.status === 429) x.noAI = true;
+    else if (idx.length > 1 && depth < 2){ const h = Math.ceil(idx.length / 2); await songMeanings(x, idx.slice(0, h), depth + 1); await songMeanings(x, idx.slice(h), depth + 1); return; }
   }
-  for (const i of idx) if (!x.lines[i].mean) x.lines[i].mean = await songTranslateFree(x.lines[i].t);
+  for (const i of idx) if (!x.lines[i].mean) x.lines[i].mean = x.lines[i].old?.mean || await songTranslateFree(x.lines[i].t);
 }
 // songs being analysed right now: the analyse button keeps saying so even if the fan leaves the song and comes back
 const SONG_BUSY = new Set();
@@ -6699,15 +6671,14 @@ async function songAnalyze(x, onStep){
   finally { SONG_BUSY.delete(x.id); if (curView === "army" && AR.screen === "songs" && AR.song === x.id && (AR.songTab || "ly") === "ly") renderSongView(); }
 }
 async function songAnalyzeRun(x, onStep){
-  x.lines.forEach(l => { if (!l.who.length) l.g = true; });
-  await songSingers(x);
+  x.noAI = x.waited = false;
   const todo = x.lines.map((l, i) => i).filter(i => !x.lines[i].mean);
   for (let k = 0; k < todo.length; k += 20){
     await songMeanings(x, todo.slice(k, k + 20));
     save(); if (onStep) onStep(Math.min(k + 20, todo.length), todo.length);
   }
-  x.lang = songLang(); save();
-  if (!songDone(x)) throw new Error(L("một số câu chưa dịch được", "some lines couldn't be translated"));
+  delete x.noAI; delete x.waited; x.lines.forEach(l => delete l.old); x.lang = songLang(); save();
+  if (x.lines.some(l => !l.mean && l.mean !== "-")) throw new Error(L("một số câu chưa dịch được", "some lines couldn't be translated"));
 }
 // read a Korean line aloud with a Korean voice, whatever course is open
 function songSay(t){
@@ -6718,13 +6689,13 @@ function songSay(t){
   const u = new SpeechSynthesisUtterance(t); u.voice = v; u.lang = v.lang; u.rate = S.settings.rate;
   songSay.u = u; speechSynthesis.speak(u);
 }
-// the story behind the song: looked up on Google so the album and release date are always found; never quoting the lyrics
+// the story behind the song: looked up on Google (Search grounding) so the album and release date are always found; never quoting the lyrics
 async function songStory(x){
   const prompt = `A BTS fan is studying the song "${x.title}" by BTS (it may be a solo or sub-unit song by a member). Search the web for it first, then in ${songLang()} tell them about it, in a warm fan-friendly tone.
 Return only JSON: {"album":"the album/single it was released on","released":"release date (day month year if known)","about":"1–2 sentences: who wrote/produced it, what kind of song it is","origin":"how the song came to be: the inspiration and story behind the writing","meaning":"its message and themes, what the members have said about it","theories":["popular fan theories or connections (e.g. to the BU storyline, other songs, the MV), each clearly framed as a theory"],"facts":["3–5 fun facts: records, performances, behind-the-scenes"]}
 Fill EVERY field from what the search turns up (interviews, album liner notes, Weverse/V Live talks, articles, fan wikis) and what you know — the fan wants the full story. "album" and "released" are always required. Leave a field empty only when nothing at all can be found for it; never invent. Paraphrase — do not quote the lyrics.`;
   let txt;
-  try { txt = await gemini(prompt, undefined, { temperature: 0.3, search: true, model: hearModel() }); }
+  try { txt = await gemini(prompt, undefined, { temperature: 0.3, search: true }); }
   catch(e){ if (e.status === 429 || e.status === 403) throw e; txt = await gemini(prompt, undefined, { temperature: 0.4 }); }   // no search on this model/key: answer from memory
   const j = extractJSON(txt);
   x.story = { album: String(j.album || ""), released: String(j.released || ""), about: String(j.about || ""), origin: String(j.origin || ""), meaning: String(j.meaning || ""),
@@ -6740,12 +6711,11 @@ const songHead = (id, title, right = "") => `<div class="sub-head">
 function renderSongs(){
   if (AR.song && !(S.songs || []).some(x => x.id === AR.song)) AR.song = "";
   if (AR.song) return renderSongView();
-  if (AR.songAdd) return renderSongAdd();
+  if (AR.songAdd || !(S.songs || []).length) return renderSongAdd();   // no songs yet: straight to the add form
   const list = (S.songs || []).slice().sort((a, b) => b.created - a.created);
   $("#v-army").innerHTML = `${songHead("sgBack", ic("music-notes") + " BTS Songs", `<button class="btn2 sh-act" id="sgNew">+ ${L("Thêm", "Add")}</button>`)}
-    <div class="card flat">${list.length ? `<ul class="wl" id="sgList">${list.map(x => `<li data-id="${x.id}" style="cursor:pointer"><div class="t"><b style="font-size:15px">${esc(x.title)}</b><div>${
-        L(`${x.lines.length} câu`, `${x.lines.length} line${x.lines.length === 1 ? "" : "s"}`)}${songDone(x) ? "" : " · " + L("chưa phân tích xong", "not fully analysed")}</div></div><span class="muted">›</span></li>`).join("")}</ul>`
-      : `<p class="muted" style="text-align:center">${L("Chưa có bài nào — bấm ＋ Thêm bài, dán lời vào, AI lo phần còn lại.", "No songs yet — tap ＋ Add song, paste the lyrics, AI does the rest.")}</p>`}
+    <div class="card flat"><ul class="wl" id="sgList">${list.map(x => `<li data-id="${x.id}" style="cursor:pointer"><div class="t"><b style="font-size:15px">${esc(x.title)}</b><div>${
+        L(`${x.lines.length} câu`, `${x.lines.length} line${x.lines.length === 1 ? "" : "s"}`)}${songDone(x) ? "" : " · " + L("chưa phân tích xong", "not fully analysed")}</div></div><span class="muted">›</span></li>`).join("")}</ul>
       ${songKeyNote()}</div>`;
   $("#sgBack").onclick = () => { AR.screen = "home"; renderArmy(); scrollTo(0, 0); };
   $("#sgNew").onclick = () => { AR.songAdd = true; renderArmy(); scrollTo(0, 0); };
@@ -6760,12 +6730,12 @@ function renderSongAdd(){
       <button class="btn-ghost" id="sgFind" style="margin-top:10px;width:100%">${ic("magnifying-glass")} ${L("Tìm lời trên Google", "Find the lyrics on Google")}</button>
       <label>${L("Lời bài hát", "Lyrics")}</label>
       <textarea id="sgRaw" rows="8" placeholder="${L("Dán lời vào đây", "Paste the lyrics here")}"></textarea>
-      <p class="small muted" style="margin:6px 0 0">${L("Dán nguyên trang cũng được — app tự bỏ dòng thừa. Dòng như <b>[Chorus: Jimin]</b> giúp biết chính xác ai hát; không có thì AI đoán.", "Pasting the whole page is fine — extra lines are dropped. Lines like <b>[Chorus: Jimin]</b> tell exactly who sings; without them AI guesses.")}</p>
+      <p class="small muted" style="margin:6px 0 0">${L("Dán nguyên trang cũng được — app tự bỏ dòng thừa.", "Pasting the whole page is fine — extra lines are dropped.")}</p>
       <button class="btn" id="sgGo" style="margin-top:12px;width:100%">✨ ${L("Phân tích", "Analyse")}${hasKey() ? "" : " 🔒"}</button>
       <p class="small muted hidden" id="sgStatus" style="margin:8px 0 0"></p>
       ${songKeyNote()}
     </div>`;
-  $("#sgBack").onclick = () => { AR.songAdd = false; renderArmy(); scrollTo(0, 0); };
+  $("#sgBack").onclick = () => { AR.songAdd = false; if (!(S.songs || []).length) AR.screen = "home"; renderArmy(); scrollTo(0, 0); };   // nothing to list: back to ARMY
   $$("#v-army .sg-key").forEach(b => b.onclick = songGoKey);
   $("#sgFind").onclick = () => window.open("https://www.google.com/search?q=" + encodeURIComponent(`BTS ${$("#sgTitle").value.trim()} lyrics`), "_blank", "noopener");
   $("#sgGo").onclick = async () => {
@@ -6783,12 +6753,8 @@ function renderSongAdd(){
     if (curView === "army" && AR.screen === "songs") { renderArmy(); scrollTo(0, 0); }
   };
 }
-// a member chip opens on a run of lines sung by the same people; tapping it lets the fan fix the singer of that run
-const songWhoKey = l => l.who.join(",");
 function songLine(l, i, prev){
-  const c = SONG_COLOR[l.who[0]] || "var(--line)";
-  const chip = !prev || songWhoKey(prev) !== songWhoKey(l) ? `<button class="sg-who${l.who.length ? "" : " none"}" data-i="${i}" style="--c:${c}" title="${l.gw ? L("AI đoán — chạm để sửa", "AI's guess — tap to fix") : L("Chạm để sửa", "Tap to fix")}">${l.who.length ? esc(l.who.join(" & ")) : "?"}${l.gw ? " ?" : ""}</button>` : "";
-  return `<li class="sg-l${prev && prev.sec !== l.sec ? " sg-sec" : ""}" style="--c:${c}">${chip}
+  return `<li class="sg-l${prev && prev.sec !== l.sec ? " sg-sec" : ""}">
     ${songHasKo(l.t) ? `<button class="sg-say" data-i="${i}" title="${L("Nghe đọc", "Listen")}" aria-label="${L("Nghe đọc", "Listen")}">🔊</button>` : ""}<div class="sg-o"${songHasKo(l.t) ? ' lang="ko"' : ""}>${esc(l.t)}</div>${songHasKo(l.t) ? `<div class="sg-r">${esc(songRom(l.t))}</div>` : ""}${l.mean && l.mean !== "-" ? `<div class="sg-m">${esc(l.mean)}</div>` : ""}</li>`;
 }
 function renderSongView(){
@@ -6819,23 +6785,12 @@ function renderSongView(){
     S.settings.songHide = h; save(); renderSongView();
   }; });
   $$(".sg-say").forEach(b => b.onclick = () => songSay(x.lines[+b.dataset.i].t));
-  $$(".sg-who").forEach(b => b.onclick = () => {
-    const i = +b.dataset.i, sel = document.createElement("select");
-    sel.className = "sg-pick";
-    sel.innerHTML = `<option value="">?</option>` + SONG_MEMBERS.map(m => `<option>${m}</option>`).join("") + (x.lines[i].who.length > 1 ? `<option selected>${esc(x.lines[i].who.join(", "))}</option>` : "");
-    if (x.lines[i].who.length === 1) sel.value = x.lines[i].who[0];
-    b.replaceWith(sel); sel.focus();
-    sel.onchange = sel.onblur = () => {
-      const key = songWhoKey(x.lines[i]), w = songWho(sel.value);
-      for (let k = i; k < x.lines.length && songWhoKey(x.lines[k]) === key; k++){ x.lines[k].who = w; x.lines[k].g = !w.length; x.lines[k].gw = false; }
-      save(); renderSongView();
-    };
-  });
   $("#sgRedo").onclick = async e => {
     if (!hasKey()) return songGoKey();
     if (SONG_BUSY.has(x.id)) return;
     const b = e.currentTarget;
-    if (songDone(x)) x.lines.forEach(l => { l.mean = ""; if (l.gw){ l.who = []; l.g = true; l.gw = false; } });
+    // analyse again: the old meaning is kept aside (old) and comes back if Gemini can't redo that line
+    if (songDone(x)) x.lines.forEach(l => { l.old = { mean: l.mean }; l.mean = ""; });
     busy(b, true, L("Đang phân tích…", "Analysing…"));
     try { await songAnalyze(x); } catch(err){ toast(L("Chưa phân tích xong: ", "Analysis stopped: ") + err.message + (err.reason ? ` (${err.reason})` : "")); }
   };

@@ -133,21 +133,21 @@ The mic is only open during a turn. It is paused while a translation is being re
 
 ## 🎵 BTS Songs
 
-Lets a fan learn a song: who sings each line, the original, its romanization and its meaning, plus the story behind the song. Songs are kept in `S.songs` and sync like saved conversations.
+Lets a fan learn a song: the original, its romanization and its meaning, plus the story behind the song. Songs are kept in `S.songs` and sync like saved conversations.
 
+- **No songs yet:** opening BTS Songs goes straight to the add form; its back button returns to ARMY.
 - **The lyrics always come from the fan.** They type the title, tap **🔍 Find the lyrics on Google**, copy the lyrics and paste them. AI never writes the lyrics: it misremembers them, and Gemini blocks quoted lyrics.
 - **Paste cleanup (`songParse`):**
   - Anything above the first `[section]` line is dropped (contributors, translations, blurb), and so are junk lines ("You might also like", "…Embed").
-  - `[Chorus: Jimin & Jung Kook]` sets the singers of the lines that follow; so do `[Jimin]`, `[Verse 2 - SUGA]` and `[Chorus: V (뷔)]` (member names and aliases are found anywhere in the header).
+  - `[Chorus]`-style headers (and blank lines) only start a new section, shown as a gap. Who sings is not tracked: AI kept getting the line distribution wrong and it cost scarce quota.
 - **Romanization (`songRom`)** is worked out in code, never by AI: Revised Romanization with the common sound changes (했어 → haesseo, 합니다 → hamnida, 같이 → gachi). It is computed from each line when shown.
-- **✨ Analyse (`songAnalyze`, needs a key)** makes two kinds of calls, so one failure can't wipe out everything:
-  - **Singers (`songSingers`):** the whole song goes in, and the answer is names only for the lines marked `?`. Gemini looks up the song's line distribution on Google first (Search grounding, `gemini(…, { search: true })`, with Flash rather than Lite); if searching fails it answers from memory. It must always pick a member, guessing from the song's structure only when nothing is found. A second round asks again for any still missing. Guesses are kept as `gw` and shown with `?`.
-  - **Meanings (`songMeanings`):** 20 lines per call, in the app's language (not the course's meaning language). Gemini can block an answer that matches published text (`finishReason: RECITATION`, shown in the error toast), so a refused chunk is split in half and retried. A single line it still refuses gets its meaning from free Google Translate.
+- **✨ Analyse (`songAnalyze`, needs a key)** — every song call uses the model picked in Settings:
+  - **Meanings (`songMeanings`):** 20 lines per call, in the app's language (not the course's meaning language). Gemini can block an answer that matches published text (`finishReason: RECITATION`), so a refused chunk is split in half and retried, at most twice (20 → 10 → 5); lines still refused get their meaning from free Google Translate.
+  - **Out of Gemini quota (429):** wait 20 s once and retry (the free tier counts per minute); if it is still refused, the rest of the song goes to Google Translate, so the analysis always finishes. While it runs, the button shows "Analysing…" (`SONG_BUSY`), even after leaving the song and coming back. On "Analyse again", each line's old meaning is kept aside (`old`) and comes back if Gemini can't redo that line.
 - **Lyrics tab:**
-  - A colour bar per member, and a chip where the singer changes. Tap the chip to fix that run of lines.
   - A 🔊 on every Korean line reads it with a Korean voice (`arVoiceFor("ko")`), whatever course is open, for pronunciation practice.
   - **Original / Romanized / Meaning** toggles hide layers for practice (`settings.songHide`).
-- **Story tab (`songStory`):** looked up on Google first (Search grounding, Flash; falls back to memory if searching fails), so every section is filled from what it finds; the album and release date are always given and shown at the top, and if nothing else turns up only those basics show, with a note. Sections: about, origin & inspiration, meaning, theories and fun facts, written by AI in the app's language without quoting the lyrics. It carries a "may not be accurate" note.
+- **Story tab (`songStory`):** looked up on Google first (Search grounding; falls back to memory if searching fails), so every section is filled from what it finds; the album and release date are always given and shown at the top, and if nothing else turns up only those basics show, with a note. Sections: about, origin & inspiration, meaning, theories and fun facts, written by AI in the app's language without quoting the lyrics. It carries a "may not be accurate" note.
 - **Without a key:** the AI buttons show 🔒 and lead to the key setup. Songs analysed earlier stay readable.
 
 Test: `.venv/bin/python tests/songs_test.py` (Gemini faked, placeholder lyrics).

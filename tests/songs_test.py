@@ -1,8 +1,8 @@
 """ARMY → 🎵 BTS Songs — end-to-end test (see docs/translate-army.md).
 
 Drives the real index.html in headless Chromium with Gemini faked (no key, no network). The lyrics are
-made-up placeholder lines: checks the paste is cleaned up, [section: member] headers set the singer, AI fills
-romanization/meaning/guessed singers without being sent anything to rewrite, the layer toggles, and the story tab.
+made-up placeholder lines: checks the paste is cleaned up, [section] headers only split sections (no singers),
+AI fills meanings on the model picked in Settings, romanization is worked out locally, quota fallbacks, the layer toggles, and the story tab.
 
     .venv/bin/python tests/songs_test.py
 """
@@ -43,21 +43,20 @@ Last english line5Embed"""
 INIT = r"""
 if (!sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");
-  localStorage.setItem("hangulCards.v1", JSON.stringify({ cards: [], settings: { course: "ko", apiKey: "FAKE", uiLang: "vi", model: "gemini-2.5-flash-lite" } }));
+  localStorage.setItem("hangulCards.v1", JSON.stringify({ cards: [], settings: { course: "ko", apiKey: "FAKE", uiLang: "vi", model: "gemini-2.5-flash" } }));
   localStorage.setItem("hangulCards.welcomed", "1");
 }
 window.__prompts = [];
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
-    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
+    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     const body = JSON.parse(opts.body), p = body.contents[0].parts[0].text;
-    window.__prompts.push(p);
-    if (p.includes("For EVERY line marked")) window.__singBody = body;
+    window.__prompts.push(p); (window.__models = window.__models || []).push(String(url).split("/models/")[1].split(":")[0]);
     await new Promise(r => setTimeout(r, 100));
     let out;
+    if (window.__quota && !p.includes("tell them about it")) return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 });
     if (p.includes("tell them about it")) { window.__storyBody = JSON.parse(opts.body); out = { album: "Album thử", released: "13/2/2017", about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] }; }
-    else if (p.includes("For EVERY line marked")) out = { who: [{ n: 7, who: "V" }, { n: 8, who: "Jin" }] };
     else {
       // a chunk holding the 4th line is "blocked as recitation": no text, like the real API
       if (p.includes("마지막 줄이에요")) return new Response(JSON.stringify({ candidates: [{ finishReason: "RECITATION" }] }));
@@ -70,6 +69,7 @@ window.fetch = async (url, opts) => {
   return realFetch(url, opts);
 };
 window.__opened = [];
+window.__songWaitMs = 50;
 window.open = u => { window.__opened.push(u); return null; };
 """
 
@@ -85,8 +85,10 @@ with sync_playwright() as pw:
     page.goto(URL); page.wait_for_timeout(800)
     page.click('nav button[data-v="army"]'); page.wait_for_timeout(200)
     page.click("#arSongsOpen"); page.wait_for_timeout(200)
-    check("empty list", "Chưa có bài nào" in page.inner_text("#v-army"))
-    page.click("#sgNew"); page.wait_for_timeout(200)
+    check("no songs yet: the add form opens straight away", page.locator("#sgTitle").count() == 1 and page.locator("#sgList").count() == 0)
+    page.click("#sgBack"); page.wait_for_timeout(200)
+    check("back from the empty add form goes to ARMY", page.locator("#arSongsOpen").count() == 1)
+    page.click("#arSongsOpen"); page.wait_for_timeout(200)
     check("title is free text, no suggestion list", page.get_attribute("#sgTitle", "list") is None and page.locator("#sgTitles").count() == 0)
     page.fill("#sgTitle", "Test Song")
     page.click("#sgFind")
@@ -98,23 +100,19 @@ with sync_playwright() as pw:
     song = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs[0]")
     texts = [l["t"] for l in song["lines"]]
     check("paste cleaned", texts == ["우리는 테스트 노래", "Hello test line", "노래를 불러요", "지민 줄", "슈가 줄", "뷔 줄", "마지막 줄이에요", "Last english line"], texts)
-    check("headers without colon / with dash / with brackets", [l["who"] for l in song["lines"][3:6]] == [["Jimin"], ["SUGA"], ["V", "Jung Kook"]], [l["who"] for l in song["lines"][3:6]])
-    sb = page.evaluate("__singBody")
-    check("singers looked up on Google with Flash", sb.get("tools") == [{"google_search": {}}] and sb["generationConfig"]["responseMimeType"] == "text/plain", sb.get("tools"))
-    check("header singers", [l["who"] for l in song["lines"][:3]] == [["RM"], ["RM"], ["Jimin", "Jung Kook"]], [l["who"] for l in song["lines"]])
-    check("AI picks a singer for every unknown line", [song["lines"][i]["who"] for i in (6, 7)] == [["V"], ["Jin"]] and all(song["lines"][i].get("gw") for i in (6, 7)), song["lines"])
-    check("no line left without a singer", all(l["who"] for l in song["lines"]))
+    check("no singers kept or asked", not any("who" in l for l in song["lines"]) and not any("sings" in p for p in page.evaluate("__prompts")), song["lines"][0])
+    check("no singer chips or member colours", page.locator(".sg-who").count() == 0 and "Jimin" not in page.inner_text(".sg-ly"))
+    check("sections split by headers", [l["sec"] for l in song["lines"]] == [1, 1, 2, 3, 4, 5, 6, 6], [l["sec"] for l in song["lines"]])
+    check("hint no longer talks about singers", "ai hát" not in page.content())
+    check("meanings on the model picked in Settings", set(page.evaluate("__models")) == {"gemini-2.5-flash"}, page.evaluate("__models"))
     rom = page.locator(".sg-r").all_inner_texts()
     check("romanization worked out on Korean lines", rom[:2] + rom[-1:] == ["urineun teseuteu norae", "noraereul bulleoyo", "majimak jurieyo"], rom)
     check("meanings filled", all(l["mean"] for l in song["lines"]), [l["mean"] for l in song["lines"]])
-    check("blocked line falls back to Google Translate, others from AI", song["lines"][6]["mean"] == "dịch google" and song["lines"][0]["mean"].startswith("nghĩa") and page.evaluate("__free") == 1,
+    check("blocked line falls back to Google Translate, others from AI", song["lines"][6]["mean"] == "dịch google" and song["lines"][0]["mean"].startswith("nghĩa") and page.evaluate("__free") <= 2,
           [l["mean"] for l in song["lines"]])
     pw_ = page.evaluate("__prompts")
-    sing = next(p for p in pw_ if "For EVERY line marked" in p)
-    check("singer prompt marks unknown lines with ?", "[?] 마지막 줄이에요" in sing and "[RM] 우리는" in sing and "Never leave a line empty" in sing and "search the web" in sing)
     mean = next(p for p in pw_ if "translation of that line" in p)
     check("meaning prompt asks Vietnamese, no romanization", "Vietnamese translation" in mean and "rom" not in mean.split("Return")[0].lower().replace("from", ""))
-    check("chips per singer run", page.locator(".sg-who").count() == 7, page.locator(".sg-who").all_inner_texts())
     check("speaker only on Korean lines", page.locator(".sg-say").count() == 6)
     page.evaluate("() => { window.__said = []; speechSynthesis.speak = u => __said.push(u.text); }")
     page.locator(".sg-say").first.click(); page.wait_for_timeout(100)
@@ -126,11 +124,6 @@ with sync_playwright() as pw:
     check("meaning hidden", not page.locator(".sg-m").first.is_visible())
     page.click('.sg-layers button[data-k="m"]'); page.wait_for_timeout(150)
 
-    # fix the guessed singer
-    page.locator(".sg-who").nth(5).click(); page.select_option(".sg-pick", "SUGA"); page.wait_for_timeout(150)
-    l3 = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs[0].lines[6]")
-    check("singer edited", l3["who"] == ["SUGA"] and not l3["g"] and not l3.get("gw"), l3)
-
     # delete is an icon-only button
     check("delete button is icon only", page.inner_text("#sgDel").strip() == "" and page.locator("#sgDel svg").count() == 1 and "ico" in page.get_attribute("#sgDel", "class"))
     # analysing: the button says so, even after leaving the song and coming back
@@ -141,6 +134,22 @@ with sync_playwright() as pw:
     page.wait_for_function("!document.querySelector('#sgRedo').disabled", timeout=8000)
     check("button back to normal when done", "Phân tích lại" in page.inner_text("#sgRedo"), page.inner_text("#sgRedo"))
 
+    # out of Gemini quota: the analysis still finishes, meanings from Google Translate
+    before = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs[0]")
+    page.evaluate("() => { window.__quota = true; window.__free = 0; }")
+    page.click("#sgRedo"); page.wait_for_function("!document.querySelector('#sgRedo').disabled", timeout=15000)
+    song = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs[0]")
+    check("quota on re-analyse: old meanings kept, no Google needed", [l["mean"] for l in song["lines"]] == [l["mean"] for l in before["lines"]] and page.evaluate("__free") == 0 and not any("old" in l for l in song["lines"]), song["lines"])
+    check("quota on re-analyse: done", "Phân tích lại" in page.inner_text("#sgRedo"))
+    # a new song while out of quota: meanings from Google Translate, and it's done
+    page.click("#sgBack"); page.click("#sgNew"); page.fill("#sgTitle", "Quota Song"); page.fill("#sgRaw", "[Verse 1]\n첫 줄\n둘째 줄")
+    page.click("#sgGo"); page.wait_for_selector(".sg-ly", timeout=15000); page.wait_for_timeout(200)
+    q = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs.find(s => s.title === 'Quota Song')")
+    check("quota: every line still gets a meaning", all(l["mean"] == "dịch google" for l in q["lines"]), q["lines"])
+    check("quota: song counts as analysed", "Phân tích lại" in page.inner_text("#sgRedo"))
+    page.evaluate("() => { window.__quota = false; }")
+    page.click("#sgBack"); page.locator("#sgList li", has_text="Test Song").click(); page.wait_for_timeout(100)
+
     # story tab
     page.click('#sgTabs button[data-t="st"]'); page.wait_for_timeout(100)
     page.click("#sgStory"); page.wait_for_selector(".sg-h", timeout=5000)
@@ -148,6 +157,7 @@ with sync_playwright() as pw:
     st = page.inner_text("#sgBody")
     check("story shows album and release date", "Album thử" in st and "phát hành 13/2/2017" in st, st)
     check("story prompt asks for every field", "Fill EVERY field" in page.evaluate("JSON.stringify(__storyBody)"))
+    check("story on the model picked in Settings", page.evaluate("__models[__models.length-1]") == "gemini-2.5-flash")
     check("story looked up on Google", page.evaluate("__storyBody.tools") == [{"google_search": {}}])
     check("story shown", "Nguồn gốc thử" in st and "Fact 2" in st and "Theory thử" in st, st)
     check("story prompt doesn't quote lyrics", "do not quote the lyrics" in page.evaluate("__prompts[__prompts.length-1]"))
@@ -155,7 +165,7 @@ with sync_playwright() as pw:
     # survives a reload; list shows it
     page.reload(); page.wait_for_timeout(800)
     page.click('nav button[data-v="army"]'); page.click("#arSongsOpen"); page.wait_for_timeout(200)
-    check("listed after reload", "Test Song" in page.inner_text("#sgList"))
+    check("listed after reload", "Test Song" in page.inner_text("#sgList") and "Quota Song" in page.inner_text("#sgList"))
     check("no page errors", not errs, errs)
     b.close()
 
