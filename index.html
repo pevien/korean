@@ -6691,7 +6691,14 @@ ${idx.map((i, j) => `${j + 1}. ${x.lines[i].t}`).join("\n")}`;
   }
   for (const i of idx) if (!x.lines[i].mean) x.lines[i].mean = await songTranslateFree(x.lines[i].t);
 }
+// songs being analysed right now: the analyse button keeps saying so even if the fan leaves the song and comes back
+const SONG_BUSY = new Set();
 async function songAnalyze(x, onStep){
+  SONG_BUSY.add(x.id);
+  try { await songAnalyzeRun(x, onStep); }
+  finally { SONG_BUSY.delete(x.id); if (curView === "army" && AR.screen === "songs" && AR.song === x.id && (AR.songTab || "ly") === "ly") renderSongView(); }
+}
+async function songAnalyzeRun(x, onStep){
   x.lines.forEach(l => { if (!l.who.length) l.g = true; });
   await songSingers(x);
   const todo = x.lines.map((l, i) => i).filter(i => !x.lines[i].mean);
@@ -6796,8 +6803,9 @@ function renderSongView(){
   const body = $("#sgBody");
   if (tab === "st") return songStoryUI(x, body);
   body.innerHTML = `<div class="ar-tools" style="margin-bottom:14px">
-      <button class="btn-ghost" id="sgRedo">✨ ${songDone(x) ? L("Phân tích lại", "Analyse again") : L("Phân tích tiếp", "Finish analysing")}${hasKey() ? "" : " 🔒"}</button>
-      <button class="btn-danger" id="sgDel">🗑 ${L("Xoá bài", "Delete song")}</button>
+      <button class="btn-ghost" id="sgRedo"${SONG_BUSY.has(x.id) ? " disabled" : ""}>${SONG_BUSY.has(x.id) ? `<span class="spinner"></span>${L("Đang phân tích…", "Analysing…")}`
+        : `✨ ${songDone(x) ? L("Phân tích lại", "Analyse again") : L("Phân tích tiếp", "Finish analysing")}${hasKey() ? "" : " 🔒"}`}</button>
+      <button class="btn-danger ico" id="sgDel" title="${L("Xoá bài", "Delete song")}" aria-label="${L("Xoá bài", "Delete song")}">${ic("trash")}</button>
     </div>
     <div class="card flat">
       <div class="ar-disp sg-layers">
@@ -6825,13 +6833,13 @@ function renderSongView(){
   });
   $("#sgRedo").onclick = async e => {
     if (!hasKey()) return songGoKey();
+    if (SONG_BUSY.has(x.id)) return;
     const b = e.currentTarget;
     if (songDone(x)) x.lines.forEach(l => { l.mean = ""; if (l.gw){ l.who = []; l.g = true; l.gw = false; } });
     busy(b, true, L("Đang phân tích…", "Analysing…"));
     try { await songAnalyze(x); } catch(err){ toast(L("Chưa phân tích xong: ", "Analysis stopped: ") + err.message + (err.reason ? ` (${err.reason})` : "")); }
-    if (b.isConnected) renderSongView();
   };
-  $("#sgDel").onclick = e => confirmTap(e.currentTarget, `🗑 ${L("Xoá bài", "Delete song")}`, () => {
+  $("#sgDel").onclick = e => confirmTap(e.currentTarget, ic("trash"), () => {
     S.songs = S.songs.filter(v => v !== x); save(); AR.song = ""; renderArmy(); toast(L("Đã xoá bài hát", "Song deleted"));
   });
 }

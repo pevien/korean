@@ -131,6 +131,16 @@ with sync_playwright() as pw:
     l3 = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs[0].lines[6]")
     check("singer edited", l3["who"] == ["SUGA"] and not l3["g"] and not l3.get("gw"), l3)
 
+    # delete is an icon-only button
+    check("delete button is icon only", page.inner_text("#sgDel").strip() == "" and page.locator("#sgDel svg").count() == 1 and "ico" in page.get_attribute("#sgDel", "class"))
+    # analysing: the button says so, even after leaving the song and coming back
+    page.click("#sgRedo"); page.wait_for_timeout(50)
+    check("analyse button shows analysing", "Đang phân tích" in page.inner_text("#sgRedo") and page.is_disabled("#sgRedo"), page.inner_text("#sgRedo"))
+    page.click("#sgBack"); page.wait_for_timeout(50); page.locator("#sgList li").first.click(); page.wait_for_timeout(50)
+    check("still analysing after reopening", "Đang phân tích" in page.inner_text("#sgRedo") and page.is_disabled("#sgRedo"), page.inner_text("#sgRedo"))
+    page.wait_for_function("!document.querySelector('#sgRedo').disabled", timeout=8000)
+    check("button back to normal when done", "Phân tích lại" in page.inner_text("#sgRedo"), page.inner_text("#sgRedo"))
+
     # story tab
     page.click('#sgTabs button[data-t="st"]'); page.wait_for_timeout(100)
     page.click("#sgStory"); page.wait_for_selector(".sg-h", timeout=5000)
