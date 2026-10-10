@@ -59,5 +59,19 @@ A key is free from <https://aistudio.google.com/apikey>. Without one, most AI te
 | Speaking checks, "⚡ Basic" | ✓ (browser speech recognition; accuracy + fluency only) | Same |
 | Speaking checks, "✨ AI" | ✗ | ✓ (4 scores and detailed tips) |
 | Talk with AI | ✗ | ✓ |
+| AI tutor chat (floating 💬 bubble) | Hidden | ✓ |
 | Translate / ARMY, Basic engine | ✓ (speech recognition + on-device translator / MyMemory) | Gemini improves the translations |
 | Translate / ARMY, AI engine; tab audio | ✗ | ✓ |
+
+## AI tutor
+
+A floating 💬 bubble in the bottom-right corner opens a chat with an AI tutor. It only appears while a Gemini key is set.
+
+- Ask by **typing**, by **voice** (🎙, tap ⏹ to send, up to 60 s) or with a **photo** (📷, or paste an image into the box).
+- The tutor knows the course, the level and the interface language, and it sees the text of the screen you are on, so "what does this mean?" works without copying anything.
+- During a quiz it gives hints first and only gives the answer when you ask for it.
+- Bold words in the course language are underlined; tap one to hear it.
+- The chat is kept until you reload or tap ↻ (new chat). Only the last 20 messages are sent, and only the latest 6 still carry their photos and recordings.
+- The bubble moves up above whatever is pinned to the bottom of the screen (tab bar, study sheet, Talk mic, ARMY controls).
+
+Code: the `TU` block (`tuSync`, `tuPlace`, `tuSystem`, `tuAsk`) in `index.html`; `save()` calls `window.__tutorSync` so adding or removing the key shows or hides it. Test: `tests/tutor_test.py`.
