@@ -2401,13 +2401,14 @@ async function refreshModels(sel){
 }
 const MODEL_HINT = () => L("Flash-Lite: rẻ nhất, nhiều lượt miễn phí nhất — đủ cho học và ARMY. Flash: chính xác hơn nhưng ít lượt miễn phí. Chép lời ghi âm luôn dùng Flash để nghe chính xác (tự lùi về Lite khi hết lượt).",
   "Flash-Lite: cheapest, most free requests — fine for studying and ARMY. Flash: more accurate but fewer free requests. Recording transcription always uses Flash for accuracy (falls back to Lite when out of quota).");
-// opts.contents: a whole multi-turn chat instead of one prompt; opts.text: a plain-text answer instead of JSON
+// opts.contents: a whole multi-turn chat instead of one prompt; opts.text: a plain-text answer instead of JSON;
+// opts.search: let Gemini look things up on Google first (the answer then comes as text — read it with extractJSON)
 async function gemini(prompt, extraParts, opts = {}){
   const tryModel = async (model) => {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": S.settings.apiKey.trim() },
-      body: JSON.stringify({ ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}), contents: opts.contents || [{ role:"user", parts: [{ text: prompt }, ...(extraParts || [])] }], generationConfig: { responseMimeType: opts.text ? "text/plain" : "application/json", ...(opts.schema ? { responseSchema: opts.schema } : {}), temperature: opts.temperature ?? (extraParts ? 0.3 : 0.9) } })
+      body: JSON.stringify({ ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}), contents: opts.contents || [{ role:"user", parts: [{ text: prompt }, ...(extraParts || [])] }], ...(opts.search ? { tools: [{ google_search: {} }] } : {}), generationConfig: { responseMimeType: opts.text || opts.search ? "text/plain" : "application/json", ...(opts.schema ? { responseSchema: opts.schema } : {}), temperature: opts.temperature ?? (extraParts ? 0.3 : 0.9) } })
     });
     if (!r.ok){
       let msg = ""; try { msg = (await r.json()).error.message; } catch(e){}
@@ -6581,13 +6582,13 @@ function renderArmyView(){
 const songLang = () => UI === "vi" ? "Vietnamese" : "English";
 const SONG_MEMBERS = ["RM", "Jin", "SUGA", "j-hope", "Jimin", "V", "Jung Kook", "All"];
 const SONG_COLOR = { RM: "#3b82f6", Jin: "#ec4899", SUGA: "#64748b", "j-hope": "#f97316", Jimin: "#ca8a04", V: "#16a34a", "Jung Kook": "#8b5cf6", All: "var(--accent)" };
-const SONG_ALIAS = [[/^(rm|rap ?monster|namjoon|kim namjoon|남준|알엠)$/i, "RM"], [/^(jin|seokjin|kim seokjin|석진|진)$/i, "Jin"], [/^(suga|yoongi|min yoongi|agust ?d|슈가|윤기)$/i, "SUGA"],
-  [/^(j-?hope|hoseok|jung hoseok|제이홉|호석)$/i, "j-hope"], [/^(jimin|park jimin|지민)$/i, "Jimin"], [/^(v|taehyung|kim taehyung|뷔|태형)$/i, "V"],
-  [/^(jung ?kook|jeon jungkook|jk|정국)$/i, "Jung Kook"], [/^(all|bts|everyone|방탄소년단|다같이|전원)$/i, "All"]];
-// "Jimin & Jung Kook", "RM, SUGA" → stage names; anything unknown is dropped
-const songWho = s => [...new Set(String(s || "").split(/\s*(?:,|&|\+|\/|\band\b|\bwith\b)\s*/i).map(p => {
-  p = p.replace(/[*()[\]]/g, "").trim(); const a = SONG_ALIAS.find(([r]) => r.test(p)); return a ? a[1] : "";
-}).filter(Boolean))];
+const SONG_ALIAS = [["rm|rap ?monster|namjoon|kim namjoon|남준|알엠|김남준", "RM"], ["jin|seokjin|kim seokjin|석진|진|김석진", "Jin"], ["suga|yoongi|min yoongi|agust ?d|슈가|윤기|민윤기", "SUGA"],
+  ["j-?hope|hoseok|jung hoseok|hobi|제이홉|호석|정호석", "j-hope"], ["jimin|park jimin|지민|박지민", "Jimin"], ["v|taehyung|kim taehyung|뷔|태형|김태형", "V"],
+  ["jung ?kook|jeon jung ?kook|jk|정국|전정국", "Jung Kook"], ["all|bts|everyone|방탄소년단|다같이|모두|전원", "All"]]
+  .map(([a, m]) => [new RegExp(`(?<![\\p{L}\\p{N}-])(?:${a})(?![\\p{L}\\p{N}-])`, "iu"), m]);
+// "Jimin & Jung Kook", "Verse 1 - RM", "V (뷔)" → stage names in the order they appear; anything unknown is dropped
+const songWho = s => { s = String(s || ""); return [...new Set(SONG_ALIAS.map(([r, m]) => { const k = s.search(r); return k < 0 ? null : [k, m]; })
+  .filter(Boolean).sort((a, b) => a[0] - b[0]).map(a => a[1]))]; };
 const SONG_TITLES = ["Spring Day", "Dynamite", "Butter", "Permission to Dance", "Life Goes On", "Black Swan", "ON", "Boy With Luv", "DNA", "FAKE LOVE", "IDOL",
   "Blood Sweat & Tears", "Fire", "Save ME", "I NEED U", "RUN", "Dope", "Euphoria", "Magic Shop", "Mikrokosmos", "Answer: Love Myself", "Epiphany", "Serendipity",
   "Singularity", "Make It Right", "Dionysus", "Louder than bombs", "Blue & Grey", "Telepathy", "Film out", "Yet To Come", "Run BTS", "For Youth",
@@ -6603,7 +6604,7 @@ function songParse(raw){
     t = t.replace(/\d*Embed$/, "").trim();
     if (!t){ gap = true; return; }
     const h = t.match(/^\[([^\]]*)\]$/);
-    if (h){ const m = h[1].split(":"); who = m.length > 1 ? songWho(m.slice(1).join(":")) : []; sec++; gap = false; return; }
+    if (h){ const k = h[1].indexOf(":"); who = songWho(k < 0 ? h[1] : h[1].slice(k + 1)); sec++; gap = false; return; }   // [Chorus: Jimin & V], [Jimin], [Verse 1 - RM]
     if (junk.test(t)) return;
     if (gap && out.length){ sec++; }
     gap = false;
@@ -6653,17 +6654,24 @@ async function songTranslateFree(t){
     return ((await r.json())[0] || []).map(x => x[0]).join("").trim();
   } catch(e){ return ""; }
 }
-// who sings the lines the paste didn't say: a short answer of its own (names only), so a blocked translation can't take it down too
+// who sings the lines the paste didn't say: a short answer of its own (names only), so a blocked translation can't take it down too.
+// Memory alone gets the line distribution wrong, so Gemini first looks the song up on Google (Genius [Verse: member] tags,
+// colour-coded lyrics) with Flash rather than Lite; only if searching fails does it answer from what it knows
 async function songSingers(x){
   const ask = x.lines.map((l, i) => i).filter(i => x.lines[i].g);
   for (let round = 0; round < 2 && ask.some(i => x.lines[i].g); round++){
     const prompt = `The BTS song "${x.title}". Below are its lines, numbered, each with its singer in brackets; "?" = not known yet.
-For EVERY line marked "?", say who sings it in the official recording. You must always pick: use what you know of this song's line distribution; if unsure, give your best guess from the song's structure (a rap verse → a rap line member: RM, SUGA or j-hope; the lines around it, the same part sung earlier in the song). Never leave it empty.
-Stage names only: ${SONG_MEMBERS.join(", ")}; several singers joined with ", ". Do not repeat the lines.
-Return JSON: {"who":[{"n":1,"who":"Jimin"}]} — one item per "?" line.
+For EVERY line marked "?", say who sings it in the official studio recording.
+First search the web for this song's member line distribution — Genius lyrics with [Verse/Chorus: member] tags, colour-coded lyrics, line distribution videos — and follow it line by line, matching each line here to its line there (they may be in Korean, romanized or translated). Lines marked with a singer are certain: use them to keep your place in the song.
+A part that repeats keeps its singers unless the source says otherwise. Only if nothing can be found, give your best guess from the song's structure (a rap verse → RM, SUGA or j-hope). Never leave a line empty.
+Stage names only: ${SONG_MEMBERS.join(", ")}; several singers joined with ", "; "All" only when the whole group sings. Do not repeat the lines.
+Return only JSON: {"who":[{"n":1,"who":"Jimin"}]} — one item per "?" line.
 
 ${x.lines.map((l, i) => `${i + 1}. [${l.g ? "?" : l.who.join(", ") || "?"}] ${l.t}`).join("\n")}`;
-    const j = extractJSON(await gemini(prompt, undefined, { temperature: 0.2 }));
+    let txt;
+    try { txt = await gemini(prompt, undefined, { temperature: 0, search: true, model: hearModel() }); }
+    catch(e){ if (e.status === 429 || e.status === 403) throw e; txt = await gemini(prompt, undefined, { temperature: 0.2 }); }   // no search on this model/key: answer from memory
+    const j = extractJSON(txt);
     arrOf(j.who || j.items || j).forEach(it => {
       const l = x.lines[+it.n - 1], w = songWho(it.who);
       if (l && l.g && w.length){ l.who = w; l.gw = true; l.g = false; }   // gw: AI's guess, shown with "?"

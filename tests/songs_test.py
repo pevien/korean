@@ -29,6 +29,12 @@ Hello test line
 
 [Chorus: Jimin & Jung Kook]
 노래를 불러요
+[Jimin]
+지민 줄
+[Verse 2 - SUGA (슈가)]
+슈가 줄
+[Chorus: V (뷔), Jung Kook]
+뷔 줄
 [Bridge]
 마지막 줄이에요
 You might also like
@@ -45,12 +51,13 @@ const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
     if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
-    const p = JSON.parse(opts.body).contents[0].parts[0].text;
+    const body = JSON.parse(opts.body), p = body.contents[0].parts[0].text;
     window.__prompts.push(p);
+    if (p.includes("For EVERY line marked")) window.__singBody = body;
     await new Promise(r => setTimeout(r, 100));
     let out;
     if (p.includes("tell them about it")) out = { known: true, about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] };
-    else if (p.includes("For EVERY line marked")) out = { who: [{ n: 4, who: "V" }, { n: 5, who: "Jin" }] };
+    else if (p.includes("For EVERY line marked")) out = { who: [{ n: 7, who: "V" }, { n: 8, who: "Jin" }] };
     else {
       // a chunk holding the 4th line is "blocked as recitation": no text, like the real API
       if (p.includes("마지막 줄이에요")) return new Response(JSON.stringify({ candidates: [{ finishReason: "RECITATION" }] }));
@@ -89,22 +96,25 @@ with sync_playwright() as pw:
 
     song = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs[0]")
     texts = [l["t"] for l in song["lines"]]
-    check("paste cleaned", texts == ["우리는 테스트 노래", "Hello test line", "노래를 불러요", "마지막 줄이에요", "Last english line"], texts)
+    check("paste cleaned", texts == ["우리는 테스트 노래", "Hello test line", "노래를 불러요", "지민 줄", "슈가 줄", "뷔 줄", "마지막 줄이에요", "Last english line"], texts)
+    check("headers without colon / with dash / with brackets", [l["who"] for l in song["lines"][3:6]] == [["Jimin"], ["SUGA"], ["V", "Jung Kook"]], [l["who"] for l in song["lines"][3:6]])
+    sb = page.evaluate("__singBody")
+    check("singers looked up on Google with Flash", sb.get("tools") == [{"google_search": {}}] and sb["generationConfig"]["responseMimeType"] == "text/plain", sb.get("tools"))
     check("header singers", [l["who"] for l in song["lines"][:3]] == [["RM"], ["RM"], ["Jimin", "Jung Kook"]], [l["who"] for l in song["lines"]])
-    check("AI picks a singer for every unknown line", [l["who"] for l in song["lines"][3:]] == [["V"], ["Jin"]] and all(l.get("gw") for l in song["lines"][3:]), song["lines"][3:])
+    check("AI picks a singer for every unknown line", [song["lines"][i]["who"] for i in (6, 7)] == [["V"], ["Jin"]] and all(song["lines"][i].get("gw") for i in (6, 7)), song["lines"])
     check("no line left without a singer", all(l["who"] for l in song["lines"]))
     rom = page.locator(".sg-r").all_inner_texts()
-    check("romanization worked out on Korean lines", rom == ["urineun teseuteu norae", "noraereul bulleoyo", "majimak jurieyo"], rom)
+    check("romanization worked out on Korean lines", rom[:2] + rom[-1:] == ["urineun teseuteu norae", "noraereul bulleoyo", "majimak jurieyo"], rom)
     check("meanings filled", all(l["mean"] for l in song["lines"]), [l["mean"] for l in song["lines"]])
-    check("blocked line falls back to Google Translate, others from AI", song["lines"][3]["mean"] == "dịch google" and song["lines"][0]["mean"].startswith("nghĩa") and page.evaluate("__free") == 1,
+    check("blocked line falls back to Google Translate, others from AI", song["lines"][6]["mean"] == "dịch google" and song["lines"][0]["mean"].startswith("nghĩa") and page.evaluate("__free") == 1,
           [l["mean"] for l in song["lines"]])
     pw_ = page.evaluate("__prompts")
     sing = next(p for p in pw_ if "For EVERY line marked" in p)
-    check("singer prompt marks unknown lines with ?", "[?] 마지막 줄이에요" in sing and "[RM] 우리는" in sing and "Never leave it empty" in sing)
+    check("singer prompt marks unknown lines with ?", "[?] 마지막 줄이에요" in sing and "[RM] 우리는" in sing and "Never leave a line empty" in sing and "search the web" in sing)
     mean = next(p for p in pw_ if "translation of that line" in p)
     check("meaning prompt asks Vietnamese, no romanization", "Vietnamese translation" in mean and "rom" not in mean.split("Return")[0].lower().replace("from", ""))
-    check("chips per singer run", page.locator(".sg-who").count() == 4, page.locator(".sg-who").all_inner_texts())
-    check("speaker only on Korean lines", page.locator(".sg-say").count() == 3)
+    check("chips per singer run", page.locator(".sg-who").count() == 7, page.locator(".sg-who").all_inner_texts())
+    check("speaker only on Korean lines", page.locator(".sg-say").count() == 6)
     page.evaluate("() => { window.__said = []; speechSynthesis.speak = u => __said.push(u.text); }")
     page.locator(".sg-say").first.click(); page.wait_for_timeout(100)
     said = page.evaluate("__said")
@@ -116,8 +126,8 @@ with sync_playwright() as pw:
     page.click('.sg-layers button[data-k="m"]'); page.wait_for_timeout(150)
 
     # fix the guessed singer
-    page.locator(".sg-who").nth(2).click(); page.select_option(".sg-pick", "SUGA"); page.wait_for_timeout(150)
-    l3 = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs[0].lines[3]")
+    page.locator(".sg-who").nth(5).click(); page.select_option(".sg-pick", "SUGA"); page.wait_for_timeout(150)
+    l3 = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1')).songs[0].lines[6]")
     check("singer edited", l3["who"] == ["SUGA"] and not l3["g"] and not l3.get("gw"), l3)
 
     # story tab

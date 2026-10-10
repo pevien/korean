@@ -138,10 +138,10 @@ Lets a fan learn a song: who sings each line, the original, its romanization and
 - **The lyrics always come from the fan.** They type the title, tap **🔍 Find the lyrics on Google**, copy the lyrics and paste them. AI never writes the lyrics: it misremembers them, and Gemini blocks quoted lyrics.
 - **Paste cleanup (`songParse`):**
   - Anything above the first `[section]` line is dropped (contributors, translations, blurb), and so are junk lines ("You might also like", "…Embed").
-  - `[Chorus: Jimin & Jung Kook]` sets the singers of the lines that follow.
+  - `[Chorus: Jimin & Jung Kook]` sets the singers of the lines that follow; so do `[Jimin]`, `[Verse 2 - SUGA]` and `[Chorus: V (뷔)]` (member names and aliases are found anywhere in the header).
 - **Romanization (`songRom`)** is worked out in code, never by AI: Revised Romanization with the common sound changes (했어 → haesseo, 합니다 → hamnida, 같이 → gachi). It is computed from each line when shown.
 - **✨ Analyse (`songAnalyze`, needs a key)** makes two kinds of calls, so one failure can't wipe out everything:
-  - **Singers (`songSingers`):** the whole song goes in, and the answer is names only for the lines marked `?`. AI must always pick a member, guessing from the song's structure if unsure. A second round asks again for any still missing. Guesses are kept as `gw` and shown with `?`.
+  - **Singers (`songSingers`):** the whole song goes in, and the answer is names only for the lines marked `?`. Gemini looks up the song's line distribution on Google first (Search grounding, `gemini(…, { search: true })`, with Flash rather than Lite); if searching fails it answers from memory. It must always pick a member, guessing from the song's structure only when nothing is found. A second round asks again for any still missing. Guesses are kept as `gw` and shown with `?`.
   - **Meanings (`songMeanings`):** 20 lines per call, in the app's language (not the course's meaning language). Gemini can block an answer that matches published text (`finishReason: RECITATION`, shown in the error toast), so a refused chunk is split in half and retried. A single line it still refuses gets its meaning from free Google Translate.
 - **Lyrics tab:**
   - A colour bar per member, and a chip where the singer changes. Tap the chip to fix that run of lines.
