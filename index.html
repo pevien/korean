@@ -6748,9 +6748,21 @@ function renderSongs(){
   if (AR.songAdd || !(S.songs || []).length) return renderSongAdd();   // no songs yet: straight to the add form
   const list = (S.songs || []).slice().sort((a, b) => b.created - a.created);
   $("#v-army").innerHTML = `${songHead("sgBack", ic("music-notes") + " BTS Songs", `<button class="btn2 sh-act" id="sgNew">+ ${L("Thêm", "Add")}</button>`)}
+    <input id="sgQ" type="search" autocomplete="off" placeholder="${L("Tìm bài hát hoặc lời…", "Search songs or lyrics…")}" value="${esc(AR.songQ || "")}" style="margin-bottom:10px">
     <div class="card flat"><ul class="wl" id="sgList">${list.map(x => `<li data-id="${x.id}" style="cursor:pointer"><div class="t"><b style="font-size:15px">${esc(x.title)}</b><div>${
         L(`${x.lines.length} câu`, `${x.lines.length} line${x.lines.length === 1 ? "" : "s"}`)}${songDone(x) ? "" : " · " + L("chưa phân tích xong", "not fully analysed")}</div></div><span class="muted">›</span></li>`).join("")}</ul>
+      <p class="small muted hidden" id="sgNone" style="margin:0">${L("Không có bài nào khớp.", "No songs match.")}</p>
       ${songKeyNote()}</div>`;
+  // matches the title, the lyrics and their meanings; accents optional ("mua xuan" finds "mùa xuân")
+  const fold = t => t.normalize("NFD").toLowerCase().replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
+  const hay = new Map(list.map(x => [x.id, fold([x.title, ...x.lines.map(l => `${l.t} ${l.mean || ""}`)].join("\n"))]));
+  const filt = () => {
+    const q = fold((AR.songQ = $("#sgQ").value).trim());
+    let n = 0;
+    $$("#sgList li").forEach(li => { const on = !q || hay.get(li.dataset.id).includes(q); li.classList.toggle("hidden", !on); n += on; });
+    $("#sgNone").classList.toggle("hidden", n > 0);
+  };
+  $("#sgQ").oninput = filt; filt();
   $("#sgBack").onclick = () => { AR.screen = "home"; renderArmy(); scrollTo(0, 0); };
   $("#sgNew").onclick = () => { AR.songAdd = true; renderArmy(); scrollTo(0, 0); };
   $$("#sgList li").forEach(li => li.onclick = () => { AR.song = li.dataset.id; AR.songTab = "ly"; renderArmy(); scrollTo(0, 0); });
