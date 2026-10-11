@@ -57,7 +57,14 @@ window.fetch = async (url, opts) => {
     let out;
     if (window.__quota && !p.includes("tell them about it")) return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 });
     if (window.__searchQuota && body.tools) { window.__searchFails = (window.__searchFails || 0) + 1; return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 }); }
-    if (body.tools) { window.__searchBody = body; return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "NOTES: album Album thử, released 13 Feb 2017, written by RM." }] } }] })); }
+    if (body.tools) {
+      window.__searchBody = body; window.__searches = (window.__searches || 0) + 1;
+      const txt = window.__notFound ? "NOT FOUND" : "NOTES: album Album thử, released 13 Feb 2017, written by RM.";
+      // __noGround: the model answered without actually searching (no groundingMetadata)
+      return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: txt }] }, ...(window.__noGround ? {} : { groundingMetadata: { webSearchQueries: ["BTS song"] } }) }] }));
+    }
+    if (window.__unknownSong && p.includes("tell them about it") && p.includes("never describe a different song")) { window.__stories = (window.__stories || 0) + 1; window.__storyBody = body;
+      return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ known: false }) }] } }] })); }
     if (p.includes("tell them about it")) { window.__storyBody = JSON.parse(opts.body); (window.__storyBodies = window.__storyBodies || []).push(window.__storyBody); window.__storyModel = window.__models[window.__models.length - 1]; window.__stories = (window.__stories || 0) + 1; out = { album: "Album thử", released: "13/2/2017", about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] }; }
     else {
       // a chunk holding the 4th line is "blocked as recitation": no text, like the real API
@@ -177,6 +184,24 @@ with sync_playwright() as pw:
     page.evaluate("() => { window.__searchQuota = false; }")
     page.click("#sgStory"); page.wait_for_function("__stories >= 2 && !document.querySelector('#sgStory').disabled", timeout=5000); page.wait_for_timeout(100)
     check("search back: rewrite searches again", "chưa tra được Google" not in page.inner_text("#sgBody") and "<notes>" in page.evaluate("JSON.stringify(__storyBody)"))
+    # the search prompt gives today's date and a few lyric lines, so a new (2026) song isn't mixed up with an older one
+    sp = page.evaluate("__searchBody.contents[0].parts[0].text")
+    import datetime
+    check("search prompt: today's date + lyric lines + no other song", datetime.date.today().isoformat() in sp and "우리는 테스트 노래" in sp and "never another song" in sp, sp[:300])
+    # the model answers without really searching: treated as not searched, asked twice, then written from memory with a warning
+    page.evaluate("() => { window.__noGround = true; window.__searches = 0; }")
+    page.click("#sgStory"); page.wait_for_function("!document.querySelector('#sgStory').disabled", timeout=5000); page.wait_for_timeout(100)
+    check("no grounding: search tried twice, notes not trusted", page.evaluate("__searches") == 2 and "<notes>" not in page.evaluate("__storyBody.contents[0].parts[0].text") and "chưa tra được Google" in page.inner_text("#sgBody"))
+    check("memory prompt forbids describing another song", "never describe a different song" in page.evaluate("__storyBody.contents[0].parts[0].text"))
+    # AI doesn't know the song (memory only) → says so instead of telling another song's story
+    page.evaluate("() => { window.__unknownSong = true; }")
+    page.click("#sgStory"); page.wait_for_function("!document.querySelector('#sgStory').disabled", timeout=5000); page.wait_for_timeout(100)
+    check("unknown new song: says so, no wrong story", "AI chưa biết bài này" in page.inner_text("#sgBody") and "Album thử" not in page.inner_text("#sgBody"), page.inner_text("#sgBody"))
+    # Google finds no BTS song with this title → ask to check the title
+    page.evaluate("() => { window.__noGround = false; window.__notFound = true; }")
+    page.click("#sgStory"); page.wait_for_function("!document.querySelector('#sgStory').disabled", timeout=5000); page.wait_for_timeout(100)
+    check("not found: asks to check the title", "Google không tìm thấy bài BTS nào tên này" in page.inner_text("#sgBody"), page.inner_text("#sgBody"))
+    page.evaluate("() => { window.__notFound = false; window.__unknownSong = false; }")
     check("story prompt doesn't quote lyrics", "do not quote the lyrics" in page.evaluate("__prompts[__prompts.length-1]"))
 
     # survives a reload; list shows it
