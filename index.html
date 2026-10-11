@@ -22,7 +22,7 @@
 :root{
   /* text is --text or --muted, never faded with opacity; coloured text (--ok/--bad/--warn/tones) stays ≥ 4.5:1 on white, on --bg and on its -soft tint */
   --bg:#f6f7fb; --card:#ffffff; --text:#1d2033; --muted:#63688a; --line:#e3e5ef;
-  --accent:#4f46e5; --accent-soft:#eceafe; --soft:#e6e8f0; --on-accent:#fff; --ok:#0f7a4a; --ok-soft:#e3f6ec;
+  --accent:#4f46e5; --accent-soft:#eceafe; --soft:#e6e8f0; --soft-2:#d8dbe8; --on-accent:#fff; --ok:#0f7a4a; --ok-soft:#e3f6ec;
   --bad:#c4302b; --bad-soft:#fdeaea; --warn:#9a5b0b;
   /* four corner radii: surfaces · inner blocks & fields · small marks · tappable controls (pill) */
   --radius:16px; --r-md:12px; --r-sm:8px; --r-pill:99px;
@@ -30,7 +30,7 @@
 }
 @media (prefers-color-scheme: dark){
   :root{--bg:#12131a; --card:#1c1e28; --text:#eceef7; --muted:#9a9fbd; --line:#2c2f3d;
-    --accent:#8b83ff; --accent-soft:#26244a; --soft:#262935; --on-accent:#16142e; --ok:#3ecf8e; --ok-soft:#173327;
+    --accent:#8b83ff; --accent-soft:#26244a; --soft:#262935; --soft-2:#323646; --on-accent:#16142e; --ok:#3ecf8e; --ok-soft:#173327;
     --bad:#ff6b6b; --bad-soft:#3a1d1f; --warn:#f0b35a; --shadow:none;}
 }
 /* icons: Phosphor sprite (#i-*), sized by the surrounding text, coloured by currentColor */
@@ -578,7 +578,7 @@ body.ar-conv-on{overflow:hidden}
 #typeIn{font-size:18px}   /* the answer reads at a real size; under 16px iOS also zooms the page on focus */
 .speak{background:var(--accent-soft);color:var(--accent);border-radius:var(--r-pill);width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
 .speak.big{width:96px;height:96px;font-size:40px}
-.speak.sm{background:var(--soft);color:var(--text);width:40px;height:40px;font-size:17px;margin:0}
+.speak.sm{background:var(--soft-2);color:var(--text);width:40px;height:40px;font-size:17px;margin:0}
 /* phones, study session: the mic of speaking questions and the post-answer actions (Continue / Hard·Good·Easy)
    sit in a bottom sheet within thumb reach; on wider screens .dock is just an inline block */
 .dock{margin-top:12px}
@@ -638,13 +638,12 @@ body.ar-conv-on{overflow:hidden}
 .progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
 .newtag{display:inline-block;background:#fff4e0;color:#9a5b0b;font-size:11px;font-weight:700;padding:3px 8px;border-radius:var(--r-pill);margin-bottom:10px}
 /* list */
-/* row lists (words, passages, songs, talks, saved, tests): one soft white card like .card — rounded and inset on every screen size, never an edge-to-edge slab */
-.wl,.plist{list-style:none;margin:0;padding:0 16px;background:var(--card);border:1px solid transparent;border-radius:var(--radius);box-shadow:var(--shadow)}
-.wl:not(:has(> li:not(.hidden))),.plist:empty{display:none}   /* nothing to show (or a search hides every row): no empty box */
+/* row lists (words, passages, songs, talks, saved, tests): flat on the page background, rows split by hairlines — no card box, so rows get the full width */
+.wl,.plist{list-style:none;margin:0;padding:0}
+.wl:not(:has(> li:not(.hidden))),.plist:empty{display:none}   /* nothing to show (or a search hides every row): no stray gap */
 #wordList{margin-top:12px}   /* clear of the pinned search bar's line */
 /* my-words: search + filters stay pinned while the list scrolls under them */
-.wbar{position:sticky;top:0;z-index:4;margin:0;padding:calc(10px + env(safe-area-inset-top)) 0 10px;border-bottom:1px solid transparent}   /* no backdrop at rest; the glass comes back once the list scrolls under it (.stuck) */
-.wbar.stuck{background:var(--bg);border-bottom-color:var(--line)}
+.wbar{position:sticky;top:0;z-index:4;margin:0;padding:calc(10px + env(safe-area-inset-top)) 0 10px}   /* no backdrop or line, even when pinned: just the tabs and 🔍 floating over the list */
 @media (max-width:560px){ .wbar{margin:0 -16px;padding-left:16px;padding-right:16px} }   /* edge to edge only on phones; on wide screens it lines up with the list */
 input[type=search]{border-radius:var(--r-pill);padding-left:18px;padding-right:18px}   /* every search field is a pill (my words, BTS songs…) */
 .wbar #search{background:var(--card)}
@@ -817,7 +816,7 @@ input[type=search]{border-radius:var(--r-pill);padding-left:18px;padding-right:1
 /* reader: one slim pinned bar — ⏮ ▶ ⏭ · speed · ⚙; the rarely-changed options fold into the ⚙ panel */
 .player{position:sticky;top:calc(6px + env(safe-area-inset-top));z-index:5;background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:8px;margin-bottom:12px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
 .pctl{display:flex;gap:8px;justify-content:center;align-items:center}
-.pctl button{background:var(--soft);color:var(--text);width:48px;height:48px;padding:0;border-radius:var(--r-pill);display:inline-flex;align-items:center;justify-content:center;font-size:18px}
+.pctl button{background:var(--soft-2);color:var(--text);width:48px;height:48px;padding:0;border-radius:var(--r-pill);display:inline-flex;align-items:center;justify-content:center;font-size:18px}
 .pctl button.main{width:60px;height:60px;background:var(--accent);color:var(--on-accent);font-size:24px}
 .player .pctl button{width:40px;height:40px;font-size:15px}
 .player .pctl button.main{width:48px;height:48px;font-size:20px}
@@ -898,15 +897,15 @@ input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .rd-lite .es .ek{font-size:16px}
 .rd-lite .es .em{font-size:14px;color:var(--muted)}
 .rd-lite .es .x{background:none;color:var(--muted);padding:6px 8px;font-size:14px;line-height:1}
-/* speaking coach expanded inline under its sentence: one joined block, no repeated sentence text until there are marks to show */
-.sent.coaching{background:var(--accent-soft);border-color:var(--accent);border-bottom-color:transparent;border-radius:var(--r-md) var(--r-md) 0 0;margin-bottom:0}
-#sentList #coach{margin:0 0 8px;padding:12px;box-shadow:none;background:var(--accent-soft);border:1px solid var(--accent);border-top:0;border-radius:0 0 var(--r-md) var(--r-md)}
+/* speaking coach expanded inline under its sentence: one joined block on a plain card, purple outline only (no tint, so the grey buttons keep their contrast), no repeated sentence text until there are marks to show */
+.sent.coaching{background:var(--card);border-color:var(--accent);border-bottom-color:transparent;border-radius:var(--r-md) var(--r-md) 0 0;margin-bottom:0}
+#sentList #coach{margin:0 0 8px;padding:12px;box-shadow:none;background:var(--card);border:1px solid var(--accent);border-top:0;border-radius:0 0 var(--r-md) var(--r-md)}
 #sentList #coach > .row:first-child{display:none}
 .rd-hint{font-size:13px;font-weight:600;color:var(--ok);text-align:center;margin:6px 0 0}   /* no bottom margin: the player's 8px padding is the same with or without this line */
 .player .turn:not(:empty) + .rd-hint{display:none}   /* "your turn…" / "finished" takes that line while it shows */
 #sentList #coach .pctl{margin-top:4px!important}
 .cgrade-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px}
-.cgrade{width:max-content;padding:2px;background:transparent}
+.cgrade{width:max-content;padding:2px}   /* keeps the .seg --bg track so the white "on" chip shows on a card */
 .cgrade button{flex:0 0 auto;padding:4px 12px;font-size:12.5px}
 #sentList #coach #cTargetM, #sentList #coach .ctarget:not(:has(mark)){display:none}
 /* ---- glass: only the bars that content scrolls under get frosted (1–2 blur layers at a time keeps it light on phones);
@@ -917,12 +916,12 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     radial-gradient(55vmax 40vmax at -12% 108%, color-mix(in srgb, var(--army, #b197fc) 11%, transparent), transparent 70%)}
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
   /* one glass everywhere (the chat header's): tab bar, top bars, floating controls, the study sheet on phones */
-  nav, .player, .wbar.stuck, body.talking #talk > .sub-head.stuck, .tk-ctl, .tk-foot, .prev-cta, #arCtl.ar-on{background:color-mix(in srgb, var(--bg) 66%, transparent);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6)}
+  nav, .player, body.talking #talk > .sub-head.stuck, .tk-ctl, .tk-foot, .prev-cta, #arCtl.ar-on{background:color-mix(in srgb, var(--bg) 66%, transparent);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6)}
   @media (max-width:600px){ .dock{background:color-mix(in srgb, var(--bg) 66%, transparent);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6)} }
 }
 @media (prefers-reduced-transparency: reduce){
-  nav, .player, .tk-ctl, .tk-foot, .prev-cta, #arCtl.ar-on{background:var(--card)} .wbar.stuck, body.talking #talk > .sub-head.stuck{background:var(--bg)}
-  nav, .player, .wbar, body.talking #talk > .sub-head.stuck, .tk-ctl, .tk-foot, .prev-cta, #arCtl.ar-on, .dock{-webkit-backdrop-filter:none;backdrop-filter:none}
+  nav, .player, .tk-ctl, .tk-foot, .prev-cta, #arCtl.ar-on{background:var(--card)} body.talking #talk > .sub-head.stuck{background:var(--bg)}
+  nav, .player, body.talking #talk > .sub-head.stuck, .tk-ctl, .tk-foot, .prev-cta, #arCtl.ar-on, .dock{-webkit-backdrop-filter:none;backdrop-filter:none}
   body::before{display:none}
 }
 /* ---- AI tutor: floating bubble bottom-right (above whatever is pinned to the bottom: --tu-b), chat panel on top of the page ---- */
@@ -5792,8 +5791,6 @@ function talkHeadStuck(){
   if (h) h.classList.toggle("stuck", h.getBoundingClientRect().top <= 0 && scrollY > 0);
 }
 addEventListener("scroll", talkHeadStuck, { passive: true });
-// same for the my-words search bar
-addEventListener("scroll", () => { const w = $("#v-words .wbar"); if (w && w.offsetParent) w.classList.toggle("stuck", w.getBoundingClientRect().top <= 0 && scrollY > 0); }, { passive: true });
 $("#talk").addEventListener("click", e => {
   if (TK.rec && e.target.closest("button") && !e.target.closest("#tkRec")){ talkStop(); talkStatus(""); }
 }, true);
