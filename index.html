@@ -874,6 +874,9 @@ input.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .rd-lite .es .h{display:flex;justify-content:center;align-self:stretch;padding:9px 0;color:var(--muted);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}   /* drag handle */
 .rd-lite .es.drag{background:var(--accent-soft);border-radius:var(--r-md);box-shadow:0 6px 16px rgba(0,0,0,.15);position:relative;z-index:1}
 .rd-lite .es.drag .h{cursor:grabbing}
+#sgList .sg-grip{display:flex;align-self:stretch;align-items:center;padding:0 6px 0 2px;color:var(--muted);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}   /* drag handle */
+#sgList li.drag{background:var(--accent-soft);border-radius:var(--r-md);box-shadow:0 6px 16px rgba(0,0,0,.15);position:relative;z-index:1}
+#sgList li.drag .sg-grip{cursor:grabbing}
 .rd-lite .es .ek{font-size:16px}
 .rd-lite .es .em{font-size:14px;color:var(--muted)}
 .rd-lite .es .x{background:none;color:var(--muted);padding:6px 8px;font-size:14px;line-height:1}
@@ -3760,14 +3763,9 @@ ${sents.map((k, i) => `${i + 1}. ${k}`).join("\n")}`;
   const j = extractJSON(await gemini(prompt, undefined, { temperature: 0 }));
   return { title: String(j.title || "").trim(), titleMean: String(j.titleMean || "").trim(), meanings: arrOf(j.meanings).map(m => String(m || "").trim()) };
 }
-function liteRow(list, x){
-  const d = document.createElement("div"); d.className = "es";
-  d.innerHTML = `<div class="h" title="${L("Kéo để đổi thứ tự", "Drag to reorder")}"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2" cy="2" r="1.5"/><circle cx="8" cy="2" r="1.5"/><circle cx="2" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="2" cy="14" r="1.5"/><circle cx="8" cy="14" r="1.5"/></svg></div>
-    <div><textarea class="ek" lang="${TL}" rows="1">${esc(x.ko || "")}</textarea><textarea class="em" rows="1" placeholder="${L("Bản dịch", "Translation")}">${esc(x.meaning || "")}</textarea></div>
-    <button class="btn-ghost x" title="${L("Xoá câu", "Delete sentence")}" aria-label="${L("Xoá câu", "Delete sentence")}">${ic("x")}</button>`;
-  d.querySelector(".x").onclick = () => d.remove();
-  // drag by the handle (mouse or touch): the row slots in before the first row whose middle is below the pointer
-  const h = d.querySelector(".h");
+const GRIP = '<svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2" cy="2" r="1.5"/><circle cx="8" cy="2" r="1.5"/><circle cx="2" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="2" cy="14" r="1.5"/><circle cx="8" cy="14" r="1.5"/></svg>';
+// drag a row by its handle (mouse or touch): the row slots in before the first row whose middle is below the pointer; done() after the drop
+function dragSort(h, d, list, done){
   // listeners live on document: moving the row in the DOM drops pointer capture, which froze the drag before
   h.onpointerdown = e => {
     if (e.button > 0) return;
@@ -3778,10 +3776,18 @@ function liteRow(list, x){
       if (next){ if (d.nextElementSibling !== next) next.before(d); } else if (list.lastElementChild !== d) list.append(d);
       if (ev.clientY > innerHeight - 150) scrollBy(0, 8); else if (ev.clientY < 60) scrollBy(0, -8);   // long lists: scroll while dragging near an edge
     };
-    const end = () => { document.removeEventListener("pointermove", move); document.removeEventListener("pointerup", end); document.removeEventListener("pointercancel", end); d.classList.remove("drag"); };
+    const end = () => { document.removeEventListener("pointermove", move); document.removeEventListener("pointerup", end); document.removeEventListener("pointercancel", end); d.classList.remove("drag"); done && done(); };
     document.addEventListener("pointermove", move, { passive: false });
     document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
   };
+}
+function liteRow(list, x){
+  const d = document.createElement("div"); d.className = "es";
+  d.innerHTML = `<div class="h" title="${L("Kéo để đổi thứ tự", "Drag to reorder")}">${GRIP}</div>
+    <div><textarea class="ek" lang="${TL}" rows="1">${esc(x.ko || "")}</textarea><textarea class="em" rows="1" placeholder="${L("Bản dịch", "Translation")}">${esc(x.meaning || "")}</textarea></div>
+    <button class="btn-ghost x" title="${L("Xoá câu", "Delete sentence")}" aria-label="${L("Xoá câu", "Delete sentence")}">${ic("x")}</button>`;
+  d.querySelector(".x").onclick = () => d.remove();
+  dragSort(d.querySelector(".h"), d, list);
   list.append(d);
   return d;
 }
@@ -6728,11 +6734,11 @@ ${notes ? `Base every field on these research notes from Google Search — keep 
 <notes>
 ${notes}
 </notes>` : `${found ? "Google Search isn't available right now, so use what you know." : "Google Search found no BTS song with this title."} The song may be newer than your knowledge. Only describe a song you know with exactly this title${sample ? ` (it contains lines like: ${sample})` : ""} — never describe a different song. If you don't know it, return only {"known":false}.`}
-Return only JSON: {"album":"the album/single it was released on","released":"release date (day month year)","about":"1–2 sentences: who wrote/produced it, what kind of song it is","origin":"how the song came to be: the inspiration and story behind the writing","meaning":"its message and themes, what the members have said about it","theories":["popular fan theories or connections, each clearly framed as a theory"],"facts":["3–5 fun facts: records, performances, behind-the-scenes"]}
-"album" and "released" are always required. Leave another field empty only when nothing is known for it; never invent. Paraphrase — do not quote the lyrics.`;
+Return only JSON: {"artist":"the performer: BTS, a sub-unit, or the member's stage name for a solo song (add featured artists, e.g. \"Jimin (feat. …)\")","album":"the album/single it was released on","released":"release date (day month year)","about":"1–2 sentences: who wrote/produced it, what kind of song it is","origin":"how the song came to be: the inspiration and story behind the writing","meaning":"its message and themes, what the members have said about it","theories":["popular fan theories or connections, each clearly framed as a theory"],"facts":["3–5 fun facts: records, performances, behind-the-scenes"]}
+"artist", "album" and "released" are always required. Leave another field empty only when nothing is known for it; never invent. Paraphrase — do not quote the lyrics.`;
   const j = extractJSON(await gemini(prompt, undefined, { temperature: 0.3 }));
   x.story = j.known === false ? { unknown: true, searched: !!notes, found }
-    : { album: String(j.album || ""), released: String(j.released || ""), about: String(j.about || ""), origin: String(j.origin || ""), meaning: String(j.meaning || ""),
+    : { artist: String(j.artist || ""), album: String(j.album || ""), released: String(j.released || ""), about: String(j.about || ""), origin: String(j.origin || ""), meaning: String(j.meaning || ""),
       theories: arrOf(j.theories).map(String), facts: arrOf(j.facts).map(String), searched: !!notes };
   x.story.lang = songLang(); save();
 }
@@ -6746,11 +6752,14 @@ function renderSongs(){
   if (AR.song && !(S.songs || []).some(x => x.id === AR.song)) AR.song = "";
   if (AR.song) return renderSongView();
   if (AR.songAdd || !(S.songs || []).length) return renderSongAdd();   // no songs yet: straight to the add form
-  const list = (S.songs || []).slice().sort((a, b) => b.created - a.created);
+  // order the learner dragged (x.ord); songs added after that have none and go on top, newest first
+  const list = (S.songs || []).slice().sort((a, b) => (a.ord ?? -a.created) - (b.ord ?? -b.created));
+  const sub = x => { const s = x.story, yr = ((s && s.released) || "").match(/\b(19|20)\d\d\b/);
+    return [s && s.artist, s && s.album, yr && yr[0]].filter(Boolean).join(" · ") || (s ? "" : L("Chưa có album — xem ở tab Câu chuyện", "No album yet — see the Story tab")); };
   $("#v-army").innerHTML = `${songHead("sgBack", ic("music-notes") + " BTS Songs", `<button class="btn2 sh-act" id="sgNew">+ ${L("Thêm", "Add")}</button>`)}
     <input id="sgQ" type="search" autocomplete="off" placeholder="${L("Tìm bài hát hoặc lời…", "Search songs or lyrics…")}" value="${esc(AR.songQ || "")}" style="margin-bottom:10px">
-    <div class="card flat"><ul class="wl" id="sgList">${list.map(x => `<li data-id="${x.id}" style="cursor:pointer"><div class="t"><b style="font-size:15px">${esc(x.title)}</b><div>${
-        L(`${x.lines.length} câu`, `${x.lines.length} line${x.lines.length === 1 ? "" : "s"}`)}${songDone(x) ? "" : " · " + L("chưa phân tích xong", "not fully analysed")}</div></div><span class="muted">›</span></li>`).join("")}</ul>
+    <div class="card flat"><ul class="wl" id="sgList">${list.map(x => `<li data-id="${x.id}" style="cursor:pointer"><span class="sg-grip" title="${L("Kéo để đổi thứ tự", "Drag to reorder")}">${GRIP}</span><div class="t"><b style="font-size:15px">${esc(x.title)}</b><div>${
+        esc(sub(x))}${songDone(x) ? "" : (sub(x) ? " · " : "") + L("chưa phân tích xong", "not fully analysed")}</div></div><span class="muted">›</span></li>`).join("")}</ul>
       <p class="small muted hidden" id="sgNone" style="margin:0">${L("Không có bài nào khớp.", "No songs match.")}</p>
       ${songKeyNote()}</div>`;
   // matches the title, the lyrics and their meanings; accents optional ("mua xuan" finds "mùa xuân")
@@ -6765,7 +6774,10 @@ function renderSongs(){
   $("#sgQ").oninput = filt; filt();
   $("#sgBack").onclick = () => { AR.screen = "home"; renderArmy(); scrollTo(0, 0); };
   $("#sgNew").onclick = () => { AR.songAdd = true; renderArmy(); scrollTo(0, 0); };
-  $$("#sgList li").forEach(li => li.onclick = () => { AR.song = li.dataset.id; AR.songTab = "ly"; renderArmy(); scrollTo(0, 0); });
+  $$("#sgList li").forEach(li => {
+    li.onclick = e => { if (e.target.closest(".sg-grip")) return; AR.song = li.dataset.id; AR.songTab = "ly"; renderArmy(); scrollTo(0, 0); };
+    dragSort(li.querySelector(".sg-grip"), li, $("#sgList"), () => { $$("#sgList li").forEach((r, i) => { const x = S.songs.find(v => v.id === r.dataset.id); if (x) x.ord = i; }); save(); });
+  });
   $$("#v-army .sg-key").forEach(b => b.onclick = songGoKey);
 }
 function renderSongAdd(){
@@ -6850,7 +6862,7 @@ function songStoryUI(x, body){
   body.innerHTML = `<div class="card sg-story">${!s ? `<p class="muted" style="margin-top:0">${L("Nguồn gốc, cảm hứng sáng tác, theory và fun fact của bài — do AI tổng hợp.", "Origin, inspiration, theories and fun facts — put together by AI.")}</p>`
       : s.unknown ? `<p class="muted" style="margin-top:0">${s.found === false ? L("Google không tìm thấy bài BTS nào tên này — kiểm tra lại tên bài (chạm tên ở trên để sửa) rồi bấm <b>Viết lại</b>.", "Google found no BTS song with this title — check the title (tap it above to fix it), then tap <b>Rewrite</b>.")
           : L("Chưa tra được Google lúc này, và AI chưa biết bài này (có thể là bài mới) — bấm <b>Viết lại</b> sau để tra lại.", "Google Search isn't available right now and AI doesn't know this song yet (it may be new) — tap <b>Rewrite</b> later to search again.")}</p>`
-      : (s.album || s.released ? `<h3 class="sg-h">💿 ${L("Album", "Album")}</h3><p>${esc(s.album || "?")}${s.released ? ` · ${L("phát hành", "released")} ${esc(s.released)}` : ""}</p>` : "")
+      : (s.album || s.released ? `<h3 class="sg-h">💿 ${L("Album", "Album")}</h3><p>${s.artist ? `🎤 ${esc(s.artist)} · ` : ""}${esc(s.album || "?")}${s.released ? ` · ${L("phát hành", "released")} ${esc(s.released)}` : ""}</p>` : "")
         + para("📀 " + L("Giới thiệu", "About"), s.about) + para("✍️ " + L("Nguồn gốc & cảm hứng", "Origin & inspiration"), s.origin) + para("💜 " + L("Ý nghĩa", "Meaning"), s.meaning)
         + list("🔮 Theory", s.theories) + list("✨ Fun facts", s.facts)
         + (s.origin || s.meaning || (s.theories || []).length || (s.facts || []).length ? "" : `<p class="muted">${L("Chưa tìm thấy thêm câu chuyện nào về bài này — mới có thông tin cơ bản ở trên.", "No more story found for this song yet — just the basics above.")}</p>`)

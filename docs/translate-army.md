@@ -137,6 +137,7 @@ Lets a fan learn a song: the original, its romanization and its meaning, plus th
 
 - **No songs yet:** opening BTS Songs goes straight to the add form; its back button returns to ARMY.
 - **The lyrics always come from the fan.** They type the title, tap **🔍 Find the lyrics on Google**, copy the lyrics and paste them. AI never writes the lyrics: it misremembers them, and Gemini blocks quoted lyrics.
+- **Song list:** each row shows artist · album · year from the story (`artist` is BTS, a sub-unit or the member for a solo song; stories written before this have none until **Rewrite**). A search box filters by title, lyrics and meanings, accents optional. Drag the ⠿ handle to reorder (saved as `ord`; songs added later go on top).
 - **Paste cleanup (`songParse`):**
   - Anything above the first `[section]` line is dropped (contributors, translations, blurb), and so are junk lines ("You might also like", "…Embed").
   - `[Chorus]`-style headers (and blank lines) only start a new section, shown as a gap. Who sings is not tracked: AI kept getting the line distribution wrong and it cost scarce quota.

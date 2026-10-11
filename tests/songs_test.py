@@ -65,7 +65,7 @@ window.fetch = async (url, opts) => {
     }
     if (window.__unknownSong && p.includes("tell them about it") && p.includes("never describe a different song")) { window.__stories = (window.__stories || 0) + 1; window.__storyBody = body;
       return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ known: false }) }] } }] })); }
-    if (p.includes("tell them about it")) { window.__storyBody = JSON.parse(opts.body); (window.__storyBodies = window.__storyBodies || []).push(window.__storyBody); window.__storyModel = window.__models[window.__models.length - 1]; window.__stories = (window.__stories || 0) + 1; out = { album: "Album thử", released: "13/2/2017", about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] }; }
+    if (p.includes("tell them about it")) { window.__storyBody = JSON.parse(opts.body); (window.__storyBodies = window.__storyBodies || []).push(window.__storyBody); window.__storyModel = window.__models[window.__models.length - 1]; window.__stories = (window.__stories || 0) + 1; out = { artist: "BTS", album: "Album thử", released: "13/2/2017", about: "Giới thiệu thử", origin: "Nguồn gốc thử", meaning: "Ý nghĩa thử", theories: ["Theory thử"], facts: ["Fact 1", "Fact 2"] }; }
     else {
       // a chunk holding the 4th line is "blocked as recitation": no text, like the real API
       if (p.includes("마지막 줄이에요")) return new Response(JSON.stringify({ candidates: [{ finishReason: "RECITATION" }] }));
@@ -167,6 +167,7 @@ with sync_playwright() as pw:
     page.screenshot(path=os.path.join(SP, "story.png"), full_page=True)
     st = page.inner_text("#sgBody")
     check("story shows album and release date", "Album thử" in st and "phát hành 13/2/2017" in st, st)
+    check("story shows the artist", "🎤 BTS" in st, st)
     check("story prompt asks for album and release date", "are always required" in page.evaluate("__storyBody.contents[0].parts[0].text"))
     check("story on the model picked in Settings", page.evaluate("__storyModel") == "gemini-2.5-flash")
     sb = page.evaluate("__searchBody")
