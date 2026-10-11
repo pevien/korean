@@ -4947,6 +4947,8 @@ function applyRemote(R){
   else refreshStats();
   renderWordsSoft();
   if (!$("#v-read").classList.contains("hidden") && typeof renderPassList === "function") try { renderPassList(); } catch(e){}
+  // ARMY lists (songs, saved transcripts): redraw so synced items show up; never mid-live, in the add form or while typing
+  if (curView === "army" && AR.screen !== "mode" && !AR.songAdd && !$("#v-army").contains(document.activeElement && document.activeElement.matches("input,textarea") ? document.activeElement : null)) try { renderArmy(); } catch(e){}
 }
 function payload(){ const d = JSON.parse(JSON.stringify(S)); d.syncedAt = Date.now(); return d; }
 

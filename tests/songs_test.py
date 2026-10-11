@@ -209,6 +209,21 @@ with sync_playwright() as pw:
     page.reload(); page.wait_for_timeout(800)
     page.click('nav button[data-v="army"]'); page.click("#arSongsOpen"); page.wait_for_timeout(200)
     check("listed after reload", "Test Song" in page.inner_text("#sgList") and "Quota Song" in page.inner_text("#sgList"))
+
+    # a song added on another device shows up on the open list as soon as Drive sync brings it in
+    remote = page.evaluate("JSON.parse(localStorage.getItem('hangulCards.v1'))")
+    synced = dict(remote, songs=remote["songs"] + [{"id": "remote1", "title": "Synced Song", "created": 1, "mod": 9e15, "lines": [{"t": "노래", "mean": "bài hát"}]}])
+    drive = {"file": remote}   # the startup sync gets today's copy; the other device's new song lands while the list is open
+    page.route("https://www.googleapis.com/**", lambda r: r.fulfill(status=200, content_type="application/json",
+        body=json.dumps(drive["file"] if "alt=media" in r.request.url else {"id": "f1", "files": [{"id": "f1"}]})))
+    page.evaluate("""() => { localStorage.setItem('hangulCards.sync', JSON.stringify({ clientId: 'x.apps.googleusercontent.com', on: true, fileId: 'f1', last: 1 }));
+      localStorage.setItem('hangulCards.gtoken', JSON.stringify({ t: 'tok', exp: Date.now() + 3600e3 })); }""")
+    page.reload(); page.wait_for_timeout(800)
+    page.click('nav button[data-v="army"]'); page.click("#arSongsOpen"); page.wait_for_timeout(300)
+    drive["file"] = synced
+    page.evaluate("document.dispatchEvent(new Event('visibilitychange'))")
+    page.wait_for_function("document.querySelector('#sgList') && document.querySelector('#sgList').innerText.includes('Synced Song')", timeout=5000)
+    check("synced song shows on the open list", "Synced Song" in page.inner_text("#sgList"), page.inner_text("#sgList"))
     check("no page errors", not errs, errs)
     b.close()
 
