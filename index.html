@@ -22,7 +22,7 @@
 :root{
   /* text is --text or --muted, never faded with opacity; coloured text (--ok/--bad/--warn/tones) stays ≥ 4.5:1 on white, on --bg and on its -soft tint */
   --bg:#f6f7fb; --card:#ffffff; --text:#1d2033; --muted:#63688a; --line:#e3e5ef;
-  --accent:#4f46e5; --accent-soft:#eceafe; --soft:#e6e8f0; --soft-2:#d8dbe8; --on-accent:#fff; --ok:#0f7a4a; --ok-soft:#e3f6ec;
+  --accent:#4f46e5; --accent-soft:#eceafe; --soft:#e6e8f0; --on-accent:#fff; --ok:#0f7a4a; --ok-soft:#e3f6ec;
   --bad:#c4302b; --bad-soft:#fdeaea; --warn:#9a5b0b;
   /* four corner radii: surfaces · inner blocks & fields · small marks · tappable controls (pill) */
   --radius:16px; --r-md:12px; --r-sm:8px; --r-pill:99px;
@@ -30,7 +30,7 @@
 }
 @media (prefers-color-scheme: dark){
   :root{--bg:#12131a; --card:#1c1e28; --text:#eceef7; --muted:#9a9fbd; --line:#2c2f3d;
-    --accent:#8b83ff; --accent-soft:#26244a; --soft:#262935; --soft-2:#323646; --on-accent:#16142e; --ok:#3ecf8e; --ok-soft:#173327;
+    --accent:#8b83ff; --accent-soft:#26244a; --soft:#262935; --on-accent:#16142e; --ok:#3ecf8e; --ok-soft:#173327;
     --bad:#ff6b6b; --bad-soft:#3a1d1f; --warn:#f0b35a; --shadow:none;}
 }
 /* icons: Phosphor sprite (#i-*), sized by the surrounding text, coloured by currentColor */
@@ -578,7 +578,7 @@ body.ar-conv-on{overflow:hidden}
 #typeIn{font-size:18px}   /* the answer reads at a real size; under 16px iOS also zooms the page on focus */
 .speak{background:var(--accent-soft);color:var(--accent);border-radius:var(--r-pill);width:64px;height:64px;padding:0;font-size:26px;margin:10px auto;display:flex;align-items:center;justify-content:center}
 .speak.big{width:96px;height:96px;font-size:40px}
-.speak.sm{background:var(--soft-2);color:var(--text);width:40px;height:40px;font-size:17px;margin:0}
+.speak.sm{background:var(--soft);color:var(--text);width:40px;height:40px;font-size:17px;margin:0}
 /* phones, study session: the mic of speaking questions and the post-answer actions (Continue / Hard·Good·Easy)
    sit in a bottom sheet within thumb reach; on wider screens .dock is just an inline block */
 .dock{margin-top:12px}
@@ -816,7 +816,7 @@ input[type=search]{border-radius:var(--r-pill);padding-left:18px;padding-right:1
 /* reader: one slim pinned bar — ⏮ ▶ ⏭ · speed · ⚙; the rarely-changed options fold into the ⚙ panel */
 .player{position:sticky;top:calc(6px + env(safe-area-inset-top));z-index:5;background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:8px;margin-bottom:12px;box-shadow:0 4px 18px rgba(0,0,0,.22)}
 .pctl{display:flex;gap:8px;justify-content:center;align-items:center}
-.pctl button{background:var(--soft-2);color:var(--text);width:48px;height:48px;padding:0;border-radius:var(--r-pill);display:inline-flex;align-items:center;justify-content:center;font-size:18px}
+.pctl button{background:var(--soft);color:var(--text);width:48px;height:48px;padding:0;border-radius:var(--r-pill);display:inline-flex;align-items:center;justify-content:center;font-size:18px}
 .pctl button.main{width:60px;height:60px;background:var(--accent);color:var(--on-accent);font-size:24px}
 .player .pctl button{width:40px;height:40px;font-size:15px}
 .player .pctl button.main{width:48px;height:48px;font-size:20px}
