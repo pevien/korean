@@ -42,9 +42,9 @@ window.fetch = async (url, opts) => {
     await new Promise(r => setTimeout(r, 150));
     const lastParts = body.contents[body.contents.length - 1].parts, voice = lastParts.some(p => p.inline_data && p.inline_data.mime_type === "audio/wav");
     const p0 = (body.contents[0].parts[0] || {}).text || "";
-    if (p0.startsWith("Transcribe this")) { window.__hearPrompt = p0; window.__hearN = (window.__hearN || 0) + 1; }   // the blind transcription before the tutor answers
-    const txt = body.generationConfig.responseMimeType === "text/plain" ? (voice && window.__oldHeard ? "HEARD: \"안녕하세요\"\n" : "") + %s
-      : p0.startsWith("Transcribe this") ? JSON.stringify({ heard: window.__silent ? "" : "Xin chào, 안녕하세요 means hello?" }) : "{}";
+    if (p0.startsWith("Transcribe this")) window.__hearN = (window.__hearN || 0) + 1;   // a separate transcription call (there should be none)
+    // a voice message: the tutor transcribes it itself, on a HEARD line before the answer ("HEARD: " alone = didn't catch it)
+    const txt = body.generationConfig.responseMimeType === "text/plain" ? (voice ? (window.__silent ? "HEARD: \n" : "HEARD: \"Xin chào, 안녕하세요 means hello?\"\n") : "") + %s : "{}";
     if (String(url).includes("alt=sse")) {   // streamed: first half, then the rest window.__sseGap ms later
       window.__thinking = body.generationConfig.thinkingConfig;
       const enc = new TextEncoder(), cut = Math.ceil(txt.length / 2);
@@ -141,24 +141,20 @@ def C(page):
     check("C: player in the learner bubble", page.query_selector("#tuList .tu-m.me audio"))
     check("C: answer shown", page.query_selector("#tuList .tu-m.ai"))
     heard = page.query_selector("#tuList .tu-m.me .heard")
-    check("C: blind transcript (several languages) under the recording", heard and heard.inner_text() == "Xin chào, 안녕하세요 means hello?", heard and heard.inner_text())
-    hp = page.evaluate("window.__hearPrompt || ''")
-    check("C: transcribed in any language, nothing translated", "Never translate" in hp and "mixed" in hp and "not Korean" not in hp, hp[:200])
-    check("C: the tutor gets the transcript as final", any("Xin chào, 안녕하세요 means hello?" in (p.get("text") or "") for p in parts), str(parts)[:300])
+    check("C: the tutor's HEARD line (several languages) under the recording", heard and heard.inner_text() == "Xin chào, 안녕하세요 means hello?", heard and heard.inner_text())
+    check("C: one call — no separate blind transcription", not page.evaluate("window.__hearN || 0"))
+    sysp = page.evaluate("window.__bodies[0].systemInstruction.parts[0].text")
+    check("C: told to transcribe in any language, nothing translated", "never translate" in sysp and "mix" in sysp and "HEARD" in sysp, sysp[:200])
     check("C: HEARD line not in the answer", "HEARD" not in page.inner_text("#tuList .tu-m.ai"))
     check("C: the answer is streamed with light thinking", page.evaluate("JSON.stringify(window.__thinking || null)") not in ("null", "{}"), page.evaluate("JSON.stringify(window.__thinking || null)"))
     page.screenshot(path=f"{SP}/C-voice.png")
-    # silence: nothing sent to the tutor, a hint instead
+    # silence: the tutor writes "HEARD: " alone (and asks again) — no transcript line, nothing of the next line taken as one
     n = page.evaluate("window.__bodies.length"); page.evaluate("window.__silent = true")
-    page.click("#tuMic"); page.wait_for_timeout(1500); page.click("#tuMic"); page.wait_for_timeout(1500)
-    check("C: silent recording → not sent, hint shown", page.evaluate("window.__bodies.length") == n and "nghe rõ" in page.inner_text("#tuNote"), page.inner_text("#tuNote"))
-    check("C: silent recording leaves no empty bubble", len(page.query_selector_all("#tuList .tu-m.me")) == 1)
-    # transcription failing: the tutor still answers and writes HEARD itself
-    page.evaluate("window.__silent = false; window.__oldHeard = true; const f = window.fetch; window.fetch = (u, o) => String(o && o.body).includes('Transcribe this') ? Promise.reject(new Error('net')) : f(u, o)")
     page.click("#tuMic"); page.wait_for_timeout(1500); page.click("#tuMic")
     page.wait_for_function(f"window.__bodies.length > {n} && !document.querySelector('#tuList .tu-wait') && !document.querySelector('#tuSend').disabled", timeout=8000)
-    hs = page.query_selector_all("#tuList .tu-m.me .heard")
-    check("C: transcription failed → the tutor's HEARD line is used", len(hs) == 2 and hs[-1].inner_text() == "안녕하세요", str([h.inner_text() for h in hs]))
+    me = page.query_selector_all("#tuList .tu-m.me")
+    check("C: empty HEARD → no transcript under the recording", len(me) == 2 and not me[-1].query_selector(".heard"), me[-1].inner_html()[:200])
+    check("C: empty HEARD line not in the answer", "HEARD" not in page.query_selector_all("#tuList .tu-m.ai")[-1].inner_text())
 
 def D(page):
     """Photo question: attach, preview, sent as JPEG with the typed text."""

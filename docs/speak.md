@@ -194,7 +194,7 @@ Tap 🎙 on a sentence to open the coach underneath it. The coach has:
   - It sees the last 14 turns.
 - **Your turn:** tap 🎙, speak, then tap again. Recording stops by itself after 30 s.
 - **What the AI sends back for each turn:**
-  - What it heard, word for word, mistakes included. The recording is transcribed on its own first, without the conversation, so the AI can't fill in words from its own last line; the grading and reply then use that transcript as is. Nothing heard → "Didn't catch that", try again.
+  - What it heard, word for word, mistakes included. It is written down in the same AI call as the grading and reply: knowing the conversation helps the AI hear an accented learner (a blind transcription first was tried and misheard too much). The AI is told to keep mistakes and not borrow words from its own last line. Nothing heard → "Didn't catch that", try again.
   - ✅ "Correct and natural!", or ✏️ a corrected sentence with a one-line reason.
   - A translation.
   - A **pronunciation** score with up to 2 issues. Tap the score to expand it, with "My recording" and "Model" playback.

@@ -87,11 +87,11 @@ One AI call (`ieBegin`) writes the whole test before the first question, so movi
 
 ## Feedback on each answer
 
-Two AI calls per answer (`ieScoreAnswer`). First the WAV recording is transcribed blind (`aiHear`, without the question, so the AI can't fill in words that fit the question). If nothing was heard, the answer counts as unanswered and the second call is skipped. The second call sends the recording plus that transcript, marked as final, and returns the following:
+One AI call per answer (`ieScoreAnswer`): the WAV recording plus the question. The AI transcribes the answer and grades it in the same call; knowing the question helps it hear an accented answer, and it is told not to borrow words from the question. (A separate blind transcription was tried and dropped: without context it misheard too much, and those mishearings were graded as the candidate's mistakes.) If nothing was heard, the answer counts as unanswered. The call returns the following:
 
 | Field | Shown as |
 |---|---|
-| `heard` | The transcript from the first call, mistakes and fillers (um, uh) kept |
+| `heard` | What they said, mistakes and fillers (um, uh) kept |
 | `note` | One sentence overall |
 | `checks` | **Content & development**, shown first. Each check is ✓ or ! with a concrete tip when it isn't met. Part 1: answers directly · extends with a reason/detail · stays on topic. Part 2: each cue-card point · opening–body–wrap-up · on topic. Part 3: clear opinion · reasons · concrete example · logical flow/linking · no rambling. |
 | `ideas` | 0–2 ways to develop this answer: an example to add, or a part to cut |

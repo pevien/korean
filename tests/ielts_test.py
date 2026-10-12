@@ -45,7 +45,7 @@ window.fetch = async (url, opts) => {
     if (kind === "ans") window.__ansSchema = body.generationConfig.responseSchema;
     if (kind === "band") window.__bandPrompt = p;
     if (kind === "gen") window.__genPrompt = p;
-    if (kind === "hear") window.__hearPrompt = p;
+    if (kind === "ans") window.__ansPrompt = p;
     await new Promise(r => setTimeout(r, 200));
     if (kind === "band" && window.__mock.bad > 0) { window.__mock.bad--; return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '{"fc":{"band":6,"note":"x"}, "lr" {"band"' + '}' }] } }] })); }
     if (kind === "ans" && window.__mock.fail > 0) { window.__mock.fail--; return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 }); }
@@ -56,7 +56,6 @@ window.fetch = async (url, opts) => {
     else if (kind === "gen") out = { p1: [{ topic: "Work or study", q: "Do you work or are you a student?" }, { topic: "Music", q: "What kind of music do you like?" }, { topic: "Music", q: "Did you learn an instrument as a child?" }],
       card: { topic: "Describe a place you visited that you would like to go back to.", points: ["where it is", "when you went there", "what you did there"], end: "and explain why you would like to go back." },
       follow: "Do you often travel?", p3: ["Why do people like to travel?", "How has tourism changed in your country?"] };
-    else if (kind === "hear") out = { heard: window.__mock.silent ? "" : window.__mock.partial ? "I work as a nurse." : "um I am work in a software company since three years, uh it is very good job" };   // the blind transcription before grading
     else if (kind === "ans" && window.__mock.partial) out = { heard: "I work as a nurse.", fixes: [], upgrades: [], note: "", issues: [] };   // Gemini leaving fields out
     else if (kind === "ans") out = window.__mock.silent ? { heard: "" } : { heard: "um I am work in a software company since three years, uh it is very good job", fixes: [{ from: "I am work", to: "I work", why: "Không dùng 'am' trước động từ thường." }],
       upgrades: [{ from: "very good job", to: "a rewarding job", why: "Tự nhiên hơn." }], note: "Đúng ý nhưng hơi ngắn.", score: 72, issues: [{ part: "three", tip: "Âm /θ/: /θriː/" }],
@@ -142,8 +141,9 @@ def t_full(page):
     check("C. Part 3 reached", "Part 3" in txt(page, "#ielts .sub-head"))
     answer(page); answer(page, wait=4000)
     c = calls(page)
-    check("C. AI calls: 1 gen + 7 answers (each transcribed first) + 1 band", c.count("gen") == 1 and c.count("hear") == 7 and c.count("ans") == 7 and c.count("band") == 1, str(c))
-    check("C. transcribed blind, without the question", "?" not in page.evaluate("window.__hearPrompt || ''") and "fillers" in page.evaluate("window.__hearPrompt || ''"))
+    check("C. AI calls: 1 gen + 7 answers (transcribed in the same call) + 1 band", c.count("gen") == 1 and c.count("hear") == 0 and c.count("ans") == 7 and c.count("band") == 1, str(c))
+    ap = page.evaluate("window.__ansPrompt || ''")
+    check("C. the answer call transcribes too, keeping fillers", '"heard"' in ap and "fillers" in ap and page.evaluate("(window.__ansSchema || {}).propertyOrdering[0]") == "heard", ap[:200])
     s = saved(page)
     check("C. test saved once", len(s) == 1)
     if s:
