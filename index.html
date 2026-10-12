@@ -1508,6 +1508,10 @@ const DY = () => { rollDay(); return isKo ? S.daily : ((S.daily.c ||= {})[CUR] |
 const feedbackLangRule = () => isKo ? `Write every explanation (tips, "good", "overall") in ${uiLangName()}, NOT in Korean. Use Hangul only for the Korean words/syllables being discussed and for pronunciations in brackets. If for any reason you cannot write in ${uiLangName()}, you MUST answer in English. Never write explanations in Korean.`
   : CO.en === uiLangName() ? `Write every explanation (tips, "good", "overall") in ${uiLangName()}.`
   : `Write every explanation (tips, "good", "overall") in ${uiLangName()}, NOT in ${CO.en}. Use ${CO.en} only for the words/sounds being discussed and for pronunciations in brackets. If for any reason you cannot write in ${uiLangName()}, you MUST answer in English. Never write explanations in ${CO.en}.`;
+// repeated as the prompt's last line, right after the JSON template — the part the model reads last sticks best,
+// and every slip costs a second call (fixFeedbackLang) the learner has to wait for
+const langTail = (...keys) => CO.en === uiLangName() ? "" : `
+Reminder: ${keys.map(k => `"${k}"`).join(", ")} must be written in ${uiLangName()}, not in ${CO.en}.`;
 // …and it still sometimes does: an explanation mostly in the course language (ignoring [pron], /IPA/ and quoted words) gets re-translated
 const mostlyKo = s => {
   const t = String(s || "").replace(/\[[^\]]*\]|\/[^/]*\/|"[^"]*"|“[^”]*”|'[^']*'/g, ""), lat = (t.match(/[A-Za-zÀ-ỹ]/g) || []).length;
@@ -1526,7 +1530,7 @@ async function fixFeedbackLang(fields){   // fields: [[obj, key], …] — fixed
 Return JSON exactly like: {"t":[""]} — same number of items, same order.
 ${JSON.stringify(bad.map(([o, k]) => String(o[k])))}` : `Translate each explanation below into ${uiLangName()}. Keep the ${CO.en} words/sounds being discussed and pronunciations in brackets as they are; everything else must be ${uiLangName()}.
 Return JSON exactly like: {"t":[""]} — same number of items, same order.
-${JSON.stringify(bad.map(([o, k]) => String(o[k])))}`, null, { temperature: 0.2 }));
+${JSON.stringify(bad.map(([o, k]) => String(o[k])))}`, null, { temperature: 0.2, thinking: "off" }));
     (r.t || []).forEach((s, i) => { if (bad[i] && s) bad[i][0][bad[i][1]] = String(s); });
   } catch(e){}   // keep the untranslated text rather than fail the grading
 }
@@ -2425,14 +2429,20 @@ const MODEL_HINT = () => L("Flash-Lite: rẻ nhất, nhiều lượt miễn phí
   "Flash-Lite: cheapest, most free requests — fine for studying and ARMY. Flash: more accurate but fewer free requests. Recording transcription always uses Flash for accuracy (falls back to Lite when out of quota).");
 // opts.contents: a whole multi-turn chat instead of one prompt; opts.text: a plain-text answer instead of JSON;
 // opts.search: let Gemini look things up on Google first (the answer then comes as text — read it with extractJSON);
-// opts.meta: an object that gets .grounding (what Google Search returned) — the model may skip the search, this tells whether it did
+// opts.meta: an object that gets .grounding (what Google Search returned) — the model may skip the search, this tells whether it did;
+// opts.thinking: "off" | "low" — Flash thinks before answering by default, which adds seconds; grading and transcribing don't need much
+const thinkingConfig = (model, level) => modelVer(model) >= 3
+  ? { thinkingLevel: level === "off" ? "minimal" : "low" }
+  : { thinkingBudget: level === "off" ? 0 : 512 };
 async function gemini(prompt, extraParts, opts = {}){
-  const tryModel = async (model) => {
+  const tryModel = async (model, think = opts.thinking) => {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": S.settings.apiKey.trim() },
-      body: JSON.stringify({ ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}), contents: opts.contents || [{ role:"user", parts: [{ text: prompt }, ...(extraParts || [])] }], ...(opts.search ? { tools: [{ google_search: {} }] } : {}), generationConfig: { responseMimeType: opts.text || opts.search ? "text/plain" : "application/json", ...(opts.schema ? { responseSchema: opts.schema } : {}), temperature: opts.temperature ?? (extraParts ? 0.3 : 0.9) } })
+      body: JSON.stringify({ ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}), contents: opts.contents || [{ role:"user", parts: [{ text: prompt }, ...(extraParts || [])] }], ...(opts.search ? { tools: [{ google_search: {} }] } : {}), generationConfig: { responseMimeType: opts.text || opts.search ? "text/plain" : "application/json", ...(opts.schema ? { responseSchema: opts.schema } : {}), temperature: opts.temperature ?? (extraParts ? 0.3 : 0.9), ...(think ? { thinkingConfig: thinkingConfig(model, think) } : {}) } })
     });
+    // a model that doesn't take this thinking setting: ask again with its default
+    if (r.status === 400 && think) return tryModel(model, null);
     if (!r.ok){
       let msg = ""; try { msg = (await r.json()).error.message; } catch(e){}
       const err = new Error(r.status === 429 ? "Gemini limit reached — wait a minute and try again." : r.status === 400 || r.status === 403 ? "API key problem: " + (msg || r.status) : (msg || "HTTP " + r.status));
@@ -3285,8 +3295,8 @@ ${sayFocus()}
 "score" = strict pronunciation score 0–100. Start at 100 and deduct for each issue: a clearly wrong sound, tone or a missing syllable −15 to −25; a missed sound rule, linking or final consonant −10 to −15; wrong stress or intonation −8 to −12; hesitation, choppy or unnatural pace −5 to −10; a slight accent on one sound −3 to −6. 95–100 ONLY when it sounds native in every aspect; with any issue the score is at most 90. A different word scores under 40. Work the score out from the issues you list — it must match them.
 "good" = one short thing they did well, or "".
 ${feedbackLangRule()}
-Return JSON exactly like: {"correct":false,"pron":"","score":0,"issues":[{"part":"","type":"","heard":"","tip":""}],"good":""}`;
-    const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule(), temperature: 0.2 }));
+Return JSON exactly like: {"correct":false,"pron":"","score":0,"issues":[{"part":"","type":"","heard":"","tip":""}],"good":""}${langTail("tip", "good")}`;
+    const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule(), temperature: 0.2, thinking: "low" }));
     const issues = item.issues = (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 6).map(x => ({ part: String(x.part || "").trim(), type: String(x.type || "").trim(), heard: String(x.heard || "").trim(), tip: String(x.tip) }));
     await fixFeedbackLang([...issues.map(x => [x, "tip"]), [j, "good"]]);
     item.busy = false;
@@ -4341,7 +4351,7 @@ async function aiHear(audio, dur, opts = {}){
 - If the learner stopped mid-sentence, the transcript stops there too.
 - ${opts.fillers ? "Keep hesitation fillers (um, uh, er) exactly where they were said" : "Leave out hesitation sounds (um, uh, 음, 어)"}; leave out any background voices.
 - If the audio is silent, just noise, or not ${CO.en}, return "heard":"".
-Return JSON exactly like: {"heard":""}`, audio, { temperature: 0, model: hearModel() }));
+Return JSON exactly like: {"heard":""}`, audio, { temperature: 0, model: hearModel(), thinking: "off" }));
   return String(j.heard || "").trim();
 }
 // the line every grading prompt gets after aiHear
@@ -4359,7 +4369,7 @@ async function evaluateAI(){
     const heard = await aiHear(audio, C.dur);
     if (tok !== C.tok) return;
     if (!heard){ cBusy(false); $("#cStatus").textContent = "Didn't catch that — speak a bit louder and closer to the mic, then try again."; return; }
-    const j = coachClean(extractJSON(await gemini(coachPrompt(s, heard), audio, { system: feedbackLangRule(), temperature: 0.2 })));
+    const j = coachClean(extractJSON(await gemini(coachPrompt(s, heard), audio, { system: feedbackLangRule(), temperature: 0.2, thinking: "low" })));
     j.heard = heard;
     await fixFeedbackLang([[j, "good"], [j, "overall"], ...j.issues.map(x => [x, "tip"])]);
     if (tok === C.tok) renderCoachResult(s, j, true);   // moved to another sentence meanwhile: drop it
@@ -4410,7 +4420,7 @@ Scores are 0–100 and strict. Each starts at 100; deduct for every issue in tha
 "pron" = ${CO.pron} — for the whole TARGET.
 If HEARD is unrelated to the target, return all scores 0.
 ${feedbackLangRule()}
-Return JSON exactly like: {"pron":"","scores":{"accuracy":0,"fluency":0,"intonation":0,"native":0},"issues":[{"part":"","type":"${isKo ? "sound|batchim|sound-rule|linking" : "sound|tone|vowel-length|linking"}|stress|intonation|pace|missing|extra","heard":"","tip":""}],"good":"","overall":""}`;
+Return JSON exactly like: {"pron":"","scores":{"accuracy":0,"fluency":0,"intonation":0,"native":0},"issues":[{"part":"","type":"${isKo ? "sound|batchim|sound-rule|linking" : "sound|tone|vowel-length|linking"}|stress|intonation|pace|missing|extra","heard":"","tip":""}],"good":"","overall":""}${langTail("tip", "good", "overall")}`;
 }
 // the scores are the AI's own; only drop empty issues and keep at most 10
 function coachClean(j){
@@ -5716,8 +5726,8 @@ The attached recording is the learner's next turn (${(dur / 1000).toFixed(1)} s)
 - "ko": your in-character reply in ${CO.en} — respond to what the learner MEANT, even if it had mistakes. 1–2 short sentences.
 - "koMean": translation of your reply in ${uiLangName()}.
 ${feedbackLangRule()}
-Return JSON exactly like: {"ok":true,"fix":"","why":"","mean":"","score":0,"pron":"","issues":[{"part":"","tip":""}],"ko":"","koMean":""}`;
-    const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule() }));
+Return JSON exactly like: {"ok":true,"fix":"","why":"","mean":"","score":0,"pron":"","issues":[{"part":"","tip":""}],"ko":"","koMean":""}${langTail("why", "mean", "tip", "koMean")}`;
+    const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule(), thinking: "low" }));
     await fixFeedbackLang([[j, "why"], [j, "mean"], [j, "koMean"], ...(Array.isArray(j.issues) ? j.issues : []).map(x => [x, "tip"])]);
     if (S.talk !== t) return;
     t.turns = t.turns.filter(x => x !== me);
