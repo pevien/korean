@@ -41,7 +41,21 @@ window.fetch = async (url, opts) => {
     if (body.generationConfig.responseMimeType === "text/plain") window.__bodies.push(body);
     await new Promise(r => setTimeout(r, 150));
     const lastParts = body.contents[body.contents.length - 1].parts, voice = lastParts.some(p => p.inline_data && p.inline_data.mime_type === "audio/wav");
-    const txt = body.generationConfig.responseMimeType === "text/plain" ? (voice ? "HEARD: \"안녕하세요\"\n" : "") + %s : "{}";
+    const p0 = (body.contents[0].parts[0] || {}).text || "";
+    if (p0.startsWith("Transcribe this")) { window.__hearPrompt = p0; window.__hearN = (window.__hearN || 0) + 1; }   // the blind transcription before the tutor answers
+    const txt = body.generationConfig.responseMimeType === "text/plain" ? (voice && window.__oldHeard ? "HEARD: \"안녕하세요\"\n" : "") + %s
+      : p0.startsWith("Transcribe this") ? JSON.stringify({ heard: window.__silent ? "" : "Xin chào, 안녕하세요 means hello?" }) : "{}";
+    if (String(url).includes("alt=sse")) {   // streamed: first half, then the rest window.__sseGap ms later
+      window.__thinking = body.generationConfig.thinkingConfig;
+      const enc = new TextEncoder(), cut = Math.ceil(txt.length / 2);
+      return new Response(new ReadableStream({ async start(c) {
+        for (const [i, x] of [txt.slice(0, cut), txt.slice(cut)].entries()) {
+          if (i) await new Promise(r => setTimeout(r, window.__sseGap || 0));
+          c.enqueue(enc.encode("data: " + JSON.stringify({ candidates: [{ content: { parts: [{ text: x }] } }] }) + "\r\n\r\n"));
+        }
+        c.close();
+      } }), { headers: { "content-type": "text/event-stream" } });
+    }
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: txt }] } }] }));
   }
   return realFetch(url, opts);
@@ -73,7 +87,7 @@ def run(pw, name, fn, width=390, **kw):
 def ask(page, text):
     n = page.evaluate("window.__bodies.length")
     page.fill("#tuIn", text); page.press("#tuIn", "Enter")
-    page.wait_for_function(f"window.__bodies.length > {n} && !document.querySelector('#tuList .tu-wait')", timeout=8000)
+    page.wait_for_function(f"window.__bodies.length > {n} && !document.querySelector('#tuList .tu-wait') && !document.querySelector('#tuSend').disabled", timeout=8000)
     return page.evaluate("window.__bodies[window.__bodies.length - 1]")
 
 def A(page):
@@ -121,15 +135,30 @@ def C(page):
     page.click("#tuMic"); page.wait_for_timeout(1500)
     check("C: recording state", "on" in page.get_attribute("#tuMic", "class"))
     page.click("#tuMic")
-    page.wait_for_function("window.__bodies.length > 0 && !document.querySelector('#tuList .tu-wait')", timeout=8000)
+    page.wait_for_function("window.__bodies.length > 0 && !document.querySelector('#tuList .tu-wait') && !document.querySelector('#tuSend').disabled", timeout=8000)
     parts = page.evaluate("window.__bodies[0].contents[0].parts")
     check("C: audio part sent", any(p.get("inline_data", {}).get("mime_type") == "audio/wav" for p in parts), str([list(p) for p in parts]))
     check("C: player in the learner bubble", page.query_selector("#tuList .tu-m.me audio"))
     check("C: answer shown", page.query_selector("#tuList .tu-m.ai"))
     heard = page.query_selector("#tuList .tu-m.me .heard")
-    check("C: transcript under the recording", heard and heard.inner_text() == "안녕하세요", heard and heard.inner_text())
+    check("C: blind transcript (several languages) under the recording", heard and heard.inner_text() == "Xin chào, 안녕하세요 means hello?", heard and heard.inner_text())
+    hp = page.evaluate("window.__hearPrompt || ''")
+    check("C: transcribed in any language, nothing translated", "Never translate" in hp and "mixed" in hp and "not Korean" not in hp, hp[:200])
+    check("C: the tutor gets the transcript as final", any("Xin chào, 안녕하세요 means hello?" in (p.get("text") or "") for p in parts), str(parts)[:300])
     check("C: HEARD line not in the answer", "HEARD" not in page.inner_text("#tuList .tu-m.ai"))
+    check("C: the answer is streamed with light thinking", page.evaluate("JSON.stringify(window.__thinking || null)") not in ("null", "{}"), page.evaluate("JSON.stringify(window.__thinking || null)"))
     page.screenshot(path=f"{SP}/C-voice.png")
+    # silence: nothing sent to the tutor, a hint instead
+    n = page.evaluate("window.__bodies.length"); page.evaluate("window.__silent = true")
+    page.click("#tuMic"); page.wait_for_timeout(1500); page.click("#tuMic"); page.wait_for_timeout(1500)
+    check("C: silent recording → not sent, hint shown", page.evaluate("window.__bodies.length") == n and "nghe rõ" in page.inner_text("#tuNote"), page.inner_text("#tuNote"))
+    check("C: silent recording leaves no empty bubble", len(page.query_selector_all("#tuList .tu-m.me")) == 1)
+    # transcription failing: the tutor still answers and writes HEARD itself
+    page.evaluate("window.__silent = false; window.__oldHeard = true; const f = window.fetch; window.fetch = (u, o) => String(o && o.body).includes('Transcribe this') ? Promise.reject(new Error('net')) : f(u, o)")
+    page.click("#tuMic"); page.wait_for_timeout(1500); page.click("#tuMic")
+    page.wait_for_function(f"window.__bodies.length > {n} && !document.querySelector('#tuList .tu-wait') && !document.querySelector('#tuSend').disabled", timeout=8000)
+    hs = page.query_selector_all("#tuList .tu-m.me .heard")
+    check("C: transcription failed → the tutor's HEARD line is used", len(hs) == 2 and hs[-1].inner_text() == "안녕하세요", str([h.inner_text() for h in hs]))
 
 def D(page):
     """Photo question: attach, preview, sent as JPEG with the typed text."""
@@ -156,12 +185,43 @@ def E(page):
         check("E: bubble above the tab bar", fab["y"] + fab["height"] <= nav["y"], (fab, nav))
     page.screenshot(path=f"{SP}/E-session.png")
 
+def G(page):
+    """Streaming: the first half of the answer shows while the rest is still coming, without the 'thinking' spinner."""
+    page.click("#tuFab"); page.evaluate("window.__sseGap = 1500")
+    page.fill("#tuIn", "사과 là gì?"); page.press("#tuIn", "Enter")
+    page.wait_for_function("document.querySelector('#tuList .tu-m.ai:not(.tu-wait)')", timeout=5000)
+    part = page.inner_text("#tuList .tu-m.ai:not(.tu-wait)")
+    check("G: part of the answer shows while streaming", 0 < len(part) < len(ANSWER) - 5 and page.query_selector("#tuList .tu-wait") is None, part[:80])
+    check("G: send stays locked until it's done", page.evaluate("document.querySelector('#tuSend').disabled"))
+    page.wait_for_function("!document.querySelector('#tuSend').disabled", timeout=5000)
+    check("G: whole answer at the end, shown once", "sa-goa" in page.inner_text("#tuList") and len(page.query_selector_all("#tuList .tu-m.ai")) == 1)
+
 def F(page):
     """Desktop: floating panel at the corner."""
     page.click("#tuFab")
     r = page.query_selector("#tu").bounding_box()
     check("F: panel is a corner window", r["width"] <= 402 and r["x"] > 500, r)
     page.screenshot(path=f"{SP}/F-desktop.png")
+
+def H(page):
+    """No tutor on Speak → Reading and Talk with AI (they have their own coach); back elsewhere. An open tutor closes there."""
+    fab = lambda: page.is_visible("#tuFab")
+    page.click('nav [data-v="read"]'); page.wait_for_timeout(200)
+    check("H: shown on the Speak picker", fab())
+    page.click('#spHome .sp-pick[data-s="read"]'); page.wait_for_timeout(200)
+    check("H: hidden on Reading", not fab())
+    page.click('nav [data-v="read"]'); page.wait_for_timeout(200)
+    check("H: back on the Speak picker", fab())
+    page.click('#spHome .sp-pick[data-s="talk"]'); page.wait_for_timeout(200)
+    check("H: hidden on Talk with AI", not fab())
+    page.click('nav [data-v="study"]'); page.wait_for_timeout(200)
+    check("H: shown again on another tab", fab())
+    page.click('nav [data-v="read"]'); page.wait_for_timeout(200)
+    page.click("#tuFab"); page.wait_for_timeout(200)
+    page.click('#spHome .sp-pick[data-s="read"]'); page.wait_for_timeout(200)   # desktop: the tutor is a corner window, the page stays reachable
+    check("H: an open tutor closes on Reading", page.is_hidden("#tu") and not fab())
+    page.reload(); page.wait_for_timeout(1000)
+    check("H: still hidden after a reload on Reading", not fab())
 
 with sync_playwright() as pw:
     run(pw, "A", A, key="")
@@ -170,6 +230,8 @@ with sync_playwright() as pw:
     run(pw, "D", D)
     run(pw, "E", E)
     run(pw, "F", F, width=1200)
+    run(pw, "G", G)
+    run(pw, "H", H, width=1200)
 
 fails = [r for r in results if not r[1]]
 for n, ok, info in results: print(("PASS " if ok else "FAIL ") + n + ("" if ok else "  →  " + str(info)))

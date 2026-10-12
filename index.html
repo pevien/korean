@@ -803,7 +803,7 @@ input[type=search]{border-radius:var(--r-pill);padding-left:18px;padding-right:1
 .modal textarea{min-height:90px;font-size:13px}
 .steps{margin:0 0 6px;padding-left:20px;font-size:14px}
 .steps li{margin:4px 0}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:var(--r-pill);animation:spin .8s linear infinite;vertical-align:-2px;margin-right:6px}
+.spinner{display:inline-block;width:1.1em;height:1.1em;border:max(2px,.14em) solid currentColor;border-right-color:transparent;border-radius:var(--r-pill);animation:spin .8s linear infinite;vertical-align:-.2em;margin-right:6px;flex:0 0 auto;box-sizing:border-box}   /* the size of an icon in the same text */
 @keyframes spin{to{transform:rotate(360deg)}}
 /* switching course / language reloads the page: dim everything at once so nothing can be tapped twice */
 .reloading{position:fixed;inset:0;z-index:70;background:rgba(10,12,30,.55);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -2519,10 +2519,15 @@ function busy(btn, on, label){
   if (on){ btn.dataset.label = btn.innerHTML; btn.disabled = true; btn.innerHTML = `<span class="spinner"></span>${label || "Working…"}`; }
   else { btn.disabled = false; if (btn.dataset.label) btn.innerHTML = btn.dataset.label; }
 }
+// a spinner that takes an icon-only button's icon place, at that icon's size (a big mic button gets a big one)
+function spinFor(btn){
+  const el = btn && btn.querySelector("svg.i, .spinner"), w = el ? el.getBoundingClientRect().width : 0;
+  return `<span class="spinner" style="margin:0${w ? `;width:${Math.round(Math.max(14, w * .9))}px;height:${Math.round(Math.max(14, w * .9))}px;border-width:${w >= 24 ? 3 : 2}px` : ""}"></span>`;
+}
 // opening the mic can take a moment (permission prompt, iOS warming up): the mic button spins until it's live
 function micWait(btn, p){
   if (!btn) return p;
-  const h = btn.innerHTML; btn.disabled = true; btn.innerHTML = `<span class="spinner" style="margin:0"></span>`;
+  const h = btn.innerHTML; btn.disabled = true; btn.innerHTML = spinFor(btn);
   return p.finally(() => { if (btn.isConnected){ btn.disabled = false; btn.innerHTML = h; } });
 }
 // one feature records at a time: starting one stops whatever else still holds the mic (the tutor and Translate sit over the other tabs).
@@ -2615,6 +2620,7 @@ function show(v){
   if (v === "read") spShow(spScreen);
   if (v === "words") renderWords();
   if (v === "set") renderSettings();
+  if (window.__tutorSync) window.__tutorSync();   // hidden on some screens (not defined yet while the app starts)
   window.scrollTo(0,0);
   navSave({ v, p: v === "read" && curP ? curP.id : "", y: 0 });
 }
@@ -3237,11 +3243,11 @@ function frCancel(){
 }
 // the mic button carries the state (idle / true = recording / "busy" = grading); the line above it is only for errors and live text
 function frBtn(on){
-  const busy = on === "busy", spin = `<span class="spinner" style="margin:0"></span>`;
+  const busy = on === "busy";
   on = on === true;
-  const b = $("#sayRec"); if (b){ b.classList.toggle("on", on); b.disabled = busy; b.innerHTML = busy ? spin : ic(on ? "stop-fill" : "microphone"); }
+  const b = $("#sayRec"); if (b){ b.classList.toggle("on", on); b.disabled = busy; b.innerHTML = busy ? spinFor(b) : ic(on ? "stop-fill" : "microphone"); }
   const a = $("#sayAgain"); if (a){ a.classList.toggle("on", on); a.disabled = busy;
-    a.innerHTML = busy ? spin + " " + L("Đang chấm…", "Checking…") : ic(on ? "stop-fill" : "microphone") + " " + (on ? L("Đang ghi…", "Recording…") : L("Luyện lại", "Practice again")); }
+    a.innerHTML = busy ? `<span class="spinner" style="margin:0"></span> ` + L("Đang chấm…", "Checking…") : ic(on ? "stop-fill" : "microphone") + " " + (on ? L("Đang ghi…", "Recording…") : L("Luyện lại", "Practice again")); }
 }
 // after the answer the dock is gone: messages for "say it again" show in the result box; any message after a try puts the button back
 function frSay(html){ const el = $("#sayAgainSt") || $("#sayStatus"); if (el) el.innerHTML = html; if (!FR.rec && !FR.recog) frBtn(false); }
@@ -3339,7 +3345,7 @@ Return JSON exactly like: {"correct":false,"pron":"","score":0,"issues":[{"part"
       if (early || !ok || !sc || !el || !session || session.queue[0] !== item) return;
       early = true;
       const n = Math.max(0, Math.min(100, +sc[1])), [, title] = sayTitle(ok[1] === "true" && n >= SAY_PASS, n);
-      el.innerHTML = `<b>${esc(title)} · ${n}/100</b> <span class="muted"><span class="spinner" style="margin:0 4px 0 6px;width:12px;height:12px;vertical-align:-1px"></span>${L("đang viết nhận xét…", "writing feedback…")}</span>`;
+      el.innerHTML = `<b>${esc(title)} · ${n}/100</b> <span class="muted"><span class="spinner" style="margin:0 4px 0 6px"></span>${L("đang viết nhận xét…", "writing feedback…")}</span>`;
     };
     const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule(), temperature: 0.2, thinking: "low", onText }));
     const issues = item.issues = (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 6).map(x => ({ part: String(x.part || "").trim(), type: String(x.type || "").trim(), heard: String(x.heard || "").trim(), tip: String(x.tip) }));
@@ -3476,7 +3482,7 @@ const AUTO_TR = () => L("Tự điền nghĩa", "Fill meaning");
 $("#autoTr").textContent = AUTO_TR();
 $("#autoTr").onclick = async () => {
   const ko = $("#inKo").value.trim(); if (!ko) { toast(`Type a ${CO.en} word first`); return; }
-  const b = $("#autoTr"); b.style.width = b.offsetWidth + "px"; b.disabled = true; b.innerHTML = `<span class="spinner" style="margin:0"></span>`;   // keep its width while busy
+  const b = $("#autoTr"); b.style.width = b.offsetWidth + "px"; b.disabled = true; b.innerHTML = spinFor(b);   // keep its width while busy
   try { $("#inMean").value = await translate(ko); } catch(e){ toast("Translation unavailable — type it yourself"); }
   b.disabled = false; b.textContent = AUTO_TR(); b.style.width = "";
 };
@@ -4247,7 +4253,7 @@ function cancelRec(){
   cBusy(false);
 }
 // grading: the 🎙 button turns into a spinner (the status line under it is only for errors and live text)
-function cBusy(on){ C.busy = on; const b = $("#cRec"); if (!b) return; b.classList.remove("on"); b.disabled = on; b.innerHTML = on ? `<span class="spinner" style="margin:0"></span>` : ic("microphone"); }
+function cBusy(on){ C.busy = on; const b = $("#cRec"); if (!b) return; b.classList.remove("on"); b.disabled = on; b.innerHTML = on ? spinFor(b) : ic("microphone"); }
 /* explain *why* the mic is blocked (file://, Chrome app permission, site permission) */
 function micHelp(kind, el){
   // only reached once opening the mic actually failed — a Mac in DevTools Android mode never gets here
@@ -4389,13 +4395,16 @@ async function blobToWavB64(blob, stats){
 // what the learner said, transcribed blind: with the expected word / sentence / conversation in view the model "hears" that
 // instead — fills in missing words, swaps in a similar-sounding phrase — so it gets the audio alone, and the grading
 // call that follows takes this transcript as final ("" = silence or noise)
+// opts.mixed (the tutor): any language, several in one message, each kept as spoken — nothing translated or dropped
 async function aiHear(audio, dur, opts = {}){
-  const j = extractJSON(await gemini(`Transcribe this ${(dur / 1000).toFixed(1)} s recording of a ${CO.en} learner speaking, verbatim, ${CO.script}.
+  const j = extractJSON(await gemini(`Transcribe this ${(dur / 1000).toFixed(1)} s recording of a ${CO.en} learner speaking, verbatim, ${opts.mixed
+    ? `in whatever language(s) they speak — often ${uiLangName()} mixed with ${CO.en}, English or another language, even within one sentence. Write each word in the language it was spoken in and in that language's own script (${CO.en} ${CO.script}, ${uiLangName()} with its full diacritics). Never translate any part, and never drop the parts in another language`
+    : CO.script}.
 - Write ONLY the words actually spoken, in the order spoken. Never add, complete, guess or "repair" words; never fix grammar, particles or endings.
 - If a word is unclear, mispronounced or cut off, write your best phonetic guess of what was actually said — don't substitute a similar-sounding common word or phrase.
 - If the learner stopped mid-sentence, the transcript stops there too.
 - ${opts.fillers ? "Keep hesitation fillers (um, uh, er) exactly where they were said" : "Leave out hesitation sounds (um, uh, 음, 어)"}; leave out any background voices.
-- If the audio is silent, just noise, or not ${CO.en}, return "heard":"".
+- If the audio is silent or just noise${opts.mixed ? "" : `, or not ${CO.en}`}, return "heard":"".
 Return JSON exactly like: {"heard":""}`, audio, { temperature: 0, thinking: "off" }));
   return String(j.heard || "").trim();
 }
@@ -5554,6 +5563,7 @@ function spShow(scr){
   else if (scr === "ielts") renderIelts();
   else renderTalk();
   navSave({ sp: scr, p: curP ? curP.id : "" });
+  if (window.__tutorSync) window.__tutorSync();
 }
 function renderSpHome(){
   const t = S.talk;
@@ -5797,7 +5807,7 @@ Return JSON exactly like: {"ok":true,"fix":"","why":"","mean":"","score":0,"pron
 }
 async function talkHint(){
   const t = S.talk; if (!t || TK.busy) return;
-  const b = $("#tkHint"); b.disabled = true; b.innerHTML = `<span class="spinner" style="margin:0"></span>`;
+  const b = $("#tkHint"); b.disabled = true; b.innerHTML = spinFor(b);
   try {
     const j = extractJSON(await gemini(`${talkContext(t)}
 The learner is stuck and doesn't know what to say next. Help them answer:
@@ -5873,7 +5883,7 @@ function renderTalkChat(){
   const rs = $("#tkRate"); syncPRate();   // fills #tkRate from Settings → Speed (the reader's box may not be synced yet after a reload)
   rs.onchange = () => { $("#pRate").value = rs.value; $("#pRate").onchange(); fitPRate(rs); };
   if (TK.rec) talkRecUI(true);
-  if (TK.busy){ const b = $("#tkRec"); b.disabled = true; b.innerHTML = `<span class="spinner" style="margin:0"></span>`; }   // grading what was just said
+  if (TK.busy){ const b = $("#tkRec"); b.disabled = true; b.innerHTML = spinFor(b); }   // grading what was just said
   talkStatus(TK.status);
   const ttsBtn = () => { const b = $("#tkTts"); b.innerHTML = ic(talkTts() ? "speaker-high" : "speaker-slash"); b.setAttribute("aria-label", talkTts() ? L("Đọc to", "Read aloud") : L("Tắt tiếng", "Muted")); b.title = talkTts() ? L("AI đang đọc to — chạm để tắt", "AI reads aloud — tap to mute") : L("Không đọc to — chạm để bật", "Not reading aloud — tap to turn on"); };
   ttsBtn();
@@ -7652,8 +7662,10 @@ function tuHead(){
   $("#tu .tu-head .tu-av").innerHTML = m ? m.emoji : ic("graduation-cap");
 }
 const tuIsOpen = () => !$("#tu").classList.contains("hidden");
+// Speak → Reading and Talk with AI have their own AI coach and mic: no tutor there
+const tuAway = () => curView === "read" && (spScreen === "read" || spScreen === "talk");
 function tuSync(){   // the bubble only exists while there's a key
-  const on = hasKey();
+  const on = hasKey() && !tuAway();
   if (!on && tuIsOpen()) tuClose();
   $("#tuFab").classList.toggle("hidden", !on || tuIsOpen());
   tuPlace();
@@ -7686,7 +7698,7 @@ const tuSystem = () => `${tuPersona(TU.idol)}You are a warm, patient ${CO.en} te
 - Language: follow the learner, message by message. Reply in the language they write or speak in (${uiLangName()}, ${CO.en}, English…) or the one they ask for; if unclear, use ${uiLangName()}. When they chat in ${CO.en} to practise, answer in simple ${CO.en} at their level. Write ${CO.en} ${CO.script}${CO.words ? "" : `; when explaining a new ${CO.en} word, add its pronunciation in Latin letters in (parentheses)`}. Put each ${CO.en} word or phrase in **bold**.
 - Be short and clear: a few sentences or a short list (under ~120 words) unless they ask for more. Simple Markdown only: **bold**, *italic*, "- " lists. No tables, no headings.
 - Explain at their level; give 1–2 example sentences with a ${uiLangName()} translation when useful.
-- A voice message may be a question (in ${uiLangName()} or ${CO.en}) or them practising ${CO.en}. When the latest message is a voice message, the FIRST line of your reply must be "HEARD: " + exactly what they said, word for word, in the language they spoke (the app shows it under their recording). Then answer the question, or kindly correct their pronunciation and grammar — no need to repeat what they said.
+- A voice message may be a question (in ${uiLangName()} or ${CO.en}) or them practising ${CO.en}. The app transcribes each voice message word for word first and gives you that transcript with the audio: treat it as exactly what they said (don't "hear" the answer you expected instead), and use the audio only to judge how it sounded. Answer the question, or kindly correct their pronunciation and grammar — no need to repeat what they said. If a voice message comes without a transcript, make the FIRST line of your reply "HEARD: " + exactly what they said, word for word, in the language(s) they spoke.
 - A photo (textbook, sign, menu, screenshot, homework…): read it and answer what they ask; if they ask nothing, explain the ${CO.en} in it.
 - If they are in the middle of a quiz question, give hints first; give the answer straight away only when they ask for it.
 - Off-topic questions: answer briefly, then steer back to ${CO.en}.
@@ -7723,7 +7735,7 @@ function tuRender(){
   list.innerHTML = (TU.msgs.length ? TU.msgs.map(m => m.role === "user"
       ? `<div class="tu-m me">${m.img ? `<img src="${m.img}" alt="">` : ""}${m.audio ? `<audio controls src="${m.audio}"></audio>` : ""}${m.heard ? `<div class="t heard" lang="${TL}">${esc(m.heard)}</div>` : ""}${m.text ? `<div class="t">${esc(m.text)}</div>` : ""}</div>`
       : `<div class="tu-m ai">${tuMd(m.text)}</div>`).join("") : tuHello())
-    + (TU.busy ? `<div class="tu-m ai tu-wait"><span class="spinner"></span>${L("Đang nghĩ…", "Thinking…")}</div>` : "")
+    + (TU.busy && !TU.msgs.some(m => m.live) ? `<div class="tu-m ai tu-wait"><span class="spinner"></span>${L("Đang nghĩ…", "Thinking…")}</div>` : "")
     + (TU.err && !TU.busy ? `<div class="tu-err">⚠️ ${esc(TU.err)} <button class="linkbtn" id="tuRetry">${L("Thử lại", "Try again")}</button></div>` : "");
   list.scrollTop = list.scrollHeight;
   $("#tuSend").disabled = TU.busy;
@@ -7768,9 +7780,21 @@ async function tuSend(audio){
   const parts = [], m = { role: "user", text };
   if (att){ parts.push({ inline_data: { mime_type: "image/jpeg", data: att.b64 } }); m.img = att.url; }
   if (audio){ parts.push({ inline_data: { mime_type: "audio/wav", data: audio.b64 } }); m.audio = audio.url; }
-  parts.push({ text: text || (audio ? "(voice message)" : "(photo)") });
   m.parts = parts;
   TU.msgs.push(m); $("#tuIn").value = ""; tuGrow(); TU.att = null; tuAttSet(null); tuNote("");
+  if (audio){
+    // transcribed blind, like everywhere else: the tutor itself sees the chat and "hears" the answer it expects
+    const g = TU.gen; TU.busy = true; tuRender();
+    let heard = null;
+    try { heard = await aiHear(parts.slice(-1), audio.dur, { mixed: true }); } catch(e){}   // failed: the tutor transcribes it itself (HEARD line)
+    if (g !== TU.gen) return;
+    if (heard === ""){
+      TU.msgs.pop(); URL.revokeObjectURL(m.audio); TU.busy = false; tuRender();
+      return tuNote(L("Không nghe rõ — nói to và gần micro hơn rồi thử lại.", "Didn't catch that — speak a bit louder and closer to the mic, then try again."));
+    }
+    if (heard){ m.heard = heard; tuRender(); }
+  }
+  parts.push({ text: text || (audio ? (m.heard ? `(voice message, transcribed word for word as: "${m.heard}")` : "(voice message)") : "(photo)") });
   await tuAsk();
 }
 async function tuAsk(){
@@ -7781,10 +7805,21 @@ async function tuAsk(){
     let h = TU.msgs.slice(-50); while (h.length && h[0].role !== "user") h = h.slice(1);
     const contents = h.map((m, i) => ({ role: m.role, parts: i >= h.length - 6 ? m.parts
       : m.parts.map(p => p.inline_data ? { text: p.inline_data.mime_type.startsWith("audio") ? (m.heard ? `[earlier voice message: "${m.heard}"]` : "[earlier voice message]") : "[earlier photo]" } : p) }));
-    let ans = (await gemini("", undefined, { contents, system: tuSystem(), text: true, temperature: 0.6 })).trim();
+    // streamed: the answer shows as it's written (the HEARD line, when the tutor writes one, stays hidden); light thinking keeps it quick
+    const live = { role: "model", text: "", live: true };
+    const onText = t => {
+      if (g !== TU.gen) return;
+      if (/^\**HEARD/i.test(t)){ const nl = t.indexOf("\n"); if (nl < 0) return; t = t.slice(nl + 1); }
+      live.text = t.trim(); if (!live.text) return;
+      if (!TU.msgs.includes(live)) TU.msgs.push(live);
+      tuRender();
+    };
+    let ans;
+    try { ans = (await gemini("", undefined, { contents, system: tuSystem(), text: true, temperature: 0.6, thinking: "low", onText })).trim(); }
+    finally { TU.msgs = TU.msgs.filter(x => x !== live); }
     if (g !== TU.gen) return;
     const last = TU.msgs[TU.msgs.length - 1], hd = ans.match(/^\**HEARD:?\**:?\s*(.*)(?:\n|$)/i);
-    if (hd){ ans = ans.slice(hd[0].length).trim(); if (last.audio) last.heard = hd[1].replace(/\*+/g, "").replace(/^["“]|["”]$/g, "").trim(); }
+    if (hd){ ans = ans.slice(hd[0].length).trim(); if (last.audio && !last.heard) last.heard = hd[1].replace(/\*+/g, "").replace(/^["“]|["”]$/g, "").trim(); }
     // a sign-off line ("Jin", "— Jimin 💜") is dropped: the header already says who is talking
     if (TU.idol) ans = ans.replace(new RegExp(`\\n+[\\s*_—–~-]*${TU.idol.name.replace(/[-\s]/g, "[-\\s]?")}[\\s*_.!~\\p{Extended_Pictographic}\\uFE0F]*$`, "iu"), "").trim();
     TU.msgs.push({ role: "model", text: ans, parts: [{ text: ans }] });
@@ -7812,7 +7847,7 @@ async function tuRecStart(){
       if (dur < 700) return tuNote(L("Ngắn quá — nói lâu hơn chút nhé.", "That was too short — try again."));
       const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
       try { const b64 = await blobToWavB64(blob);   // replayed as WAV: an Android WebM can claim minutes it never recorded
-        await tuSend({ b64, url: URL.createObjectURL(new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: "audio/wav" })) }); }
+        await tuSend({ b64, dur, url: URL.createObjectURL(new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: "audio/wav" })) }); }
       catch(e){ tuNote("⚠️ " + (e.message || L("Không đọc được bản ghi", "Couldn't read the recording"))); }
     };
     TU.cancel = false; rec.start(); TU.t0 = Date.now(); tuRecUI(true);

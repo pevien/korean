@@ -139,6 +139,7 @@ def open_ie(page):
     page.wait_for_selector("#ieRec", timeout=6000); page.wait_for_timeout(200)
     return "#ieRec"
 def open_tu(page):
+    if not page.is_visible("#tu") and not page.is_visible("#tuFab"): page.click('nav [data-v="set"]'); page.wait_for_timeout(200)   # no tutor on Reading / Talk
     if not page.is_visible("#tu"): page.click("#tuFab")
     page.wait_for_timeout(200)
     return "#tuMic"
@@ -226,7 +227,7 @@ def t_overlay(page):
         page.click(trsel); page.wait_for_timeout(1500)
         close_overlays(page); page.wait_for_timeout(300)
         idle(page, f"D {f}→TR closed")
-    for f in ["FR", "C", "TK", "IE"]:
+    for f in ["FR", "IE"]:   # Reading and Talk have no tutor
         sel = FEAT[f](page); page.click(sel); page.wait_for_timeout(1000)
         open_tu(page); page.click("#tuMic"); page.wait_for_timeout(1000)
         s = state(page)
