@@ -46,6 +46,18 @@ window.fetch = async (url, opts) => {
     const pick = i => Array.isArray(ans) ? ans[Math.min(i, ans.length - 1)] : ans;
     const out = p.startsWith("Transcribe this") ? { heard: pick(n + 1).heard || "" }   // the blind transcription before each grading call
       : p.includes("attached recording") ? pick(n) : { t: [] };
+    if (String(url).includes("alt=sse")) {   // streamed: everything before "issues" first, the rest window.__sseGap ms later
+      const txt = JSON.stringify(out), cut = txt.indexOf('"issues"'), enc = new TextEncoder();
+      const chunks = cut > 0 ? [txt.slice(0, cut), txt.slice(cut)] : [txt];
+      const body = new ReadableStream({ async start(c) {
+        for (const [i, x] of chunks.entries()) {
+          if (i) await new Promise(r => setTimeout(r, window.__sseGap || 0));
+          c.enqueue(enc.encode("data: " + JSON.stringify({ candidates: [{ content: { parts: [{ text: x }] } }] }) + "\r\n\r\n"));
+        }
+        c.close();
+      } });
+      return new Response(body, { headers: { "content-type": "text/event-stream" } });
+    }
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(out) }] } }] }));
   }
   return realFetch(url, opts);
@@ -110,14 +122,21 @@ def A(page):
     check("A: example sentence still shown", "Example with 음악." in text, text)
     check("A: Say again button", page.is_visible("#sayAgain"))
     m = page.evaluate("window.__models")
-    check("A: transcription on Flash, grading on the chosen Lite", m == [["gemini-2.5-flash", "hear"], ["gemini-2.5-flash-lite", "grade"]], m)
+    check("A: transcription and grading both on the chosen model", m == [["gemini-2.5-flash-lite", "hear"], ["gemini-2.5-flash-lite", "grade"]], m)
 
-def J(page):
-    """Flash out of quota (429): the transcription falls back to the chosen Lite model and grading still works."""
-    text, _ = say(page, "J-quota")
-    m = page.evaluate("window.__models")
-    check("J: Flash tried, then Lite", m[:3] == [["gemini-2.5-flash", "hear"], ["gemini-2.5-flash-lite", "hear"], ["gemini-2.5-flash-lite", "grade"]], m)
-    check("J: score still shown", "78/100" in text, text[:120])
+def K(page):
+    """Streamed grading: the verdict and score show while the tips are still coming, then the full feedback replaces them."""
+    page.evaluate("window.__sseGap = 1500")
+    if page.query_selector("#startBtn"): page.click("#startBtn")
+    page.wait_for_selector("#sayRec")
+    record(page, "#sayRec")
+    page.wait_for_function("(document.querySelector('#sayStatus') || {}).textContent?.includes('78/100')", timeout=6000)
+    st = page.inner_text("#sayStatus")
+    page.screenshot(path=f"{SP}/K-early.png")
+    check("K: score shown before the feedback", "Khá tốt · 78/100" in st and "đang viết nhận xét" in st and not page.query_selector("#fb .qfb"), st)
+    page.wait_for_selector("#fb .qfb", timeout=6000)
+    check("K: full feedback after the stream ends", page.eval_on_selector_all("#fb .say-iss .issue", "e => e.length") == 3 and "78/100" in page.inner_text("#fb .fb-t > span"))
+    check("K: grading asked for a stream", page.evaluate("window.__models").count(["gemini-2.5-flash-lite", "grade"]) == 1)
 
 def B(page):
     """No issues: a native-like 98 is kept and the 'good' line shows instead of a list."""
@@ -226,8 +245,8 @@ with sync_playwright() as pw:
                 { "heard": "음악", "correct": True, "pron": "[으막]", "score": 55, "issues": ISSUES, "good": "" }])
     run(pw, "I", I, course="en", word="board", meaning="lên tàu xe máy bay", mode="m2say", ui="en",
         answer={ "heard": "get on", "correct": False, "pron": "/bɔːrd/", "score": 20, "issues": [], "good": "" })
-    run(pw, "J", J, course="ko", word="음악", meaning="âm nhạc", quota=True,
-        answer={ "heard": "음악", "correct": True, "pron": "[으막]", "score": 78, "issues": [], "good": "" })
+    run(pw, "K", K, course="ko", word="음악", meaning="âm nhạc",
+        answer={ "heard": "음악", "correct": True, "pron": "[으막]", "score": 78, "issues": ISSUES, "good": "" })
     run(pw, "D", D, course="ko", word="음악", meaning="âm nhạc", answer={ "heard": "음악", "correct": True })
 
 ok = sum(1 for r in results if r[1])
