@@ -2428,37 +2428,13 @@ const MODEL_HINT = () => L("Flash-Lite: rẻ nhất, nhiều lượt miễn phí
 // opts.contents: a whole multi-turn chat instead of one prompt; opts.text: a plain-text answer instead of JSON;
 // opts.search: let Gemini look things up on Google first (the answer then comes as text — read it with extractJSON);
 // opts.meta: an object that gets .grounding (what Google Search returned) — the model may skip the search, this tells whether it did;
-// opts.onText: streams the answer, called with the text so far as it arrives (e.g. to show a score before the tips are written);
 // opts.thinking: "off" | "low" — Flash thinks before answering by default, which adds seconds; grading and transcribing don't need much
 const thinkingConfig = (model, level) => modelVer(model) >= 3
   ? { thinkingLevel: level === "off" ? "minimal" : "low" }
   : { thinkingBudget: level === "off" ? 0 : 512 };
-// a streamed answer (server-sent events, one JSON chunk per "data:" line) folded back into the shape of a plain one
-async function readSSE(r, onText){
-  const rd = r.body.getReader(), dec = new TextDecoder();
-  let buf = "", txt = "", cand = {}, fb;
-  const take = line => {
-    if (!line.startsWith("data:")) return;
-    let c; try { c = JSON.parse(line.slice(5)); } catch(e){ return; }
-    const k = c.candidates?.[0] || {};
-    const t = (k.content?.parts || []).filter(p => !p.thought).map(p => p.text || "").join("");
-    if (k.finishReason) cand.finishReason = k.finishReason;
-    if (k.groundingMetadata) cand.groundingMetadata = k.groundingMetadata;
-    if (c.promptFeedback) fb = c.promptFeedback;
-    if (t){ txt += t; try { onText(txt); } catch(e){} }
-  };
-  for (;;){
-    const { done, value } = await rd.read();
-    buf += dec.decode(value || new Uint8Array(), { stream: !done });
-    const lines = buf.split(/\r?\n/); buf = done ? "" : lines.pop();
-    lines.forEach(take);
-    if (done) break;
-  }
-  return { candidates: [{ ...cand, content: { parts: [{ text: txt }] } }], promptFeedback: fb };
-}
 async function gemini(prompt, extraParts, opts = {}){
   const tryModel = async (model, think = opts.thinking) => {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:${opts.onText ? "streamGenerateContent?alt=sse" : "generateContent"}`, {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": S.settings.apiKey.trim() },
       body: JSON.stringify({ ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}), contents: opts.contents || [{ role:"user", parts: [{ text: prompt }, ...(extraParts || [])] }], ...(opts.search ? { tools: [{ google_search: {} }] } : {}), generationConfig: { responseMimeType: opts.text || opts.search ? "text/plain" : "application/json", ...(opts.schema ? { responseSchema: opts.schema } : {}), temperature: opts.temperature ?? (extraParts ? 0.3 : 0.9), ...(think ? { thinkingConfig: thinkingConfig(model, think) } : {}) } })
@@ -2470,7 +2446,7 @@ async function gemini(prompt, extraParts, opts = {}){
       const err = new Error(r.status === 429 ? "Gemini limit reached — wait a minute and try again." : r.status === 400 || r.status === 403 ? "API key problem: " + (msg || r.status) : (msg || "HTTP " + r.status));
       err.status = r.status; throw err;
     }
-    const j = /event-stream/.test(r.headers.get("content-type") || "") ? await readSSE(r, opts.onText) : await r.json();
+    const j = await r.json();
     const txt = (j.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("");
     if (opts.meta) opts.meta.grounding = j.candidates?.[0]?.groundingMetadata || null;
     if (!txt){ const err = new Error("Empty answer from AI"); err.reason = j.candidates?.[0]?.finishReason || j.promptFeedback?.blockReason || ""; throw err; }
@@ -3337,17 +3313,7 @@ ${sayFocus()}
 "good" = one short thing they did well, or "".
 ${feedbackLangRule()}
 Return JSON exactly like: {"correct":false,"pron":"","score":0,"issues":[{"part":"","type":"","heard":"","tip":""}],"good":""}${langTail("tip", "good")}`;
-    // "correct" and "score" come first in the answer: show them while the tips are still being written
-    let early = false;
-    const onText = t => {
-      const ok = t.match(/"correct"\s*:\s*(true|false)/), sc = t.match(/"score"\s*:\s*(\d+)\s*[,}]/);
-      const el = $("#sayAgainSt") || $("#sayStatus");
-      if (early || !ok || !sc || !el || !session || session.queue[0] !== item) return;
-      early = true;
-      const n = Math.max(0, Math.min(100, +sc[1])), [, title] = sayTitle(ok[1] === "true" && n >= SAY_PASS, n);
-      el.innerHTML = `<b>${esc(title)} · ${n}/100</b> <span class="muted"><span class="spinner" style="margin:0 4px 0 6px"></span>${L("đang viết nhận xét…", "writing feedback…")}</span>`;
-    };
-    const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule(), temperature: 0.2, thinking: "low", onText }));
+    const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule(), temperature: 0.2, thinking: "low" }));
     const issues = item.issues = (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 6).map(x => ({ part: String(x.part || "").trim(), type: String(x.type || "").trim(), heard: String(x.heard || "").trim(), tip: String(x.tip) }));
     await fixFeedbackLang([...issues.map(x => [x, "tip"]), [j, "good"]]);
     item.busy = false;
@@ -7801,18 +7767,8 @@ async function tuAsk(){
     let h = TU.msgs.slice(-50); while (h.length && h[0].role !== "user") h = h.slice(1);
     const contents = h.map((m, i) => ({ role: m.role, parts: i >= h.length - 6 ? m.parts
       : m.parts.map(p => p.inline_data ? { text: p.inline_data.mime_type.startsWith("audio") ? (m.heard ? `[earlier voice message: "${m.heard}"]` : "[earlier voice message]") : "[earlier photo]" } : p) }));
-    // streamed: the answer shows as it's written (the HEARD line on a voice message stays hidden); light thinking keeps it quick
-    const live = { role: "model", text: "", live: true };
-    const onText = t => {
-      if (g !== TU.gen) return;
-      if (/^\**HEARD/i.test(t)){ const nl = t.indexOf("\n"); if (nl < 0) return; t = t.slice(nl + 1); }
-      live.text = t.trim(); if (!live.text) return;
-      if (!TU.msgs.includes(live)) TU.msgs.push(live);
-      tuRender();
-    };
-    let ans;
-    try { ans = (await gemini("", undefined, { contents, system: tuSystem(), text: true, temperature: 0.6, thinking: "low", onText })).trim(); }
-    finally { TU.msgs = TU.msgs.filter(x => x !== live); }
+    // light thinking keeps the answer quick
+    let ans = (await gemini("", undefined, { contents, system: tuSystem(), text: true, temperature: 0.6, thinking: "low" })).trim();
     if (g !== TU.gen) return;
     const last = TU.msgs[TU.msgs.length - 1], hd = ans.match(/^\**HEARD:?\**:?[ \t]*(.*)(?:\n|$)/i);
     if (hd){ ans = ans.slice(hd[0].length).trim(); if (last.audio && !last.heard) last.heard = hd[1].replace(/\*+/g, "").replace(/^["“]|["”]$/g, "").trim(); }

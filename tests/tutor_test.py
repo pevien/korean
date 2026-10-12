@@ -45,17 +45,8 @@ window.fetch = async (url, opts) => {
     if (p0.startsWith("Transcribe this")) window.__hearN = (window.__hearN || 0) + 1;   // a separate transcription call (there should be none)
     // a voice message: the tutor transcribes it itself, on a HEARD line before the answer ("HEARD: " alone = didn't catch it)
     const txt = body.generationConfig.responseMimeType === "text/plain" ? (voice ? (window.__silent ? "HEARD: \n" : "HEARD: \"Xin chào, 안녕하세요 means hello?\"\n") : "") + %s : "{}";
-    if (String(url).includes("alt=sse")) {   // streamed: first half, then the rest window.__sseGap ms later
-      window.__thinking = body.generationConfig.thinkingConfig;
-      const enc = new TextEncoder(), cut = Math.ceil(txt.length / 2);
-      return new Response(new ReadableStream({ async start(c) {
-        for (const [i, x] of [txt.slice(0, cut), txt.slice(cut)].entries()) {
-          if (i) await new Promise(r => setTimeout(r, window.__sseGap || 0));
-          c.enqueue(enc.encode("data: " + JSON.stringify({ candidates: [{ content: { parts: [{ text: x }] } }] }) + "\r\n\r\n"));
-        }
-        c.close();
-      } }), { headers: { "content-type": "text/event-stream" } });
-    }
+    window.__thinking = body.generationConfig.thinkingConfig;
+    if (String(url).includes("alt=sse")) window.__sse = true;
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: txt }] } }] }));
   }
   return realFetch(url, opts);
@@ -146,7 +137,7 @@ def C(page):
     sysp = page.evaluate("window.__bodies[0].systemInstruction.parts[0].text")
     check("C: told to transcribe in any language, nothing translated", "never translate" in sysp and "mix" in sysp and "HEARD" in sysp, sysp[:200])
     check("C: HEARD line not in the answer", "HEARD" not in page.inner_text("#tuList .tu-m.ai"))
-    check("C: the answer is streamed with light thinking", page.evaluate("JSON.stringify(window.__thinking || null)") not in ("null", "{}"), page.evaluate("JSON.stringify(window.__thinking || null)"))
+    check("C: light thinking, not streamed", not page.evaluate("window.__sse || false") and page.evaluate("JSON.stringify(window.__thinking || null)") not in ("null", "{}"), page.evaluate("JSON.stringify(window.__thinking || null)"))
     page.screenshot(path=f"{SP}/C-voice.png")
     # silence: the tutor writes "HEARD: " alone (and asks again) — no transcript line, nothing of the next line taken as one
     n = page.evaluate("window.__bodies.length"); page.evaluate("window.__silent = true")
@@ -180,17 +171,6 @@ def E(page):
         nav = page.query_selector("nav").bounding_box()
         check("E: bubble above the tab bar", fab["y"] + fab["height"] <= nav["y"], (fab, nav))
     page.screenshot(path=f"{SP}/E-session.png")
-
-def G(page):
-    """Streaming: the first half of the answer shows while the rest is still coming, without the 'thinking' spinner."""
-    page.click("#tuFab"); page.evaluate("window.__sseGap = 1500")
-    page.fill("#tuIn", "사과 là gì?"); page.press("#tuIn", "Enter")
-    page.wait_for_function("document.querySelector('#tuList .tu-m.ai:not(.tu-wait)')", timeout=5000)
-    part = page.inner_text("#tuList .tu-m.ai:not(.tu-wait)")
-    check("G: part of the answer shows while streaming", 0 < len(part) < len(ANSWER) - 5 and page.query_selector("#tuList .tu-wait") is None, part[:80])
-    check("G: send stays locked until it's done", page.evaluate("document.querySelector('#tuSend').disabled"))
-    page.wait_for_function("!document.querySelector('#tuSend').disabled", timeout=5000)
-    check("G: whole answer at the end, shown once", "sa-goa" in page.inner_text("#tuList") and len(page.query_selector_all("#tuList .tu-m.ai")) == 1)
 
 def F(page):
     """Desktop: floating panel at the corner."""
@@ -226,7 +206,6 @@ with sync_playwright() as pw:
     run(pw, "D", D)
     run(pw, "E", E)
     run(pw, "F", F, width=1200)
-    run(pw, "G", G)
     run(pw, "H", H, width=1200)
 
 fails = [r for r in results if not r[1]]

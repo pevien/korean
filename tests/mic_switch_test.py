@@ -76,11 +76,6 @@ window.fetch = async (url, opts) => {
     else out = { heard: "I like apples", score: 80, note: "Tốt.", fixes: [], upgrades: [], issues: [], checks: [], ideas: [], sample: "I like apples.",
       ko: "Hello! How are you?", mean: "Xin chào! Bạn khoẻ không?", reply: "Nice!", fix: "", ok: true, t: [] };
     const txt = kind === "tutor" ? "HEARD: \"hello\"\nXin chào!" : JSON.stringify(out);
-    if (String(url).includes("alt=sse")) {
-      const enc = new TextEncoder();
-      return new Response(new ReadableStream({ start(c){ c.enqueue(enc.encode("data: " + JSON.stringify({ candidates: [{ content: { parts: [{ text: txt }] } }] }) + "\r\n\r\n")); c.close(); } }),
-        { headers: { "content-type": "text/event-stream" } });
-    }
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: txt }] } }] }));
   }
   return realFetch(url, opts);
