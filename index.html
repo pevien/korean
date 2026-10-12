@@ -2525,6 +2525,19 @@ function micWait(btn, p){
   const h = btn.innerHTML; btn.disabled = true; btn.innerHTML = `<span class="spinner" style="margin:0"></span>`;
   return p.finally(() => { if (btn.isConnected){ btn.disabled = false; btn.innerHTML = h; } });
 }
+// one feature records at a time: starting one stops whatever else still holds the mic (the tutor and Translate sit over the other tabs).
+// Two open mics also break Android's recordings: the new one inherits the old one's clock and shows minutes it never recorded
+function micFree(keep){
+  if (keep !== "fr" && (FR.rec || FR.recog || FR.stream || FR.starting)) frCancel();
+  if (keep !== "c" && (C.rec || C.recog || C.stream || C.starting)) cancelRec();
+  if (keep !== "tk" && (TK.rec || TK.stream || TK.starting)) talkStop();
+  if (keep !== "ie" && (IE.rec || IE.stream || IE.starting)){ ieStop(); if (ieVisible()) renderIelts(); }
+  if (keep !== "tu" && TU.rec) tuRecStop(true);
+  if (keep !== "ar"){
+    if (arTalk()){ if (AR.turn) arEndTurn(); arMicOff(); }   // the interpreter stays open, only its turn ends
+    else if (AR.on) arStop();
+  }
+}
 
 const EXGEN = new Set();   // ids of words whose example sentence AI is writing right now — the word list shows a spinner on them
 async function genExamples(cards, silent){
@@ -3234,7 +3247,7 @@ function frBtn(on){
 function frSay(html){ const el = $("#sayAgainSt") || $("#sayStatus"); if (el) el.innerHTML = html; if (!FR.rec && !FR.recog) frBtn(false); }
 const frBlocked = () => L("🎙 Micro bị chặn. Cho phép micro cho trang này rồi thử lại (xem Cài đặt → Giọng đọc → Micro & luyện nói).", "🎙 Microphone blocked. Allow it for this site and try again (see Settings → Voice → Microphone & speaking).");
 async function sayStart(item){
-  ttsCancel(); frSay("");
+  ttsCancel(); frSay(""); micFree("fr");
   // the picked grading mode; Basic falls back to AI only when this browser has no speech recognition
   const useAI = hasKey() && navigator.mediaDevices && window.MediaRecorder && (coachAI() || !SR);
   FR.heard = ""; FR.alts = []; FR.spoke = false; FR.stopping = false; item.pron = "";
@@ -4264,7 +4277,7 @@ async function startRec(){
 async function startRec0(){
   const tok = C.tok, mt = C.micTok;
   const gone = () => tok !== C.tok || mt !== C.micTok;   // coach closed / moved, or the tab left, while waiting
-  ttsCancel();
+  ttsCancel(); micFree("c");
   if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { micHelp("insecure"); return; }
   if (await micPermissionState() === "denied") { micHelp("site-denied"); return; }
   if (gone()) return;
@@ -5890,7 +5903,7 @@ function renderTalkChat(){
   if (talkVisible() && (wasBottom || t.turns.some(x => x.pending))) requestAnimationFrame(() => scrollTo(0, document.body.scrollHeight));
 }
 async function talkRecStart(){
-  ttsCancel();   // don't record the AI's own voice
+  ttsCancel(); micFree("tk");   // don't record the AI's own voice
   const st = $("#tkStatus");
   if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices || !window.MediaRecorder) return micHelp("insecure", st);
   if (TK.starting) return;
@@ -6065,8 +6078,14 @@ function renderIelts(){
   else if (t && t.result) renderIeResult(t);
   else if (t && IE.phase && IE.phase !== "list") renderIeExam();
   else renderIeSetup();
+  ieWire();
+}
+// the header buttons: wired after every redraw, including the exam's own (start / stop recording redraws it)
+function ieWire(){
+  const h = IE.view && (S.ielts || []).find(x => x.id === IE.view), t = IE.test, back = $("#ieBack");
   if ($("#ieHistOpen")) $("#ieHistOpen").onclick = () => { IE.histList = true; renderIelts(); scrollTo(0, 0); };
-  $("#ieBack").onclick = h ? () => { IE.view = ""; renderIelts(); scrollTo(0, 0); }
+  if (!back) return;
+  back.onclick = h ? () => { IE.view = ""; renderIelts(); scrollTo(0, 0); }
     : IE.histList ? () => { IE.histList = false; renderIelts(); scrollTo(0, 0); }
     : t && !t.result && IE.phase && !["list", "gen", "score"].includes(IE.phase) ? () => { ieStop(); ttsCancel(); IE.phase = "list"; renderIelts(); scrollTo(0, 0); }
     : () => { spShow(""); scrollTo(0, 0); };
@@ -6232,6 +6251,9 @@ function ieFbHTML(x, i, rec = true, tt = IE.test){
 }
 function renderIeExam(){
   const t = IE.test; if (!t || !ieVisible() || IE.view || IE.histList) return;
+  ieExamDraw(t); ieWire();
+}
+function ieExamDraw(t){
   if (IE.phase === "gen"){
     $("#ielts").innerHTML = ieHead(`${ic("graduation-cap")} ${ieMode(t.mode)}`) + `<div class="card" style="text-align:center"><span class="spinner"></span> ${L("Giám khảo đang chuẩn bị đề…", "The examiner is preparing your test…")}</div>`;
     return;
@@ -6298,7 +6320,7 @@ function ieTickRec(){
   IE.tick = setInterval(() => { const c = $("#ieClock"); if (c) c.textContent = ieClock(Date.now() - IE.t0); }, 250);
 }
 async function ieRecStart(){
-  ttsCancel();   // don't record the examiner's voice
+  ttsCancel(); micFree("ie");   // don't record the examiner's voice
   const st = $("#ieStatus");
   if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices || !window.MediaRecorder) return micHelp("insecure", st);
   if (IE.starting) return;
@@ -7371,7 +7393,7 @@ async function arTurn(lang){
   if (AR.turn === lang) return arEndTurn();   // tapped again: done speaking
   if (AR.turn) arEndTurn();
   AR.dir = lang;
-  ttsCancel();   // someone starts talking: stop reading the last one
+  ttsCancel(); micFree("ar");   // someone starts talking: stop reading the last one
   AR.saying = 0; AR.taint = false;
   if (!AR.on){ await arStart(); if (!AR.on) return; }
   AR.turn = lang; AR.turnId = Date.now(); AR.turnHeard = false;
@@ -7570,7 +7592,7 @@ function arRenderConv(){
 async function arStart(){
   const eng = arEngine(); if (!eng || arSaveNow.busy) return;
   if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices) { arUI(L("🎙 Cần mở app từ link https:// để dùng micro.", "🎙 Open the app from its https:// link to use the mic.")); return; }
-  ttsCancel();
+  ttsCancel(); micFree("ar");
   AR.on = true; AR.engine = eng; AR.quota = 0; AR.hideBefore = 0; AR.waitTurn = 0;
   arUI();
   arOnDevice(arIn(), arOut(), true); if (arTalk()) arOnDevice(arOut(), arIn(), true);   // both ways: talk mode swaps turns
@@ -7775,7 +7797,7 @@ const tuNote = t => { $("#tuNote").textContent = t; };
 async function tuRecStart(){
   if ((location.protocol !== "file:" && !window.isSecureContext) || !navigator.mediaDevices || !window.MediaRecorder) return micHelp("insecure", $("#tuNote"));
   if (TU.starting || TU.busy) return;
-  ttsCancel(); TU.starting = true;
+  ttsCancel(); micFree("tu"); TU.starting = true;
   if (await micPermissionState() === "denied"){ TU.starting = false; return micHelp("site-denied", $("#tuNote")); }
   try {
     const ms = await micWait($("#tuMic"), navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })).finally(() => { TU.starting = false; });
@@ -7789,7 +7811,8 @@ async function tuRecStart(){
       if (TU.cancel) return;
       if (dur < 700) return tuNote(L("Ngắn quá — nói lâu hơn chút nhé.", "That was too short — try again."));
       const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
-      try { await tuSend({ b64: await blobToWavB64(blob), url: URL.createObjectURL(blob) }); }
+      try { const b64 = await blobToWavB64(blob);   // replayed as WAV: an Android WebM can claim minutes it never recorded
+        await tuSend({ b64, url: URL.createObjectURL(new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))], { type: "audio/wav" })) }); }
       catch(e){ tuNote("⚠️ " + (e.message || L("Không đọc được bản ghi", "Couldn't read the recording"))); }
     };
     TU.cancel = false; rec.start(); TU.t0 = Date.now(); tuRecUI(true);
