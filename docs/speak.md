@@ -196,11 +196,11 @@ Test: `tests/coach_test.py` (✨ AI grading; Gemini and the mic faked).
   - It sees the last 50 turns.
 - **Your turn:** tap 🎙, speak, then tap again. Recording stops by itself after 30 s.
 - **What the AI sends back for each turn:**
-  - What it heard, word for word, mistakes included. It is written down in the same AI call as the grading and reply: knowing the conversation helps the AI hear an accented learner (a blind transcription first was tried and misheard too much). The AI is told to keep mistakes and not borrow words from its own last line. Nothing heard → "Didn't catch that", try again.
+  - What it heard, word for word, mistakes included. It is written down in the same AI call as the grading and reply: knowing the conversation helps the AI hear an accented learner (a blind transcription first was tried and misheard too much). The AI is told to write only what is in the recording (every particle and ending as said, a phonetic guess for an unclear word rather than a word that fits better, stop where you stopped), keep mistakes, and not borrow words from its own last line. Nothing heard → "Didn't catch that", try again.
   - ✅ "Correct and natural!", or ✏️ a corrected sentence with a one-line reason. A turn counts as a mistake only when there is something to show: a correction that differs from what was said, or at least a reason (then ✏️ "Not quite right" + the reason). The AI marking it wrong with neither counts as correct. The chat, the whole-conversation view and the summary all use this rule (`tkWrong`).
   - A translation.
   - A **pronunciation** score with up to 2 issues. Tap the score to expand it, with "My recording" and "Model" playback.
-  - Its reply in character, which is read aloud.
+  - Its reply in character, which is read aloud. The reply and the correction are only in the language you're learning; the translation goes on its own line underneath. The prompt says so last, and if the reply still comes back with words in your UI language mixed in (e.g. Vietnamese mid-sentence), one more short AI call rewrites it fully in the course language.
 - **💡 Hint:** explains what was asked and offers 3 answers, from simple to richer. Tap one to hear it.
 - **Bottom bar:** speed, 💡, 🎙, and 🔊/🔇 to turn read-aloud on or off.
 - **While chatting:** the tab bar is hidden.

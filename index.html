@@ -1534,6 +1534,23 @@ ${JSON.stringify(bad.map(([o, k]) => String(o[k])))}`, null, { temperature: 0.2,
     (r.t || []).forEach((s, i) => { if (bad[i] && s) bad[i][0][bad[i][1]] = String(s); });
   } catch(e){}   // keep the untranslated text rather than fail the grading
 }
+// the other way round: the feedback-language rule sometimes leaks into lines that must be in the course language
+// (Talk's reply switched to Vietnamese mid-sentence: "아, 지민이랑 정국이도 thực sự rất tuyệt!")
+const mixedUi = s => {
+  s = String(s || ""); if (!s || CUR === UI) return false;
+  if (UI === "vi" && VN_MARK.test(s)) return true;
+  return !CO.words && (s.match(/\b[a-z]{2,}\b/g) || []).length >= 3;   // a few English words — a name like K-pop alone isn't
+};
+async function fixCourseLang(fields){   // fields: [[obj, key], …] — fixed in place
+  const bad = fields.filter(([o, k]) => o && mixedUi(o[k]));
+  if (!bad.length) return;
+  try {
+    const r = extractJSON(await gemini(`Each line below should be entirely in ${CO.en} but has words in another language mixed in. Rewrite each one fully in natural ${CO.en} ${CO.script}, keeping its meaning and tone; names may stay as ${CO.en} speakers write them.
+Return JSON exactly like: {"t":[""]} — same number of items, same order.
+${JSON.stringify(bad.map(([o, k]) => String(o[k])))}`, null, { temperature: 0.2, thinking: "off" }));
+    (r.t || []).forEach((s, i) => { if (bad[i] && s) bad[i][0][bad[i][1]] = String(s); });
+  } catch(e){}   // keep the line as it came rather than lose the turn
+}
 
 const VI = {
 "Due today":"Cần học","See these words":"Xem các từ này","Day streak":"Chuỗi ngày","Streak calendar":"Lịch học","Learning":"Đang học","Mastered":"Đã thuộc","End":"Kết thúc",
@@ -4377,7 +4394,7 @@ Return JSON exactly like: {"heard":""}`, audio, { temperature: modelVer(curModel
   return String(j.heard || "").trim();
 }
 // what free-speech prompts say about "heard": use the context to recognize words, never to change them
-const heardKeep = `Use the context only to recognize words said with an accent — write each one as the word they said, correctly spelled. Keep their grammar mistakes and wrong words exactly; never add, complete or "fix" words, and never borrow words from the question or your own earlier messages they didn't say.`;
+const heardKeep = `Write ONLY the words actually in the recording, in the order spoken — it must match the audio, not what would fit the conversation. Use the context only to recognize words said with an accent — write each one as the word they said, correctly spelled. Keep their grammar mistakes and wrong words exactly, every particle and ending as said (a missing or wrong one stays missing or wrong); never add, complete or "fix" words, and never borrow words from the question or your own earlier messages they didn't say. A word you can't make out or that was mispronounced into another word: write your best phonetic guess of what was said, not a similar-sounding word that fits better. If they stopped mid-sentence, "heard" stops there too.`;
 // the line every grading prompt gets after aiHear
 const heardRule = heard => `The recording was transcribed word for word, without knowing what was expected, as:
 HEARD: "${heard}"
@@ -5697,6 +5714,9 @@ async function talkBegin(scene, topic){
 }
 
 /* ---- prompts ---- */
+// the last line: the feedback-language rule pulls the reply itself into the interface language
+const talkLangTail = (...keys) => CUR === UI ? "" : `
+Reminder: ${keys.map(k => `"${k}"`).join(" and ")} must be ONLY ${CO.en} ${CO.script} from start to end — never switch to ${uiLangName()} mid-sentence.`;
 function talkContext(t){
   const sc = talkScene(t);
   const role = t.scene === "custom"
@@ -5713,9 +5733,10 @@ async function talkOpening(){
   try {
     const j = extractJSON(await gemini(`${talkContext(t)}
 Start the conversation now with your first line in character (a greeting plus a question).
-"mean" = translation of your line in ${uiLangName()}.
-Return JSON exactly like: {"ko":"","mean":""}`, null, { temperature: 0.8 }));
+"ko" = your line, entirely in ${CO.en} — not one ${uiLangName()} word in it. "mean" = translation of your line in ${uiLangName()}.
+Return JSON exactly like: {"ko":"","mean":""}${talkLangTail("ko")}`, null, { temperature: 0.8 }));
     await fixFeedbackLang([[j, "mean"]]);
+    await fixCourseLang([[j, "ko"]]);
     if (S.talk !== t) return;
     t.turns = t.turns.filter(x => !x.pending);
     t.turns.push({ who: "ai", ko: String(j.ko || "").trim(), mean: String(j.mean || "").trim() });
@@ -5746,15 +5767,15 @@ The attached recording is the learner's next turn (${(dur / 1000).toFixed(1)} s)
 - "score": pronunciation score 0–100 — realistic (typical beginners 40–75, only near-native 90+).
 - "pron": ${CO.pron} — for their sentence.
 - "issues": the 0–2 most important pronunciation problems: "part" = the syllable/word from "heard", "tip" = a short concrete fix in ${uiLangName()} with the correct pronunciation in brackets. Empty array if pronunciation was fine.
-- "ko": your in-character reply in ${CO.en} — respond to what the learner MEANT, even if it had mistakes. 1–2 short sentences.
+- "ko": your in-character reply, entirely in ${CO.en} — respond to what the learner MEANT, even if it had mistakes. 1–2 short sentences. Not one ${uiLangName()} word in it: the ${uiLangName()} version goes only in "koMean".
 - "koMean": translation of your reply in ${uiLangName()}.
-${feedbackLangRule()}
-Return JSON exactly like: {"heard":"","ok":true,"fix":"","why":"","mean":"","score":0,"pron":"","issues":[{"part":"","tip":""}],"ko":"","koMean":""}${langTail("why", "mean", "tip", "koMean")}`;
+${feedbackLangRule()} This rule is only for "why", "mean", "tip" and "koMean": "fix" and "ko" are ${CO.en} sentences, and "heard" is what was said.
+Return JSON exactly like: {"heard":"","ok":true,"fix":"","why":"","mean":"","score":0,"pron":"","issues":[{"part":"","tip":""}],"ko":"","koMean":""}${langTail("why", "mean", "tip", "koMean")}${talkLangTail("fix", "ko")}`;
     const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule(), thinking: "low" }));
     if (S.talk !== t) return;
     const heard = String(j.heard || "").trim();
     if (!heard){ t.turns = t.turns.filter(x => x !== me); TK.busy = false; renderTalkChat(); talkStatus(L("Không nghe rõ — nói to và gần micro hơn rồi thử lại.", "Didn't catch that — speak a bit louder and closer to the mic, then try again.")); return; }
-    await fixFeedbackLang([[j, "why"], [j, "mean"], [j, "koMean"], ...(Array.isArray(j.issues) ? j.issues : []).map(x => [x, "tip"])]);
+    await Promise.all([fixFeedbackLang([[j, "why"], [j, "mean"], [j, "koMean"], ...(Array.isArray(j.issues) ? j.issues : []).map(x => [x, "tip"])]), fixCourseLang([[j, "fix"], [j, "ko"]])]);
     if (S.talk !== t) return;
     t.turns = t.turns.filter(x => x !== me);
     const fix = String(j.fix || "").trim();

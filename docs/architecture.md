@@ -9,7 +9,7 @@
 | `manifest.webmanifest` | PWA manifest: name "Grow with PV", standalone display, theme `#4f46e5`, background `#12131a` |
 | `icon-*.png`, `apple-touch-icon.png` | App icons; the 512 px icon also has a maskable version |
 
-**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v61`). Old caches are then removed on activate.
+**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v62`). Old caches are then removed on activate.
 
 ## Views and navigation
 
@@ -116,7 +116,7 @@ S
 
 | Cache | Contents |
 |---|---|
-| `hangul-v61` | The app shell |
+| `hangul-v62` | The app shell |
 | `hangul-notify` | The snapshot of what is due (`./__notify-state`) that the service worker reads for reminders |
 
 ## Interface language (i18n)

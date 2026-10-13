@@ -44,10 +44,11 @@ window.fetch = async (url, opts) => {
     if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     const body = JSON.parse(opts.body), parts = body.contents[body.contents.length - 1].parts, p = parts.map(x => x.text || "").join("\n");
     const kind = p.startsWith("Transcribe this") ? "hear" : p.includes("Start the conversation now") ? "open"
-      : p.includes("learner's next turn") ? "turn" : p.includes("learner is stuck") ? "hint" : "other";
+      : p.includes("learner's next turn") ? "turn" : p.includes("learner is stuck") ? "hint" : p.includes("has words in another language mixed in") ? "relang" : "other";
     window.__calls.push({ kind, p, audio: parts.filter(x => x.inline_data).map(x => x.inline_data.mime_type), cfg: body.generationConfig });
     await new Promise(r => setTimeout(r, 150));
     const out = kind === "open" ? window.__open : kind === "turn" ? (window.__turns.shift() || {})
+      : kind === "relang" ? { t: JSON.parse(p.slice(p.lastIndexOf("\n[") + 1)).map(x => "FIXED: " + x) }
       : kind === "hint" ? { ask: "Họ hỏi bạn muốn uống gì.", hints: [{ ko: "A latte, please.", mean: "Cho một ly latte." }, { ko: "Can I get a tea?", mean: "Cho tôi trà." }, { ko: "I'd like an iced americano.", mean: "Cho americano đá." }, { ko: "extra", mean: "x" }] }
       : {};
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(out) }] } }] }));
@@ -219,6 +220,24 @@ def I(page):
     tr = page.query_selector_all("#tkAll .tk-msg.me")
     check("I: the whole-conversation view agrees", len(tr) == 3 and tr[0].query_selector(".ok") and tr[1].query_selector(".fix") and tr[2].query_selector(".ok"), len(tr))
 
+def J(page):
+    """The reply / correction must stay in the course language: the prompt says so last, and a line with Vietnamese mixed in is rewritten."""
+    start_cafe(page)
+    p0 = calls(page, "open")[0]["p"]
+    check("J: opening prompt ends with the course-language reminder", p0.rstrip().endswith("never switch to Vietnamese mid-sentence."), p0[-200:])
+    say(page, GOOD)
+    p = calls(page, "turn")[0]["p"]
+    check("J: turn prompt: fix and ko only in English, said last", '"fix" and "ko" must be ONLY English' in p and p.rstrip().endswith("mid-sentence."), p[-300:])
+    check("J: the feedback-language rule is limited to the explanations", 'This rule is only for "why", "mean", "tip" and "koMean"' in p)
+    check("J: heard must match the audio", "it must match the audio" in p and "best phonetic guess" in p)
+    check("J: a clean reply isn't rewritten", not calls(page, "relang"))
+    mixed = dict(BAD, fix="I'd like a large one, please.", ko="Oh, large thật sự rất tuyệt! For here or to go?")
+    say(page, mixed)
+    r = calls(page, "relang")
+    check("J: only the mixed line is sent to be rewritten", len(r) == 1 and mixed["ko"] in r[0]["p"] and mixed["fix"] not in r[0]["p"], r and r[0]["p"][-200:])
+    txt = page.inner_text("#tkList")
+    check("J: the rewritten reply is shown", "FIXED: " + mixed["ko"] in txt, txt[-300:])
+
 OLD = [{ "id": f"old{i}", "lang": "en", "created": 1000 + i, "scene": "cafe", "topic": "",
          "turns": [{ "who": "ai", "ko": "Hi", "mean": "" }, { "who": "me", "heard": "Hi", "ok": True, "fix": "", "why": "", "mean": "", "score": 70, "pron": "", "issues": [] }] } for i in range(60)]
 
@@ -233,6 +252,7 @@ if __name__ == "__main__":
         run(pw, "G", G, talks=OLD)
         run(pw, "H", H)
         run(pw, "I", I)
+        run(pw, "J", J)
     fails = [r for r in results if not r[1]]
     for n, ok, info in results:
         print(("PASS " if ok else "FAIL ") + n + ("" if ok else f"  ← {info}"))
