@@ -1,7 +1,8 @@
 """Study speaking questions with ✨ AI grading — end-to-end tests (see docs/study.md, "Speaking questions").
 
 Drives the real index.html in headless Chromium. Gemini and the microphone are faked, so it needs
-no key, no mic and no network. Checks the strict prompt, that the AI's score is shown as-is, and the issue list.
+no key, no mic and no network. Checks the strict prompt, that the AI's score is shown as-is, the issue list, and that a 429 or a
+Gemini that never answers ends in an error message, not an endless spinner.
 
 Run from the repo root (add scenario letters to run only those, e.g. `... say_test.py B`):
     .venv/bin/python tests/say_test.py
@@ -21,7 +22,7 @@ URL = f"http://127.0.0.1:{_srv.server_address[1]}/index.html"
 
 MODES = { m: False for m in ["ko2m", "listen2m", "listen2kc", "m2ko", "listen2ko", "m2say"] }
 
-def init(course, word, meaning, answer, ui="vi", mode="ko2say", quota=False):
+def init(course, word, meaning, answer, ui="vi", mode="ko2say", quota=False, fail=""):
     st = { "cards": [{ "id": "c1", "lang": course, "ko": word, "meaning": meaning, "ex": f"Example with {word}.", "exMean": "Câu ví dụ.", "ease": 2.5, "interval": 1,
                        "reps": 1, "lapses": 0, "due": 1, "last": 1, "created": 1 }],
            "settings": { "course": course, "apiKey": "FAKE", "uiLang": ui, "model": "gemini-2.5-flash-lite", "newPerDay": 0,
@@ -33,6 +34,9 @@ if (!sessionStorage.getItem("seeded")) {
   localStorage.setItem("hangulCards.welcomed", "1");
 }
 window.__prompts = []; window.__models = [];
+const FAIL = %s;
+// "hang": Gemini never answers — the 30 s timeout runs in 0.3 s here
+if (FAIL === "hang") { const st = window.setTimeout; window.setTimeout = (f, ms, ...a) => st(f, ms >= 20000 ? 300 : ms, ...a); }
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
@@ -40,6 +44,8 @@ window.fetch = async (url, opts) => {
     const body = JSON.parse(opts.body), p = body.contents[0].parts[0].text, model = decodeURIComponent(String(url).match(/models\/([^:]+):/)[1]);
     window.__models.push([model, p.startsWith("Transcribe this") ? "hear" : "grade"]);
     if (%s && model === "gemini-2.5-flash") return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 });
+    if (FAIL === "429") return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 });
+    if (FAIL === "hang") return new Promise((_, rej) => opts.signal.addEventListener("abort", () => rej(new DOMException("aborted", "AbortError"))));
     window.__prompts.push(p); window.__temp = body.generationConfig.temperature;
     await new Promise(r => setTimeout(r, 150));
     const ans = %s, n = window.__prompts.filter(x => x.includes("attached recording")).length - 1;
@@ -52,7 +58,7 @@ window.fetch = async (url, opts) => {
 };
 navigator.mediaDevices.getUserMedia = async () => { const ac = new AudioContext(), o = ac.createOscillator(), d = ac.createMediaStreamDestination(); o.connect(d); o.start(); return d.stream; };
 if (navigator.permissions) { const q = navigator.permissions.query.bind(navigator.permissions); navigator.permissions.query = d => d && d.name === "microphone" ? Promise.resolve({ state: "granted" }) : q(d); }
-""" % (json.dumps(json.dumps(st)), "true" if quota else "false", json.dumps(answer))
+""" % (json.dumps(json.dumps(st)), json.dumps(fail), "true" if quota else "false", json.dumps(answer))
 
 results = []
 def check(name, cond, info=""): results.append((name, bool(cond), info))
@@ -198,6 +204,22 @@ def D(page):
     check("D: no score line", "/100" not in text, text[:120])
     check("D: verdict shown", "✅" in text, text[:80])
 
+def J(page):
+    """Gemini out of quota (429): the error shows and the mic comes back — no endless spinner."""
+    if page.query_selector("#startBtn"): page.click("#startBtn")
+    page.wait_for_selector("#sayRec"); record(page, "#sayRec")
+    page.wait_for_function("document.querySelector('#sayStatus').innerText.includes('Hết lượt Gemini')", timeout=5000)
+    check("J: mic button back, no spinner", page.is_enabled("#sayRec") and not page.query_selector("#sayRec .spinner"))
+    check("J: no result box", not page.query_selector("#fb .qfb"))
+
+def K(page):
+    """Gemini never answers: after the timeout the error shows and the mic comes back; trying again works."""
+    if page.query_selector("#startBtn"): page.click("#startBtn")
+    page.wait_for_selector("#sayRec"); record(page, "#sayRec")
+    page.wait_for_function("document.querySelector('#sayStatus').innerText.includes('Gemini không trả lời')", timeout=5000)
+    check("K: mic button back, no spinner", page.is_enabled("#sayRec") and not page.query_selector("#sayRec .spinner"))
+    check("K: only one try (a timeout isn't retried on another model)", len(page.evaluate("window.__models")) == 1, page.evaluate("window.__models"))
+
 with sync_playwright() as pw:
     run(pw, "A", A, course="ko", word="음악", meaning="âm nhạc",
         answer={ "heard": "음악", "correct": True, "pron": "[으막]", "score": 78, "issues": ISSUES, "good": "" })
@@ -219,6 +241,8 @@ with sync_playwright() as pw:
                 { "heard": "음악", "correct": True, "pron": "[으막]", "score": 55, "issues": ISSUES, "good": "" }])
     run(pw, "I", I, course="en", word="board", meaning="lên tàu xe máy bay", mode="m2say", ui="en",
         answer={ "heard": "get on", "correct": False, "pron": "/bɔːrd/", "score": 20, "issues": [], "good": "" })
+    run(pw, "J", J, course="ko", word="음악", meaning="âm nhạc", answer={}, fail="429")
+    run(pw, "K", K, course="ko", word="음악", meaning="âm nhạc", answer={}, fail="hang")
     run(pw, "D", D, course="ko", word="음악", meaning="âm nhạc", answer={ "heard": "음악", "correct": True })
 
 ok = sum(1 for r in results if r[1])

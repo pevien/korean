@@ -1530,7 +1530,7 @@ async function fixFeedbackLang(fields){   // fields: [[obj, key], …] — fixed
 Return JSON exactly like: {"t":[""]} — same number of items, same order.
 ${JSON.stringify(bad.map(([o, k]) => String(o[k])))}` : `Translate each explanation below into ${uiLangName()}. Keep the ${CO.en} words/sounds being discussed and pronunciations in brackets as they are; everything else must be ${uiLangName()}.
 Return JSON exactly like: {"t":[""]} — same number of items, same order.
-${JSON.stringify(bad.map(([o, k]) => String(o[k])))}`, null, { temperature: 0.2, thinking: "off" }));
+${JSON.stringify(bad.map(([o, k]) => String(o[k])))}`, null, { temperature: 0.2, thinking: "off", timeout: 20000 }));
     (r.t || []).forEach((s, i) => { if (bad[i] && s) bad[i][0][bad[i][1]] = String(s); });
   } catch(e){}   // keep the untranslated text rather than fail the grading
 }
@@ -1547,7 +1547,7 @@ async function fixCourseLang(fields){   // fields: [[obj, key], …] — fixed i
   try {
     const r = extractJSON(await gemini(`Each line below should be entirely in ${CO.en} but has words in another language mixed in. Rewrite each one fully in natural ${CO.en} ${CO.script}, keeping its meaning and tone; names may stay as ${CO.en} speakers write them.
 Return JSON exactly like: {"t":[""]} — same number of items, same order.
-${JSON.stringify(bad.map(([o, k]) => String(o[k])))}`, null, { temperature: 0.2, thinking: "off" }));
+${JSON.stringify(bad.map(([o, k]) => String(o[k])))}`, null, { temperature: 0.2, thinking: "off", timeout: 20000 }));
     (r.t || []).forEach((s, i) => { if (bad[i] && s) bad[i][0][bad[i][1]] = String(s); });
   } catch(e){}   // keep the line as it came rather than lose the turn
 }
@@ -1637,7 +1637,7 @@ const VI = {
 "Daily routine":"Sinh hoạt hằng ngày","Delete":"Xoá","Drive permission wasn't granted":"Chưa cấp quyền Drive","Easy":"Dễ","Edit":"Sửa","Back":"Quay lại",
 "Elementary (TOPIK 2)":"Sơ cấp 2 (TOPIK 2)","Empty answer from AI":"AI không trả lời","Example sentence":"Câu ví dụ","Example translation":"Dịch câu ví dụ",
 "Extra":"Thừa","Family":"Gia đình","Feelings":"Cảm xúc","Final consonant":"Phụ âm cuối","Fluency":"Trôi chảy","Food & drinks":"Đồ ăn & thức uống",
-"Gemini limit reached — wait a minute and try again.":"Hết lượt Gemini — đợi một phút rồi thử lại.","Good":"Tốt","Google sign-in expired":"Phiên đăng nhập Google đã hết hạn",
+"Gemini limit reached — wait a minute and try again.":"Hết lượt Gemini — đợi một phút rồi thử lại.","Gemini didn't answer — it may be busy or out of free requests. Wait a minute and try again.":"Gemini không trả lời — có thể đang quá tải hoặc hết lượt miễn phí. Đợi một phút rồi thử lại.","Good":"Tốt","Google sign-in expired":"Phiên đăng nhập Google đã hết hạn",
 "Hard":"Khó","Hobbies":"Sở thích","Home":"Nhà cửa","Intermediate (TOPIK 3)":"Trung cấp 1 (TOPIK 3)","Intonation":"Ngữ điệu",
 "Introducing myself":"Giới thiệu bản thân","K-drama phrases":"Câu trong phim Hàn","Keep practicing — listen 🔊 and try again":"Luyện tiếp nhé — nghe 🔊 rồi thử lại",
 "Tap 🎙 and read aloud. Tap again to stop.":"Chạm 🎙 rồi đọc to. Chạm lần nữa để dừng.",
@@ -2449,13 +2449,20 @@ const MODEL_HINT = () => L("Flash-Lite: rẻ nhất, nhiều lượt miễn phí
 const thinkingConfig = (model, level) => modelVer(model) >= 3
   ? { thinkingLevel: level === "off" ? "minimal" : "low" }
   : { thinkingBudget: level === "off" ? 0 : 512 };
+// opts.timeout: ms before giving up (default 60 s) — near its limit Gemini sometimes holds the request open instead of
+// answering 429, and without this the spinner would turn forever
+const GEMINI_SLOW = "Gemini didn't answer — it may be busy or out of free requests. Wait a minute and try again.";
 async function gemini(prompt, extraParts, opts = {}){
   const tryModel = async (model, think = opts.thinking) => {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-      method: "POST",
+    const ac = new AbortController(), timer = setTimeout(() => ac.abort(), opts.timeout || 60000);
+    let r;
+    try { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST", signal: ac.signal,
       headers: { "Content-Type": "application/json", "x-goog-api-key": S.settings.apiKey.trim() },
       body: JSON.stringify({ ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}), contents: opts.contents || [{ role:"user", parts: [{ text: prompt }, ...(extraParts || [])] }], ...(opts.search ? { tools: [{ google_search: {} }] } : {}), generationConfig: { responseMimeType: opts.text || opts.search ? "text/plain" : "application/json", ...(opts.schema ? { responseSchema: opts.schema } : {}), temperature: opts.temperature ?? (extraParts ? 0.3 : 0.9), ...(think ? { thinkingConfig: thinkingConfig(model, think) } : {}) } })
-    });
+    }); }
+    catch(e){ throw ac.signal.aborted ? Object.assign(new Error(GEMINI_SLOW), { status: 408 }) : e; }
+    finally { clearTimeout(timer); }
     // a model that doesn't take this thinking setting: ask again with its default
     if (r.status === 400 && think) return tryModel(model, null);
     if (!r.ok){
@@ -2463,7 +2470,7 @@ async function gemini(prompt, extraParts, opts = {}){
       const err = new Error(r.status === 429 ? "Gemini limit reached — wait a minute and try again." : r.status === 400 || r.status === 403 ? "API key problem: " + (msg || r.status) : (msg || "HTTP " + r.status));
       err.status = r.status; throw err;
     }
-    const j = await r.json();
+    const j = await r.json();   // the body is short once the headers are in, so it stays outside the timeout
     const txt = (j.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("");
     if (opts.meta) opts.meta.grounding = j.candidates?.[0]?.groundingMetadata || null;
     if (!txt){ const err = new Error("Empty answer from AI"); err.reason = j.candidates?.[0]?.finishReason || j.promptFeedback?.blockReason || ""; throw err; }
@@ -3330,7 +3337,7 @@ ${sayFocus()}
 "good" = one short thing they did well, or "".
 ${feedbackLangRule()}
 Return JSON exactly like: {"correct":false,"pron":"","score":0,"issues":[{"part":"","type":"","heard":"","tip":""}],"good":""}${langTail("tip", "good")}`;
-    const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule(), temperature: 0.2, thinking: "low" }));
+    const j = extractJSON(await gemini(prompt, audio, { system: feedbackLangRule(), temperature: 0.2, thinking: "low", timeout: 30000 }));
     const issues = item.issues = (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 6).map(x => ({ part: String(x.part || "").trim(), type: String(x.type || "").trim(), heard: String(x.heard || "").trim(), tip: String(x.tip) }));
     await fixFeedbackLang([...issues.map(x => [x, "tip"]), [j, "good"]]);
     item.busy = false;
@@ -4390,7 +4397,7 @@ async function aiHear(audio, dur){
 - If the learner stopped mid-sentence, the transcript stops there too.
 - Leave out hesitation sounds (um, uh, 음, 어); leave out any background voices.
 - If the audio is silent or just noise, or not ${CO.en}, return "heard":"".
-Return JSON exactly like: {"heard":""}`, audio, { temperature: modelVer(curModel()) >= 3 ? 1 : 0, thinking: "off" }));   // Gemini 3 degrades below its default temperature 1
+Return JSON exactly like: {"heard":""}`, audio, { temperature: modelVer(curModel()) >= 3 ? 1 : 0, thinking: "off", timeout: 30000 }));   // Gemini 3 degrades below its default temperature 1
   return String(j.heard || "").trim();
 }
 // what free-speech prompts say about "heard": use the context to recognize words, never to change them

@@ -120,7 +120,9 @@ In non-Korean courses, "Korean" in these labels is replaced by the course name.
 - **Can't speak now** switches the card to a question type that doesn't need speaking.
 - The first time a key is added, the speaking question types are switched on automatically (once).
 
-Test: `tests/say_test.py` (✨ AI grading; Gemini and the mic faked).
+- **AI errors:** out of quota (429) or no answer within 30 s → the message shows above the 🎙 button, which comes back so you can try again.
+
+Test: `tests/say_test.py` (✨ AI grading, 429 and a Gemini that never answers; Gemini and the mic faked).
 
 ### Feedback and grading
 

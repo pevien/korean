@@ -67,6 +67,7 @@ The key powers word generation, example sentences, passages, AI pronunciation fe
 **Errors:**
 
 - **Rate limit (429):** "Gemini limit reached — wait a minute".
+- **No answer:** near its limit Gemini sometimes holds a request open instead of answering 429. Every call gives up after 60 s (spoken word-card grading after 30 s) with "Gemini didn't answer — it may be busy or out of free requests", so a spinner never turns forever. A timeout isn't retried on another model.
 - **400 / 403:** "API key problem".
 
 **No key: copy/paste fallback.** For AI text features, the app opens a "Use a free chatbot" dialog:
