@@ -120,6 +120,8 @@ In non-Korean courses, "Korean" in these labels is replaced by the course name.
 - **Can't speak now** switches the card to a question type that doesn't need speaking.
 - The first time a key is added, the speaking question types are switched on automatically (once).
 
+Test: `tests/say_test.py` (✨ AI grading; Gemini and the mic faked).
+
 ### Feedback and grading
 
 - **After each answer:** ✅ or ❌, the correct word and its meaning, what you typed or what was heard (wrong characters in red), and the example sentence. The word is read aloud.
@@ -237,3 +239,5 @@ Open it from "+ Add words". It has four tabs. Before anything is added, a **prev
 - **Before reading aloud:** speaker labels such as "민수:" and symbols are removed.
 - **No voice installed:** if the device has no voice for the course, a toast points to Settings → Voice. Settings lists the steps to install one on each OS.
 - **Auto-play** (Settings): reads the word aloud when a new word is introduced and on "Korean → meaning" questions. Listening questions always play.
+
+Test: `tests/tts_test.py` (the start of a word is never cut off; rapid taps read only the last word).

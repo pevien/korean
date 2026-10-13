@@ -213,7 +213,7 @@ nav button.on{color:var(--accent);font-weight:600}
 #welcome .dots i{width:6px;height:6px;border-radius:var(--r-pill);background:var(--line);transition:width .2s,background .2s}
 #welcome .dots i.on{width:18px;background:var(--accent)}
 #welcome .wlang{padding:2px}
-#welcome .wlang button{padding:4px 10px;font-size:12px}
+#welcome .wlang button{padding:6px 12px;font-size:13px}   /* same size as the VIE | ENG switch in Settings */
 #welcome .wstep{flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 0}
 #welcome .wicon{width:64px;height:64px;border-radius:var(--radius);background:var(--accent);color:var(--on-accent);font-size:34px;font-weight:800;
   display:flex;align-items:center;justify-content:center;margin-bottom:18px}
@@ -825,13 +825,13 @@ input[type=search]{border-radius:var(--r-pill);padding-left:18px;padding-right:1
 .player .pctl .prate{justify-self:start;margin-left:4px}
 .player .pctl .popt-btn{justify-self:end;margin-right:4px}
 .player .pctl .prate, .player .pctl .popt-btn{background-color:transparent;color:var(--text)}
-.prate{width:auto;border:0;padding:6px 18px 6px 6px;font-size:14px;font-weight:600;background-position:right 4px center;background-size:10px 7px}   /* ⌄ right after "1×" (the width follows the chosen speed) */
+.prate{width:auto;height:30px;border:0;padding:6px 18px 6px 6px;font-size:14px;font-weight:600;background-position:right 4px center;background-size:10px 7px}   /* ⌄ right after "1×" (the width follows the chosen speed) */
 .popt-btn[aria-expanded=true]{background:var(--accent-soft)!important}
 .player .turn{font-size:13px;min-height:0;margin:6px 0 0}
 .player .turn:empty{display:none}
 .popts{border-top:1px solid var(--line);margin:8px 4px 2px;padding-top:4px}
 .popts label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:8px 6px;color:var(--text);font-size:14px;font-weight:500;cursor:pointer}
-.popts select{width:84px;padding:4px 26px 4px 10px;font-size:14px;background-position:right 9px center;background-size:10px 7px}
+.popts select{width:84px;height:30px;padding:4px 26px 4px 10px;font-size:14px;background-position:right 9px center;background-size:10px 7px}
 /* iOS-style switch */
 input.sw{appearance:none;-webkit-appearance:none;width:40px;height:24px;border-radius:var(--r-pill);background:var(--line);position:relative;margin:0;flex:0 0 auto;cursor:pointer;transition:background .15s}
 input.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:var(--r-pill);background:#fff;transition:transform .15s}
@@ -942,7 +942,7 @@ body.tu-on .toast{z-index:36}
 .tu-sub select:focus{outline:none}   /* no accent ring after a tap or a pick; the keyboard ring is the soft fill below */
 .tu-sub select:focus-visible{background-color:var(--soft);border-radius:4px}
 .tu-sub select{width:auto;min-width:0;max-width:100%;flex:0 1 auto;font-size:12px;color:var(--muted);background-color:transparent;border:0;border-radius:0;
-  padding:2px 14px 2px 0;background-position:right 1px center;background-size:9px 6px;text-overflow:ellipsis}
+  padding:7px 14px 7px 0;margin:-5px 0;background-position:right 1px center;background-size:9px 6px;text-overflow:ellipsis}   /* a taller tap area, same line height in the header */
 .tu-av{flex:0 0 auto;width:34px;height:34px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:19px}
 .tu-list{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
 .tu-m{max-width:86%;padding:9px 12px;border-radius:var(--r-md);font-size:14.5px;line-height:1.5;overflow-wrap:anywhere}
@@ -4782,33 +4782,31 @@ $("#impFile").onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try {
     const d = JSON.parse(await f.text());
-    if (!Array.isArray(d.cards)) throw new Error();
+    if (!d || !Array.isArray(d.cards)) throw new Error();
+    // read the whole file first (anything broken throws here), and only then touch S, so a broken file adds nothing at all
+    const list = k => { if (d[k] == null) return []; if (!Array.isArray(d[k])) throw new Error(); return d[k]; };
     const wasEmpty = !S.cards.length;
     // the same word can be in two courses; a backup from before courses is all Korean
-    // read the whole file first (a bad card throws here), so a broken file adds nothing at all
     // same id as a card already here (e.g. it was edited since the backup) → keep the one in use: two cards must never share an id
     const kk = c => lgOf(c) + "|" + c.ko, ids = new Set(S.cards.map(kk)), cids = new Set(S.cards.map(c => c.id)), add = [];
     d.cards.forEach(c => { if (c && c.ko && !ids.has(kk(c)) && !cids.has(c.id)) { add.push(Object.assign(newCard(c.ko, c.meaning||""), c, { lang: lgOf(c) })); ids.add(kk(c)); if (c.id) cids.add(c.id); } });
-    const n = add.length; S.cards.push(...add);
+    const fresh = (key, ok) => { const have = new Set((Array.isArray(S[key]) ? S[key] : []).map(x => x.id)), out = [];
+      list(key).forEach(x => { if (x && x.id && ok(x) && !have.has(x.id)) { out.push(x); have.add(x.id); } }); return out; };
+    const addP = fresh("passages", p => Array.isArray(p.sentences)).map(p => Object.assign({ vocab: [] }, p)),
+      addL = fresh("lives", x => Array.isArray(x.lines)), addG = fresh("songs", x => Array.isArray(x.lines)),
+      addT = fresh("talks", x => Array.isArray(x.turns)), addI = fresh("ielts", x => Array.isArray(x.qs) && x.result);
+    const n = add.length, np = addP.length; S.cards.push(...add);
     if (wasEmpty && d.settings && typeof d.settings === "object") {   // key, course and voices stay this device's; question types missing from an old backup keep their defaults
       const { apiKey, keyMod, course, voice, voiceBy } = S.settings;
       S.settings = Object.assign(S.settings, d.settings, { apiKey, keyMod, course, voice, voiceBy });
       S.settings.modes = Object.assign({}, defaults().settings.modes, d.settings.modes || {});
       if (d.streak) S.streak = d.streak;
     }
-    let np = 0; const pids = new Set(S.passages.map(p => p.id));
-    (d.passages || []).forEach(p => { if (p && p.id && Array.isArray(p.sentences) && !pids.has(p.id)) { S.passages.push(Object.assign({ vocab: [] }, p)); np++; } });
-    const lids = new Set(S.lives.map(x => x.id));
-    (d.lives || []).forEach(x => { if (x && x.id && Array.isArray(x.lines) && !lids.has(x.id)) S.lives.push(x); });
+    S.passages.push(...addP); S.lives.push(...addL);
     if (!Array.isArray(S.songs)) S.songs = [];
-    const gids = new Set(S.songs.map(x => x.id));
-    (d.songs || []).forEach(x => { if (x && x.id && Array.isArray(x.lines) && !gids.has(x.id)) S.songs.push(x); });
     if (!Array.isArray(S.talks)) S.talks = [];
-    const tids = new Set(S.talks.map(x => x.id));
-    (d.talks || []).forEach(x => { if (x && x.id && Array.isArray(x.turns) && !tids.has(x.id)) S.talks.push(x); });
     if (!Array.isArray(S.ielts)) S.ielts = [];
-    const iids = new Set(S.ielts.map(x => x.id));
-    (d.ielts || []).forEach(x => { if (x && x.id && Array.isArray(x.qs) && x.result && !iids.has(x.id)) S.ielts.push(x); });
+    S.songs.push(...addG); S.talks.push(...addT); S.ielts.push(...addI);
     save(); toast(`Imported ${n} word${n===1?"":"s"}${np ? ` and ${np} passage${np===1?"":"s"}` : ""}`); refreshHome(); renderSettings();
     if ((S.settings.uiLang || "vi") !== UI) reloadTo(S.settings.uiLang === "en" ? "Switching language…" : "Đang đổi ngôn ngữ…", 800);
   } catch(err){ toast("Invalid backup file"); }
@@ -5634,8 +5632,9 @@ function talkArchive(t){
   if (i >= 0) S.talks[i] = Object.assign(S.talks[i], copy); else S.talks.push(copy);
   if (S.talks.length > 60) S.talks.sort((a, b) => b.created - a.created).splice(60);   // keep the latest 60
 }
+const tkWrong = x => !x.ok && !!(x.fix || x.why);   // ok:false with no correction and no reason → nothing to fix, counts as correct
 const talkStats = t => {
-  const mine = t.turns.filter(x => x.who === "me"), fixes = mine.filter(x => !x.ok && x.fix);
+  const mine = t.turns.filter(x => x.who === "me"), fixes = mine.filter(tkWrong);
   return { mine, fixes, avg: mine.length ? Math.round(mine.reduce((a, x) => a + (x.score || 0), 0) / mine.length) : 0 };
 };
 
@@ -5759,10 +5758,10 @@ Return JSON exactly like: {"heard":"","ok":true,"fix":"","why":"","mean":"","sco
     if (S.talk !== t) return;
     t.turns = t.turns.filter(x => x !== me);
     const fix = String(j.fix || "").trim();
-    const turn = { who: "me", heard, ok: !!j.ok && !fix, fix: fix === heard ? "" : fix, why: String(j.why || "").trim(), mean: String(j.mean || "").trim(),
+    const fx = fix === heard ? "" : fix, why = String(j.why || "").trim();   // a "correction" identical to what was said isn't one
+    const turn = { who: "me", heard, ok: !fx && (!!j.ok || !why), fix: fx, why, mean: String(j.mean || "").trim(),
       score: Math.max(0, Math.min(100, Math.round(+j.score || 0))), pron: String(j.pron || "").trim(),
       issues: (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 2).map(x => ({ part: String(x.part || ""), tip: String(x.tip) })) };
-    if (turn.fix) turn.ok = false;
     t.turns.push(turn);
     const ti = t.turns.length - 1;
     if (TK.urls[ti]) URL.revokeObjectURL(TK.urls[ti]);
@@ -5810,10 +5809,11 @@ function talkMsg(x, i){
   return `<div class="tk-msg me" data-i="${i}">
     <div class="tk-b"><div class="ko" lang="${TL}">${esc(x.heard)}</div></div>
     <div class="tk-fb">
-      ${x.ok ? `<div class="ok">✅ ${L("Câu đúng và tự nhiên!", "Correct and natural!")}</div>`
+      ${!tkWrong(x) ? `<div class="ok">✅ ${L("Câu đúng và tự nhiên!", "Correct and natural!")}</div>`
+        : !x.fix ? `<div class="fix">${ic("pencil-simple")} <span>${L("Chưa tự nhiên", "Not quite right")}</span></div>`
         : `<div class="fix">${ic("pencil-simple")} <span lang="${TL}">${esc(x.fix)}</span> <button class="icon-btn" data-a="sayfix" title="${L("Nghe câu đúng", "Hear the correct sentence")}">${ic("speaker-high")}</button></div>`}
       ${x.mean ? `<div class="why muted">${esc(x.mean)}</div>` : ""}
-      ${!x.ok && x.why ? `<div class="why">${esc(x.why)}</div>` : ""}
+      ${tkWrong(x) && x.why ? `<div class="why">${esc(x.why)}</div>` : ""}
       <button class="tk-more ${sc}" data-a="more">${ic("user-sound")} ${L("Phát âm", "Pronunciation")} <b>${x.score}</b>/100${x.issues.length ? ` · ${L(`${x.issues.length} lỗi`, `${x.issues.length} issue${x.issues.length > 1 ? "s" : ""}`)}` : ""} <span class="muted">${open ? "▴" : "▾"}</span></button>
       ${open ? `<div class="tk-det">
         ${x.pron ? `<div><span class="muted">${L("Đọc chuẩn", "Standard")}:</span> <span lang="${TL}">${esc(x.pron)}</span></div>` : ""}
@@ -5929,9 +5929,9 @@ function talkTranscript(t){
   return `<div class="tk-list tk-read">${t.turns.filter(x => !x.pending).map(x => x.who === "ai"
     ? `<div class="tk-msg ai"><div class="tk-b" data-say="${esc(x.ko)}"><div class="ko" lang="${TL}">${esc(x.ko)}</div>${x.mean ? `<div class="mean">${esc(x.mean)}</div>` : ""}</div></div>`
     : `<div class="tk-msg me"><div class="tk-b"><div class="ko" lang="${TL}">${esc(x.heard)}</div></div><div class="tk-fb">
-        ${x.ok ? `<div class="ok">✅ ${L("Câu đúng và tự nhiên!", "Correct and natural!")}</div>` : `<div class="fix" data-say="${esc(x.fix)}">${ic("pencil-simple")} <span lang="${TL}">${esc(x.fix)}</span> ${ic("speaker-high")}</div>`}
+        ${!tkWrong(x) ? `<div class="ok">✅ ${L("Câu đúng và tự nhiên!", "Correct and natural!")}</div>` : !x.fix ? `<div class="fix">${ic("pencil-simple")} <span>${L("Chưa tự nhiên", "Not quite right")}</span></div>` : `<div class="fix" data-say="${esc(x.fix)}">${ic("pencil-simple")} <span lang="${TL}">${esc(x.fix)}</span> ${ic("speaker-high")}</div>`}
         ${x.mean ? `<div class="why muted">${esc(x.mean)}</div>` : ""}
-        ${!x.ok && x.why ? `<div class="why">${esc(x.why)}</div>` : ""}
+        ${tkWrong(x) && x.why ? `<div class="why">${esc(x.why)}</div>` : ""}
         <div class="why muted">${ic("user-sound")} ${L("Phát âm", "Pronunciation")} ${x.score}/100</div></div></div>`).join("")}</div>`;
 }
 function renderTalkSummary(t, hist){
@@ -5946,7 +5946,7 @@ function renderTalkSummary(t, hist){
     </div>
     <div class="card">
       <h2>${ic("pencil-simple")} ${L("Câu cần sửa", "Corrections")}</h2>
-      ${fixes.length ? fixes.map(x => `<div class="tk-sum"><div class="bad" lang="${TL}">${esc(x.heard)}</div><div class="good" lang="${TL}">→ ${esc(x.fix)}</div>${x.why ? `<div class="small muted">${esc(x.why)}</div>` : ""}</div>`).join("")
+      ${fixes.length ? fixes.map(x => `<div class="tk-sum"><div class="bad" lang="${TL}">${esc(x.heard)}</div>${x.fix ? `<div class="good" lang="${TL}">→ ${esc(x.fix)}</div>` : ""}${x.why ? `<div class="small muted">${esc(x.why)}</div>` : ""}</div>`).join("")
         : `<p class="muted" style="margin:0">${L("Không có câu nào sai — tuyệt vời! 🎉", "Nothing to fix — great job! 🎉")}</p>`}
       ${issues.length ? `<h2 style="margin-top:16px">${ic("user-sound")} ${L("Lưu ý phát âm", "Pronunciation notes")}</h2>${issues.slice(0, 8).map(s => `<div class="tk-sum small">${s.part ? `<b lang="${TL}">${esc(s.part)}</b> · ` : ""}${esc(s.tip)}</div>`).join("")}` : ""}
     </div>
@@ -7463,6 +7463,7 @@ function arInterpOpen(){
   arStop();   // a BTS live listening in the ARMY tab stops first
   AR.prevMode = AR.mode; AR.mode = "talk"; arUseSess(); AR.flip = false;
   arConvFit(); requestAnimationFrame(arConvFit); navHi("tr"); renderConv(); arStart(); navSave({ tr: 1 });
+  if (window.__tutorSync) window.__tutorSync();
   AR.hideBefore = AR.openAt = AR.lines.length; arRenderConv();   // opens clean (also after a reload): the old turns stay in the saved lines only
   if (!AR.on){
     toast(arEngine() ? L("🎙 Cần mở app từ link https:// để dùng micro.", "🎙 Open the app from its https:// link to use the mic.")
@@ -7486,6 +7487,7 @@ function arInterpClose(){
   arStop(); AR.flip = false;
   AR.mode = AR.prevMode && AR.prevMode !== "talk" ? AR.prevMode : "bts"; arUseSess(); arPersist();
   $("#arConvRoot").innerHTML = ""; document.body.classList.remove("ar-conv-on"); navSave({ tr: 0 }); navHi(curView);
+  if (window.__tutorSync) window.__tutorSync();
   if (curView === "army") renderArmy();
 }
 function renderConv(){
@@ -7637,7 +7639,7 @@ function tuHead(){
 }
 const tuIsOpen = () => !$("#tu").classList.contains("hidden");
 // Speak → Reading and Talk with AI have their own AI coach and mic: no tutor there
-const tuAway = () => curView === "read" && (spScreen === "read" || spScreen === "talk");
+const tuAway = () => (curView === "read" && (spScreen === "read" || spScreen === "talk")) || !!$("#arConvRoot").firstElementChild;   // Translate has its own mic too
 function tuSync(){   // the bubble only exists while there's a key
   const on = hasKey() && !tuAway();
   if (!on && tuIsOpen()) tuClose();
@@ -7902,6 +7904,36 @@ try { if (!localStorage.getItem(WEL_KEY) || sessionStorage.getItem("wStep") != n
 if (navGet().tr) arInterpOpen();   // the Translate screen was open on top of that tab
 refreshHome();
 tuSync();
+
+/* ---- the phone's Back button / back swipe: one screen back, like the in-app ← ---- */
+// Something open on top closes first, then the screen's own ← is tapped (so whatever it does — keep a talk, save an IELTS answer — still happens),
+// then another tab goes back to Vocab; only on Vocab's main screen does Back leave the app.
+function appBack(){
+  const vis = el => !!el && el.getClientRects().length > 0;   // offsetParent is null for fixed sheets (the coach on a phone)
+  if (!$("#aiModal").classList.contains("hidden")) { $("#mCancel").click(); return true; }
+  if (!$("#courseModal").classList.contains("hidden")) { closeCourses(); return true; }
+  if ($("#wordList .menu")) { closeWordMenu(); return true; }
+  if (!$("#pOpts").classList.contains("hidden")) { $("#pOpts").classList.add("hidden"); $("#pOptBtn").setAttribute("aria-expanded", false); return true; }
+  if (!$("#welcome").classList.contains("hidden")) { if (vis($("#wBack"))) { $("#wBack").click(); return true; } return false; }
+  if (tuIsOpen()) { tuClose(); return true; }
+  if ($("#arConvRoot").firstElementChild) { arInterpClose(); return true; }
+  if (vis($("#coach"))) { closeCoach(); return true; }   // no ✕ on a phone, where it is a sheet
+  if (session && vis($("#endBtn"))) { $("#endBtn").click(); return true; }
+  const back = [...$$("#v-" + curView + " .back, #v-" + curView + " #sgBack")].find(vis);
+  if (back) { back.click(); return true; }
+  if (curView !== "study") { show("study"); return true; }
+  return false;
+}
+// Chrome skips history entries added without a tap, so the entry Back lands on is (re)added on the next tap, not on load
+let backArmed = false;
+const backArm = () => { if (backArmed) return; backArmed = true; try { history.pushState({ gwp: 1 }, ""); } catch(e){} };
+addEventListener("pointerdown", backArm, true);
+addEventListener("keydown", backArm, true);
+addEventListener("popstate", () => {
+  backArmed = false;
+  if (appBack()) backArm();   // stay in the app, ready for the next Back
+  else history.back();        // nothing left to close: leave the app
+});
 setInterval(() => { if (!session && !$("#v-study").classList.contains("hidden")) refreshHome(true); }, 60000);   // a card coming due updates the card, never starts a round by itself
 })();
 </script>

@@ -9,7 +9,7 @@
 | `manifest.webmanifest` | PWA manifest: name "Grow with PV", standalone display, theme `#4f46e5`, background `#12131a` |
 | `icon-*.png`, `apple-touch-icon.png` | App icons; the 512 px icon also has a maskable version |
 
-**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v21`). Old caches are then removed on activate.
+**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v61`). Old caches are then removed on activate.
 
 ## Views and navigation
 
@@ -32,7 +32,17 @@
 
 - Saved in **sessionStorage**, key `hangulCards.nav`.
 - Fields: `{v, p, y, sp, tr}`, which are the tab, open passage, scroll position, Speak screen, and whether Translate is open.
-- A reload returns to the same place.
+- A reload returns to the same tab, Speak screen and scroll position, and reopens Translate if it was open. A sub-page (an open passage, Add words) goes back to its tab's main screen.
+
+**The phone's Back button / back swipe** (`appBack()`, on `popstate`) goes one screen back, in this order:
+
+1. Whatever is open on top closes: the copy/paste dialog, the course sheet, a word's ⋯ menu, the player options, the tutor, Translate, the reading coach.
+2. A study round ends (answers are already saved).
+3. The screen's own ← is tapped, so whatever it does still happens (Talk keeps the conversation, IELTS keeps the answers, the welcome screen steps back).
+4. Another tab goes to Vocab.
+5. Only on Vocab's main screen does Back leave the app.
+
+Chrome skips history entries that were added without a tap, so the entry that Back lands on is added on the next tap (`pointerdown` / `keydown`), not on load. Test: `tests/back_test.py`.
 
 ## State
 
@@ -106,7 +116,7 @@ S
 
 | Cache | Contents |
 |---|---|
-| `hangul-v21` | The app shell |
+| `hangul-v61` | The app shell |
 | `hangul-notify` | The snapshot of what is due (`./__notify-state`) that the service worker reads for reminders |
 
 ## Interface language (i18n)
@@ -153,6 +163,8 @@ S
 3. If all pass, it shows a notification in the UI language.
 4. Tapping the notification focuses the app, or opens it.
 
+Test: `tests/consistency_test.py` checks the cache named here matches `sw.js`, every pre-cached file exists, the docs and `tests/` name each other, and no English is left in the Vietnamese UI.
+
 ## External services
 
 | Service | Used for | Key? |
@@ -170,9 +182,12 @@ S
 - Wake Lock
 - Periodic Background Sync and Notifications
 
+**The microphone:** one feature records at a time. Starting a recording anywhere (Vocab speaking, reading coach, Talk with AI, IELTS, the tutor, Translate / ARMY) calls `micFree(keep)`, which stops whatever else still holds the mic. The interpreter stays open and only its current turn ends. Two open mics would also break Android recordings (the new one inherits the old one's clock and shows minutes it never recorded). Test: `tests/mic_switch_test.py`.
+
 **Gemini calls:**
 
 - `gemini()` asks for JSON output. Temperature is 0.9 for text and 0.3 when audio or an image is attached.
+- **Thinking** (`opts.thinking`, `thinkingConfig()`): Flash thinks before answering by default, which adds seconds. Transcribing and fixing translations use `"off"`; grading (Vocab speaking, reading coach, Talk with AI) and the tutor use `"low"`. Gemini 3 models get `thinkingLevel` (minimal / low), older ones `thinkingBudget` (0 / 512). A model that rejects the setting is asked again with its default.
 - `askAI()` uses the key when there is one. Otherwise it opens the copy/paste dialog (`manualAI`).
 - `extractJSON()` pulls the JSON out of either kind of reply.
 - **Feedback language:** feedback is requested in the UI language, and `fixFeedbackLang()` corrects replies that come back in the wrong language.

@@ -10,7 +10,9 @@ Live app: <https://pevien.github.io/korean/> (GitHub Pages, served straight from
 |---|---|
 | [study.md](study.md) | **Vocab** tab: daily review, spaced repetition, quiz types, adding words, My words, Alphabet, streaks, text-to-speech |
 | [speak.md](speak.md) | **Speak** tab: reading passages, audio player and shadowing, pronunciation coach, Talk with AI |
+| [ielts.md](ielts.md) | **Speak** tab: IELTS Speaking mock test (English course) |
 | [translate-army.md](translate-army.md) | **Translate** tab (face-to-face interpreter) and **ARMY** tab (live BTS subtitles, saved conversations) |
+| [tutor.md](tutor.md) | **AI tutor**: the floating 💬 chat on every tab |
 | [settings.md](settings.md) | **Settings** tab: language, course, study options, voice, Gemini key, Google Drive sync, reminders, backup, guide, welcome |
 | [architecture.md](architecture.md) | Files, state and storage, i18n, icons, service worker, external services, deployment |
 
@@ -65,17 +67,4 @@ A key is free from <https://aistudio.google.com/apikey>. Without one, most AI te
 
 ## AI tutor
 
-A floating 💬 bubble in the bottom-right corner opens a chat with an AI tutor. It only appears while a Gemini key is set.
-
-- Ask by **typing**, by **voice** (🎙, tap ⏹ to send, up to 60 s) or with a **photo** (📷, or paste an image into the box).
-- The tutor knows the course, the level and the interface language, and it sees the text of the screen you are on, so "what does this mean?" works without copying anything.
-- In the Korean course the tutor is a **BTS member**, picked at random for each chat (page load or the ✎ new-chat button), never the same one twice in a row: RM 🐨, Jin 🐹, SUGA 🐱, j-hope 🐿️, Jimin 🐥, V 🐻 or Jung Kook 🐰. Each has their own tone; teaching rules stay the same. Other courses keep the plain "AI tutor".
-- The course's flag follows the tutor's name (switch the course from the app header, since that reloads the app); under the name a **level** dropdown sets the app-wide level, and the next answers follow it.
-- A voice question goes straight to the tutor (no separate transcription: with the chat in view it hears mixed Vietnamese/Korean far better). Its reply starts with a `HEARD:` line; the app takes it out and shows it under your recording as a transcript (and sends it as text in later turns once the audio is dropped).
-- It answers and stops: no "want more examples?"-style question at the end of each reply.
-- During a quiz it gives hints first and only gives the answer when you ask for it.
-- Bold words in the course language are underlined; tap one to hear it.
-- The chat is kept until you reload or tap ✎ (new chat). Only the last 20 messages are sent, and only the latest 6 still carry their photos and recordings.
-- The bubble moves up above whatever is pinned to the bottom of the screen (tab bar, study sheet, Talk mic, ARMY controls).
-
-Code: the `TU` block (`TU_BTS`, `tuPickIdol`, `tuSync`, `tuPlace`, `tuSystem`, `tuAsk`) in `index.html`; `save()` calls `window.__tutorSync` so adding or removing the key shows or hides it. Test: `tests/tutor_test.py`.
+A floating 💬 bubble opens a chat with an AI tutor (a BTS member in the Korean course) that sees the screen you are on. It needs a Gemini key. See [tutor.md](tutor.md).

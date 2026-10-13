@@ -118,7 +118,7 @@ Tap 🎙 on a sentence to open the coach underneath it. The coach has:
 |---|---|---|
 | Needs | A browser with speech recognition (Chrome/Safari). Speech recognition itself may need internet. | A Gemini key |
 | Scores | Accuracy and fluency | Accuracy, fluency, intonation, native-like (0–100) |
-| How | Lines up what was heard against the sentence, then applies built-in rules | The recording (16 kHz WAV) goes to Gemini twice: first transcribed blind (without the sentence, so it can't "hear" the target instead of what you said) on Gemini Flash, which hears more precisely than Flash-Lite (back to the chosen model when Flash is out of quota), then graded against the sentence using that transcript as is |
+| How | Lines up what was heard against the sentence, then applies built-in rules | The recording (16 kHz WAV) goes to Gemini twice: first transcribed blind (without the sentence, so it can't "hear" the target instead of what you said) with the chosen model, then graded against the sentence using that transcript as is |
 
 **⚡ Basic in detail:**
 
@@ -164,6 +164,8 @@ Tap 🎙 on a sentence to open the coach underneath it. The coach has:
 - no mic found, or the mic is in use by another app
 - mic blocked at the OS level
 
+Test: `tests/coach_test.py` (✨ AI grading; Gemini and the mic faked).
+
 ---
 
 ## Talk with AI
@@ -191,11 +193,11 @@ Tap 🎙 on a sentence to open the coach underneath it. The coach has:
 - **The AI's lines:**
   - The AI opens with a line in character.
   - Its replies are 1–2 short sentences and usually end with a question.
-  - It sees the last 14 turns.
+  - It sees the last 50 turns.
 - **Your turn:** tap 🎙, speak, then tap again. Recording stops by itself after 30 s.
 - **What the AI sends back for each turn:**
   - What it heard, word for word, mistakes included. It is written down in the same AI call as the grading and reply: knowing the conversation helps the AI hear an accented learner (a blind transcription first was tried and misheard too much). The AI is told to keep mistakes and not borrow words from its own last line. Nothing heard → "Didn't catch that", try again.
-  - ✅ "Correct and natural!", or ✏️ a corrected sentence with a one-line reason.
+  - ✅ "Correct and natural!", or ✏️ a corrected sentence with a one-line reason. A turn counts as a mistake only when there is something to show: a correction that differs from what was said, or at least a reason (then ✏️ "Not quite right" + the reason). The AI marking it wrong with neither counts as correct. The chat, the whole-conversation view and the summary all use this rule (`tkWrong`).
   - A translation.
   - A **pronunciation** score with up to 2 issues. Tap the score to expand it, with "My recording" and "Model" playback.
   - Its reply in character, which is read aloud.
@@ -214,3 +216,5 @@ Tap 🎙 on a sentence to open the coach underneath it. The coach has:
 - **Summary buttons:** **Keep talking** or **New conversation**.
 - **If you never spoke:** the conversation is discarded.
 - **🕘 History:** keeps the latest **60** conversations. Each shows the scene, date, number of fixes and average score. From History you can **Keep talking** or delete one (two taps).
+
+Test: `tests/talk_test.py` (Gemini and the mic faked).

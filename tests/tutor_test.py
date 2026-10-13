@@ -1,4 +1,4 @@
-"""AI tutor (floating chat) — end-to-end tests (see docs/README.md, "AI tutor").
+"""AI tutor (floating chat) — end-to-end tests (see docs/tutor.md).
 
 Drives the real index.html in headless Chromium. Gemini, the microphone and photos are faked, so it needs
 no key, no mic and no network. Checks the bubble only shows with a key, typed / voice / photo questions,
@@ -180,7 +180,7 @@ def F(page):
     page.screenshot(path=f"{SP}/F-desktop.png")
 
 def H(page):
-    """No tutor on Speak → Reading and Talk with AI (they have their own coach); back elsewhere. An open tutor closes there."""
+    """No tutor on Speak → Reading, Talk with AI and Translate (they have their own mic); back elsewhere. An open tutor closes there."""
     fab = lambda: page.is_visible("#tuFab")
     page.click('nav [data-v="read"]'); page.wait_for_timeout(200)
     check("H: shown on the Speak picker", fab())
@@ -198,6 +198,13 @@ def H(page):
     check("H: an open tutor closes on Reading", page.is_hidden("#tu") and not fab())
     page.reload(); page.wait_for_timeout(1000)
     check("H: still hidden after a reload on Reading", not fab())
+    page.click('nav [data-v="set"]'); page.wait_for_timeout(200)
+    page.click('nav [data-v="tr"]'); page.wait_for_timeout(400)
+    check("H: hidden on Translate (its own mic)", not fab())
+    page.reload(); page.wait_for_timeout(1200)
+    check("H: still hidden after a reload on Translate", page.query_selector("#arConvRoot *") and not fab())
+    page.click('nav [data-v="set"]'); page.wait_for_timeout(400)
+    check("H: back once Translate closes", not page.query_selector("#arConvRoot *") and fab())
 
 with sync_playwright() as pw:
     run(pw, "A", A, key="")

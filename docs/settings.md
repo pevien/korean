@@ -57,7 +57,7 @@ The key powers word generation, example sentences, passages, AI pronunciation fe
 - The list comes live from Google and is limited to Gemini Flash and Flash-Lite models, with Flash-Lite first.
 - **Automatic (recommended)** uses the first model in that list.
   - Before the list has loaded, the defaults are `gemini-2.5-flash-lite`, then `gemini-2.5-flash`.
-- "Flash-Lite: cheapest, most free requests — fine for studying and ARMY. Flash: more accurate but fewer free requests."
+- "Flash-Lite: cheapest, most free requests — fine for studying and ARMY. Flash: more accurate but fewer free requests. Pick Flash for stricter pronunciation grading."
 - **Model not available:** if a model isn't found or is overloaded, the request is retried once with the next model.
 
 **Test connection** sends a test translation request to check the key.
@@ -123,6 +123,8 @@ Keeps words, progress, passages, conversations and settings (including the Gemin
 
 **🗑 Disconnect** (two taps) turns off sync and signs out. Your data stays on the device, and the Drive file is not deleted.
 
+Test: `tests/sync_test.py` (Google sign-in and the Drive API faked): merge rules, deletions, settings, and "Delete all data".
+
 ## Review reminders
 
 **Remind me on this device**: sends a notification when there are words to review or new words left.
@@ -159,6 +161,8 @@ Keeps words, progress, passages, conversations and settings (including the Gemin
 - **If deleting the Drive copy fails:** nothing is deleted.
 - Your key and Drive connection are removed as well. The interface language and course stay.
 - Nothing is left behind for a later sync: connecting Drive again afterwards doesn't delete anything there or on other devices.
+
+Test: `tests/backup_test.py`.
 
 ## Guide
 
