@@ -30,7 +30,7 @@ def init():
                        "reps": 1, "lapses": 0, "due": 1, "last": 1, "created": 1 }],
            "passages": [{ "id": "p1", "lang": "en", "title": "Test", "titleMean": "", "created": 1, "vocab": [], "sentences": [{ "ko": "I like apples.", "meaning": "Tôi thích táo." }] }],
            "settings": { "course": "en", "apiKey": "FAKE", "uiLang": "vi", "model": "gemini-2.5-flash-lite", "newPerDay": 0, "coachGrade": "ai",
-                         "speakAuto": True, "autoPlay": False, "talkTts": False, "armyEngine": "ai", "modes": { **MODES, "ko2say": True } } }
+                         "speakAuto": True, "talkTts": False, "armyEngine": "ai", "modes": { **MODES, "ko2say": True } } }
     return r"""
 if (!sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");

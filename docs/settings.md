@@ -22,7 +22,7 @@ The **VIE / ENG** switch sets the interface language. Changing it reloads the ap
 |---|---|---|
 | New words per day | 10 | 1–100; one limit for all courses, counted separately per course |
 | Question types | All 7 on | Grouped as Choose / Type / Speak (see [study.md](study.md#question-types)); at least one must stay on |
-| Auto-play audio for vocabulary | On | Reads the word aloud on new-word cards and "word → meaning" questions |
+| Review reminders on this device | Off | See [Review reminders](#review-reminders) |
 
 The **level** is not set here. Choose it in the Level menus in Add words, Reading and Talk. Those three menus share one level for each course.
 
@@ -57,12 +57,13 @@ The key powers word generation, example sentences, passages, AI pronunciation fe
 - The list comes live from Google and is limited to Gemini Flash and Flash-Lite models, with Flash-Lite first.
 - **Automatic (recommended)** uses the first model in that list.
   - Before the list has loaded, the defaults are `gemini-2.5-flash-lite`, then `gemini-2.5-flash`.
-- "Flash-Lite: cheapest, most free requests — fine for studying and ARMY. Flash: more accurate but fewer free requests. Pick Flash for stricter pronunciation grading."
+- "Flash-Lite: cheapest, with the most free requests — enough for study and ARMY."
+- "Flash: more accurate and stricter on pronunciation, but fewer free requests."
 - **Model not available:** if a model isn't found or is overloaded, the request is retried once with the next model.
 
 **Test connection** sends a test translation request to check the key. With no key entered, it says so instead ("Chưa điền API key").
 
-**Auto-add example sentences:** default on. When on, words you add get an example sentence. Needs a key.
+**Example sentences:** words you add always get an example sentence when a key is set.
 
 **Errors:**
 
@@ -121,7 +122,7 @@ Test: `tests/sync_test.py` (Google sign-in and the Drive API faked): merge rules
 
 ## Review reminders
 
-**Remind me on this device**: sends a notification when there are words to review or new words left.
+**Review reminders on this device** (checkbox at the bottom of the study settings): sends a notification when there are words to review or new words left.
 
 - **Where it works:**
   - Chrome or Edge with the app installed.
@@ -136,7 +137,7 @@ Test: `tests/sync_test.py` (Google sign-in and the Drive API faked): merge rules
   - Title: "🎯 Time to review!"
   - Body, for example: "3 words to review · 5 new words".
 - **Not synced:** the setting is per device.
-- **Unsupported setup:** when your browser or setup can't send reminders, the card explains why.
+- **Unsupported setup:** when your browser or setup can't send reminders, turning the checkbox on shows a brief message and it stays off.
 
 ## Backup
 
@@ -167,7 +168,6 @@ Expandable help topics are placed inside the card they relate to; the rest are c
 - **How to get a free Gemini key.**
 - **Drive sync setup and troubleshooting.**
 - **Microphone & speaking:** permission steps for each OS.
-- **Backup.**
 - **FAQ:** privacy, cost, and "not seeing the latest version? Close the app fully and reopen it while online."
 
 **↺ Show the welcome screen again** reopens the welcome screen.

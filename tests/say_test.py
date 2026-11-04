@@ -26,7 +26,7 @@ def init(course, word, meaning, answer, ui="vi", mode="ko2say", quota=False, fai
     st = { "cards": [{ "id": "c1", "lang": course, "ko": word, "meaning": meaning, "ex": f"Example with {word}.", "exMean": "Câu ví dụ.", "ease": 2.5, "interval": 1,
                        "reps": 1, "lapses": 0, "due": 1, "last": 1, "created": 1 }],
            "settings": { "course": course, "apiKey": "FAKE", "uiLang": ui, "model": "gemini-2.5-flash-lite", "newPerDay": 0,
-                         "coachGrade": "ai", "speakAuto": True, "autoPlay": False, "modes": { **MODES, "ko2say": False, mode: True } } }
+                         "coachGrade": "ai", "speakAuto": True, "modes": { **MODES, "ko2say": False, mode: True } } }
     return r"""
 if (!sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");

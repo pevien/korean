@@ -25,7 +25,7 @@ ANSWER = "**사과** nghĩa là *quả táo*.\n- Ví dụ: **사과를 먹어요
 def init(key="FAKE"):
     st = { "cards": [{ "id": "c1", "lang": "ko", "ko": "사과", "meaning": "quả táo", "ex": "", "exMean": "", "ease": 2.5, "interval": 1,
                        "reps": 1, "lapses": 0, "due": 1, "last": 1, "created": 1 }],
-           "settings": { "course": "ko", "apiKey": key, "uiLang": "vi", "model": "gemini-2.5-flash-lite", "newPerDay": 0, "speakAuto": True, "autoPlay": False } }
+           "settings": { "course": "ko", "apiKey": key, "uiLang": "vi", "model": "gemini-2.5-flash-lite", "newPerDay": 0, "speakAuto": True } }
     return r"""
 if (!sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");

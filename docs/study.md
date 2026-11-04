@@ -183,7 +183,7 @@ Open it from "+ Add words". It has four tabs. Before anything is added, a **prev
 - **Fill meanings** translates any rows that are missing a meaning.
 - **Add (N)** saves the ticked rows. Duplicates are skipped and counted in the confirmation message.
 
-**Example sentences:** if "Auto-add example sentences" is on and a key is set, new words without an example get one at your current level. Words are processed in batches of 30.
+**Example sentences:** if a key is set, new words without an example get one at your current level. Words are processed in batches of 30.
 
 **Free translation** (`translate`) uses the Google Translate web endpoint first, then MyMemory. Results are rejected when they come back untranslated or in the wrong script.
 
@@ -240,6 +240,6 @@ Open it from "+ Add words". It has four tabs. Before anything is added, a **prev
   - Short single words of up to 3 syllables play at 0.8× that speed.
 - **Before reading aloud:** speaker labels such as "민수:" and symbols are removed.
 - **No voice installed:** if the device has no voice for the course, a toast points to Settings → Voice. Settings lists the steps to install one on each OS.
-- **Auto-play** (Settings): reads the word aloud when a new word is introduced and on "Korean → meaning" questions. Listening questions always play.
+- **Auto-play:** the word is always read aloud when a new word is introduced and on "Korean → meaning" and listening questions.
 
 Test: `tests/tts_test.py` (the start of a word is never cut off; rapid taps read only the last word).
