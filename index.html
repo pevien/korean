@@ -72,7 +72,6 @@ header{display:none}   /* no app title bar: the course sits in the Vocabulary ti
 /* small phones: a flag + "Vietnamese" side by side no longer fit half the row, so the flag goes on top and the name gets the full width */
 .co-grid{container-type:inline-size}
 @container (max-width:300px){ .co-grid button{flex-direction:column;gap:4px;text-align:center;padding:10px 6px} }
-#gdStatus{background:var(--bg)}
 #gdStatus[data-st="expired"],#gdStatus[data-st="error"]{color:var(--bad);background:var(--bad-soft);border-color:color-mix(in srgb, var(--bad) 35%, transparent);font-weight:600}
 /* surfaces separate by fill (+ light-mode shadow), not outlines — borders stay transparent so hover/state colours can still use them */
 .card{background:var(--card);border:1px solid transparent;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
@@ -1273,10 +1272,10 @@ body.tu-on .toast{z-index:36}
       <button class="btn2" style="margin-top:10px;width:100%" id="testAI">Test connection</button>
     </div>
     <div class="card">
-      <div class="row" style="margin-bottom:10px"><h2 style="margin:0">Google Drive sync</h2><button class="pill hidden" id="gdStatus" style="flex:0 0 auto;cursor:pointer;font-weight:500">☁️</button><button class="btn-danger ico sq hidden" id="gdOff" style="flex:0 0 auto"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button></div>
+      <h2>Google Drive sync</h2>
       <p class="small muted" style="margin-top:0">Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.</p>
       <div class="guide" data-g="g-sync" data-noi18n></div>
-      <button class="btn2" id="gdConnect" style="width:100%;margin-top:10px">Sign in with Google</button>
+      <div class="row" style="margin-top:10px"><button class="btn2" id="gdConnect">Sign in with Google</button><button class="btn2 hidden" id="gdStatus" data-noi18n>☁️</button><button class="btn-danger ico sq hidden" id="gdOff"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button></div>
     </div>
     <div class="card">
       <h2>Backup</h2>
@@ -4888,9 +4887,10 @@ function ago(t){
 function renderSyncCard(){
   if (!$("#gdStatus")) return;
   gdOffBtn();
-  $("#gdConnect").classList.toggle("hidden", SY.on);   // once connected, the ☁️ badge above is the sync button
+  $("#gdConnect").classList.toggle("hidden", SY.on);   // once connected, the ☁️ button beside it is the sync button
   const st = SY.on ? cloudState : "off", gs = $("#gdStatus");
-  gs.textContent = CLOUD_BADGE[st] || "☁️"; gs.dataset.st = st; gs.classList.toggle("hidden", !SY.on);   // nothing to show until Drive is connected
+  gs.textContent = (CLOUD_BADGE[st] || "☁️") + " " + (st === "ok" ? L("Đã đồng bộ", "Synced") : st === "busy" ? L("Đang đồng bộ…", "Syncing…") : st === "error" ? L("Đồng bộ lỗi — thử lại", "Sync failed — retry") : L("Bấm để đồng bộ tiếp", "Tap to continue syncing"));
+  gs.dataset.st = st; gs.classList.toggle("hidden", !SY.on);   // nothing to show until Drive is connected
   gs.title = gs.ariaLabel = !SY.on ? L("Chưa kết nối", "Not connected") :
     cloudState === "busy" ? L("Đang đồng bộ…", "Syncing…") :
     cloudState === "error" ? L("Đồng bộ lỗi — bấm để thử lại", "Last sync failed — tap to retry") :

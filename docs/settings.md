@@ -91,8 +91,9 @@ Keeps words, progress, passages, conversations and settings (including the Gemin
 
 **Sync status:**
 
-- A status pill shows ☁️ ✅ (synced), ☁️ … (syncing) or ☁️ ⚠️ (sign-in expired or error).
-- Tap the pill to sync now.
+- Once connected, the card shows a status button under **How it works**: ☁️ ✅ Synced, ☁️ … Syncing or ☁️ ⚠️ (sign-in expired or error).
+- Tap it to sync now.
+- The 🗑 button beside it disconnects, and looks and works like the one that removes the Gemini key.
 - Sync status appears only in Settings.
 
 **When syncing happens:**

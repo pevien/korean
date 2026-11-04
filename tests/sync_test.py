@@ -197,6 +197,7 @@ def I(b):
     p.goto(URL); p.wait_for_selector("#goCal")
     p.click('nav [data-v="set"]'); p.wait_for_selector("#resetBtn")
     assert p.is_visible("#gdOff") and p.is_visible("#gdStatus") and not p.is_visible("#gdConnect")
+    assert p.evaluate("document.querySelector('#gdStatus').parentElement === document.querySelector('#gdOff').parentElement && !!document.querySelector('#gdStatus').closest('.card').querySelector('.guide + .row')")   # both buttons sit under the guide
     conf = lambda: p.evaluate("JSON.parse(localStorage.getItem('hangulCards.sync'))")
     assert conf()["on"] is True and conf()["clientId"] == "test.apps.googleusercontent.com" and conf()["fileId"] == "F1", conf()
     sync(p)
