@@ -1619,8 +1619,8 @@ const VI = {
 "No Korean words found":"Không tìm thấy từ tiếng Hàn","No empty meanings":"Không có nghĩa nào trống",
 "No new words came back — try another topic":"Không có từ mới — thử chủ đề khác","No new words left — add some!":"Hết từ mới — thêm từ nhé!",
 "Nothing selected":"Chưa chọn gì","Nothing to study":"Chưa có gì để học","Passage deleted":"Đã xoá bài đọc",
-"Paste some Korean text first":"Hãy dán văn bản tiếng Hàn trước","Paste your Gemini key first":"Hãy dán Gemini key trước",
-"Paste your Google Client ID first":"Hãy dán Google Client ID trước","Preparing…":"Đang chuẩn bị…","Progress reset":"Đã đặt lại tiến độ",
+"Paste some Korean text first":"Hãy dán văn bản tiếng Hàn trước","No API key entered yet":"Chưa điền API key",
+"No Google OAuth Client ID entered yet":"Chưa điền Google OAuth Client ID","Preparing…":"Đang chuẩn bị…","Progress reset":"Đã đặt lại tiến độ",
 "Prompt copied":"Đã copy câu lệnh","Prompt selected — copy it":"Đã chọn câu lệnh — hãy copy","Tap again to delete everything":"Chạm để xoá hết",
 "Testing…":"Đang kiểm tra…","That doesn't look like Korean":"Đây không phải tiếng Hàn","That doesn't look like a Google Client ID":"Đây không phải Google Client ID",
 "That was too short — try again.":"Ngắn quá — thử lại nhé.","Translation unavailable — type it yourself":"Không dịch được — hãy tự gõ",
@@ -4787,7 +4787,7 @@ $("#testAI").onclick = async () => {
   const v = $("#setKey").value.trim(); if (v && !$("#setKey").dataset.masked) setApiKey(v);
   showSecret($("#setKey"), S.settings.apiKey);
   save(); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]);
-  if (!S.settings.apiKey) { toast("Paste your Gemini key first"); return; }
+  if (!S.settings.apiKey) { toast("No API key entered yet"); return; }
   const b = $("#testAI"); busy(b, true, "Testing…");
   await refreshModels($("#setModel"));
   try { const j = extractJSON(await gemini('Translate 안녕하세요 to English. Return JSON {"t":""}')); toast("✅ Connected! " + (j.t || "")); try { localStorage.setItem(KEYOK_KEY, keyFp()); } catch(e){} keyDelBtn(); }
@@ -5037,7 +5037,7 @@ function payload(){ const d = JSON.parse(JSON.stringify(S)); d.syncedAt = Date.n
 
 let syncing = false, again = false, pushT = null, renewTried = false;
 async function syncNow(interactive){
-  if (!clientId()){ if (interactive) toast("Paste your Google Client ID first"); return; }
+  if (!clientId()){ if (interactive) toast("No Google OAuth Client ID entered yet"); return; }
   if (!tokValid()){
     if (!interactive) return;
     setCloud("busy");
@@ -5073,6 +5073,7 @@ $("#gdStatus").onclick = () => syncNow(true);
 $("#gdConnect").onclick = () => {
   const v = $("#gdClient").value.trim();
   if (!GOOGLE_CLIENT_ID && v && !$("#gdClient").dataset.masked){ SY.clientId = v; saveSY(); showSecret($("#gdClient"), v); }
+  if (!clientId()){ toast("No Google OAuth Client ID entered yet"); return; }
   if (!/\.apps\.googleusercontent\.com$/.test(clientId())){ toast("That doesn't look like a Google Client ID"); return; }
   // sign-in popup + the first full download can take a while: one tap, then wait
   const b = $("#gdConnect"); if (b.disabled) return;

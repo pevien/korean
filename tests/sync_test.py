@@ -164,7 +164,22 @@ def F(b):
     assert len(saved(p)["cards"]) == 1 and p.evaluate("window.__deleted") == []
     assert not errs, errs
 
-SCEN = { "A": A, "B": B, "C": C, "C2": C2, "D": D, "E": E, "F": F }
+def G(b):
+    """Settings: with no API key / Client ID, Test connection and Connect Google Drive say what's missing."""
+    ctx = b.new_context(viewport={ "width": 390, "height": 844 }, service_workers="block")
+    ctx.add_init_script("""if (!sessionStorage.getItem("seeded")) { sessionStorage.setItem("seeded", "1");
+      localStorage.setItem("hangulCards.v1", JSON.stringify({ cards: [], settings: { course: "en", uiLang: "vi" } })); localStorage.setItem("hangulCards.welcomed", "1"); }""")
+    p = ctx.new_page(); errs = []
+    p.on("pageerror", lambda e: errs.append(str(e)))
+    p.goto(URL); p.wait_for_selector("#goCal")
+    p.click('nav [data-v="set"]'); p.wait_for_selector("#resetBtn")
+    toast = lambda: p.evaluate("document.querySelector('#toast').textContent")
+    p.click("#testAI"); assert toast() == "Chưa điền API key", toast()
+    p.click("#gdConnect"); assert toast() == "Chưa điền Google OAuth Client ID", toast()
+    p.fill("#gdClient", "abc"); p.click("#gdConnect"); assert toast() == "Đây không phải Google Client ID", toast()
+    assert not errs, errs
+
+SCEN = { "A": A, "B": B, "C": C, "C2": C2, "D": D, "E": E, "F": F, "G": G }
 
 if __name__ == "__main__":
     pick = [a.upper() for a in sys.argv[1:]] or list(SCEN)

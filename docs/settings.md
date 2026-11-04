@@ -60,7 +60,7 @@ The key powers word generation, example sentences, passages, AI pronunciation fe
 - "Flash-Lite: cheapest, most free requests — fine for studying and ARMY. Flash: more accurate but fewer free requests. Pick Flash for stricter pronunciation grading."
 - **Model not available:** if a model isn't found or is overloaded, the request is retried once with the next model.
 
-**Test connection** sends a test translation request to check the key.
+**Test connection** sends a test translation request to check the key. With no key entered, it says so instead ("Chưa điền API key").
 
 **Auto-add example sentences:** default on. When on, words you add get an example sentence. Needs a key.
 
@@ -92,7 +92,7 @@ Keeps words, progress, passages, conversations and settings (including the Gemin
   5. Create a Web client with the origin `https://pevien.github.io`.
   6. Copy the Client ID.
 - **Optional:** setting the `GOOGLE_CLIENT_ID` constant in the code hides the Client ID field.
-- **Connect Google Drive** signs you in with Google Identity Services.
+- **Connect Google Drive** signs you in with Google Identity Services. With no Client ID entered, it says so instead ("Chưa điền Google OAuth Client ID"); a value that isn't a Client ID gets its own message.
   - On other devices, use the same Client ID and the same Google account.
 
 **Sync status:**
