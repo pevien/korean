@@ -57,10 +57,17 @@ def A(b):
         i = g["id"]
         assert hangul.search(g["pattern"]) and both(g["meaning"]), i
         assert g["structure"] and all(both(x["when"]) and x["form"] and hangul.search(x["ex"]) for x in g["structure"]), i
+        assert "how" not in g or both(g["how"]), i
+        assert not any("gốc từ" in x["when"]["vi"].lower() for x in g["structure"]), (i, "plain labels: the how-to line explains the rest")
+        assert not any("(으)" in x["form"] or "(이)" in x["form"] for x in g["structure"]), (i, "one row per case, not a merged form")
         assert g["uses"] and all(both(u["when"]) and u["ex"] for u in g["uses"]), i
         assert all(hangul.search(x["ko"]) and both(x) for u in g["uses"] for x in u["ex"]), i
         assert all(both(x["name"]) and both(x["note"]) and hangul.search(x["ex"]) for x in g.get("irregular", [])), i
-        assert "notes" not in g or both(g["notes"]), i
+        assert "notes" not in g or (both(g["notes"]) and g.get("notesEx")), (i, "a note comes with examples")
+        assert all(hangul.search(x["ko"]) and both(x) for x in g.get("notesEx", [])), i
+        assert all("→" in x["rule"] and hangul.search(x["ex"]) for x in g.get("vowels", [])), i
+        if i != "ko-mot":   # its note shows how 못 먹어요 is pronounced
+            assert not any(x["ko"].rstrip(".?!") in g["notes"][l] for x in g.get("notesEx", []) for l in ("vi", "en")), (i, "a note doesn't repeat its examples")
 
 def B(b):
     """Only the Korean course has it, also after a reload that lands on the grammar screen."""
@@ -132,10 +139,41 @@ def E(b):
         assert g["meaning"][other] not in t and g["uses"][0]["ex"][0][other] not in t, ui
         for h in { "vi": ("Cấu trúc", "Khi dùng", "Bất quy tắc", "Lưu ý", "Đánh dấu đã học"), "en": ("Structure", "When to use it", "Irregulars", "Notes", "Mark as learned") }[ui]:
             assert h in t, h
+        assert p.locator("#grammar .gr-wrong").count() == 2 and p.locator("#grammar .gr-wrong .speak").count() == 0, "wrong sentences aren't read aloud"
+        heads = [h.inner_text() for h in p.locator("#grammar .card h3").all()]
+        assert heads[:2] == { "vi": ["Khi dùng", "Cấu trúc"], "en": ["When to use it", "Structure"] }[ui], heads
         p.evaluate("() => { window.__said = []; speechSynthesis.speak = u => window.__said.push(u.text); }")
         p.click("#grammar .ex .speak"); p.wait_for_timeout(300)
         assert p.evaluate("window.__said").count(g["uses"][0]["ex"][0]["ko"]), p.evaluate("window.__said")
         assert not errs, errs
+
+def M(b):
+    """Structure reads as steps: a how-to line, what to add for each case, and the join in each example."""
+    p, errs = page_for(b)
+    open_list(p)
+    p.click(row("ko-ayo") + " .gr-open"); p.wait_for_selector("#grNote")
+    t = p.inner_text("#grammar .card:has(.gr-form) >> nth=0")
+    assert "Bỏ 다, nhìn nguyên âm cuối" in t, t
+    assert "Nguyên âm là ㅏ, ㅗ → thêm 아요" in t and "좋다 → 좋 + 아요 → 좋아요" in t and "Có 하다 → đổi 하다 thành 해요" in t, t
+    p.click("#grBack"); p.wait_for_selector("#grList .gr-row")
+    p.click(row("ko-amuri-ado") + " .gr-open"); p.wait_for_selector("#grNote")
+    assert "thêm 아무리" not in p.inner_text("#grammar"), "a frame around the word isn't an ending to add"
+    assert not errs, errs
+
+def L(b):
+    """Vowel contraction: in the Notes card, spelled for that lesson's ending, also in a lesson with no other note."""
+    p, errs = page_for(b)
+    open_list(p)
+    p.click(row("ko-past") + " .gr-open"); p.wait_for_selector("#grNote")
+    t = p.inner_text("#grammar .gr-vowels")
+    assert "Rút gọn nguyên âm" in t and "ㅗ + 아 → ㅘ" in t and "보다 → 봤어요" in t and "마시다 → 마셨어요" in t and "되다 → 됐어요" in t, t
+    p.click("#grBack"); p.wait_for_selector("#grList .gr-row")
+    p.click(row("ko-a-boda") + " .gr-open"); p.wait_for_selector("#grNote")
+    assert "오다 → 와 보다" in p.inner_text("#grammar .gr-vowels") and "봐 보다" not in p.inner_text("#grammar .gr-vowels")
+    p.click("#grBack"); p.wait_for_selector("#grList .gr-row")
+    p.click(row("ko-do") + " .gr-open"); p.wait_for_selector("#grNote")
+    assert p.locator("#grammar .gr-vowels").count() == 0
+    assert not errs, errs
 
 def F(b):
     """The phone's Back button goes detail → list → Speak, and tapping the Speak tab starts from its home."""
@@ -222,7 +260,7 @@ def I(b):
         p.screenshot(path=f"{SP}/detail-{n}.png", full_page=True)
         assert not errs, errs
 
-SCEN = { "A": A, "B": B, "C": C, "D": D, "E": E, "F": F, "G": G, "H": H, "I": I, "K": K }
+SCEN = { "A": A, "B": B, "C": C, "D": D, "E": E, "F": F, "G": G, "H": H, "I": I, "K": K, "L": L, "M": M }
 
 if __name__ == "__main__":
     pick = [a.upper() for a in sys.argv[1:]] or list(SCEN)

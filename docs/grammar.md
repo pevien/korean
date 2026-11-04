@@ -20,9 +20,10 @@ The row shows progress once the lessons have loaded, for example "12 of 36 learn
 Each lesson shows, in the interface language:
 
 - the pattern and its short meaning
-- the structure, with a form for each case
 - when to use it, with examples for each use; 🔊 reads an example aloud
-- irregulars and notes, when it has any
+- the structure: a how-to line, what to add in each case, and examples that show the join (좋다 → 좋 + 아요 → 좋아요)
+- irregulars and notes, when it has any; each note has examples, and wrong sentences are marked ✗ and aren't read aloud
+- vowel contraction, in lessons built on 아/어: it sits in Notes and says it isn't an irregular
 - **My notes:** a private box for how the learner understands the point, or anything that looks wrong; it saves while typing
 - a button to mark it as learned
 
@@ -32,10 +33,13 @@ Each lesson shows, in the interface language:
 
 ```text
 { id, level, pattern, meaning,
-  structure[{ when, form, ex }],
+  how,                             // optional: one how-to line for the structure
+  structure[{ when, form, ex, add, change }],   // add: "add <form>"; change: "change 하다 to <form>"; ex: " · " between examples
   uses[{ when, ex[{ ko, vi, en }] }],
   irregular[{ name, note, ex }],   // optional
-  notes }                          // optional
+  notes,                           // optional
+  notesEx[{ ko, vi, en, wrong }],  // with notes; wrong marks a sentence not to copy
+  vowels[{ rule, ex }] }           // optional: vowel contraction, spelled for this lesson's ending
 ```
 
 - **Levels:** `s1` (Sơ cấp 1), `s2` (Sơ cấp 2), `i1` (Trung cấp).

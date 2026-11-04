@@ -360,6 +360,14 @@ body.talking #ielts.tk-chat{min-height:calc(100vh - 48px - env(safe-area-inset-b
 #grammar .gr-use > b + .ex{margin-top:0}
 #grammar .exk{font-size:15px;line-height:1.5}
 #grammar .exm{font-size:13px;line-height:1.5;margin:0}
+.gr-note{margin-bottom:12px}
+.gr-note + .gr-form{border-top:0;padding-top:0}
+.gr-vowels > b{display:block;font-weight:600}
+.gr-vnote{font-size:13px;color:var(--muted);margin-bottom:12px}
+.gr-note ~ .gr-vowels{margin-top:16px}
+.gr-note + .ex{margin-top:0}
+.gr-bad{flex:0 0 32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--bad)}
+.gr-wrong .exk{color:var(--bad)}
 .gr-learn{width:100%;margin-bottom:14px}
 /* 🗣 Speak → 💬 Talk */
 .sp-pick:hover{border-color:var(--accent)}
@@ -5730,13 +5738,13 @@ function renderGrList(){
   $$("#grList .gr-tick").forEach(b => b.onclick = () => { grToggle(b.parentElement.dataset.id); renderGrammar(); });
 }
 function renderGrDetail(g){
-  const on = grLearned(g.id), ex = x => `<div class="ex"><button class="speak sm" data-say="${esc(x.ko)}" title="${L("Nghe", "Listen")}" aria-label="${L("Nghe", "Listen")}">${ic("speaker-high")}</button><div><div class="exk" lang="ko">${esc(x.ko)}</div><div class="exm">${esc(grT(x))}</div></div></div>`;
+  const on = grLearned(g.id), ex = x => `<div class="ex${x.wrong ? " gr-wrong" : ""}">${x.wrong ? `<span class="gr-bad" role="img" aria-label="${L("Câu sai", "Wrong sentence")}">${ic("x")}</span>` : `<button class="speak sm" data-say="${esc(x.ko)}" title="${L("Nghe", "Listen")}" aria-label="${L("Nghe", "Listen")}">${ic("speaker-high")}</button>`}<div><div class="exk" lang="ko">${esc(x.ko)}</div><div class="exm">${esc(grT(x))}</div></div></div>`;
   $("#grammar").innerHTML = grHead(GR_LEVELS[g.level] || L("Ngữ pháp", "Grammar"), L("Ngữ pháp", "Grammar")) + `
     <div class="card"><h2 class="gr-title" lang="ko">${esc(g.pattern)}</h2><p class="gr-mean">${esc(grT(g.meaning))}</p></div>
-    <div class="card"><h3>${L("Cấu trúc", "Structure")}</h3>${g.structure.map(x => `<div class="gr-form"><span class="small muted">${esc(grT(x.when))}</span><b lang="ko">${esc(x.form)}</b><span class="small" lang="ko">${esc(x.ex)}</span></div>`).join("")}</div>
     <div class="card"><h3>${L("Khi dùng", "When to use it")}</h3>${g.uses.map(u => `<div class="gr-use"><b>${esc(grT(u.when))}</b>${u.ex.map(ex).join("")}</div>`).join("")}</div>
+    <div class="card"><h3>${L("Cấu trúc", "Structure")}</h3>${g.how ? `<div class="gr-note">${esc(grT(g.how))}</div>` : ""}${g.structure.map(x => `<div class="gr-form"><b>${esc(grT(x.when))} → ${x.add ? L("thêm ", "add ") : x.change ? L("đổi 하다 thành ", "change 하다 to ") : ""}<span lang="ko">${esc(x.form)}</span></b>${x.ex.split(" · ").map(e => `<span class="small" lang="ko">${esc(e)}</span>`).join("")}</div>`).join("")}</div>
     ${g.irregular ? `<div class="card"><h3>${L("Bất quy tắc", "Irregulars")}</h3>${g.irregular.map(x => `<div class="gr-form"><b>${esc(grT(x.name))}</b><span class="small muted">${esc(grT(x.note))}</span><span class="small" lang="ko">${esc(x.ex)}</span></div>`).join("")}</div>` : ""}
-    ${g.notes ? `<div class="card"><h3>${L("Lưu ý", "Notes")}</h3><div>${esc(grT(g.notes))}</div></div>` : ""}
+    ${g.notes || g.vowels ? `<div class="card"><h3>${L("Lưu ý", "Notes")}</h3>${g.notes ? `<div class="gr-note">${esc(grT(g.notes))}</div>${(g.notesEx || []).map(ex).join("")}` : ""}${g.vowels ? `<div class="gr-vowels"><b>${L("Rút gọn nguyên âm", "Vowel contraction")}</b><div class="gr-vnote">${L("Đây không phải bất quy tắc: hai nguyên âm gộp lại cho dễ đọc.", "This isn't an irregular: two vowels merge to make it easier to say.")}</div>${g.vowels.map(x => `<div class="gr-form"><span class="small muted">${esc(x.rule)}</span><span class="small" lang="ko">${esc(x.ex)}</span></div>`).join("")}</div>` : ""}</div>` : ""}
     <div class="card"><h3>${L("Ghi chú của tôi", "My notes")}</h3><textarea id="grNote" rows="2" placeholder="${L("Ghi cách bạn hiểu, hoặc chỗ thấy chưa đúng…", "Write how you understand it, or anything that looks wrong…")}">${esc((grRec(g.id) || {}).note)}</textarea></div>
     <button class="${on ? "btn2" : "btn"} gr-learn" id="grLearn">${on ? L("Bỏ đánh dấu đã học", "Mark as not learned") : L("Đánh dấu đã học", "Mark as learned")}</button>`;
   bindSay($("#grammar"));
