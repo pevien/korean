@@ -241,6 +241,16 @@ def J(page):
 OLD = [{ "id": f"old{i}", "lang": "en", "created": 1000 + i, "scene": "cafe", "topic": "",
          "turns": [{ "who": "ai", "ko": "Hi", "mean": "" }, { "who": "me", "heard": "Hi", "ok": True, "fix": "", "why": "", "mean": "", "score": 70, "pron": "", "issues": [] }] } for i in range(60)]
 
+def K(page):
+    """A number in digits vs words is no mistake; a real correction next to it stays."""
+    start_cafe(page)
+    say(page, dict(GOOD, heard="I want 2 lattes", ok=False, fix="I want two lattes.", why="Sai số.", ko="Sure!"))
+    say(page, dict(GOOD, heard="I want 2 latte", ok=False, fix="I want two lattes.", why="Thiếu số nhiều.", ko="OK!"))
+    m = mine(page)
+    check("K: digits vs words → ✅, no correction", m and m[0].query_selector(".ok") and not m[0].query_selector(".fix"), m and m[0].inner_html()[:200])
+    check("K: real mistake still corrected", len(m) > 1 and m[1].query_selector(".fix") and "I want two lattes." in m[1].inner_text(), len(m))
+    check("K: prompt spells numbers out", "never use digits" in calls(page, "turn")[0]["p"])
+
 if __name__ == "__main__":
     with sync_playwright() as pw:
         run(pw, "A", A, key="")
@@ -253,6 +263,7 @@ if __name__ == "__main__":
         run(pw, "H", H)
         run(pw, "I", I)
         run(pw, "J", J)
+        run(pw, "K", K)
     fails = [r for r in results if not r[1]]
     for n, ok, info in results:
         print(("PASS " if ok else "FAIL ") + n + ("" if ok else f"  ← {info}"))

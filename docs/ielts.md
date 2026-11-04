@@ -91,7 +91,7 @@ One AI call per answer (`ieScoreAnswer`): the WAV recording plus the question. T
 
 | Field | Shown as |
 |---|---|
-| `heard` | What they said, mistakes and fillers (um, uh) kept |
+| `heard` | What they said, mistakes and fillers (um, uh) kept, numbers spelled out |
 | `note` | One sentence overall |
 | `checks` | **Content & development**, shown first. Each check is ✓ or ! with a concrete tip when it isn't met. Part 1: answers directly · extends with a reason/detail · stays on topic. Part 2: each cue-card point · opening–body–wrap-up · on topic. Part 3: clear opinion · reasons · concrete example · logical flow/linking · no rambling. |
 | `ideas` | 0–2 ways to develop this answer: an example to add, or a part to cut |

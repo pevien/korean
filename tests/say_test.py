@@ -9,7 +9,7 @@ Run from the repo root (add scenario letters to run only those, e.g. `... say_te
 
 Screenshots land in $SAY_TEST_OUT (default: a temp folder). Exit code 1 when anything fails.
 """
-import functools, http.server, json, os, sys, tempfile, threading, traceback
+import functools, http.server, json, os, re, sys, tempfile, threading, traceback
 from playwright.sync_api import sync_playwright
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -220,7 +220,57 @@ def K(page):
     check("K: mic button back, no spinner", page.is_enabled("#sayRec") and not page.query_selector("#sayRec .spinner"))
     check("K: only one try (a timeout isn't retried on another model)", len(page.evaluate("window.__models")) == 1, page.evaluate("window.__models"))
 
+def L(page):
+    """Vietnamese, the number said right but transcribed as a digit: graded as the word, on the screen too."""
+    text, p = say(page, "L-num")
+    check("L: grading gets the number in words", 'HEARD: "bốn giờ"' in p, p[:300])
+    check("L: digits and words aren't a mistake", "not a mistake" in p)
+    tr = page.evaluate("window.__prompts.find(p => p.startsWith('Transcribe this'))") or ""
+    check("L: transcription spells numbers out", "never use digits" in tr and "bốn" not in tr, tr)
+
+FAKE_SR = """class FakeSR { start(){ setTimeout(() => this.onresult && this.onresult({ results: [[{ transcript: window.__said }]] }), 50); } stop(){ setTimeout(() => this.onend && this.onend(), 10); } abort(){} }
+window.SpeechRecognition = window.webkitSpeechRecognition = FakeSR;"""
+def basic(page, said):
+    """Say it with ⚡ Basic grading, the recogniser returning `said`."""
+    page.add_init_script(FAKE_SR + f"window.__said = {json.dumps(said)};"); page.reload(); page.wait_for_timeout(800)
+    if page.query_selector("#startBtn"): page.click("#startBtn")
+    page.wait_for_selector("#sayRec")
+    page.click('#sayGrade [data-g="basic"]')
+    record(page, "#sayRec")
+    page.wait_for_selector("#fb .qfb", timeout=8000)
+
+def M(page):
+    """Basic grading: the recogniser's digits count as the word."""
+    basic(page, "4 giờ")
+    check("M: 4 giờ accepted for bốn giờ", page.query_selector("#fb .qfb.ok"), page.inner_text("#fb .qfb"))
+
+def O(page):
+    """Basic grading: a different number is still wrong."""
+    basic(page, "5 giờ")
+    check("O: 5 giờ not accepted for bốn giờ", page.query_selector("#fb .qfb.bad"), page.inner_text("#fb .qfb"))
+
+SAME = { "vi": [("4 giờ", "bốn giờ", "bốn giờ"), ("5 giờ", "bốn giờ", "5 giờ"), ("14 tuổi", "mười bốn tuổi", "mười bốn tuổi"), ("25 tuổi", "hai mươi lăm tuổi", "hai mươi lăm tuổi"),
+                ("24 giờ", "hai mươi bốn giờ", "hai mươi bốn giờ"), ("24 giờ", "hai mươi tư giờ", "hai mươi tư giờ"), ("21 tuổi", "hai mươi mốt tuổi", "hai mươi mốt tuổi"), ("105 người", "một trăm linh năm người", "một trăm linh năm người"),
+                ("1.000 đồng", "một nghìn đồng", "một nghìn đồng"), ("tháng 4", "tháng tư", "tháng tư"), ("bốn giờ", "4 giờ", "4 giờ"), ("4 giờ", "4 giờ", "4 giờ")],
+         "ko": [("4시", "네 시", "네시"), ("4월", "사월", "사월"), ("6월", "유월", "유월"), ("10월", "시월", "시월"), ("10시", "열 시", "열시"), ("20살", "스무 살", "스무살"), ("24살", "스물네 살", "스물네살"), ("3시", "네 시", "3시"), ("네 시", "4시", "4 시"), ("이십 사", "24", "24")],
+         "ja": [("4時", "四時", "四時"), ("4時", "よじ", "よ時"), ("25", "二十五", "二十五")],
+         "zh": [("4点", "四点", "四点"), ("2个", "两个", "两个"), ("105", "一百零五", "一百零五"), ("12", "十二", "十二"), ("110", "一百一十", "一百一十")],
+         "th": [("4 โมง", "สี่ โมง", "สี่ โมง"), ("21", "ยี่สิบเอ็ด", "ยี่สิบเอ็ด"), ("15", "สิบห้า", "สิบห้า")],
+         "en": [("4 cats", "four cats", "four cats"), ("21", "twenty one", "twenty one"), ("21", "twenty-one", "twenty one"), ("105", "one hundred and five", "one hundred and five"), ("1990", "nineteen ninety", "nineteen ninety"), ("5 cats", "four cats", "5 cats")] }
+# the app lives in a closure: the two functions are lifted out of index.html and run per course
+_html = open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
+NUM_SRC = re.search(r"^const norm = .*$", _html, re.M).group(0) + "\n" + _html[_html.index("function numSay(d){"):_html.index("// word cards and reading practice:")]
+def N(page):
+    """numSay + sameNums over every course's number forms, in both directions."""
+    for lang, cases in SAME.items():
+        got = page.evaluate("([src, lang, cases]) => new Function('CUR', 'cases', src + ';return cases.map(c => sameNums(c[0], c[1]))')(lang, cases)", [NUM_SRC, lang, cases])
+        for (heard, target, want), g in zip(cases, got): check(f"N-{lang}: {heard} / {target}", g == want, g)
+
 with sync_playwright() as pw:
+    run(pw, "L", L, course="vi", word="bốn giờ", meaning="four o'clock", answer={ "heard": "4 giờ", "correct": True, "pron": "", "score": 90, "issues": [], "good": "" })
+    run(pw, "M", M, course="vi", word="bốn giờ", meaning="four o'clock", answer={})
+    run(pw, "O", O, course="vi", word="bốn giờ", meaning="four o'clock", answer={})
+    run(pw, "N", N, course="vi", word="bốn giờ", meaning="four o'clock", answer={})
     run(pw, "A", A, course="ko", word="음악", meaning="âm nhạc",
         answer={ "heard": "음악", "correct": True, "pron": "[으막]", "score": 78, "issues": ISSUES, "good": "" })
     run(pw, "B", B, course="ko", word="음악", meaning="âm nhạc",

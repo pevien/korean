@@ -57,7 +57,7 @@ window.fetch = async (url, opts) => {
       card: { topic: "Describe a place you visited that you would like to go back to.", points: ["where it is", "when you went there", "what you did there"], end: "and explain why you would like to go back." },
       follow: "Do you often travel?", p3: ["Why do people like to travel?", "How has tourism changed in your country?"] };
     else if (kind === "ans" && window.__mock.partial) out = { heard: "I work as a nurse.", fixes: [], upgrades: [], note: "", issues: [] };   // Gemini leaving fields out
-    else if (kind === "ans") out = window.__mock.silent ? { heard: "" } : { heard: "um I am work in a software company since three years, uh it is very good job", fixes: [{ from: "I am work", to: "I work", why: "Không dùng 'am' trước động từ thường." }],
+    else if (kind === "ans") out = window.__mock.silent ? { heard: "" } : { heard: "um I am work in a software company since three years, uh it is very good job", fixes: [{ from: "I am work", to: "I work", why: "Không dùng 'am' trước động từ thường." }, { from: "3 years", to: "three years", why: "NUMBER-ONLY" }],
       upgrades: [{ from: "very good job", to: "a rewarding job", why: "Tự nhiên hơn." }], note: "Đúng ý nhưng hơi ngắn.", score: 72, issues: [{ part: "three", tip: "Âm /θ/: /θriː/" }],
       sample: "I work as a software engineer and I find it really rewarding.",
       checks: [{ key: "x0", ok: true, tip: "" }, { key: "x1", ok: false, tip: "Thêm một lý do vì sao bạn thích công việc này." }, { key: "x2", ok: true, tip: "" }, { key: "x3", ok: false, tip: "Nối ý bằng 'because', 'for example'." }, { key: "x4", ok: true, tip: "" }],
@@ -204,6 +204,7 @@ def t_p2(page):
     page.click("#ieReady"); page.wait_for_timeout(200)
     answer(page, 2500, 1500)
     check("D. feedback shown after answer", "I work" in txt(page, "#ielts") and page.query_selector("#ieNext") is not None)
+    check("D. a digits-to-words 'fix' isn't listed", "NUMBER-ONLY" not in txt(page, "#ielts"))
     page.click("#ieRedo"); page.wait_for_timeout(200)
     check("D. 'Try again' on the cue card goes back to ready (no new prep)", page.query_selector("#ieRec") is not None and page.query_selector("#ieReady") is None)
     answer(page, 2500, 1500)

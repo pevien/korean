@@ -3312,7 +3312,7 @@ async function sayRecorded(item){
   item.busy = true; frSay(""); frBtn("busy");
   try {
     const audio = [{ inline_data: { mime_type: "audio/wav", data: await blobToWavB64(blob) } }];
-    const heard = await aiHear(audio, dur);
+    const heard = sameNums(await aiHear(audio, dur), c.ko);
     if (!heard){ item.busy = false; if (session && session.queue[0] === item) frSay(L("Không nghe rõ — nói to và gần micro hơn rồi thử lại.", "Didn't catch that — speak a bit louder and closer to the mic, then try again.")); return; }
     const prompt = `You are a ${CO.en} teacher and a strict pronunciation examiner. A ${uiLangName()}-speaking learner was ${isLetter(c)
       ? isKo ? `${read ? `shown the Hangul letter "${c.ko}"` : `shown "${c.meaning}" (the sound of a Hangul letter)`} and asked to say the letter "${c.ko}" — its name "${ABC_SAY[c.ko]}" or its sound (e.g. the letter + ㅏ for a consonant) both count`
@@ -3368,7 +3368,7 @@ const gradedBy = ai => `<div class="small" style="margin-top:4px;opacity:.75">${
 function sayCheckLocal(item){
   if (!session || session.queue[0] !== item) return;
   item.score = null;
-  const heard = FR.heard.trim();
+  const heard = sameNums(FR.heard.trim(), item.card.ko);
   if (!heard){
     if (!FR.spoke){ frSay(L("Chưa nghe thấy gì — nói to và gần micro hơn rồi thử lại.", "Didn't catch that — speak louder and closer to the mic, then try again.")); return; }
     // they spoke but no word came out: usually the pronunciation was off. One more try, then it counts as a miss
@@ -3377,7 +3377,7 @@ function sayCheckLocal(item){
     sayResult(item, false, "", `<div class="small fb-sc">🎙 ${L("Máy không nhận ra từ bạn nói — thường là do phát âm chưa rõ.", "The recogniser couldn't make out a word — usually the pronunciation was off.")}</div>` + gradedBy(false));
     return;
   }
-  const t = norm(item.card.ko), cands = FR.alts.length ? FR.alts : [heard];
+  const t = norm(item.card.ko), cands = FR.alts.length ? FR.alts.map(a => sameNums(a, item.card.ko)) : [heard];
   const ok = cands.some(a => { const n = norm(a); return n === t || n.includes(t) || (isLetter(item.card) && saidLetter(item.card.ko, n)); });
   let extra = "";
   if (!ok){
@@ -4378,6 +4378,66 @@ async function blobToWavB64(blob, stats){
   for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   return btoa(bin);
 }
+// how a number (given as digits) can be said in the course language, the form the sentence most likely uses first
+function numSay(d){
+  const n = +d, each = t => d.length > 1 ? [[...d].map(x => t[+x]).join(" ")] : [];   // read digit by digit: 0912
+  const cjk = (D, P, zh) => {   // 四十五 / 사십오 / 一百零五
+    let out = "";
+    for (let p = 3; p > 0; p--){
+      const q = Math.floor(n / 10 ** p) % 10;
+      if (q) out += (q > 1 || (zh && (p > 1 || out)) ? D[q] : "") + P[p - 1];
+      else if (zh && out && n % 10 ** p && !out.endsWith(D[0])) out += D[0];
+    }
+    return out + (n % 10 || !n ? D[n % 10] : "");
+  };
+  let c = [];
+  if (n > 9999) c = [];
+  else if (CUR === "vi"){
+    const D = "không một hai ba bốn năm sáu bảy tám chín".split(" ");
+    const two = x => x < 10 ? D[x] : (x < 20 ? "mười" : D[x / 10 | 0] + " mươi") + (x % 10 ? " " + (x % 10 === 5 ? "lăm" : x > 20 && x % 10 === 1 ? "mốt" : x > 20 && x % 10 === 4 ? "tư" : D[x % 10]) : "");
+    const three = x => x < 100 ? two(x) : D[x / 100 | 0] + " trăm" + (x % 100 ? (x % 100 < 10 ? " linh " : " ") + two(x % 100) : "");
+    const w = n < 1000 ? three(n) : D[n / 1000 | 0] + " nghìn" + (n % 1000 ? (n % 1000 < 100 ? " không trăm " : " ") + (n % 1000 < 100 ? (n % 100 < 10 ? "linh " : "") + two(n % 100) : three(n % 1000)) : "");
+    c = [w, w.replace("tư", "bốn"), w.replace("lăm", "nhăm"), w.replace("linh", "lẻ"), w.replace("nghìn", "ngàn"), ...(n === 4 ? ["tư"] : n === 1 ? ["nhất"] : []), ...each(D)];
+  }
+  else if (CUR === "ko"){
+    const U = [[""], ["하나", "한"], ["둘", "두"], ["셋", "세", "석"], ["넷", "네", "넉"], ["다섯"], ["여섯"], ["일곱"], ["여덟"], ["아홉"]], T = ["", "열", "스물", "서른", "마흔", "쉰", "예순", "일흔", "여든", "아흔"];
+    const nat = n > 0 && n < 100 ? U[n % 10].map(u => T[n / 10 | 0] + u) : [];
+    c = [cjk("영일이삼사오육칠팔구", "십백천"), ...nat, ...(n === 20 ? ["스무"] : []), ...(n === 6 ? ["유"] : n === 10 ? ["시"] : []), ...each("공일이삼사오육칠팔구")];   // 유월, 시월
+  }
+  else if (CUR === "ja"){
+    const KANA = [["ゼロ", "れい"], ["いち", "ひと"], ["に", "ふた"], ["さん", "みっ"], ["よん", "よっ", "よ", "し"], ["ご", "いつ"], ["ろく", "むっ"], ["なな", "しち"], ["はち", "やっ"], ["きゅう", "ここの", "く"], ["じゅう", "とお"]];
+    c = [cjk("〇一二三四五六七八九", "十百千"), ...(KANA[n] || []), ...each("〇一二三四五六七八九")];
+  }
+  else if (CUR === "zh") c = [cjk("零一二三四五六七八九", "十百千", true), ...(n === 2 ? ["两"] : []), ...each("零一二三四五六七八九")];
+  else if (CUR === "th"){
+    const D = "ศูนย์ หนึ่ง สอง สาม สี่ ห้า หก เจ็ด แปด เก้า".split(" "), q = x => Math.floor(n / x) % 10, t = q(10), u = n % 10;
+    const w = (q(1000) ? D[q(1000)] + "พัน" : "") + (q(100) ? D[q(100)] + "ร้อย" : "") + (t ? (t === 1 ? "" : t === 2 ? "ยี่" : D[t]) + "สิบ" : "") + (u || !n ? (u === 1 && n > 10 ? "เอ็ด" : D[u]) : "");
+    c = [w, ...each(D)];
+  }
+  else if (CUR === "en"){
+    const O = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split(" "), T = ",,twenty,thirty,forty,fifty,sixty,seventy,eighty,ninety".split(",");
+    const two = x => x < 20 ? O[x] : T[x / 10 | 0] + (x % 10 ? " " + O[x % 10] : "");
+    const three = (x, and) => x < 100 ? two(x) : O[x / 100 | 0] + " hundred" + (x % 100 ? and + two(x % 100) : "");
+    const big = and => n < 1000 ? three(n, and) : O[n / 1000 | 0] + " thousand" + (n % 1000 ? (n % 1000 < 100 ? and : " ") + three(n % 1000, and) : "");
+    c = [big(" and "), big(" "), ...(n > 1099 && n % 100 > 9 ? [two(n / 100 | 0) + " " + two(n % 100)] : []), ...each(O)];   // years: nineteen ninety
+  }
+  return [...new Set(c)].filter(Boolean).sort((a, b) => norm(b).length - norm(a).length);   // longest first: 14 is mười bốn, never just bốn
+}
+// recognisers write numbers as digits whatever the learner read: put what was heard in the target's own form (4 giờ ↔ bốn giờ) so a
+// number said right isn't a "missing word". A different number finds no match in the target and stays a mismatch
+function sameNums(heard, target){
+  const tgt = norm(target), txt = String(heard).normalize("NFC");
+  return [...new Set(String(target).normalize("NFC").match(/\d+/g) || [])].reduce((out, d) => {   // the target wrote it in digits, the learner's came back in words
+    for (const w of numSay(d)){
+      const re = new RegExp([...w.replace(/\s/g, "")].join("\\s*"), "iu");
+      if (re.test(out)) return out.replace(re, d);
+    }
+    return out;
+  }, txt.replace(/\d+(?:[.,]\d{3})*/g, m => {
+    const d = m.replace(/\D/g, "");
+    return tgt.includes(d) ? m : numSay(d).find(w => tgt.includes(norm(w))) || m;
+  }));
+}
 // word cards and reading practice: what the learner said, transcribed blind — with the expected word / sentence in view
 // the model "hears" that instead — and the grading call that follows takes this transcript as final ("" = silence or noise).
 // Free speech (Talk, IELTS, the tutor) is transcribed in the answering call instead: blind, the model can't tell what a
@@ -4387,17 +4447,18 @@ async function aiHear(audio, dur){
 - Write ONLY the words actually spoken, in the order spoken. Never add, complete, guess or "repair" words; never fix grammar, particles or endings.
 - If a word is unclear, mispronounced or cut off, write your best phonetic guess of what was actually said — don't substitute a similar-sounding common word or phrase.
 - If the learner stopped mid-sentence, the transcript stops there too.
+- Spell every number out in ${CO.en} words, the way it was pronounced — never use digits.
 - Leave out hesitation sounds (um, uh, 음, 어); leave out any background voices.
 - If the audio is silent or just noise, or not ${CO.en}, return "heard":"".
 Return JSON exactly like: {"heard":""}`, audio, { temperature: modelVer(curModel()) >= 3 ? 1 : 0, thinking: "off", timeout: 30000 }));   // Gemini 3 degrades below its default temperature 1
   return String(j.heard || "").trim();
 }
 // what free-speech prompts say about "heard": use the context to recognize words, never to change them
-const heardKeep = `Write ONLY the words actually in the recording, in the order spoken — it must match the audio, not what would fit the conversation. Use the context only to recognize words said with an accent — write each one as the word they said, correctly spelled. Keep their grammar mistakes and wrong words exactly, every particle and ending as said (a missing or wrong one stays missing or wrong); never add, complete or "fix" words, and never borrow words from the question or your own earlier messages they didn't say. A word you can't make out or that was mispronounced into another word: write your best phonetic guess of what was said, not a similar-sounding word that fits better. If they stopped mid-sentence, "heard" stops there too.`;
+const heardKeep = `Write ONLY the words actually in the recording, in the order spoken — it must match the audio, not what would fit the conversation. Use the context only to recognize words said with an accent — write each one as the word they said, correctly spelled. Keep their grammar mistakes and wrong words exactly, every particle and ending as said (a missing or wrong one stays missing or wrong); never add, complete or "fix" words, and never borrow words from the question or your own earlier messages they didn't say. A word you can't make out or that was mispronounced into another word: write your best phonetic guess of what was said, not a similar-sounding word that fits better. Spell every number out in words, the way it was pronounced — never use digits; a number in digits and the same number in words are never a mistake to correct. If they stopped mid-sentence, "heard" stops there too.`;
 // the line every grading prompt gets after aiHear
 const heardRule = heard => `The recording was transcribed word for word, without knowing what was expected, as:
 HEARD: "${heard}"
-That transcript is final — grade exactly those words (use the audio only to judge how they sounded). Never assume the learner said words that aren't in it, even if it looks unfinished or doesn't match what was expected: missing, extra or different words are their mistakes.${CO.words ? "" : " A different spelling of the same sounds (e.g. other characters for a homophone) is not a mistake."}`;
+That transcript is final — grade exactly those words (use the audio only to judge how they sounded). Never assume the learner said words that aren't in it, even if it looks unfinished or doesn't match what was expected: missing, extra or different words are their mistakes. The one exception: a number in digits and the same number in words are the same thing, not a mistake.${CO.words ? "" : " A different spelling of the same sounds (e.g. other characters for a homophone) is not a mistake."}`;
 
 // the sentence the coach grades: without a dialogue speaker label, which is never read out
 const coachSent = () => { const s = curP.sentences[C.i]; return { ...s, ko: noSpeaker(s.ko) }; };
@@ -4406,7 +4467,7 @@ async function evaluateAI(){
   cBusy(true); $("#cStatus").textContent = "";
   try {
     const audio = [{ inline_data: { mime_type: "audio/wav", data: await blobToWavB64(C.blob) } }];
-    const heard = await aiHear(audio, C.dur);
+    const heard = sameNums(await aiHear(audio, C.dur), s.ko);
     if (tok !== C.tok) return;
     if (!heard){ cBusy(false); $("#cStatus").textContent = "Didn't catch that — speak a bit louder and closer to the mic, then try again."; return; }
     const j = coachClean(extractJSON(await gemini(coachPrompt(s, heard), audio, { system: feedbackLangRule(), temperature: 0.2, thinking: "low" })));
@@ -4538,7 +4599,7 @@ function align(tg, hd){
 }
 function evaluateLocal(){
   const s = coachSent();
-  const heard = C.heard.trim();
+  const heard = sameNums(C.heard.trim(), s.ko);
   if (!heard){ $("#cStatus").textContent = C.srErr === "network" ? "Speech check needs internet (or isn't available in this browser — try Chrome), then try again."
     : "Didn't catch anything — speak a bit louder and closer to the mic, then try again."; return; }
   const tg = syls(s.ko), { map, extra } = align(tg, syls(heard));
@@ -5731,8 +5792,9 @@ Return JSON exactly like: {"heard":"","ok":true,"fix":"","why":"","mean":"","sco
     if (S.talk !== t) return;
     t.turns = t.turns.filter(x => x !== me);
     const fix = String(j.fix || "").trim();
-    const fx = fix === heard ? "" : fix, why = String(j.why || "").trim();   // a "correction" identical to what was said isn't one
-    const turn = { who: "me", heard, ok: !fx && (!!j.ok || !why), fix: fx, why, mean: String(j.mean || "").trim(),
+    const said = sameNums(heard, fix), numOnly = said !== heard && norm(said) === norm(fix);   // "4 giờ" → "bốn giờ" corrects nothing
+    const fx = fix === heard || numOnly ? "" : fix, why = numOnly ? "" : String(j.why || "").trim();   // a "correction" identical to what was said isn't one
+    const turn = { who: "me", heard: said, ok: !fx && (!!j.ok || !why), fix: fx, why, mean: String(j.mean || "").trim(),
       score: Math.max(0, Math.min(100, Math.round(+j.score || 0))), pron: String(j.pron || "").trim(),
       issues: (Array.isArray(j.issues) ? j.issues : []).filter(x => x && x.tip).slice(0, 2).map(x => ({ part: String(x.part || ""), tip: String(x.tip) })) };
     t.turns.push(turn);
@@ -6347,7 +6409,7 @@ ${feedbackLangRule()}
 Return JSON exactly like: {"heard":"","note":"","checks":[{"key":"","ok":true,"tip":""}],"ideas":[""],"fixes":[{"from":"","to":"","why":""}],"upgrades":[{"from":"","to":"","why":""}],"score":0,"issues":[{"part":"","tip":""}],"sample":""}`,
       audio, { system: feedbackLangRule() });
     const s = v => String(v || "").trim();
-    const pairs = v => (Array.isArray(v) ? v : []).filter(f => f && f.from && f.to && s(f.from) !== s(f.to)).map(f => ({ from: s(f.from), to: s(f.to), why: s(f.why) }));
+    const pairs = v => (Array.isArray(v) ? v : []).filter(f => f && f.from && f.to && s(f.from) !== s(f.to) && norm(sameNums(s(f.from), s(f.to))) !== norm(f.to)).map(f => ({ from: s(f.from), to: s(f.to), why: s(f.why) }));
     if (x.seq !== seq) return;
     const heard = s(j.heard);
     if (!heard){ x.a = { heard: "", dur, fixes: [], upgrades: [], note: "", score: null, issues: [], sample: "", band: t.target, checks: [], ideas: [], wpm: 0, fillers: 0 }; x.busy = false; return; }

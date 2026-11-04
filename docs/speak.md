@@ -141,6 +141,8 @@ Tap 🎙 on a sentence to open the coach underneath it. The coach has:
 - The prompt spells out the deductions per score (e.g. a wrong sound −10 to −20 on Accuracy, each hesitation −5 to −10 on Fluency), says Native-like can't be more than 10 above the lowest of the other three, and that the scores must match the issues listed. The scores shown are Gemini's own — the app doesn't adjust them.
 - You also get the standard pronunciation, what was heard, and an overall comment in your UI language. Issue types are labelled in the UI language (Nối âm, Patchim, Tốc độ…).
 
+**Numbers (both modes):** recognisers tend to write numbers as digits, so `sameNums` converts what was heard to the sentence's own form before comparing, in either direction (4 giờ ↔ bốn giờ, 네 시 ↔ 4시). It knows the spoken forms for each course up to 9999 (Korean native and Sino-Korean, Vietnamese tư / lăm / mốt…); a different number stays a mismatch. The AI's blind transcription is also told to spell numbers out. Talk with AI gets the same rule: see below.
+
 **The result shows:**
 
 - Problem parts marked in the sentence with numbers.
@@ -196,6 +198,7 @@ Test: `tests/coach_test.py` (✨ AI grading; Gemini and the mic faked).
   - It sees the last 50 turns.
 - **Your turn:** tap 🎙, speak, then tap again. Recording stops by itself after 30 s.
 - **What the AI sends back for each turn:**
+  - Numbers are spelled out in what it heard, and a "correction" that only changes digits into words (4 giờ → bốn giờ) is dropped, so the turn counts as correct.
   - What it heard, word for word, mistakes included. It is written down in the same AI call as the grading and reply: knowing the conversation helps the AI hear an accented learner (a blind transcription first was tried and misheard too much). The AI is told to write only what is in the recording (every particle and ending as said, a phonetic guess for an unclear word rather than a word that fits better, stop where you stopped), keep mistakes, and not borrow words from its own last line. Nothing heard → "Didn't catch that", try again.
   - ✅ "Correct and natural!", or ✏️ a corrected sentence with a one-line reason. A turn counts as a mistake only when there is something to show: a correction that differs from what was said, or at least a reason (then ✏️ "Not quite right" + the reason). The AI marking it wrong with neither counts as correct. The chat, the whole-conversation view and the summary all use this rule (`tkWrong`).
   - A translation.

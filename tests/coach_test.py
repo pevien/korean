@@ -114,7 +114,25 @@ def C(page):
     check("C: missing score shows –", sc[2] == "–", sc)
     check("C: other scores shown as-is", sc[0] == "90" and sc[1] == "80" and sc[3] == "85", sc)
 
+FAKE_SR = """class FakeSR { start(){ setTimeout(() => this.onresult && this.onresult({ results: [[{ transcript: window.__said }]] }), 50); } stop(){ setTimeout(() => this.onend && this.onend(), 10); } abort(){} }
+window.SpeechRecognition = window.webkitSpeechRecognition = FakeSR;"""
+def N(page):
+    """A number transcribed as a digit: nothing marked missing — not by ✨ AI, not by ⚡ Basic."""
+    page.add_init_script(FAKE_SR + 'window.__said = "Bây giờ là 4 giờ";'); page.reload(); page.wait_for_timeout(800)
+    sc, text, p = read(page, "N-num")
+    check("N: AI grades the number in words", 'HEARD: "Bây giờ là bốn giờ."' in p, p[:300])
+    check("N: AI shows it in words too", "Bây giờ là bốn giờ." in text and "4 giờ" not in text, text)
+    check("N: AI marks nothing in the sentence", not page.query_selector("#cTarget mark"), page.inner_html("#cTarget"))
+    page.click('#cGrade [data-g="basic"]')
+    page.click("#cRec"); page.wait_for_timeout(1500)
+    page.click("#cRec"); page.wait_for_timeout(1500)
+    sc = page.eval_on_selector_all("#cResult .scores .stat b", "els => els.map(e => e.textContent.trim())")
+    check("N: Basic accuracy 100", sc[0] == "100", sc)
+    check("N: Basic marks nothing in the sentence", not page.query_selector("#cTarget mark"), page.inner_html("#cTarget"))
+
 with sync_playwright() as pw:
+    run(pw, "N", N, course="vi", sentence="Bây giờ là bốn giờ.", meaning="It is four o'clock.",
+        answer={ "heard": "Bây giờ là 4 giờ.", "pron": "", "scores": { "accuracy": 95, "fluency": 90, "intonation": 90, "native": 90 }, "issues": [], "good": "", "overall": "" })
     run(pw, "A", A, course="ko", sentence=KO, meaning="Tôi thích âm nhạc.",
         answer={ "heard": "저는 음악을 좋아해요", "pron": "[저는 으마글 조아해요]", "scores": { "accuracy": 72, "fluency": 85, "intonation": 88, "native": 70 }, "issues": ISSUES, "good": "Rõ ràng", "overall": "" })
     run(pw, "B", B, course="ko", sentence=KO, meaning="Tôi thích âm nhạc.",
