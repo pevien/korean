@@ -4056,6 +4056,7 @@ function openReader(id){
   syncPRate();
   renderSentences();
   renderRdVocab();
+  rdFillVocab(curP);
   window.scrollTo(0,0);
   navSave({ v: "read", p: curP.id, y: 0 });
 }
@@ -4129,8 +4130,9 @@ $("#rdDel").onclick = e => confirmTap(e.currentTarget, ic("trash"), () => {
 function renderRdVocab(){
   const byKo = new Map(deck().map(c => [c.ko, c]));
   const lab = { new:["New","b-new"], learn:["Learning","b-learn"], master:["Mastered","b-master"] };
-  $("#rdVocabCard").classList.toggle("hidden", !curP.vocab.length);
-  $("#rdVocab").innerHTML = curP.vocab.map((v, i) => {
+  const wait = !curP.vocab.length && rdVocabBusy.has(curP.id);
+  $("#rdVocabCard").classList.toggle("hidden", !curP.vocab.length && !wait);
+  $("#rdVocab").innerHTML = wait ? `<li class="muted" style="justify-content:center;cursor:default"><span class="spinner"></span>${L("AI đang tìm từ vựng…", "AI is finding key words…")}</li>` : curP.vocab.map((v, i) => {
     const c = byKo.get(v.ko), [t, cls] = c ? lab[status(c)] : [];
     return `<li><button class="speak sm" data-say="${esc(v.ko)}" title="${L("Nghe", "Listen")}">${ic("speaker-high")}</button><div class="t"><b lang="${TL}">${esc(v.ko)}</b>
       <div>${esc(v.meaning)}</div></div>${c ? `<span class="badge ${cls}">${t}</span>` : `<button class="icon-btn" style="flex:0 0 auto;color:var(--accent);font-size:22px" data-add="${i}" title="${L("Thêm vào thẻ", "Add to flashcards")}" aria-label="${L("Thêm vào thẻ", "Add to flashcards")}">＋</button>`}</li>`;
@@ -4141,6 +4143,28 @@ function renderRdVocab(){
   $("#rdAddVocab").classList.toggle("hidden", left < 2);
   $("#rdAddVocab").title = L("Thêm các từ chưa có vào thẻ", "Add the words you don't have yet to flashcards");
   $("#rdAddVocab").textContent = L(`+ Lưu ${left} từ`, `+ Save ${left} words`);
+}
+// typed, photo and ARMY passages (and older ones) come without key words: AI lists them on the first open.
+// Quiet on failure — the card stays hidden and the next open tries again
+const rdVocabBusy = new Set();
+async function rdFillVocab(p){
+  if (p.vocab.length || !hasKey() || rdVocabBusy.has(p.id)) return;
+  rdVocabBusy.add(p.id); renderRdVocab();
+  const prompt = `List 5–10 key vocabulary items from this ${CO.en} passage for a learner, with short ${langName()} meanings.
+- Only words or expressions that actually appear in the passage, given in dictionary form.
+- Skip speaker names and the most basic words.
+Passage:
+${p.sentences.map(s => s.ko).join("\n")}
+Return JSON exactly like: {"vocab":[{"ko":"","meaning":""}]}`;
+  let vocab = [];
+  try {
+    const j = extractJSON(await gemini(prompt, undefined, { thinking: "off", timeout: 30000 }));
+    vocab = arrOf(j.vocab).map(v => ({ ko: String(v.ko||"").trim(), meaning: String(v.meaning||"").trim() })).filter(v => v.ko);
+  } catch(e){}
+  rdVocabBusy.delete(p.id);
+  const live = S.passages.find(x => x.id === p.id);   // may have been deleted, or filled by a sync, while AI was answering
+  if (live && !live.vocab.length && vocab.length){ live.vocab = vocab; save(); }
+  if (curP && curP.id === p.id) renderRdVocab();
 }
 function rdAdd(vs){
   const findS = v => curP.sentences.find(s => s.ko.includes(v.ko.replace(/다$/,""))) || {};

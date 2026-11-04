@@ -65,7 +65,7 @@ There are three sources:
 - Each row has a drag handle, the sentence, its translation and ✕.
 - **＋ Add sentence** adds a row. **Create passage** saves.
 - Empty translations are filled automatically.
-- Passages made this way have no key words and no level.
+- Passages made this way have no level. Their key words are added the first time they are opened (see Reader).
 
 ### Reader
 
@@ -82,6 +82,9 @@ There are three sources:
 
 **Key words:**
 
+- A passage without key words (typed, from a photo, saved from ARMY, or older) gets 5–10 from AI the first time it is opened, if a Gemini key is set. The card shows a spinner meanwhile, and the passage stays usable. Tests: `tests/keywords_test.py`.
+- The words are saved with the passage and synced, so AI runs once per passage. If it fails nothing is shown, and the next open tries again. Without a key the card stays hidden.
+- Key words don't change when the passage is edited afterwards.
 - Each key word has 🔊.
 - Words already in your deck show their status (New / Learning / Mastered).
 - Words not yet in your deck get a **＋** button.
