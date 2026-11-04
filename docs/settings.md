@@ -169,7 +169,7 @@ Expandable help topics are placed inside the card they relate to; the rest are c
 - **How to get a free Gemini key.**
 - **Drive sync setup and troubleshooting.**
 - **Microphone & speaking:** permission steps for each OS.
-- **FAQ:** privacy, cost, and "not seeing the latest version? Close the app fully and reopen it while online."
+- **FAQ:** privacy, cost, clearing browser data, and "not seeing the latest version? Close the app fully and reopen it while online."
 
 **↺ Show the welcome screen again** reopens the welcome screen.
 

@@ -1279,8 +1279,7 @@ body.tu-on .toast{z-index:36}
     </div>
     <div class="card">
       <h2>Backup</h2>
-      <p class="small muted" style="margin-top:0;margin-bottom:4px">Export to save a backup file, Import to restore or move devices.</p>
-      <p class="small muted" style="margin-top:0">⚠️ Clearing browser data deletes your words unless Drive sync is on or you exported them.</p>
+      <p class="small muted" style="margin-top:0">Export to save a backup file, Import to restore or move devices.</p>
       <div class="row">
         <button class="btn2" id="expBtn"><svg class="i" aria-hidden="true"><use href="#i-download-simple"/></svg> Export</button>
         <button class="btn2" id="impBtn"><svg class="i" aria-hidden="true"><use href="#i-upload-simple"/></svg> Import</button>
@@ -1586,7 +1585,7 @@ const VI = {
 "☁️ Google Drive sync":"☁️ Đồng bộ Google Drive","Guide":"Hướng dẫn",
 "Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.":"Giữ từ vựng, tiến độ, bài đọc và cài đặt (cả Gemini key) giống nhau trên mọi máy. Lưu trong thư mục ẩn trên Drive của bạn.",
 "Sign in with Google":"Đăng nhập Google","Disconnect":"Ngắt kết nối",
-"Backup":"Sao lưu","Export to save a backup file, Import to restore or move devices.":"Xuất file để lưu dự phòng, Nhập file để khôi phục hoặc chuyển máy.","⚠️ Clearing browser data deletes your words unless Drive sync is on or you exported them.":"⚠️ Xoá dữ liệu trình duyệt sẽ mất từ vựng nếu chưa đồng bộ Drive hoặc xuất file.",
+"Backup":"Sao lưu","Export to save a backup file, Import to restore or move devices.":"Xuất file để lưu dự phòng, Nhập file để khôi phục hoặc chuyển máy.",
 "⬇️ Export":"⬇️ Xuất file","⬆️ Import":"⬆️ Nhập file","Export":"Xuất file","Import":"Nhập file","Delete all data":"Xoá toàn bộ dữ liệu",
 "Read":"Đọc","Add":"Thêm","Words":"Từ vựng","Settings":"Cài đặt",
 "Use a free chatbot":"Dùng chatbot miễn phí","Copy the prompt below.":"Copy câu lệnh bên dưới.","Paste it into":"Dán vào","or any chatbot.":"hoặc chatbot bất kỳ.",
@@ -5332,9 +5331,11 @@ const GUIDE = [
   ["g-faq", L("Câu hỏi thường gặp", "FAQ"), L(`
     <p><b>Người khác có thấy dữ liệu của mình?</b> Không. Mỗi người có dữ liệu, key và Drive riêng.</p>
     <p><b>Có tốn tiền?</b> Không. Gemini miễn phí đủ học hằng ngày, Drive chỉ dùng vài MB.</p>
+    <p><b>Xoá dữ liệu trình duyệt có mất từ vựng?</b> Có, nếu chưa đồng bộ Drive hoặc xuất file.</p>
     <p><b>App chưa lên bản mới?</b> Đóng hẳn app rồi mở lại khi có mạng.</p>`, `
     <p><b>Can others see my data?</b> No. Everyone has their own data, key and Drive.</p>
     <p><b>Does it cost anything?</b> No. Gemini's free tier covers daily study; Drive uses a few MB.</p>
+    <p><b>Does clearing browser data delete my words?</b> Yes, unless Drive sync is on or you exported them.</p>
     <p><b>Not seeing the latest version?</b> Fully close the app and reopen it while online.</p>`)]
 ];
 function buildGuide(){
