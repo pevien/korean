@@ -783,7 +783,16 @@ input[type=search]{border-radius:var(--r-pill);padding-left:18px;padding-right:1
 /* My words: start studying without going back to the home card — floats above the tab bar */
 .w-cta{position:fixed;z-index:9;left:50%;transform:translateX(-50%);bottom:calc(72px + env(safe-area-inset-bottom));width:min(528px, calc(100% - 32px))}
 #v-words .wl{margin-bottom:76px}   /* room for the floating button, so the last word isn't hidden under it */
-.w-cta .btn{box-shadow:0 8px 24px rgba(10,8,30,.25)}
+.w-cta .btn,.w-cta .btn2{box-shadow:0 8px 24px rgba(10,8,30,.25)}
+#wordsCta > #wordsPick{flex:0 0 auto}
+#v-words.picking .wl{margin-bottom:128px}   /* the pick bar is taller than the button */
+.w-sel{display:grid;gap:8px;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:0 8px 24px rgba(10,8,30,.25)}
+.w-sel-h{display:flex;align-items:center;gap:12px;font-size:14px}
+.w-sel-h b{flex:1;min-width:0}
+.w-sel .icon-btn{margin:-4px -6px -4px 0;display:flex}
+.w-sel .btn{box-shadow:none}
+#v-words.picking #wordList li[data-id]{cursor:pointer}
+.wsel{flex:0 0 auto;width:20px;height:20px;margin:6px 0 0;padding:0;cursor:pointer}
 .abc-g{padding:10px 0;border-top:1px solid var(--line)}
 .abc-g:first-of-type{border-top:0;padding-top:0}
 .abc-g .chips{margin-top:6px;gap:5px}
@@ -1209,7 +1218,13 @@ body.tu-on .toast{z-index:36}
       </div>
     </div>
     <ul class="wl" id="wordList"></ul>
-    <div class="w-cta"><button class="btn" id="wordsStudy" data-noi18n></button></div>
+    <div class="w-cta" data-noi18n>
+      <div class="row" id="wordsCta"><button class="btn2" id="wordsPick"></button><button class="btn" id="wordsStudy"></button></div>
+      <div class="w-sel hidden" id="wordsSel">
+        <div class="w-sel-h"><b id="pickN"></b><button class="linkbtn" id="pickAll"></button><button class="icon-btn" id="pickX" aria-label="Close"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+        <button class="btn" id="pickGo"></button>
+      </div>
+    </div>
   </section>
 
   <!-- ARMY: live Korean → Vietnamese/English subtitles for BTS lives -->
@@ -2190,7 +2205,7 @@ function exampleHTML(c){
 function bindSay(root){ root.querySelectorAll("[data-say]").forEach(b => b.onclick = e => { e.stopPropagation(); speak(b.dataset.say); }); }
 
 /* SM-2 spaced repetition. q: 1=again, 3=hard, 4=good, 5=easy */
-function grade(c, q){
+function grade(c, q, quiet){   // quiet: a picked word's slip in a practice round moves the schedule but isn't a review of the day (no streak)
   const now = Date.now();
   if (q < 3){
     c.reps = 0; c.interval = 0; c.lapses++;
@@ -2207,8 +2222,7 @@ function grade(c, q){
   }
   if (!c.last) DY().newCount++;   // a new word counts once it's answered, not when its intro card is seen
   c.last = now;
-  DY().reviews++;
-  bumpStreak();
+  if (!quiet){ DY().reviews++; bumpStreak(); }
   save();
 }
 function nextLabel(c, q){
@@ -2610,7 +2624,7 @@ function show(v){
   if (v !== "army") arStop();
   if (v === "army") renderArmy();
   if (v === "read") spShow(spScreen);
-  if (v === "words") renderWords();
+  if (v === "words"){ pickSel = null; renderWords(); }
   if (v === "set") renderSettings();
   if (window.__tutorSync) window.__tutorSync();   // hidden on some screens (not defined yet while the app starts)
   window.scrollTo(0,0);
@@ -2845,9 +2859,12 @@ function pickWeak(cards, n){
   const w = c => 1 + 2*Math.min(c.lapses||0, 5) + 4*Math.max(0, 2.5-(c.ease||2.5)) + (c.interval < 7 ? 2 : c.interval < 21 ? 1 : 0) + (c.due - now < DAY ? 2 : 0);
   return cards.map(c => ({ c, k: Math.pow(Math.random(), 1/w(c)) })).sort((x,y) => y.k - x.k).slice(0, n).map(x => x.c);
 }
-function startSession(practice, only, auto){
+function startSession(practice, only, auto, picked){
   let queue;
-  if (only && only.length){
+  if (picked){
+    // hand-picked in My words: new words the usual way (intro, quiz, onto the schedule); known words (keep) are quizzed once and only a wrong answer moves their schedule
+    queue = shuffle(only.slice()).map(c => c.last ? { card:c, kind:"quiz", keep:true } : { card:c, kind:"intro" });
+  } else if (only && only.length){
     // retry just the words missed last session, each twice (spaced), without touching the schedule
     const a = shuffle(only.slice()), b = shuffle(only.slice());
     queue = a.concat(b).map(c => ({ card:c, kind:"quiz" }));
@@ -2865,7 +2882,7 @@ function startSession(practice, only, auto){
     });
   }
   if (!queue.length){ toast("Nothing to study"); return; }
-  session = { queue, practice, done:0, total:queue.length, correct:0, answered:0, missed:new Set(), streak0:streakNow() };
+  session = { queue, practice, picked, done:0, total:queue.length, correct:0, answered:0, missed:new Set(), streak0:streakNow() };
   $("#studyHome").classList.add("hidden"); $("#studySession").classList.remove("hidden");
   document.body.classList.add("in-session");
   document.body.classList.toggle("auto-session", !!auto);
@@ -3183,7 +3200,7 @@ function finish(item, ok, typed, extra){
   let html;
   if (ok){
     html = item.spoken ? box(...sayTitle(true, item.score)) : box("ok", "✅ Correct!");
-    if (!session.practice){
+    if (!session.practice && !item.keep){
       const base = item.fresh || item.hinted || item.failed ? [3,4] : [3,4,5];
       html += `<div class="dock">${again}<div class="grades" style="grid-template-columns:repeat(${base.length},1fr)">` + base.map(q => {
         const name = {3:"Hard",4:"Good",5:"Easy"}[q];
@@ -3209,14 +3226,14 @@ function done(item, q){
   session.queue.shift(); session.done++;
   if (!session.practice){
     if (q < 3){
-      if (!item.failed) grade(c, 1);
+      if (!item.failed) grade(c, 1, item.keep);
       const pos = Math.min(session.queue.length, 3 + Math.floor(Math.random()*3));
-      session.queue.splice(pos, 0, { card:c, kind:"quiz", failed:true });
+      session.queue.splice(pos, 0, { card:c, kind:"quiz", failed:true, keep:item.keep });
       session.total++;
     } else if (item.failed){
       // relearned in-session: short step, back tomorrow
-      c.reps = 0; grade(c, 3);
-    } else grade(c, q);
+      c.reps = 0; grade(c, 3, item.keep);
+    } else if (!item.keep) grade(c, q);
   } else if (q < 3){
     const pos = Math.min(session.queue.length, 3);
     session.queue.splice(pos, 0, { card:c, kind:"quiz" }); session.total++;
@@ -4693,10 +4710,11 @@ function renderCoachResult(s, j, ai){
 
 /* ---------------- words list ---------------- */
 let filter = "today";
+let pickSel = null, wordShown = [];   // pick mode: the ticked card ids (kept across tabs and searches), and the rows on screen for "select all"
 function setFilter(f){ filter = f; wordSearch(false); $$("#filterTabs button").forEach(x => x.classList.toggle("on", x.dataset.f === filter)); }
 // "due today" = what today's study covers: the words left in the running session, else reviews due + today's new words
 function todayIds(){
-  if (session && !session.practice) return new Set(session.queue.map(q => q.card.id));
+  if (session && !session.practice && !session.picked) return new Set(session.queue.map(q => q.card.id));
   return new Set(dueCards().concat(newPick(newLeftToday())).map(c => c.id));
 }
 // tabs: one is always selected (no "all" view)
@@ -4723,14 +4741,15 @@ function renderWords(){
   // only the selected filter tab shows its count (within the current search), so the row stays short
   $$("#filterTabs button").forEach(b => b.querySelector(".n").textContent = b.dataset.f === filter ? ` (${list.length})` : "");
   const lab = { new:["New","b-new"], learn:["Learning","b-learn"], master:["Mastered","b-master"] };
+  wordShown = list;
   $("#wordList").innerHTML = list.length ? list.map(c => {
     const s = status(c), [t, cls] = lab[s];
     const due = s !== "new" ? (c.due <= Date.now() ? "due now" : "in " + timeUntil(c.due)) : "";
     const iv = s === "learn" ? `${c.interval || 0}/21 ${L("ngày", "d")}` : s === "master" ? (c.due <= Date.now() ? L("ôn ngay", "due now") : L("ôn sau " + viTime(timeUntil(c.due)), "review in " + timeUntil(c.due))) : "";   // mastered: when it comes back (the interval read as "days studied")
-    return `<li data-id="${c.id}">
+    return `<li data-id="${c.id}">${pickSel ? `<input type="checkbox" class="wsel" aria-label="${esc(c.ko)}"${pickSel.has(c.id) ? " checked" : ""}>` : ""}
       <div class="t"><div class="wh"><button class="speak sm" data-a="say" title="${L("Nghe", "Listen")}">${ic("speaker-high")}</button><b lang="${TL}">${esc(c.ko)}</b><span class="badge ${cls}" title="${esc(s === "new" ? due : (s === "learn" ? L("Đang học", "Learning") : L("Đã thuộc", "Mastered")) + " · " + due)}">${s === "new" ? t : ""}<span class="iv">${iv}</span></span></div>
         <div>${esc(c.meaning) || "<i>no meaning</i>"}</div>${c.ex ? `<div class="exl" lang="${TL}">${esc(c.ex)} <span>· ${esc(c.exMean)}</span></div>` : EXGEN.has(c.id) ? `<div class="exl"><span class="spinner"></span>${L("Đang viết câu ví dụ…", "Writing an example…")}</div>` : ""}</div>
-      <button class="icon-btn more-btn" data-a="more" title="${L("Thêm", "More")}" aria-haspopup="menu" aria-expanded="false">⋯</button></li>`;
+      ${pickSel ? "" : `<button class="icon-btn more-btn" data-a="more" title="${L("Thêm", "More")}" aria-haspopup="menu" aria-expanded="false">⋯</button>`}</li>`;
   }).join("") : `<li class="muted" style="justify-content:center">${!deck().length ? "No words yet" : today && !q ? L("Hôm nay học xong rồi 🎉", "All done for today 🎉") : "No matches"}</li>`;
   const noEx = deck().filter(c => !c.ex && !EXGEN.has(c.id)).length;   // the ones AI is already writing don't count
   $("#exPrompt").classList.toggle("hidden", !noEx);
@@ -4740,7 +4759,37 @@ function renderWords(){
     if (b.dataset.a === "say") speak(c.ko);
     if (b.dataset.a === "more"){ e.stopPropagation(); wordMenu(li, b, c); }
   });
+  pickBar();
 }
+// pick mode: tick words, then one round with just those (startSession's picked)
+function wordPick(on){ pickSel = on ? new Set() : null; renderWords(); }
+const pickCards = () => deck().filter(c => pickSel.has(c.id));   // from the deck: a sync may have removed a ticked word
+const pickedAll = () => wordShown.length > 0 && wordShown.every(c => pickSel.has(c.id));
+function pickBar(){
+  $("#wordsPick").textContent = L("Chọn", "Select");
+  $("#wordsPick").classList.toggle("hidden", !deck().length);
+  $("#wordsCta").classList.toggle("hidden", !!pickSel);
+  $("#wordsSel").classList.toggle("hidden", !pickSel);
+  $("#v-words").classList.toggle("picking", !!pickSel);
+  if (!pickSel) return;
+  const n = pickCards().length;
+  $("#pickN").textContent = L(`Đã chọn ${n}`, `${n} selected`);
+  $("#pickAll").textContent = pickedAll() ? L("Bỏ chọn tất cả", "Clear all") : L("Chọn tất cả", "Select all");
+  $("#pickAll").disabled = !wordShown.length;
+  $("#pickGo").innerHTML = ic("play-fill") + " " + L(`Luyện tập (${n})`, `Study (${n})`);
+  $("#pickGo").disabled = !n;
+}
+$("#wordsPick").onclick = () => wordPick(true);
+$("#pickX").onclick = () => wordPick(false);
+$("#pickAll").onclick = () => { const all = pickedAll(); wordShown.forEach(c => all ? pickSel.delete(c.id) : pickSel.add(c.id)); renderWords(); };
+$("#pickGo").onclick = () => { const cards = pickCards(); homeAuto = false; show("study"); startSession(false, cards, false, true); };
+// a tap anywhere on the row ticks it; 🔊 keeps working
+$("#wordList").onclick = e => {
+  const li = e.target.closest("li[data-id]"); if (!pickSel || !li || e.target.closest("button")) return;
+  const id = li.dataset.id, on = !pickSel.has(id);
+  if (on) pickSel.add(id); else pickSel.delete(id);
+  li.querySelector(".wsel").checked = on; pickBar();
+};
 // ⋯ menu on a word row: Edit / Delete. One menu open at a time; tapping elsewhere closes it.
 function closeWordMenu(){ const m = $("#wordList .menu"); if (m){ m.previousElementSibling.setAttribute("aria-expanded", "false"); m.remove(); } }
 function wordMenu(li, btn, c){
@@ -5349,9 +5398,9 @@ async function micTest(out){
 
 const GUIDE = [
   ["g-start", L("Bắt đầu nhanh", "Quick start"), L(`
-    <ol>    <li><b>🎯 Từ vựng</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý. Chạm ô <b>Cần học / Đang học / Đã thuộc</b> hoặc <b>📚 Từ của tôi</b> để xem, sửa, xoá từ; <b>+ Thêm từ</b> để thêm từ mới, dán cả danh sách, chụp ảnh, hoặc thêm <b>bảng chữ cái</b> để ôn như từ vựng.</li>
+    <ol>    <li><b>🎯 Từ vựng</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý. Chạm ô <b>Cần học / Đang học / Đã thuộc</b> hoặc <b>📚 Từ của tôi</b> để xem, sửa, xoá từ, hoặc bấm <b>Chọn</b> để luyện đúng những từ bạn muốn; <b>+ Thêm từ</b> để thêm từ mới, dán cả danh sách, chụp ảnh, hoặc thêm <b>bảng chữ cái</b> để ôn như từ vựng.</li>
     <li><b>🗣 Luyện nói</b>: <b>Luyện đọc</b> — bài đọc theo trình độ, 🔊 để nghe, 🎙 để đọc to và được chấm; <b>Trò chuyện với AI</b> — nói chuyện với AI, được chữa lỗi từng câu.</li></ol>`, `
-    <ol>    <li><b>🎯 Vocabulary</b>: review flashcards daily. Answer honestly so the schedule fits you. Tap <b>Due today / Learning / Mastered</b> or <b>📚 My words</b> to view, edit and delete words; <b>+ Add words</b> to add more, paste a whole list, use a screenshot, or add the <b>alphabet</b> (Hangul, kana, pinyin…) to review like words.</li>
+    <ol>    <li><b>🎯 Vocabulary</b>: review flashcards daily. Answer honestly so the schedule fits you. Tap <b>Due today / Learning / Mastered</b> or <b>📚 My words</b> to view, edit and delete words, or tap <b>Select</b> to practice exactly the words you want; <b>+ Add words</b> to add more, paste a whole list, use a screenshot, or add the <b>alphabet</b> (Hangul, kana, pinyin…) to review like words.</li>
     <li><b>🗣 Speak</b>: <b>Reading</b> — passages at your level, 🔊 to listen, 🎙 to read aloud and get scored; <b>Talk with AI</b> — a spoken conversation with AI that corrects each line.</li></ol>`)],
   ["g-install", L("Cài app", "Install the app"), L(`
     <ul><li><b>Android</b>: Chrome → <b>⋮</b> → <b>Cài đặt ứng dụng</b></li>
@@ -7953,6 +8002,7 @@ function appBack(){
   if (tuIsOpen()) { tuClose(); return true; }
   if ($("#arConvRoot").firstElementChild) { arInterpClose(); return true; }
   if (vis($("#coach"))) { closeCoach(); return true; }   // no ✕ on a phone, where it is a sheet
+  if (pickSel && curView === "words") { wordPick(false); return true; }
   if (session && vis($("#endBtn"))) { $("#endBtn").click(); return true; }
   const back = [...$$("#v-" + curView + " .back, #v-" + curView + " #sgBack")].find(vis);
   if (back) { back.click(); return true; }

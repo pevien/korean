@@ -48,13 +48,14 @@ Tapping one of the first three tiles opens My words filtered to that group. Tapp
 
 ## Review session
 
-`startSession` builds one of three queues:
+`startSession` builds one of four queues:
 
 | Session | Contents | Changes the schedule? |
 |---|---|---|
 | Normal | All due cards, plus today's new words mixed in about every 3rd item | Yes |
 | Extra practice | 15 cards weighted toward shaky ones (`pickWeak`): many lapses, low ease, short interval or due soon. If nothing has been studied yet, 10 random cards. | No |
 | Practice missed | Each missed word twice, shuffled | No |
+| Picked words | The words ticked in My words, shuffled, each once. New words get their intro card first. | New words: yes, as usual. Known words: only when answered wrong |
 
 - The tab bar is hidden during a session. **End** stops early.
 - **Keyboard shortcuts:** 1–4 pick an answer, Space replays audio, Enter presses the main button.
@@ -218,7 +219,16 @@ Open it from "+ Add words". It has four tabs. Before anything is added, a **prev
   - "Due today" lists exactly what the next session will ask.
 - **Each row** shows 🔊, the word, a badge (New / `interval/21 d` / `interval d`), the meaning and the example. Newest words come first.
 - **Missing examples bar:** "N words without an example sentence — ✨ Add now".
-- **Bottom button:** Study, or Extra practice when nothing is due.
+- **Bottom buttons:** Study, or Extra practice when nothing is due, and **Select**.
+
+**Select** ticks specific words for one round:
+
+- A tap on a row ticks it; 🔊 still plays. Ticks stay while you change tab or search.
+- **Select all** covers the rows on screen. ✕ or the phone's Back leaves pick mode.
+- **Study (N)** runs just those words.
+  - **New words** get the intro card and a quiz, then go on the schedule. They count toward today's new words, so the home card offers fewer; picking more than are left is allowed.
+  - **Known words** are quizzed once, with Continue instead of Hard/Good/Easy. Right leaves the schedule alone. Wrong counts like a wrong review (once per round): the word comes back until it's right, then returns tomorrow. It doesn't count toward the streak or the day's reviews.
+- Test: `tests/pick_test.py`.
 
 **The ⋯ menu on each row:**
 

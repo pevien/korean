@@ -9,7 +9,7 @@
 | `manifest.webmanifest` | PWA manifest: name "Grow with PV", standalone display, theme `#4f46e5`, background `#12131a` |
 | `icon-*.png`, `apple-touch-icon.png` | App icons; the 512 px icon also has a maskable version |
 
-**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v70`). Old caches are then removed on activate.
+**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v71`). Old caches are then removed on activate.
 
 ## Views and navigation
 
@@ -36,7 +36,7 @@
 
 **The phone's Back button / back swipe** (`appBack()`, on `popstate`) goes one screen back, in this order:
 
-1. Whatever is open on top closes: the copy/paste dialog, the course sheet, a word's ⋯ menu, the player options, the tutor, Translate, the reading coach.
+1. Whatever is open on top closes: the copy/paste dialog, the course sheet, a word's ⋯ menu, the player options, the tutor, Translate, the reading coach, My words' pick mode.
 2. A study round ends (answers are already saved).
 3. The screen's own ← is tapped, so whatever it does still happens (Talk keeps the conversation, IELTS keeps the answers, the welcome screen steps back).
 4. Another tab goes to Vocab.
@@ -116,7 +116,7 @@ S
 
 | Cache | Contents |
 |---|---|
-| `hangul-v70` | The app shell |
+| `hangul-v71` | The app shell |
 | `hangul-notify` | The snapshot of what is due (`./__notify-state`) that the service worker reads for reminders |
 
 ## Interface language (i18n)
