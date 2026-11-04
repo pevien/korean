@@ -210,7 +210,22 @@ def I(b):
     assert cid.startswith("52671955751-") and cid.endswith(".apps.googleusercontent.com"), cid
     assert not errs, errs
 
-SCEN = { "A": A, "B": B, "C": C, "C2": C2, "D": D, "E": E, "F": F, "G": G, "I": I }
+def J(b):
+    """Grammar progress: new marks and notes arrive from either side, the newer change wins (un-marking too), and it uploads."""
+    rec = lambda id, learned, mod: { "id": id, "lang": "ko", "learned": learned, "mod": mod }
+    local = { "grammar": [rec("ko-do", NOW - 3 * H, NOW - 3 * H), rec("ko-man", NOW - 3 * H, NOW - 1 * H), rec("ko-go", NOW - 4 * H, NOW - 4 * H)] }
+    remote = { "cards": [], "settings": {}, "grammar": [rec("ko-do", 0, NOW - 2 * H), rec("ko-man", 0, NOW - 2 * H), rec("ko-e", NOW - 2 * H, NOW - 2 * H), dict(rec("ko-a", 0, NOW - 2 * H), note="ghi chú")] }
+    p, errs = page_for(b, local, remote)
+    up = sync(p)
+    got = { x["id"]: x["learned"] for x in saved(p)["grammar"] }
+    assert got["ko-do"] == 0, "un-marked on the other device later"
+    assert got["ko-man"], "un-marked there, but marked here later"
+    assert got["ko-go"] and got["ko-e"], got
+    assert next(x for x in saved(p)["grammar"] if x["id"] == "ko-a")["note"] == "ghi chú", "notes travel too"
+    assert { x["id"] for x in up["grammar"] } == set(got), up["grammar"]
+    assert not errs, errs
+
+SCEN = { "A": A, "B": B, "C": C, "C2": C2, "D": D, "E": E, "F": F, "G": G, "I": I, "J": J }
 
 if __name__ == "__main__":
     pick = [a.upper() for a in sys.argv[1:]] or list(SCEN)

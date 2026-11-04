@@ -147,7 +147,19 @@ def D(b):
     assert [c["ko"] for c in saved(p2)["cards"]] == ["apple"] and saved(p2)["settings"]["apiKey"] == "MYKEY"
     assert not errs and not errs2, errs + errs2
 
-SCEN = { "A": A, "B": B, "C": C, "C2": C2, "D": D }
+def E(b):
+    """Grammar progress comes back from a backup, without overwriting what this device already has; a backup from before grammar existed still imports."""
+    mine = { "id": "ko-do", "lang": "ko", "learned": 5, "mod": 5 }
+    p, errs = page_for(b, { "cards": [card("x1", "apple")], "grammar": [mine] })
+    import_file(p, dict(BACKUP, grammar=[{ "id": "ko-do", "lang": "ko", "learned": 0, "mod": 9 }, { "id": "ko-man", "lang": "ko", "learned": 7, "mod": 7 }]))
+    got = { x["id"]: x["learned"] for x in saved(p)["grammar"] }
+    assert got == { "ko-do": 5, "ko-man": 7 }, got
+    p2, errs2 = page_for(b, {})
+    import_file(p2, { k: v for k, v in BACKUP.items() if k != "grammar" })
+    assert saved(p2)["grammar"] == []
+    assert not errs and not errs2, errs + errs2
+
+SCEN = { "A": A, "B": B, "C": C, "C2": C2, "D": D, "E": E }
 
 if __name__ == "__main__":
     pick = [a.upper() for a in sys.argv[1:]] or list(SCEN)

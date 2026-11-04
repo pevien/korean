@@ -5,11 +5,12 @@
 | File | Role |
 |---|---|
 | `index.html` | The whole app: HTML, CSS, an inline Phosphor icon sprite and all JavaScript. There is no build step and no dependencies. |
+| `grammar-ko.json` | The built-in Korean grammar lessons. Loaded by Speak in the Korean course and pre-cached for offline use. See [grammar.md](grammar.md). |
 | `sw.js` | Service worker. Serves the app from cache (offline use) and sends review reminders. |
 | `manifest.webmanifest` | PWA manifest: name "Grow with PV", standalone display, theme `#4f46e5`, background `#12131a` |
 | `icon-*.png`, `apple-touch-icon.png` | App icons; the 512 px icon also has a maskable version |
 
-**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v71`). Old caches are then removed on activate.
+**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v72`). Old caches are then removed on activate.
 
 ## Views and navigation
 
@@ -18,7 +19,7 @@
 | Button | `data-v` | Section |
 |---|---|---|
 | Vocab | `study` | `#v-study`; sub-pages `#v-add`, `#v-words`, `#v-abc` |
-| Speak | `read` | `#v-read`, which holds `#spHome`, `#readHome`/`#reader` and `#talk` |
+| Speak | `read` | `#v-read`, which holds `#spHome`, `#readHome`/`#reader`, `#talk`, `#ielts` and `#grammar` |
 | Translate | `tr` | Not a section. `arInterpOpen()` renders an overlay into `#arConvRoot`. |
 | ARMY | `army` | `#v-army` |
 | Settings | `set` | `#v-set` |
@@ -57,6 +58,7 @@ S
 ├─ talk        the conversation in progress
 ├─ talks[]     finished Talk-with-AI conversations (latest 60)
 ├─ lives[]     saved ARMY / interpreter transcripts
+├─ grammar[]   { id, lang, learned, note, mod }   // progress and notes only; the lessons are in grammar-ko.json
 ├─ settings    see below
 ├─ daily       { date, newCount, reviews, result, c: { <course>: {...} } }
 ├─ streak      { last, count, days: ["Y-M-D", …] }   // days: every studied day, for the calendar
@@ -116,7 +118,7 @@ S
 
 | Cache | Contents |
 |---|---|
-| `hangul-v71` | The app shell |
+| `hangul-v72` | The app shell |
 | `hangul-notify` | The snapshot of what is due (`./__notify-state`) that the service worker reads for reminders |
 
 ## Interface language (i18n)

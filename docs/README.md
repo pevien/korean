@@ -11,6 +11,7 @@ Live app: <https://pevien.github.io/korean/> (GitHub Pages, served straight from
 | [study.md](study.md) | **Vocab** tab: daily review, spaced repetition, quiz types, adding words, My words, Alphabet, streaks, text-to-speech |
 | [speak.md](speak.md) | **Speak** tab: reading passages, audio player and shadowing, pronunciation coach, Talk with AI |
 | [ielts.md](ielts.md) | **Speak** tab: IELTS Speaking mock test (English course) |
+| [grammar.md](grammar.md) | **Speak** tab: grammar lessons (Korean course) |
 | [translate-army.md](translate-army.md) | **Translate** tab (face-to-face interpreter) and **ARMY** tab (live BTS subtitles, saved conversations) |
 | [tutor.md](tutor.md) | **AI tutor**: the floating 💬 chat on every tab |
 | [settings.md](settings.md) | **Settings** tab: language, course, study options, voice, Gemini key, Google Drive sync, reminders, backup, guide, welcome |
@@ -40,7 +41,7 @@ The UI is Vietnamese (default) or English. Change it in **Settings → Language*
 | Tab | Purpose |
 |---|---|
 | **Vocab** (Từ vựng) | Flashcard review with spaced repetition; add and manage words |
-| **Speak** (Luyện nói) | Reading passages with pronunciation scoring; spoken conversation with an AI |
+| **Speak** (Luyện nói) | Reading passages with pronunciation scoring; spoken conversation with an AI; grammar lessons (Korean course) |
 | **Translate** (Dịch) | Split-screen two-person interpreter, Papago-style |
 | **ARMY** | Live translated subtitles for BTS livestreams; saved conversations |
 | **Settings** (Cài đặt) | Everything configurable, plus the built-in guide |

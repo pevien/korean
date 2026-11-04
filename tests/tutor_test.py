@@ -22,10 +22,10 @@ URL = f"http://127.0.0.1:{_srv.server_address[1]}/index.html"
 
 ANSWER = "**사과** nghĩa là *quả táo*.\n- Ví dụ: **사과를 먹어요** (Tôi ăn táo)\n- Mẹo: nghe giống \"sa-goa\""
 
-def init(key="FAKE"):
+def init(key="FAKE", grammar=()):
     st = { "cards": [{ "id": "c1", "lang": "ko", "ko": "사과", "meaning": "quả táo", "ex": "", "exMean": "", "ease": 2.5, "interval": 1,
                        "reps": 1, "lapses": 0, "due": 1, "last": 1, "created": 1 }],
-           "settings": { "course": "ko", "apiKey": key, "uiLang": "vi", "model": "gemini-2.5-flash-lite", "newPerDay": 0, "speakAuto": True } }
+           "grammar": list(grammar), "settings": { "course": "ko", "apiKey": key, "uiLang": "vi", "model": "gemini-2.5-flash-lite", "newPerDay": 0, "speakAuto": True } }
     return r"""
 if (!sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");
@@ -206,6 +206,21 @@ def H(page):
     page.click('nav [data-v="set"]'); page.wait_for_timeout(400)
     check("H: back once Translate closes", not page.query_selector("#arConvRoot *") and fab())
 
+def I(page):
+    """Grammar marked as learned reaches the tutor as a hint, on any tab, right after a reload."""
+    page.wait_for_timeout(300)
+    page.click("#tuFab")
+    sysp = ask(page, "안녕")["systemInstruction"]["parts"][0]["text"]
+    check("I: names the marked pattern", "marked as learned in the app: N + 도." in sysp, sysp[:200])
+    check("I: un-marked points left out", "N + 만" not in sysp)
+    check("I: only a hint", "never assume a gap" in sysp)
+
+def J(page):
+    """Nothing marked: the system prompt says nothing about grammar progress."""
+    page.click("#tuFab")
+    sysp = ask(page, "안녕")["systemInstruction"]["parts"][0]["text"]
+    check("J: no grammar line", "marked as learned" not in sysp)
+
 with sync_playwright() as pw:
     run(pw, "A", A, key="")
     run(pw, "B", B)
@@ -214,6 +229,8 @@ with sync_playwright() as pw:
     run(pw, "E", E)
     run(pw, "F", F, width=1200)
     run(pw, "H", H, width=1200)
+    run(pw, "I", I, grammar=[{ "id": "ko-do", "lang": "ko", "learned": 5 }, { "id": "ko-man", "lang": "ko", "learned": 0 }])
+    run(pw, "J", J, grammar=[{ "id": "ko-man", "lang": "ko", "learned": 0, "note": "x" }])
 
 fails = [r for r in results if not r[1]]
 for n, ok, info in results: print(("PASS " if ok else "FAIL ") + n + ("" if ok else "  →  " + str(info)))

@@ -24,6 +24,7 @@ A floating 💬 bubble in the bottom-right corner opens a chat with an AI tutor.
 
 - The course, the level and the interface language.
 - The text of the screen you are on, so "what does this mean?" works without copying anything.
+- In the Korean course, the grammar you marked as learned, as a hint only. See [grammar.md](grammar.md#ai-tutor).
 
 ## Voice questions
 

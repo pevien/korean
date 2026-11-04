@@ -328,6 +328,39 @@ body.talking #ielts.tk-chat{min-height:calc(100vh - 48px - env(safe-area-inset-b
 .ie-pill.t-warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
 .ie-qa{padding:10px 0;border-top:1px solid var(--line)}
 .ie-qq{font-weight:600;margin-bottom:6px}
+/* 🗣 Speak → 📖 Grammar */
+#grammar{padding-bottom:64px}   /* room for the tutor bubble */
+#grammar input[type=search]{margin-bottom:10px;background:var(--card)}
+#grammar .seg{margin-bottom:12px}
+.gr-prog{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.gr-prog .progress{flex:1;margin:0}
+.gr-row{display:flex;align-items:stretch;background:var(--card);border-radius:var(--r-md);box-shadow:var(--shadow);margin-bottom:8px}
+.gr-open{flex:1;min-width:0;background:none;color:var(--text);text-align:left;font-weight:400;padding:11px 4px 11px 14px;border-radius:var(--r-md)}
+.gr-open b{display:block;font-size:15px;line-height:1.5;font-weight:600;overflow-wrap:anywhere}
+.gr-open span{display:block;font-size:13px;line-height:1.5;color:var(--muted)}
+.gr-tick{flex:0 0 48px;background:none;padding:0;display:flex;align-items:center;justify-content:center}
+.gr-c{width:24px;height:24px;box-sizing:border-box;border:2px solid var(--muted);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px}
+.gr-tick.on .gr-c{background:var(--ok);border-color:var(--ok);color:#fff}
+#grLevels .chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+/* a lesson has three sizes: the title 22, everything you read 15, labels and translations 13. One line height; 2px inside a group, 12px between groups */
+#grammar .card{font-size:15px;line-height:1.5}
+.gr-title{font-size:22px;line-height:1.3;margin:0 0 4px;overflow-wrap:anywhere}
+.gr-mean{margin:0;color:var(--muted)}
+#grammar .card h3{font-size:13px;line-height:1.5;font-weight:600;color:var(--muted);margin:0 0 12px}
+.gr-form{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-top:1px solid var(--line)}
+.gr-form:first-of-type{border-top:0;padding-top:0}
+.gr-form:last-child{padding-bottom:0}
+.gr-form > b{font-weight:600}
+.gr-form .small{font-size:13px}
+.gr-form .small[lang=ko]{font-size:15px;color:var(--text)}
+.gr-use{margin-top:16px}
+.gr-use:first-of-type{margin-top:0}
+.gr-use > b{display:block;font-weight:600;margin-bottom:8px}
+#grammar .ex{margin:8px 0 0}
+#grammar .gr-use > b + .ex{margin-top:0}
+#grammar .exk{font-size:15px;line-height:1.5}
+#grammar .exm{font-size:13px;line-height:1.5;margin:0}
+.gr-learn{width:100%;margin-bottom:14px}
 /* 🗣 Speak → 💬 Talk */
 .sp-pick:hover{border-color:var(--accent)}
 .tk-list{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
@@ -1199,6 +1232,7 @@ body.tu-on .toast{z-index:36}
     </div>
     <div id="talk" class="hidden" data-noi18n></div>
     <div id="ielts" class="hidden" data-noi18n></div>
+    <div id="grammar" class="hidden" data-noi18n></div>
   </section>
 
   <!-- WORDS -->
@@ -1847,6 +1881,7 @@ const defaults = () => ({
   songs: [],   // ARMY 🎵 BTS songs: lyrics the fan pasted + AI romanization/translation/story
   talks: [],   // finished 💬 Talk conversations (text only), for reviewing corrections later
   ielts: [],   // finished 🎓 IELTS mock tests (text only)
+  grammar: [],   // 📖 grammar progress: { id, lang, learned, note }. The lessons themselves are in grammar-ko.json
   daily: { date: todayStr(), newCount: 0, reviews: 0 },
   streak: { last: "", count: 0 }
 });
@@ -1865,14 +1900,14 @@ let SNAP = null;
 const fp = o => { const { mod, ...r } = o; return JSON.stringify(r); };
 const fpSettings = () => { const { _mod, voice, voiceBy, course, allVoices, ...r } = S.settings; return JSON.stringify(r); };   // allVoices: retired setting, may linger in old data
 function takeSnap(){
-  SNAP = { cards: new Map(S.cards.map(c => [c.id, fp(c)])), passages: new Map((S.passages||[]).map(x => [x.id, fp(x)])), lives: new Map((S.lives||[]).map(x => [x.id, fp(x)])), songs: new Map((S.songs||[]).map(x => [x.id, fp(x)])), talks: new Map((S.talks||[]).map(x => [x.id, fp(x)])), ielts: new Map((S.ielts||[]).map(x => [x.id, fp(x)])),
+  SNAP = { cards: new Map(S.cards.map(c => [c.id, fp(c)])), passages: new Map((S.passages||[]).map(x => [x.id, fp(x)])), lives: new Map((S.lives||[]).map(x => [x.id, fp(x)])), songs: new Map((S.songs||[]).map(x => [x.id, fp(x)])), talks: new Map((S.talks||[]).map(x => [x.id, fp(x)])), ielts: new Map((S.ielts||[]).map(x => [x.id, fp(x)])), grammar: new Map((S.grammar||[]).map(x => [x.id, fp(x)])),
            settings: fpSettings(), deleted: Object.assign({}, S.deleted || {}) };
 }
 function track(){
   if (!SNAP) { takeSnap(); return; }
   const now = Date.now();
   S.deleted = Object.assign({}, SNAP.deleted, S.deleted || {});
-  [["cards", S.cards], ["passages", S.passages || []], ["lives", S.lives || []], ["songs", S.songs || []], ["talks", S.talks || []], ["ielts", S.ielts || []]].forEach(([k, arr]) => {
+  [["cards", S.cards], ["passages", S.passages || []], ["lives", S.lives || []], ["songs", S.songs || []], ["talks", S.talks || []], ["ielts", S.ielts || []], ["grammar", S.grammar || []]].forEach(([k, arr]) => {
     const seen = new Set();
     arr.forEach(x => { if (!x.id) x.id = uid(); seen.add(x.id); if (SNAP[k].get(x.id) !== fp(x)) x.mod = now; });
     SNAP[k].forEach((_, id) => { if (!seen.has(id)) S.deleted[id] = now; });
@@ -2642,7 +2677,7 @@ addEventListener("pagehide", () => navSave({ y: Math.round(scrollY) }));
 $$("nav button").forEach(b => b.onclick = () => { if (b.dataset.v === "tr") return arInterpOpen(); arInterpOpen.wait = false; navRoot(b.dataset.v); show(b.dataset.v); });   // Translate opens over whatever tab is open
 function navRoot(v){
   if (v === "study") homeAuto = true;   // after "End", Back / links return to the home card; only the tab starts a new round
-  if (v === "read"){ spScreen = ""; rdNewOpen = false; TK.view = ""; TK.list = false; TK.histList = false; TK.showAll = false; }   // show() → spShow("") also closes an open passage
+  if (v === "read"){ spScreen = ""; GR.open = ""; rdNewOpen = false; TK.view = ""; TK.list = false; TK.histList = false; TK.showAll = false; }   // show() → spShow("") also closes an open passage
   if (v === "army"){ arStop(); AR.view = ""; AR.song = ""; AR.screen = "home"; arPersist(); }
 }
 $("#navSpeak").textContent = L("Luyện nói", "Speak");
@@ -4917,7 +4952,7 @@ $("#impFile").onchange = async e => {
       list(key).forEach(x => { if (x && x.id && ok(x) && !have.has(x.id)) { out.push(x); have.add(x.id); } }); return out; };
     const addP = fresh("passages", p => Array.isArray(p.sentences)).map(p => Object.assign({ vocab: [] }, p)),
       addL = fresh("lives", x => Array.isArray(x.lines)), addG = fresh("songs", x => Array.isArray(x.lines)),
-      addT = fresh("talks", x => Array.isArray(x.turns)), addI = fresh("ielts", x => Array.isArray(x.qs) && x.result);
+      addT = fresh("talks", x => Array.isArray(x.turns)), addI = fresh("ielts", x => Array.isArray(x.qs) && x.result), addGr = fresh("grammar", x => true);
     const n = add.length, np = addP.length; S.cards.push(...add);
     if (wasEmpty && d.settings && typeof d.settings === "object") {   // key, course and voices stay this device's; question types missing from an old backup keep their defaults
       const { apiKey, keyMod, course, voice, voiceBy } = S.settings;
@@ -4929,7 +4964,8 @@ $("#impFile").onchange = async e => {
     if (!Array.isArray(S.songs)) S.songs = [];
     if (!Array.isArray(S.talks)) S.talks = [];
     if (!Array.isArray(S.ielts)) S.ielts = [];
-    S.songs.push(...addG); S.talks.push(...addT); S.ielts.push(...addI);
+    if (!Array.isArray(S.grammar)) S.grammar = [];
+    S.songs.push(...addG); S.talks.push(...addT); S.ielts.push(...addI); S.grammar.push(...addGr);
     save(); toast(`Imported ${n} word${n===1?"":"s"}${np ? ` and ${np} passage${np===1?"":"s"}` : ""}`); refreshHome(); renderSettings();
     if ((S.settings.uiLang || "vi") !== UI) reloadTo(S.settings.uiLang === "en" ? "Switching language…" : "Đang đổi ngôn ngữ…", 800);
   } catch(err){ toast("Invalid backup file"); }
@@ -5088,6 +5124,8 @@ function applyRemote(R){
   mergeList(S.talks, R.talks, tomb);
   if (!Array.isArray(S.ielts)) S.ielts = [];
   mergeList(S.ielts, R.ielts, tomb);
+  if (!Array.isArray(S.grammar)) S.grammar = [];
+  mergeList(S.grammar, R.grammar, tomb);
   // same word added separately on two devices → keep the one with more progress
   const byKo = new Map(), kk = c => lgOf(c) + "|" + c.ko;   // per course: 사과 can't clash with another course's word
   S.cards.slice().forEach(c => {
@@ -5128,6 +5166,8 @@ function applyRemote(R){
   else refreshStats();
   renderWordsSoft();
   if (!$("#v-read").classList.contains("hidden") && typeof renderPassList === "function") try { renderPassList(); } catch(e){}
+  if (curView === "read" && spScreen === "grammar" && !["grSearch", "grNote"].includes((document.activeElement || {}).id)) renderGrammar();
+  else if (curView === "read" && spScreen === "") renderSpHome();
   // ARMY lists (songs, saved transcripts): redraw so synced items show up; never mid-live, in the add form or while typing
   if (curView === "army" && AR.screen !== "mode" && !AR.songAdd && !$("#v-army").contains(document.activeElement && document.activeElement.matches("input,textarea") ? document.activeElement : null)) try { renderArmy(); } catch(e){}
 }
@@ -5399,9 +5439,9 @@ async function micTest(out){
 const GUIDE = [
   ["g-start", L("Bắt đầu nhanh", "Quick start"), L(`
     <ol>    <li><b>🎯 Từ vựng</b>: ôn flashcard mỗi ngày. Chọn đúng/sai thật lòng để app xếp lịch hợp lý. Chạm ô <b>Cần học / Đang học / Đã thuộc</b> hoặc <b>📚 Từ của tôi</b> để xem, sửa, xoá từ, hoặc bấm <b>Chọn</b> để luyện đúng những từ bạn muốn; <b>+ Thêm từ</b> để thêm từ mới, dán cả danh sách, chụp ảnh, hoặc thêm <b>bảng chữ cái</b> để ôn như từ vựng.</li>
-    <li><b>🗣 Luyện nói</b>: <b>Luyện đọc</b> — bài đọc theo trình độ, 🔊 để nghe, 🎙 để đọc to và được chấm; <b>Trò chuyện với AI</b> — nói chuyện với AI, được chữa lỗi từng câu.</li></ol>`, `
+    <li><b>🗣 Luyện nói</b>: <b>Luyện đọc</b> — bài đọc theo trình độ, 🔊 để nghe, 🎙 để đọc to và được chấm; <b>Trò chuyện với AI</b> — nói chuyện với AI, được chữa lỗi từng câu${CUR === "ko" ? "; <b>Ngữ pháp</b> — xem cấu trúc, cách dùng, ví dụ và đánh dấu mục đã học" : ""}.</li></ol>`, `
     <ol>    <li><b>🎯 Vocabulary</b>: review flashcards daily. Answer honestly so the schedule fits you. Tap <b>Due today / Learning / Mastered</b> or <b>📚 My words</b> to view, edit and delete words, or tap <b>Select</b> to practice exactly the words you want; <b>+ Add words</b> to add more, paste a whole list, use a screenshot, or add the <b>alphabet</b> (Hangul, kana, pinyin…) to review like words.</li>
-    <li><b>🗣 Speak</b>: <b>Reading</b> — passages at your level, 🔊 to listen, 🎙 to read aloud and get scored; <b>Talk with AI</b> — a spoken conversation with AI that corrects each line.</li></ol>`)],
+    <li><b>🗣 Speak</b>: <b>Reading</b> — passages at your level, 🔊 to listen, 🎙 to read aloud and get scored; <b>Talk with AI</b> — a spoken conversation with AI that corrects each line${CUR === "ko" ? "; <b>Grammar</b> — structure, usage and examples, and mark what you have learned" : ""}.</li></ol>`)],
   ["g-install", L("Cài app", "Install the app"), L(`
     <ul><li><b>Android</b>: Chrome → <b>⋮</b> → <b>Cài đặt ứng dụng</b></li>
     <li><b>iPhone / iPad</b>: Safari → <b>Chia sẻ</b> ⬆️ → <b>Thêm vào MH chính</b></li>
@@ -5586,7 +5626,8 @@ function confirmTap(b, label, fn, armed){
 }
 
 /* ---------------- 🗣 Speak tab: 📖 Read (passages + coach) or 💬 Talk (spoken conversation with AI) ---------------- */
-let spScreen = navGet().sp || "";   // "" = the picker, "read", "talk" — survives a reload
+let spScreen = navGet().sp || "";   // "" = the picker, "read", "talk", "ielts", "grammar" — survives a reload
+const GR = { data: null, failed: false, open: "", q: "", f: "all", lv: "" };   // 📖 grammar: the lessons (loaded once), the open one, search and filters
 const BACK_SVG = `<svg class="caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>`;
 function spShow(scr){
   spScreen = scr;
@@ -5596,6 +5637,8 @@ function spShow(scr){
   if (scr === "talk" && S.talk && S.talk.done){ S.talk = null; talkDropUrls(); save(); }   // it's in 🕘 history already
   if (scr === "talk"){ TK.view = ""; TK.list = false; TK.histList = false; }
   if (scr !== "ielts") ieStop();
+  if (scr !== "grammar") GR.open = "";
+  if (scr === "grammar" && CUR !== "ko") scr = spScreen = "";   // a reload in another course
   if (scr === "ielts"){
     if (CUR !== "en") scr = spScreen = "";   // a reload in another course
     else { IE.view = ""; IE.histList = false; if (IE.test && IE.test.result){ IE.test = null; ieDropUrls(); } else if (IE.test && IE.phase && !["gen", "score"].includes(IE.phase)) IE.phase = "list"; }   // finished ones are in 🕘 history already
@@ -5605,9 +5648,11 @@ function spShow(scr){
   $("#reader").classList.toggle("hidden", scr !== "read" || !curP);
   $("#talk").classList.toggle("hidden", scr !== "talk");
   $("#ielts").classList.toggle("hidden", scr !== "ielts");
+  $("#grammar").classList.toggle("hidden", scr !== "grammar");
   if (scr === "") renderSpHome();
   else if (scr === "read"){ if (!curP) renderPassList(); }
   else if (scr === "ielts") renderIelts();
+  else if (scr === "grammar") renderGrammar();
   else renderTalk();
   navSave({ sp: scr, p: curP ? curP.id : "" });
   if (window.__tutorSync) window.__tutorSync();
@@ -5623,8 +5668,110 @@ function renderSpHome(){
       : L(`Nói ${CO.vi.replace(/^T/, "t")}, AI trả lời và sửa lỗi.`, `Speak ${CO.en}, the AI replies and corrects you.`))}
     ${CUR === "en" ? pick("ielts", "graduation-cap", L("Thi thử IELTS Speaking", "IELTS Speaking mock test"), IE.test && !IE.test.result && IE.phase && IE.phase !== "gen"
       ? L(`Đang thi dở: ${ieMode(IE.test.mode)}`, `In progress: ${ieMode(IE.test.mode)}`)
-      : L("Đủ 3 part, AI chấm band theo 4 tiêu chí và chữa từng câu.", "All 3 parts, with a band score on the 4 criteria and feedback on every answer.")) : ""}`;
+      : L("Đủ 3 part, AI chấm band theo 4 tiêu chí và chữa từng câu.", "All 3 parts, with a band score on the 4 criteria and feedback on every answer.")) : ""}
+    ${CUR === "ko" ? pick("grammar", "list-checks", L("Ngữ pháp", "Grammar"), GR.data
+      ? L(`Đã học ${grDone()}/${GR.data.length} ngữ pháp.`, `${grDone()} of ${GR.data.length} grammar points learned.`)
+      : L("Cấu trúc, cách dùng, ví dụ và bất quy tắc.", "Structure, usage, examples and irregulars.")) : ""}`;
   $$("#spHome .sp-pick").forEach(b => b.onclick = () => { spShow(b.dataset.s); scrollTo(0, 0); });
+  if (CUR === "ko" && !GR.data && !GR.failed) grLoad().then(() => { if (GR.data && spScreen === "" && curView === "read") renderSpHome(); });
+}
+
+/* ---------------- 📖 grammar (Korean course) ---------------- */
+const GR_LEVELS = { s1: L("Sơ cấp 1", "Elementary 1"), s2: L("Sơ cấp 2", "Elementary 2"), i1: L("Trung cấp", "Intermediate") };
+const grT = o => o ? L(o.vi, o.en) : "";
+const grFold = s => norm(s).normalize("NFD").replace(/\p{M}/gu, "").normalize("NFC").replace(/đ/g, "d");   // "vi" finds "vì"; Hangul comes back whole
+const grRec = id => (S.grammar || []).find(x => x.id === id);
+const grLearned = id => !!(grRec(id) || {}).learned;
+const grDone = () => GR.data.filter(g => grLearned(g.id)).length;
+function grToggle(id){
+  const r = grRec(id);
+  if (r) r.learned = r.learned ? 0 : Date.now();   // the record stays, so un-learning wins over an older sync
+  else S.grammar.push({ id, lang: "ko", learned: Date.now() });
+  save();
+}
+function grSetNote(id, text){
+  const r = grRec(id), note = text.trim();
+  if (r ? (r.note || "") === note : !note) return;
+  if (r) r.note = note;
+  else S.grammar.push({ id, lang: "ko", learned: 0, note });
+  save();
+}
+async function grLoad(){
+  if (GR.data) return;
+  GR.failed = false;
+  try {
+    const r = await fetch("grammar-ko.json");
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    data.forEach(g => {
+      const uses = g.uses.flatMap(u => [u.when, ...u.ex]).flatMap(x => [x.ko, x.vi, x.en]);
+      g.find = [[g.pattern, ...g.structure.map(x => x.form)], [g.meaning.vi, g.meaning.en], uses].map(a => grFold(a.join(" ")));
+    });
+    GR.data = data;
+  } catch(e){ GR.failed = true; }
+}
+function grMatches(){
+  const q = grFold(GR.q), rank = g => g.find.findIndex(t => t.includes(q));
+  const list = GR.data.filter(g => (!GR.lv || g.level === GR.lv) && (GR.f === "all" || (GR.f === "done") === grLearned(g.id)) && (!q || rank(g) >= 0));
+  return q ? list.sort((a, b) => rank(a) - rank(b)) : list;   // the pattern itself first, then meanings, then examples
+}
+function grHead(title, back){
+  return `<div class="sub-head"><div class="l"><button class="btn-ghost back" id="grBack" title="${back}" aria-label="${L("Quay lại", "Back")}">${BACK_SVG}</button></div><div class="c"><h2>${ic("list-checks")} ${title}</h2></div><div class="r"></div></div>`;
+}
+function renderGrList(){
+  const box = $("#grList");
+  if (!box) return;
+  const list = grMatches();
+  box.innerHTML = list.map(g => {
+    const on = grLearned(g.id), tick = on ? L("Bỏ đánh dấu đã học", "Mark as not learned") : L("Đánh dấu đã học", "Mark as learned");
+    return `<div class="gr-row" data-id="${g.id}"><button class="gr-open"><b lang="ko">${esc(g.pattern)}</b><span>${esc(grT(g.meaning))}</span></button><button class="gr-tick${on ? " on" : ""}" title="${tick}" aria-label="${tick}" aria-pressed="${on}"><span class="gr-c">${on ? ic("check") : ""}</span></button></div>`;
+  }).join("") || `<p class="muted" id="grNone">${L("Không tìm thấy ngữ pháp nào.", "No grammar points found.")}</p>`;
+  $$("#grList .gr-open").forEach(b => b.onclick = () => { GR.open = b.parentElement.dataset.id; renderGrammar(); scrollTo(0, 0); });
+  $$("#grList .gr-tick").forEach(b => b.onclick = () => { grToggle(b.parentElement.dataset.id); renderGrammar(); });
+}
+function renderGrDetail(g){
+  const on = grLearned(g.id), ex = x => `<div class="ex"><button class="speak sm" data-say="${esc(x.ko)}" title="${L("Nghe", "Listen")}" aria-label="${L("Nghe", "Listen")}">${ic("speaker-high")}</button><div><div class="exk" lang="ko">${esc(x.ko)}</div><div class="exm">${esc(grT(x))}</div></div></div>`;
+  $("#grammar").innerHTML = grHead(GR_LEVELS[g.level] || L("Ngữ pháp", "Grammar"), L("Ngữ pháp", "Grammar")) + `
+    <div class="card"><h2 class="gr-title" lang="ko">${esc(g.pattern)}</h2><p class="gr-mean">${esc(grT(g.meaning))}</p></div>
+    <div class="card"><h3>${L("Cấu trúc", "Structure")}</h3>${g.structure.map(x => `<div class="gr-form"><span class="small muted">${esc(grT(x.when))}</span><b lang="ko">${esc(x.form)}</b><span class="small" lang="ko">${esc(x.ex)}</span></div>`).join("")}</div>
+    <div class="card"><h3>${L("Khi dùng", "When to use it")}</h3>${g.uses.map(u => `<div class="gr-use"><b>${esc(grT(u.when))}</b>${u.ex.map(ex).join("")}</div>`).join("")}</div>
+    ${g.irregular ? `<div class="card"><h3>${L("Bất quy tắc", "Irregulars")}</h3>${g.irregular.map(x => `<div class="gr-form"><b>${esc(grT(x.name))}</b><span class="small muted">${esc(grT(x.note))}</span><span class="small" lang="ko">${esc(x.ex)}</span></div>`).join("")}</div>` : ""}
+    ${g.notes ? `<div class="card"><h3>${L("Lưu ý", "Notes")}</h3><div>${esc(grT(g.notes))}</div></div>` : ""}
+    <div class="card"><h3>${L("Ghi chú của tôi", "My notes")}</h3><textarea id="grNote" rows="2" placeholder="${L("Ghi cách bạn hiểu, hoặc chỗ thấy chưa đúng…", "Write how you understand it, or anything that looks wrong…")}">${esc((grRec(g.id) || {}).note)}</textarea></div>
+    <button class="${on ? "btn2" : "btn"} gr-learn" id="grLearn">${on ? L("Bỏ đánh dấu đã học", "Mark as not learned") : L("Đánh dấu đã học", "Mark as learned")}</button>`;
+  bindSay($("#grammar"));
+  $("#grBack").onclick = () => { GR.open = ""; renderGrammar(); scrollTo(0, 0); };
+  $("#grLearn").onclick = () => { grToggle(g.id); renderGrammar(); };
+  let noteT;
+  $("#grNote").oninput = e => { clearTimeout(noteT); noteT = setTimeout(() => grSetNote(g.id, e.target.value), 400); };
+  $("#grNote").onchange = e => { clearTimeout(noteT); grSetNote(g.id, e.target.value); };
+}
+function renderGrammar(){
+  const box = $("#grammar"), toHome = () => { spShow(""); scrollTo(0, 0); };
+  if (!GR.data){
+    box.innerHTML = grHead(L("Ngữ pháp", "Grammar"), L("Luyện nói", "Speak")) + (GR.failed
+      ? `<div class="card"><p>${L("Chưa tải được danh sách ngữ pháp. Hãy kiểm tra kết nối mạng.", "Could not load the grammar list. Check your connection.")}</p><button class="btn" id="grRetry">${L("Thử lại", "Try again")}</button></div>`
+      : `<p class="muted">${L("Đang tải…", "Loading…")}</p>`);
+    $("#grBack").onclick = toHome;
+    if (GR.failed) $("#grRetry").onclick = () => { GR.failed = false; renderGrammar(); };
+    else grLoad().then(() => { if (spScreen === "grammar") renderGrammar(); });
+    return;
+  }
+  const g = GR.open && GR.data.find(x => x.id === GR.open);
+  if (g) return renderGrDetail(g);
+  const levels = Object.keys(GR_LEVELS).filter(k => GR.data.some(x => x.level === k)), done = grDone(), n = GR.data.length;
+  if (GR.lv && !levels.includes(GR.lv)) GR.lv = "";
+  box.innerHTML = grHead(L("Ngữ pháp", "Grammar"), L("Luyện nói", "Speak")) + `
+    <div class="gr-prog"><div class="progress"><i style="width:${n ? done / n * 100 : 0}%"></i></div><span class="small muted" id="grCount">${done}/${n}</span></div>
+    <input id="grSearch" type="search" placeholder="${L("Tìm mẫu ngữ pháp, nghĩa, ví dụ…", "Search patterns, meanings, examples…")}" value="${esc(GR.q)}">
+    ${levels.length > 1 ? `<div class="chips" id="grLevels" style="margin-bottom:10px">${[["", L("Mọi cấp", "All levels")], ...levels.map(k => [k, GR_LEVELS[k]])].map(([k, t]) => `<button class="chip${GR.lv === k ? " on" : ""}" data-l="${k}">${t}</button>`).join("")}</div>` : ""}
+    <div class="seg" id="grTabs">${[["all", L("Tất cả", "All")], ["todo", L("Chưa học", "To learn")], ["done", L("Đã học", "Learned")]].map(([k, t]) => `<button data-f="${k}"${GR.f === k ? ' class="on"' : ""}>${t}</button>`).join("")}</div>
+    <div id="grList"></div>`;
+  renderGrList();
+  $("#grBack").onclick = toHome;
+  $("#grSearch").oninput = e => { GR.q = e.target.value; renderGrList(); };
+  $$("#grTabs button").forEach(b => b.onclick = () => { GR.f = b.dataset.f; renderGrammar(); });
+  $$("#grLevels .chip").forEach(b => b.onclick = () => { GR.lv = b.dataset.l; renderGrammar(); });
 }
 
 // role-play situations: [key, icon, name, role for the AI]. The other courses get the same situations in their own country
@@ -7696,6 +7843,7 @@ function arStop(){
 
 /* ---------------- init ---------------- */
 load();
+if (CUR === "ko" && (S.grammar || []).some(x => x.learned)) grLoad();   // the tutor names what was learned, wherever it is opened
 /* ---------------- AI tutor: a floating chat to ask anything while studying — type, record or send a photo (needs a Gemini key) ---------------- */
 const TU = { msgs: [], busy: false, err: "", att: null, rec: null, chunks: [], t0: 0, gen: 0, idol: null };
 // Korean course: each chat is with a random BTS member (never the same one twice in a row) — friendlier than a faceless tutor
@@ -7752,6 +7900,11 @@ function tuScreen(){
   const sec = $("#arConv") || $$("section[id^=v-]").find(s => !s.classList.contains("hidden"));
   return sec ? sec.innerText.replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n").trim().slice(0, 2500) : "";
 }
+const tuGrammar = () => {
+  const known = CUR === "ko" && GR.data ? GR.data.filter(g => grLearned(g.id)).map(g => g.pattern) : [];
+  return known.length ? `Grammar they have marked as learned in the app: ${known.join("; ")}. This is only a hint: use these patterns in explanations and examples when it helps. A pattern not on this list may still be known, so never assume a gap, avoid a pattern, or tell them to study grammar because of it.
+` : "";
+};
 const tuPersona = m => m ? `You are ${m.name} of BTS, playing a private ${CO.en} tutor for an ARMY (BTS fan) — ${m.vibe}. Stay in character: talk like ${m.name} would, friendly and close, with an emoji now and then. Never sign your messages with your name — the app already shows who is talking. Only mention well-known public facts about BTS; never make up private details, and if asked, admit with a wink that you're an AI tutor playing ${m.name}. Teaching always comes first.
 ` : "";
 const tuSystem = () => `${tuPersona(TU.idol)}You are a warm, patient ${CO.en} teacher inside the learning app "Grow with PV", helping a ${levelDesc(curLevel())} learner — like a private tutor sitting next to them while they study.
@@ -7763,7 +7916,7 @@ const tuSystem = () => `${tuPersona(TU.idol)}You are a warm, patient ${CO.en} te
 - If they are in the middle of a quiz question, give hints first; give the answer straight away only when they ask for it.
 - Off-topic questions: answer briefly, then steer back to ${CO.en}.
 - Drills: when they ask you to quiz them, ask them questions one by one, or give sentences to translate, run it as a series: one question at a time; after each answer, briefly say if it's right (and the fix if not), then give the next question in the same message right away — don't wait to be asked. Keep going until the number they asked for is done (say which one it is, e.g. 3/5), or, if they gave no number, until they say stop or switch topic. Follow the direction they ask for: if they want to be asked in ${uiLangName()} and answer in ${CO.en}, write the question only in ${uiLangName()} — no ${CO.en} word, pronunciation or hint that gives the answer away (and the other way round).
-What the app is showing them right now (context only — it may be unrelated to the question):
+${tuGrammar()}What the app is showing them right now (context only — it may be unrelated to the question):
 """
 ${tuScreen() || "(nothing)"}
 """`;
