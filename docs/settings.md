@@ -84,16 +84,9 @@ Keeps words, progress, passages, conversations and settings (including the Gemin
 
 **Setup:**
 
-- **You need your own OAuth Client ID.** The built-in guide has the six Google Cloud steps:
-  1. Create a project.
-  2. Enable the Drive API.
-  3. Set the Auth Platform to External.
-  4. Add yourself as a test user.
-  5. Create a Web client with the origin `https://pevien.github.io`.
-  6. Copy the Client ID.
-- **Optional:** setting the `GOOGLE_CLIENT_ID` constant in the code hides the Client ID field.
-- **Connect Google Drive** signs you in with Google Identity Services. With no Client ID entered, it says so instead ("Chưa điền Google OAuth Client ID"); a value that isn't a Client ID gets its own message.
-  - On other devices, use the same Client ID and the same Google account.
+- **Sign in with Google** signs you in with Google Identity Services, using the app's own Client ID (`GOOGLE_CLIENT_ID`). While the Google Cloud app is in Testing, each Gmail must first be added as a test user, so the in-app guide tells users to send theirs to Pe Vien. On other devices, sign in with the same Google account.
+- The Google script loads only once you tap the button or are already connected.
+- **Own Client ID from before:** a device already connected with its own ID stays on it, because each ID has its own hidden Drive folder. After 🗑 disconnecting, it signs in with the app's ID and starts a new folder from this device's data.
 
 **Sync status:**
 

@@ -35,7 +35,7 @@ def C():
     assert not files - named, f"not mentioned in docs: {sorted(files - named)}"
 
 # proper nouns that stay in English in the Vietnamese UI
-KEEP = { "Gemini API key", "Google OAuth Client ID" }
+KEEP = { "Gemini API key" }
 VI_CHARS = "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ"
 PROBE = r"""() => {
   const out = new Set(), skip = '[data-noi18n],:not(html)[lang],script,style,textarea,.exm,.exl', vi = /[%s]/i, en = /[a-z]{3,} [a-z]{2,}/i;

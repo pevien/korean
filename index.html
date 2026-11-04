@@ -250,7 +250,7 @@ a{color:var(--accent);text-underline-offset:2px}   /* every link: app purple, re
 .row > .sq{flex:0 0 44px;width:44px;align-self:stretch;padding:0;display:flex;align-items:center;justify-content:center}
 .row > .sq .i{width:20px;height:20px}
 .row > .sq[data-confirm]{flex:0 0 auto;width:auto;padding:0 14px;gap:4px}   /* armed: grows to fit "Gỡ?" */
-/* Gemini key / Client ID: shown as "AIza••••", typed in as dots, never copyable */
+/* Gemini key: shown as "AIza••••", typed in as dots, never copyable */
 input.secret:focus{-webkit-text-security:disc}
 .card > .guide details{border-bottom:1px solid var(--line)}   /* a how-to inside a settings card */
 .guide p, .guide li{font-size:14px;line-height:1.6}
@@ -1274,14 +1274,10 @@ body.tu-on .toast{z-index:36}
       <label class="check" style="margin-top:10px"><input type="checkbox" id="setAutoEx"> Auto-add example sentences to new words (needs key)</label>
     </div>
     <div class="card">
-      <div class="row" style="margin-bottom:10px"><h2 style="margin:0">Google Drive sync</h2><button class="pill hidden" id="gdStatus" style="flex:0 0 auto;cursor:pointer;font-weight:500">☁️</button></div>
+      <div class="row" style="margin-bottom:10px"><h2 style="margin:0">Google Drive sync</h2><button class="pill hidden" id="gdStatus" style="flex:0 0 auto;cursor:pointer;font-weight:500">☁️</button><button class="btn-danger ico sq hidden" id="gdOff" style="flex:0 0 auto"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button></div>
       <p class="small muted" style="margin-top:0">Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.</p>
       <div class="guide" data-g="g-sync" data-noi18n></div>
-      <div id="gdClientRow">
-        <label for="gdClient">Google OAuth Client ID</label>
-        <div class="row"><input id="gdClient" class="secret" type="text" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="btn-danger ico sq hidden" id="gdOff"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button></div>
-      </div>
-      <button class="btn2" id="gdConnect" style="width:100%;margin-top:10px">Connect Google Drive</button>
+      <button class="btn2" id="gdConnect" style="width:100%;margin-top:10px">Sign in with Google</button>
     </div>
     <div class="card" id="notifyCard" data-noi18n></div>
     <div class="card">
@@ -1592,7 +1588,7 @@ const VI = {
 "English":"Tiếng Anh","Vietnamese":"Tiếng Việt",
 "☁️ Google Drive sync":"☁️ Đồng bộ Google Drive","Guide":"Hướng dẫn",
 "Keeps words, progress, passages and settings (including your Gemini key) the same on all your devices. Saved in a hidden app folder in your own Google Drive.":"Giữ từ vựng, tiến độ, bài đọc và cài đặt (cả Gemini key) giống nhau trên mọi máy. Lưu trong thư mục ẩn trên Drive của bạn.",
-"Connect Google Drive":"Kết nối Google Drive","Disconnect":"Ngắt kết nối",
+"Sign in with Google":"Đăng nhập Google","Disconnect":"Ngắt kết nối",
 "Backup":"Sao lưu","Your words are stored in this browser (and in Google Drive if sync is on). Export a file as an extra backup.":"Từ vựng lưu trên trình duyệt này (và Drive nếu bật đồng bộ). Xuất file để dự phòng thêm.",
 "⬇️ Export":"⬇️ Xuất file","⬆️ Import":"⬆️ Nhập file","Export":"Xuất file","Import":"Nhập file","Delete all data":"Xoá toàn bộ dữ liệu",
 "Read":"Đọc","Add":"Thêm","Words":"Từ vựng","Settings":"Cài đặt",
@@ -1620,9 +1616,9 @@ const VI = {
 "No new words came back — try another topic":"Không có từ mới — thử chủ đề khác","No new words left — add some!":"Hết từ mới — thêm từ nhé!",
 "Nothing selected":"Chưa chọn gì","Nothing to study":"Chưa có gì để học","Passage deleted":"Đã xoá bài đọc",
 "Paste some Korean text first":"Hãy dán văn bản tiếng Hàn trước","No API key entered yet":"Chưa điền API key",
-"No Google OAuth Client ID entered yet":"Chưa điền Google OAuth Client ID","Preparing…":"Đang chuẩn bị…","Progress reset":"Đã đặt lại tiến độ",
+"Preparing…":"Đang chuẩn bị…","Progress reset":"Đã đặt lại tiến độ",
 "Prompt copied":"Đã copy câu lệnh","Prompt selected — copy it":"Đã chọn câu lệnh — hãy copy","Tap again to delete everything":"Chạm để xoá hết",
-"Testing…":"Đang kiểm tra…","That doesn't look like Korean":"Đây không phải tiếng Hàn","That doesn't look like a Google Client ID":"Đây không phải Google Client ID",
+"Testing…":"Đang kiểm tra…","That doesn't look like Korean":"Đây không phải tiếng Hàn",
 "That was too short — try again.":"Ngắn quá — thử lại nhé.","Translation unavailable — type it yourself":"Không dịch được — hãy tự gõ",
 "Type a Korean word first":"Hãy gõ từ tiếng Hàn trước","Writing passage…":"Đang viết bài…","Writing…":"Đang viết…","☁️ Synced":"☁️ Đã đồng bộ",
 "⚠️ Could not save (storage blocked)":"⚠️ Không lưu được (bộ nhớ bị chặn)","⚠️ Speech check needs internet":"⚠️ Chấm giọng nói cần có mạng",
@@ -4756,7 +4752,7 @@ function showSecret(i, v){ i.value = secretMask(v); i.dataset.masked = i.value ?
 $$("input.secret").forEach(i => {
   ["copy", "cut", "dragstart", "contextmenu"].forEach(t => i.addEventListener(t, e => e.preventDefault()));
   i.addEventListener("focus", () => { if (i.dataset.masked) { i.value = ""; i.dataset.masked = ""; } });
-  i.addEventListener("blur", () => { if (!i.value.trim()) showSecret(i, i.id === "setKey" ? S.settings.apiKey : SY.clientId); });
+  i.addEventListener("blur", () => { if (!i.value.trim()) showSecret(i, S.settings.apiKey); });
 });
 $("#setKey").onchange = e => { const v = e.target.value.trim(); if (!v || e.target.dataset.masked) return; setApiKey(v); save(); showSecret(e.target, v); $$("[data-mode]").forEach(i => i.checked = !!S.settings.modes[i.dataset.mode]); keyDelBtn(); keyLoad(); };
 // 🗑 remove key: only once the key is known to work (a typo'd key is simply cleared from the box), tap twice to confirm
@@ -4870,7 +4866,7 @@ $("#resetBtn").onclick = async () => {
 
 
 /* ---------------- Google Drive sync ---------------- */
-const GOOGLE_CLIENT_ID = "";   // ← optional: paste your Client ID here once, so every device picks it up automatically
+const GOOGLE_CLIENT_ID = "52671955751-alt0r48fncoeuji336b2ljfhh4hpfpqg.apps.googleusercontent.com";
 const SYNC_KEY = "hangulCards.sync", TOK_KEY = "hangulCards.gtoken";
 const SCOPE = "https://www.googleapis.com/auth/drive.appdata";
 const DRIVE_FILE = "hangul-cards-sync.json";
@@ -4880,7 +4876,7 @@ let tok = null;
 try { tok = JSON.parse(localStorage.getItem(TOK_KEY) || "null"); } catch(e){}
 const saveSY = () => { try { localStorage.setItem(SYNC_KEY, JSON.stringify(SY)); } catch(e){} };
 const saveTok = () => { try { tok ? localStorage.setItem(TOK_KEY, JSON.stringify(tok)) : localStorage.removeItem(TOK_KEY); } catch(e){} };
-const clientId = () => (GOOGLE_CLIENT_ID || SY.clientId || "").trim();
+const clientId = () => (SY.on && SY.clientId || GOOGLE_CLIENT_ID).trim();   // a device already connected with its own ID stays on it: each ID has its own Drive folder
 const tokValid = () => !!(tok && tok.t && tok.exp > Date.now());
 let cloudState = "off";
 
@@ -4896,8 +4892,6 @@ function ago(t){
 }
 function renderSyncCard(){
   if (!$("#gdStatus")) return;
-  $("#gdClientRow").classList.toggle("hidden", !!GOOGLE_CLIENT_ID);
-  if ($("#gdClient") !== document.activeElement) showSecret($("#gdClient"), SY.clientId);
   gdOffBtn();
   $("#gdConnect").classList.toggle("hidden", SY.on);   // once connected, the ☁️ badge above is the sync button
   const st = SY.on ? cloudState : "off", gs = $("#gdStatus");
@@ -5037,7 +5031,6 @@ function payload(){ const d = JSON.parse(JSON.stringify(S)); d.syncedAt = Date.n
 
 let syncing = false, again = false, pushT = null, renewTried = false;
 async function syncNow(interactive){
-  if (!clientId()){ if (interactive) toast("No Google OAuth Client ID entered yet"); return; }
   if (!tokValid()){
     if (!interactive) return;
     setCloud("busy");
@@ -5071,16 +5064,11 @@ window.__syncChanged = () => {
 };
 $("#gdStatus").onclick = () => syncNow(true);
 $("#gdConnect").onclick = () => {
-  const v = $("#gdClient").value.trim();
-  if (!GOOGLE_CLIENT_ID && v && !$("#gdClient").dataset.masked){ SY.clientId = v; saveSY(); showSecret($("#gdClient"), v); }
-  if (!clientId()){ toast("No Google OAuth Client ID entered yet"); return; }
-  if (!/\.apps\.googleusercontent\.com$/.test(clientId())){ toast("That doesn't look like a Google Client ID"); return; }
   // sign-in popup + the first full download can take a while: one tap, then wait
   const b = $("#gdConnect"); if (b.disabled) return;
   busy(b, true, L("Đang kết nối…", "Connecting…"));
   syncNow(true).finally(() => busy(b, false));
 };
-$("#gdClient").onchange = e => { const v = e.target.value.trim(); if (!v || e.target.dataset.masked) return; SY.clientId = v; saveSY(); showSecret(e.target, v); if (clientId()) loadGIS().catch(()=>{}); };
 // 🗑 disconnect: same two-tap button as removing the Gemini key
 function gdOffBtn(){ const b = $("#gdOff"); delete b.dataset.confirm; b.innerHTML = ic("trash"); b.title = b.ariaLabel = L("Ngắt kết nối", "Disconnect"); b.classList.toggle("hidden", !SY.on); }
 $("#gdOff").onclick = e => confirmTap(e.currentTarget, ic("trash"), () => {
@@ -5157,7 +5145,6 @@ const isIOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === "MacIntel" 
 const isAndroid = /Android/i.test(UA) || (/Linux/.test(UA) && !/CrOS/.test(UA) && navigator.maxTouchPoints > 0);
 const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 const APP_URL = "https://pevien.github.io/korean/";
-const ORIGIN = new URL(APP_URL).origin;
 const appLink = () => `<a href="${APP_URL}" target="_blank" rel="noopener">${APP_URL}</a>`;
 let installEvt = null, installed = false, wStep = 0;
 addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; renderNudge(); });
@@ -5341,35 +5328,19 @@ const GUIDE = [
     <li>Paste it into <b>Gemini API key</b> just below → <b>Test connection</b></li></ol>
     <p><b>With a key</b>: examples, passages and detailed pronunciation feedback. <b>Without</b>: the app gives you a prompt to paste into a free chatbot.</p>
     <p>🔒 Everyone should use their own key. It stays on your devices (and your Drive if sync is on) and is never included in exports.</p>`)],
-  ["g-sync", L("Cách thiết lập", "How to set it up"), L(`
-    <p><b>🔑 Tạo Client ID</b> <span class="muted">— làm một lần, miễn phí, ~5 phút</span></p>
-    <ol><li><b>Tạo project</b>: mở <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> → đặt tên tuỳ ý → <b>Create</b></li>
-    <li><b>Bật Drive API</b>: mở <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a> → <b>Enable</b></li>
-    <li><b>Khai báo app</b>: mở <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> → <b>Get started</b> → nhập tên app và Gmail của bạn → chọn <b>External</b> → <b>Create</b></li>
-    <li><b>Thêm Gmail của bạn</b>: <b>Audience</b> → <b>Test users</b> → <b>Add users</b></li>
-    <li><b>Tạo client</b>: <b>Clients</b> → <b>Create client</b> → <b>Web application</b> → <b>Authorized JavaScript origins</b> → <b>Add URI</b>, dán <code style="white-space:nowrap">${ORIGIN}</code> <button class="linkbtn" data-copy="${ORIGIN}">📋 Chép</button> → <b>Create</b></li>
-    <li><b>Copy Client ID</b> vừa hiện ra (đuôi <code>.apps.googleusercontent.com</code>)</li></ol>
-    <p><b>🔗 Kết nối</b></p>
-    <ol><li>Dán Client ID vào ô bên dưới → <b>Kết nối Google Drive</b></li>
-    <li>Google báo <i>“hasn't verified this app”</i> → <b>Continue</b> (đây là app của chính bạn)</li>
-    <li>Máy khác: dán <b>cùng Client ID</b>, đăng nhập <b>cùng Gmail</b></li></ol>
-    <p><b>🛠 Gặp lỗi?</b></p>
-    <ul><li><b>Error 400 / access blocked</b>: xem lại 🔑 bước 4 (đã thêm Gmail chưa) và bước 5 (địa chỉ phải khớp, không có <code>/</code> ở cuối). Sửa xong đợi vài phút.</li>
-    <li><b>☁️ Đồng bộ</b> (màu đỏ ⚠️) ở trên cùng: phiên đăng nhập (~1 giờ) đã hết, chạm để tiếp tục.</li></ul>`, `
-    <p><b>🔑 Create a Client ID</b> <span class="muted">— once, free, ~5 min</span></p>
-    <ol><li><b>Create a project</b>: open <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> → any name → <b>Create</b></li>
-    <li><b>Turn on the Drive API</b>: open <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Google Drive API</a> → <b>Enable</b></li>
-    <li><b>Set up the app</b>: open <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener">Google Auth Platform</a> → <b>Get started</b> → enter an app name and your Gmail → pick <b>External</b> → <b>Create</b></li>
-    <li><b>Add your Gmail</b>: <b>Audience</b> → <b>Test users</b> → <b>Add users</b></li>
-    <li><b>Create the client</b>: <b>Clients</b> → <b>Create client</b> → <b>Web application</b> → <b>Authorized JavaScript origins</b> → <b>Add URI</b>, paste <code style="white-space:nowrap">${ORIGIN}</code> <button class="linkbtn" data-copy="${ORIGIN}">📋 Copy</button> → <b>Create</b></li>
-    <li><b>Copy the Client ID</b> it shows (ends in <code>.apps.googleusercontent.com</code>)</li></ol>
-    <p><b>🔗 Connect</b></p>
-    <ol><li>Paste the Client ID into the box below → <b>Connect Google Drive</b></li>
-    <li>Google says <i>“hasn't verified this app”</i> → <b>Continue</b> (it's your own app)</li>
-    <li>Other devices: paste the <b>same Client ID</b>, sign in with the <b>same Gmail</b></li></ol>
-    <p><b>🛠 Something wrong?</b></p>
-    <ul><li><b>Error 400 / access blocked</b>: check 🔑 step 4 (Gmail added) and step 5 (the address must match, no trailing <code>/</code>). After fixing, wait a few minutes.</li>
-    <li><b>☁️ Sync</b> (red ⚠️) at the top: the ~1 hour sign-in expired, tap it to continue.</li></ul>`)],
+  ["g-sync", L("Cách dùng", "How it works"), L(`
+    <ol><li><b>Làm trước một lần:</b> liên hệ Pe Vien, gửi địa chỉ Gmail của bạn để được thiết lập quyền truy cập</li>
+    <li>Bấm <b>Đăng nhập Google</b> rồi chọn đúng Gmail đó</li>
+    <li>Google báo <i>“hasn't verified this app”</i> thì bấm <b>Continue</b></li>
+    <li>Máy khác: đăng nhập <b>cùng Gmail</b></li></ol>
+    <p>Dữ liệu nằm trong Drive của chính bạn, ở thư mục ẩn chỉ app này dùng.</p>
+    <p><b>☁️ Đồng bộ</b> (màu đỏ ⚠️) ở trên cùng: phiên đăng nhập (~1 giờ) đã hết, chạm để tiếp tục.</p>`, `
+    <ol><li><b>First, once:</b> contact Pe Vien with your Gmail address so your access can be set up</li>
+    <li>Tap <b>Sign in with Google</b> and pick that same Gmail</li>
+    <li>If Google says <i>“hasn't verified this app”</i>, tap <b>Continue</b></li>
+    <li>Other devices: sign in with the <b>same Gmail</b></li></ol>
+    <p>Your data stays in your own Drive, in a hidden folder only this app uses.</p>
+    <p><b>☁️ Sync</b> (red ⚠️) at the top: the ~1 hour sign-in expired, tap it to continue.</p>`)],
   ["g-mic", L("Micro & luyện nói", "Microphone & speaking"), L(`
     <p>Lần đầu bấm 🎙, chọn <b>Cho phép</b>. Nếu bị chặn:</p>
     <ul><li><b>Android</b>: Cài đặt → Ứng dụng → Chrome → Quyền → Micro → Cho phép</li>
@@ -7912,7 +7883,7 @@ if (S.talk && !inCourse(S.talk)){ talkArchive(S.talk); S.talk = null; save(); } 
 if (S.settings.model === "gemini-flash-latest") { S.settings.model = ""; save(); }   // old default alias, often overloaded
 fillLevels($("#genLevel")); fillLevels($("#rdLevel"));
 if ("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
-if (clientId()) loadGIS().catch(()=>{});
+if (SY.on) loadGIS().catch(()=>{});
 setCloud(SY.on ? (tokValid() ? "ok" : "idle") : "off");
 // the ~1 h Google token ran out: renew it on the first tap (GIS needs a tap for its no-prompt popup), then sync
 document.addEventListener("click", e => {

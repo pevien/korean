@@ -165,21 +165,51 @@ def F(b):
     assert not errs, errs
 
 def G(b):
-    """Settings: with no API key / Client ID, Test connection and Connect Google Drive say what's missing."""
+    """Settings: no API key → Test connection says so; no Client ID field, and Google's script only loads on Sign in."""
     ctx = b.new_context(viewport={ "width": 390, "height": 844 }, service_workers="block")
     ctx.add_init_script("""if (!sessionStorage.getItem("seeded")) { sessionStorage.setItem("seeded", "1");
       localStorage.setItem("hangulCards.v1", JSON.stringify({ cards: [], settings: { course: "en", uiLang: "vi" } })); localStorage.setItem("hangulCards.welcomed", "1"); }""")
-    p = ctx.new_page(); errs = []
+    p = ctx.new_page(); errs = []; gis = []
     p.on("pageerror", lambda e: errs.append(str(e)))
+    p.route("https://accounts.google.com/**", lambda r: (gis.append(r.request.url), r.abort()))
     p.goto(URL); p.wait_for_selector("#goCal")
     p.click('nav [data-v="set"]'); p.wait_for_selector("#resetBtn")
     toast = lambda: p.evaluate("document.querySelector('#toast').textContent")
     p.click("#testAI"); assert toast() == "Chưa điền API key", toast()
-    p.click("#gdConnect"); assert toast() == "Chưa điền Google OAuth Client ID", toast()
-    p.fill("#gdClient", "abc"); p.click("#gdConnect"); assert toast() == "Đây không phải Google Client ID", toast()
+    assert p.locator("#gdClient").count() == 0 and p.inner_text("#gdConnect") == "Đăng nhập Google"
+    assert not gis, gis
+    p.evaluate("""localStorage.setItem("hangulCards.sync", JSON.stringify({ clientId: "typo", on: false }))"""); p.reload(); p.wait_for_selector("#resetBtn", state="attached")
+    assert not gis, gis
+    p.click("#gdConnect"); p.wait_for_function("document.querySelector('#toast').textContent.startsWith('⚠️')")
+    assert gis, "Sign in should go to Google"
     assert not errs, errs
 
-SCEN = { "A": A, "B": B, "C": C, "C2": C2, "D": D, "E": E, "F": F, "G": G }
+FAKE_GIS = """window.google = { accounts: { oauth2: { revoke() {}, hasGrantedAllScopes: () => true, initTokenClient: cfg => { (window.__cids = window.__cids || []).push(cfg.client_id);
+  return { requestAccessToken() { cfg.callback({ access_token: "NEW", expires_in: 3600 }); } }; } } } };"""
+
+def I(b):
+    """Updating keeps synced devices connected: own Client ID, Drive file and sync state survive, an expired sign-in renews on that same ID; only after 🗑 does sign-in use the app's ID."""
+    ctx = b.new_context(viewport={ "width": 390, "height": 844 }, service_workers="block")
+    ctx.add_init_script(init({ "cards": [card("c1", "one")] }, { "cards": [] }))
+    ctx.add_init_script(FAKE_GIS + """if (!sessionStorage.getItem("expired")) { sessionStorage.setItem("expired", "1"); localStorage.setItem("hangulCards.gtoken", JSON.stringify({ t: "OLD", exp: 1 })); }""")
+    p = ctx.new_page(); errs = []
+    p.on("pageerror", lambda e: errs.append(str(e)))
+    p.goto(URL); p.wait_for_selector("#goCal")
+    p.click('nav [data-v="set"]'); p.wait_for_selector("#resetBtn")
+    assert p.is_visible("#gdOff") and p.is_visible("#gdStatus") and not p.is_visible("#gdConnect")
+    conf = lambda: p.evaluate("JSON.parse(localStorage.getItem('hangulCards.sync'))")
+    assert conf()["on"] is True and conf()["clientId"] == "test.apps.googleusercontent.com" and conf()["fileId"] == "F1", conf()
+    sync(p)
+    assert p.evaluate("window.__cids") == ["test.apps.googleusercontent.com"], p.evaluate("window.__cids")
+    p.reload(); p.wait_for_selector("#resetBtn", state="attached")
+    assert conf()["on"] is True and conf()["fileId"] == "F1", conf()
+    p.click("#gdOff"); p.click("#gdOff"); p.wait_for_selector("#gdConnect", state="visible")
+    p.evaluate("window.__cids = []"); p.click("#gdConnect"); p.wait_for_function("window.__cids && window.__cids.length")
+    cid = p.evaluate("window.__cids[0]")
+    assert cid.startswith("52671955751-") and cid.endswith(".apps.googleusercontent.com"), cid
+    assert not errs, errs
+
+SCEN = { "A": A, "B": B, "C": C, "C2": C2, "D": D, "E": E, "F": F, "G": G, "I": I }
 
 if __name__ == "__main__":
     pick = [a.upper() for a in sys.argv[1:]] or list(SCEN)

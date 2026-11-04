@@ -9,7 +9,7 @@
 | `manifest.webmanifest` | PWA manifest: name "Grow with PV", standalone display, theme `#4f46e5`, background `#12131a` |
 | `icon-*.png`, `apple-touch-icon.png` | App icons; the 512 px icon also has a maskable version |
 
-**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v64`). Old caches are then removed on activate.
+**Deployment:** the app is plain static files on GitHub Pages at <https://pevien.github.io/korean/>, so pushing to `main` publishes it. When a change touches the app shell, bump `CACHE` in `sw.js` (currently `hangul-v66`). Old caches are then removed on activate.
 
 ## Views and navigation
 
@@ -99,7 +99,7 @@ S
 | Key | Contents |
 |---|---|
 | `hangulCards.v1` | `S` |
-| `hangulCards.sync` | Drive config `{clientId, on, last, fileId}` |
+| `hangulCards.sync` | Drive config `{on, last, fileId}`, plus `clientId` on devices that connected with their own ID before the app had one |
 | `hangulCards.gtoken` | Google OAuth token and its expiry |
 | `hangulCards.keyOk` | Fingerprint of the verified Gemini key |
 | `hangulCards.models` | Cached Gemini model list |
@@ -116,7 +116,7 @@ S
 
 | Cache | Contents |
 |---|---|
-| `hangul-v64` | The app shell |
+| `hangul-v66` | The app shell |
 | `hangul-notify` | The snapshot of what is due (`./__notify-state`) that the service worker reads for reminders |
 
 ## Interface language (i18n)
@@ -172,7 +172,7 @@ Test: `tests/consistency_test.py` checks the cache named here matches `sw.js`, e
 | Gemini API (`generativelanguage.googleapis.com/v1beta`) | Everything AI: text, vision (screenshots), audio (pronunciation, Talk, AI translation) | User's own key, sent in the `x-goog-api-key` header |
 | Google Translate web endpoint (`translate.googleapis.com`, `client=gtx`) | Meanings for words and sentences | No |
 | MyMemory (`api.mymemory.translated.net`) | Fallback translation | No |
-| Google Identity Services (`accounts.google.com/gsi/client`, loaded only when needed) and Drive v3 | Sync | User's own OAuth Client ID |
+| Google Identity Services (`accounts.google.com/gsi/client`, loaded only when needed) and Drive v3 | Sync | The app's OAuth Client ID (`GOOGLE_CLIENT_ID`) |
 
 **Browser APIs:**
 
