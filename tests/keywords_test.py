@@ -21,7 +21,7 @@ def passage(id, sentence, vocab=()):
     return { "id": id, "lang": "ko", "title": id, "titleMean": "", "created": 1, "vocab": list(vocab), "sentences": [{ "ko": sentence, "meaning": "" }] }
 
 def init(key, passages, fails=0, delay=150):
-    st = { "cards": [], "passages": passages, "settings": { "course": "ko", "apiKey": key, "uiLang": "vi", "model": "gemini-2.5-flash-lite" } }
+    st = { "cards": [], "passages": passages, "settings": { "course": "ko", "apiKey": key, "uiLang": "vi", "model": "gemini-3.5-flash-lite" } }
     return r"""
 if (!sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");
@@ -32,7 +32,7 @@ window.__prompts = []; window.__fails = %d;
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
-    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
+    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     window.__prompts.push(JSON.parse(opts.body).contents[0].parts[0].text);
     await new Promise(r => setTimeout(r, %d));
     if (window.__fails-- > 0) return new Response("{}", { status: 500 });

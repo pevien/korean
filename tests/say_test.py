@@ -25,7 +25,7 @@ MODES = { m: False for m in ["ko2m", "listen2m", "listen2kc", "m2ko", "listen2ko
 def init(course, word, meaning, answer, ui="vi", mode="ko2say", quota=False, fail=""):
     st = { "cards": [{ "id": "c1", "lang": course, "ko": word, "meaning": meaning, "ex": f"Example with {word}.", "exMean": "Câu ví dụ.", "ease": 2.5, "interval": 1,
                        "reps": 1, "lapses": 0, "due": 1, "last": 1, "created": 1 }],
-           "settings": { "course": course, "apiKey": "FAKE", "uiLang": ui, "model": "gemini-2.5-flash-lite", "newPerDay": 0,
+           "settings": { "course": course, "apiKey": "FAKE", "uiLang": ui, "model": "gemini-3.5-flash-lite", "newPerDay": 0,
                          "coachGrade": "ai", "speakAuto": True, "modes": { **MODES, "ko2say": False, mode: True } } }
     return r"""
 if (!sessionStorage.getItem("seeded")) {
@@ -40,10 +40,10 @@ if (FAIL === "hang") { const st = window.setTimeout; window.setTimeout = (f, ms,
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
-    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
+    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     const body = JSON.parse(opts.body), p = body.contents[0].parts[0].text, model = decodeURIComponent(String(url).match(/models\/([^:]+):/)[1]);
     window.__models.push([model, p.startsWith("Transcribe this") ? "hear" : "grade"]);
-    if (%s && model === "gemini-2.5-flash") return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 });
+    if (%s && model === "gemini-3.8-flash") return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 });
     if (FAIL === "429") return new Response(JSON.stringify({ error: { message: "quota" } }), { status: 429 });
     if (FAIL === "hang") return new Promise((_, rej) => opts.signal.addEventListener("abort", () => rej(new DOMException("aborted", "AbortError"))));
     window.__prompts.push(p); window.__temp = body.generationConfig.temperature;
@@ -116,7 +116,7 @@ def A(page):
     check("A: example sentence still shown", "Example with 음악." in text, text)
     check("A: Say again button", page.is_visible("#sayAgain"))
     m = page.evaluate("window.__models")
-    check("A: transcription and grading both on the chosen model", m == [["gemini-2.5-flash-lite", "hear"], ["gemini-2.5-flash-lite", "grade"]], m)
+    check("A: transcription and grading both on the chosen model", m == [["gemini-3.5-flash-lite", "hear"], ["gemini-3.5-flash-lite", "grade"]], m)
 
 def B(page):
     """No issues: a native-like 98 is kept and the 'good' line shows instead of a list."""

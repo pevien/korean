@@ -21,7 +21,7 @@ URL = f"http://127.0.0.1:{_srv.server_address[1]}/index.html"
 
 def init(course, sentence, meaning, answer, ui="vi"):
     st = { "cards": [], "passages": [{ "id": "p1", "lang": course, "title": "Test", "titleMean": "", "created": 1, "vocab": [], "sentences": [{ "ko": sentence, "meaning": meaning }] }],
-           "settings": { "course": course, "apiKey": "FAKE", "uiLang": ui, "model": "gemini-2.5-flash-lite", "coachGrade": "ai" } }
+           "settings": { "course": course, "apiKey": "FAKE", "uiLang": ui, "model": "gemini-3.5-flash-lite", "coachGrade": "ai" } }
     return r"""
 if (!sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");
@@ -32,7 +32,7 @@ window.__prompts = [];
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
-    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
+    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     const body = JSON.parse(opts.body), p = body.contents[0].parts[0].text;
     window.__prompts.push(p); window.__temp = body.generationConfig.temperature;
     await new Promise(r => setTimeout(r, 150));

@@ -30,7 +30,7 @@ SILENT = { "heard": "", "ok": False, "fix": "", "why": "", "mean": "", "score": 
 
 def init(key="FAKE", talks=None):
     st = { "cards": [], "talks": talks or [],
-           "settings": { "course": "en", "apiKey": key, "uiLang": "vi", "model": "gemini-2.5-flash-lite", "newPerDay": 0, "talkTts": False } }
+           "settings": { "course": "en", "apiKey": key, "uiLang": "vi", "model": "gemini-3.5-flash-lite", "newPerDay": 0, "talkTts": False } }
     return r"""
 if (!sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");
@@ -41,7 +41,7 @@ window.__calls = []; window.__turns = []; window.__open = %s;
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
-    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
+    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     const body = JSON.parse(opts.body), parts = body.contents[body.contents.length - 1].parts, p = parts.map(x => x.text || "").join("\n");
     const kind = p.startsWith("Transcribe this") ? "hear" : p.includes("Start the conversation now") ? "open"
       : p.includes("learner's next turn") ? "turn" : p.includes("learner is stuck") ? "hint" : p.includes("has words in another language mixed in") ? "relang" : "other";

@@ -2462,9 +2462,11 @@ function extractJSON(text){
 }
 /* ---- Gemini models: listed live with the user's key; the cheapest suitable one is the default ---- */
 const MODELS_KEY = "hangulCards.models";
-const MODEL_FALLBACK = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];   // until the list has been fetched once
-let MODELS = (() => { try { return JSON.parse(localStorage.getItem(MODELS_KEY) || "[]"); } catch(e){ return []; } })();
+const MODEL_FALLBACK = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];   // until the list has been fetched once
 const modelVer = id => parseFloat((id.match(/^gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
+// 2.x is closed to new API keys since Sept 2026 (and 2.5 Flash is deprecated): never offer it
+const modelOk = id => modelVer(id) >= 3;
+let MODELS = (() => { try { return JSON.parse(localStorage.getItem(MODELS_KEY) || "[]").filter(modelOk); } catch(e){ return []; } })();
 const isLite = id => /flash-lite/.test(id), isPreview = id => /preview|exp/.test(id);
 // Flash-Lite before Flash, stable before preview, newest first
 const modelRank = (a, b) => (isLite(b) - isLite(a)) || (isPreview(a) - isPreview(b)) || (modelVer(b) - modelVer(a)) || a.localeCompare(b);
@@ -2477,7 +2479,7 @@ async function loadModels(){
     .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
     .map(m => m.name.replace(/^models\//, ""))
     // text + audio-in Flash models only: no Pro (paid), no "latest" aliases, no TTS/image/live variants
-    .filter(id => /^gemini-[\d.]+-flash/.test(id) && !/latest|tts|image|live|audio|embed|robotics|computer|thinking/.test(id))
+    .filter(id => /^gemini-[\d.]+-flash/.test(id) && modelOk(id) && !/latest|tts|image|live|audio|embed|robotics|computer|thinking/.test(id))
     .sort(modelRank);
   if (ids.length){ MODELS = ids; try { localStorage.setItem(MODELS_KEY, JSON.stringify(ids)); } catch(e){} }
   return MODELS;
@@ -6772,6 +6774,7 @@ const AR_MODES = {
   talk: [ic("translate"), () => L("Phiên dịch", "Interpreter"), () => L("Chạm micro, nói — app dịch và đọc to.", "Tap the mic, speak — it translates and reads aloud.")]
 };
 function renderArmy(){
+  queueMicrotask(() => window.__tutorSync && window.__tutorSync());   // the tutor bubble steps aside on BTS Live
   if (AR.view && !(S.lives || []).some(x => x.id === AR.view)) AR.view = "";
   if (AR.view) return renderArmyView();
   if (AR.screen === "saved") return renderArmySaved();
@@ -7065,13 +7068,18 @@ function songSay(t){
 // Google Search has its own free quota: if it's out (429) or unavailable, step 2 works from memory and the story says so (searched: false)
 // a song from after the model's training (e.g. 2026) gets mixed up with an older one it knows: tell it today's date, give it a few
 // lyric lines to identify the right song (not to quote), only trust notes Google actually returned, and never let it swap songs
+const SONG_SEARCH_ALT = "gemini-2.5-flash-lite";
 async function songStory(x){
   const today = new Date().toISOString().slice(0, 10);
   const sample = x.lines.map(l => l.t).filter(t => t.length > 6).slice(0, 4).join(" / ");
+  // Google Search grounding isn't on the free tier for Gemini 3+ (Nov 2026); a key that used 2.5 Flash-Lite before may still search
+  // with it, so that's the second try. Every miss is noted (searchWhy) so the story can say why it was written from memory
   let notes = "", found = true;
-  for (let tries = 0; tries < 2 && !notes; tries++){
-    const meta = {};
-    try {
+  const why = [], models = [curModel(), SONG_SEARCH_ALT].filter((m, i, a) => a.indexOf(m) === i);
+  search: for (const model of models){
+    for (let tries = 0; tries < 2; tries++){
+      const meta = {};
+      try {
       const t = (await gemini(`Today is ${today}. Use Google Search to research the song "${x.title}" by BTS (it may be a BTS member's solo or sub-unit song). It may be a recent release (2025–2026), newer than what you know — you MUST search, and trust the search results over your memory.
 ${sample ? `To make sure you have the right song, it contains lines like: ${sample}\n` : ""}Make sure every fact is about this exact song "${x.title}" — never another song with a similar name, theme or album. Search several times if needed: Genius, Wikipedia, Namu Wiki, K-pop news sites, interviews.
 Write detailed notes in English with every concrete fact you find:
@@ -7081,13 +7089,15 @@ Write detailed notes in English with every concrete fact you find:
 - what it means: themes, message
 - popular fan theories and connections
 - notable facts: charts, records, awards, performances, MV, behind-the-scenes
-Only write what the sources say. Do not quote the lyrics. If the search finds no BTS song with this title, write only: NOT FOUND`, undefined, { temperature: 0.2, search: true, meta })).trim();
-      const g = meta.grounding;
-      if (g && ((g.groundingChunks || []).length || (g.webSearchQueries || []).length)){   // it really searched
-        if (/^NOT FOUND\b/i.test(t)) { found = false; break; }
-        notes = t;
-      }
-    } catch(e){ if (e.status === 403) throw e; break; }   // out of search quota / no search on this model: write from memory
+Only write what the sources say. Do not quote the lyrics. If the search finds no BTS song with this title, write only: NOT FOUND`, undefined, { temperature: 0.2, search: true, meta, model })).trim();
+        const g = meta.grounding;
+        if (g && ((g.groundingChunks || []).length || (g.webSearchQueries || []).length)){   // it really searched
+          if (/^NOT FOUND\b/i.test(t)) found = false; else notes = t;
+          break search;
+        }
+        why.push(`${model}: ${L("trả lời mà không tra Google", "answered without searching")}`);
+      } catch(e){ why.push(`${model}: ${e.status ? e.status + " " : ""}${e.message || e}`); break; }   // refused / no access: next model
+    }
   }
   const prompt = `Today is ${today}. A BTS fan is studying the song "${x.title}" by BTS (it may be a solo or sub-unit song by a member). In ${songLang()}, tell them about it, in a warm fan-friendly tone.
 ${notes ? `Base every field on these research notes from Google Search — keep their facts (names, dates, numbers) exactly, fill every field the notes cover, and leave out anything in them about a different song:
@@ -7097,9 +7107,10 @@ ${notes}
 Return only JSON: {"artist":"the performer: BTS, a sub-unit, or the member's stage name for a solo song (add featured artists, e.g. \"Jimin (feat. …)\")","album":"the album/single it was released on","released":"release date (day month year)","about":"1–2 sentences: who wrote/produced it, what kind of song it is","origin":"how the song came to be: the inspiration and story behind the writing","meaning":"its message and themes, what the members have said about it","theories":["popular fan theories or connections, each clearly framed as a theory"],"facts":["3–5 fun facts: records, performances, behind-the-scenes"]}
 "artist", "album" and "released" are always required. Leave another field empty only when nothing is known for it; never invent. Paraphrase — do not quote the lyrics.`;
   const j = extractJSON(await gemini(prompt, undefined, { temperature: 0.3 }));
-  x.story = j.known === false ? { unknown: true, searched: !!notes, found }
+  const searchWhy = notes || !found ? "" : why.join(" · ").slice(0, 400);
+  x.story = j.known === false ? { unknown: true, searched: !!notes || !found, found, searchWhy }
     : { artist: String(j.artist || ""), album: String(j.album || ""), released: String(j.released || ""), about: String(j.about || ""), origin: String(j.origin || ""), meaning: String(j.meaning || ""),
-      theories: arrOf(j.theories).map(String), facts: arrOf(j.facts).map(String), searched: !!notes };
+      theories: arrOf(j.theories).map(String), facts: arrOf(j.facts).map(String), searched: !!notes, searchWhy };
   x.story.lang = songLang(); save();
 }
 const songGoKey = () => { show("set"); $("#g-key").open = true; $("#setAI").scrollIntoView({ behavior: "smooth", block: "start" }); $("#setKey").focus({ preventScroll: true }); };
@@ -7217,17 +7228,21 @@ function renderSongView(){
     S.songs = S.songs.filter(v => v !== x); save(); AR.song = ""; renderArmy(); toast(L("Đã xoá bài hát", "Song deleted"));
   });
 }
+// why Google Search didn't run: the likely cause in plain words, Google's own answers folded under "Details"
+const songNoSearch = s => L("Lần này không tra được Google nên AI viết theo trí nhớ — có thể thiếu hoặc sai. Key Gemini <b>miễn phí</b> không dùng được Google Search với Gemini 3 (Google chỉ mở cho key đã bật thanh toán).",
+    "Google Search didn't run this time, so AI wrote from memory — it may be incomplete or wrong. A <b>free</b> Gemini key can't use Google Search with Gemini 3 (Google only allows it on keys with billing on).")
+  + (s.searchWhy ? ` <details class="sg-why"><summary>${L("Chi tiết", "Details")}</summary>${esc(s.searchWhy)}</details>` : "");
 function songStoryUI(x, body){
   const s = x.story, para = (h, t) => t ? `<h3 class="sg-h">${h}</h3><p>${esc(t)}</p>` : "";
   const list = (h, a) => a && a.length ? `<h3 class="sg-h">${h}</h3><ul>${a.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : "";
   body.innerHTML = `<div class="card sg-story">${!s ? `<p class="muted" style="margin-top:0">${L("Nguồn gốc, cảm hứng sáng tác, theory và fun fact của bài — do AI tổng hợp.", "Origin, inspiration, theories and fun facts — put together by AI.")}</p>`
       : s.unknown ? `<p class="muted" style="margin-top:0">${s.found === false ? L("Google không tìm thấy bài BTS nào tên này — kiểm tra lại tên bài (chạm tên ở trên để sửa) rồi bấm <b>Viết lại</b>.", "Google found no BTS song with this title — check the title (tap it above to fix it), then tap <b>Rewrite</b>.")
-          : L("Chưa tra được Google lúc này, và AI chưa biết bài này (có thể là bài mới) — bấm <b>Viết lại</b> sau để tra lại.", "Google Search isn't available right now and AI doesn't know this song yet (it may be new) — tap <b>Rewrite</b> later to search again.")}</p>`
+          : L("AI chưa biết bài này (có thể là bài mới). ", "AI doesn't know this song yet (it may be new). ") + songNoSearch(s)}</p>`
       : (s.album || s.released ? `<h3 class="sg-h">💿 ${L("Album", "Album")}</h3><p>${s.artist ? `🎤 ${esc(s.artist)} · ` : ""}${esc(s.album || "?")}${s.released ? ` · ${L("phát hành", "released")} ${esc(s.released)}` : ""}</p>` : "")
         + para("📀 " + L("Giới thiệu", "About"), s.about) + para("✍️ " + L("Nguồn gốc & cảm hứng", "Origin & inspiration"), s.origin) + para("💜 " + L("Ý nghĩa", "Meaning"), s.meaning)
         + list("🔮 Theory", s.theories) + list("✨ Fun facts", s.facts)
         + (s.origin || s.meaning || (s.theories || []).length || (s.facts || []).length ? "" : `<p class="muted">${L("Chưa tìm thấy thêm câu chuyện nào về bài này — mới có thông tin cơ bản ở trên.", "No more story found for this song yet — just the basics above.")}</p>`)
-        + `<p class="small muted">${s.searched === false ? "⚠️ " + L("Lần này chưa tra được Google (hết lượt tra miễn phí) nên AI viết theo trí nhớ — có thể thiếu hoặc sai. Bấm <b>Viết lại</b> sau để tra lại.", "Google Search wasn't available this time (free search quota used up), so AI wrote from memory — it may be incomplete or wrong. Tap <b>Rewrite</b> later to search again.")
+        + `<p class="small muted">${s.searched === false ? "⚠️ " + songNoSearch(s)
           : L("AI tổng hợp từ Google — có thể chưa chính xác.", "Put together by AI from Google — may not be fully accurate.")}</p>`}
       <button class="${s ? "btn-ghost" : "btn"}" id="sgStory" style="width:100%"${SONG_BUSY.has(x.id) ? " disabled" : ""}>${SONG_BUSY.has(x.id) ? `<span class="spinner"></span>${L("Đang phân tích…", "Analysing…")}`
         : `✨ ${s ? L("Viết lại", "Rewrite") : L("Kể chuyện bài hát", "Tell me about this song")}${hasKey() ? "" : " 🔒"}`}</button>
@@ -7938,7 +7953,8 @@ function tuHead(){
 }
 const tuIsOpen = () => !$("#tu").classList.contains("hidden");
 // Speak → Reading and Talk with AI have their own AI coach and mic: no tutor there
-const tuAway = () => (curView === "read" && (spScreen === "read" || spScreen === "talk")) || !!$("#arConvRoot").firstElementChild;   // Translate has its own mic too
+const tuAway = () => (curView === "read" && (spScreen === "read" || spScreen === "talk")) || !!$("#arConvRoot").firstElementChild   // Translate has its own mic too
+  || (curView === "army" && AR.screen === "mode" && !AR.view);   // BTS Live: the subtitles need the whole screen
 function tuSync(){   // the bubble only exists while there's a key
   const on = hasKey() && !tuAway();
   if (!on && tuIsOpen()) tuClose();
@@ -8185,6 +8201,7 @@ if (!Array.isArray(S.ielts)) S.ielts = [];
 if (S.talk && S.talk.done) talkArchive(S.talk);   // finished before history existed → keep it reviewable
 if (S.talk && !inCourse(S.talk)){ talkArchive(S.talk); S.talk = null; save(); }   // a talk left open in another course: it waits in that course's history
 if (S.settings.model === "gemini-flash-latest") { S.settings.model = ""; save(); }   // old default alias, often overloaded
+if (/^gemini-[12]\./.test(S.settings.model || "")) { S.settings.model = ""; save(); }   // 2.x picked by hand: back to Automatic (3.5 Flash-Lite today)
 fillLevels($("#genLevel")); fillLevels($("#rdLevel"));
 if ("speechSynthesis" in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
 if (SY.on) loadGIS().catch(()=>{});

@@ -25,7 +25,7 @@ def init(course="en", key="FAKE", ui="vi"):
     return r"""
 if (!sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");
-  localStorage.setItem("hangulCards.v1", JSON.stringify({ cards: [], settings: { course: "%s", apiKey: "%s", uiLang: "%s", model: "gemini-2.5-flash-lite" } }));
+  localStorage.setItem("hangulCards.v1", JSON.stringify({ cards: [], settings: { course: "%s", apiKey: "%s", uiLang: "%s", model: "gemini-3.5-flash-lite" } }));
   localStorage.setItem("hangulCards.welcomed", "1");
 }
 window.__calls = []; window.__mock = { fail: 0, silent: false, bad: 0 };
@@ -38,7 +38,7 @@ if (localStorage.getItem("fakeVoice")) {
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
-    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
+    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     const body = JSON.parse(opts.body), p = body.contents[0].parts[0].text;
     const kind = p.startsWith("Transcribe this") ? "hear" : p.includes("preparing a realistic") ? "gen" : p.includes("attached recording") ? "ans" : p.includes("strict IELTS") ? "band" : "other";
     window.__calls.push(kind);

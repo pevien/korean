@@ -43,14 +43,14 @@ Last english line5Embed"""
 INIT = r"""
 if (!sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");
-  localStorage.setItem("hangulCards.v1", JSON.stringify({ cards: [], settings: { course: "ko", apiKey: "FAKE", uiLang: "vi", model: "gemini-2.5-flash" } }));
+  localStorage.setItem("hangulCards.v1", JSON.stringify({ cards: [], settings: { course: "ko", apiKey: "FAKE", uiLang: "vi", model: "gemini-3.8-flash" } }));
   localStorage.setItem("hangulCards.welcomed", "1");
 }
 window.__prompts = [];
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
-    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
+    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-3.8-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     const body = JSON.parse(opts.body), p = body.contents[0].parts[0].text;
     window.__prompts.push(p); (window.__models = window.__models || []).push(String(url).split("/models/")[1].split(":")[0]);
     await new Promise(r => setTimeout(r, 100));
@@ -61,7 +61,7 @@ window.fetch = async (url, opts) => {
       window.__searchBody = body; window.__searches = (window.__searches || 0) + 1;
       const txt = window.__notFound ? "NOT FOUND" : "NOTES: album Album thử, released 13 Feb 2017, written by RM.";
       // __noGround: the model answered without actually searching (no groundingMetadata)
-      return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: txt }] }, ...(window.__noGround ? {} : { groundingMetadata: { webSearchQueries: ["BTS song"] } }) }] }));
+      return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: txt }] }, ...(window.__noGround || window.__noGroundOn === window.__models[window.__models.length - 1] ? {} : { groundingMetadata: { webSearchQueries: ["BTS song"] } }) }] }));
     }
     if (window.__unknownSong && p.includes("tell them about it") && p.includes("never describe a different song")) { window.__stories = (window.__stories || 0) + 1; window.__storyBody = body;
       return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ known: false }) }] } }] })); }
@@ -114,7 +114,7 @@ with sync_playwright() as pw:
     check("no singer chips or member colours", page.locator(".sg-who").count() == 0 and "Jimin" not in page.inner_text(".sg-ly"))
     check("sections split by headers", [l["sec"] for l in song["lines"]] == [1, 1, 2, 3, 4, 5, 6, 6], [l["sec"] for l in song["lines"]])
     check("hint no longer talks about singers", "ai hát" not in page.content())
-    check("meanings on the model picked in Settings", set(page.evaluate("__models")) == {"gemini-2.5-flash"}, page.evaluate("__models"))
+    check("meanings on the model picked in Settings", set(page.evaluate("__models")) == {"gemini-3.8-flash"}, page.evaluate("__models"))
     rom = page.locator(".sg-r").all_inner_texts()
     check("romanization worked out on Korean lines", rom[:2] + rom[-1:] == ["urineun teseuteu norae", "noraereul bulleoyo", "majimak jurieyo"], rom)
     check("meanings filled", all(l["mean"] for l in song["lines"]), [l["mean"] for l in song["lines"]])
@@ -169,7 +169,7 @@ with sync_playwright() as pw:
     check("story shows album and release date", "Album thử" in st and "phát hành 13/2/2017" in st, st)
     check("story shows the artist", "🎤 BTS" in st, st)
     check("story prompt asks for album and release date", "are always required" in page.evaluate("__storyBody.contents[0].parts[0].text"))
-    check("story on the model picked in Settings", page.evaluate("__storyModel") == "gemini-2.5-flash")
+    check("story on the model picked in Settings", page.evaluate("__storyModel") == "gemini-3.8-flash")
     sb = page.evaluate("__searchBody")
     check("story: step 1 searches Google for free-text notes", sb.get("tools") == [{"google_search": {}}] and sb["generationConfig"]["responseMimeType"] == "text/plain" and "research" in sb["contents"][0]["parts"][0]["text"])
     first = page.evaluate("__storyBodies[0]")   # Test Song's story, written while search worked
@@ -181,18 +181,24 @@ with sync_playwright() as pw:
     page.evaluate("() => { window.__searchQuota = true; window.__stories = 0; }")
     page.click("#sgStory"); page.wait_for_function("__stories >= 1 && !document.querySelector('#sgStory').disabled", timeout=5000); page.wait_for_timeout(100)
     check("search quota: story still written from memory", page.evaluate("__stories") == 1 and "<notes>" not in page.evaluate("JSON.stringify(__storyBody)") and "Album thử" in page.inner_text("#sgBody"))
-    check("search quota: the story says it wasn't searched", "chưa tra được Google" in page.inner_text("#sgBody"), page.inner_text("#sgBody"))
+    check("search quota: the story says it wasn't searched", "không tra được Google" in page.inner_text("#sgBody"), page.inner_text("#sgBody"))
+    check("search quota: Details shows Google's answer", "429" in (page.text_content("#sgBody .sg-why") or ""), page.inner_html("#sgBody")[-600:])   # folded: text_content, not inner_text
     page.evaluate("() => { window.__searchQuota = false; }")
     page.click("#sgStory"); page.wait_for_function("__stories >= 2 && !document.querySelector('#sgStory').disabled", timeout=5000); page.wait_for_timeout(100)
-    check("search back: rewrite searches again", "chưa tra được Google" not in page.inner_text("#sgBody") and "<notes>" in page.evaluate("JSON.stringify(__storyBody)"))
+    check("search back: rewrite searches again", "không tra được Google" not in page.inner_text("#sgBody") and "<notes>" in page.evaluate("JSON.stringify(__storyBody)"))
     # the search prompt gives today's date and a few lyric lines, so a new (2026) song isn't mixed up with an older one
     sp = page.evaluate("__searchBody.contents[0].parts[0].text")
     import datetime
     check("search prompt: today's date + lyric lines + no other song", datetime.date.today().isoformat() in sp and "우리는 테스트 노래" in sp and "never another song" in sp, sp[:300])
-    # the model answers without really searching: treated as not searched, asked twice, then written from memory with a warning
+    # free key: Gemini 3 answers without searching, 2.5 Flash-Lite still searches → its notes are used
+    page.evaluate("() => { window.__noGroundOn = 'gemini-3.8-flash'; window.__searches = 0; window.__models = []; }")
+    page.click("#sgStory"); page.wait_for_function("!document.querySelector('#sgStory').disabled", timeout=5000); page.wait_for_timeout(100)
+    check("Gemini 3 doesn't search → 2.5 Flash-Lite does, notes used", "gemini-2.5-flash-lite" in page.evaluate("__models") and "<notes>" in page.evaluate("JSON.stringify(__storyBody)") and "không tra được Google" not in page.inner_text("#sgBody"), page.evaluate("__models"))
+    page.evaluate("() => { window.__noGroundOn = ''; }")
+    # the model answers without really searching: treated as not searched, asked twice per model (current, then 2.5 Flash-Lite), then written from memory with a warning
     page.evaluate("() => { window.__noGround = true; window.__searches = 0; }")
     page.click("#sgStory"); page.wait_for_function("!document.querySelector('#sgStory').disabled", timeout=5000); page.wait_for_timeout(100)
-    check("no grounding: search tried twice, notes not trusted", page.evaluate("__searches") == 2 and "<notes>" not in page.evaluate("__storyBody.contents[0].parts[0].text") and "chưa tra được Google" in page.inner_text("#sgBody"))
+    check("no grounding: search tried twice per model, notes not trusted", page.evaluate("__searches") == 4 and "<notes>" not in page.evaluate("__storyBody.contents[0].parts[0].text") and "không tra được Google" in page.inner_text("#sgBody"))
     check("memory prompt forbids describing another song", "never describe a different song" in page.evaluate("__storyBody.contents[0].parts[0].text"))
     # AI doesn't know the song (memory only) → says so instead of telling another song's story
     page.evaluate("() => { window.__unknownSong = true; }")

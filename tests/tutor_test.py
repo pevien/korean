@@ -25,7 +25,7 @@ ANSWER = "**사과** nghĩa là *quả táo*.\n- Ví dụ: **사과를 먹어요
 def init(key="FAKE", grammar=()):
     st = { "cards": [{ "id": "c1", "lang": "ko", "ko": "사과", "meaning": "quả táo", "ex": "", "exMean": "", "ease": 2.5, "interval": 1,
                        "reps": 1, "lapses": 0, "due": 1, "last": 1, "created": 1 }],
-           "grammar": list(grammar), "settings": { "course": "ko", "apiKey": key, "uiLang": "vi", "model": "gemini-2.5-flash-lite", "newPerDay": 0, "speakAuto": True } }
+           "grammar": list(grammar), "settings": { "course": "ko", "apiKey": key, "uiLang": "vi", "model": "gemini-3.5-flash-lite", "newPerDay": 0, "speakAuto": True } }
     return r"""
 if (!sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");
@@ -36,7 +36,7 @@ window.__bodies = [];
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
-    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
+    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     const body = JSON.parse(opts.body);
     if (body.generationConfig.responseMimeType === "text/plain") window.__bodies.push(body);
     await new Promise(r => setTimeout(r, 150));

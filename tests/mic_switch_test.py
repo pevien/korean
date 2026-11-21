@@ -29,7 +29,7 @@ def init():
     st = { "cards": [{ "id": "c1", "lang": "en", "ko": "apple", "meaning": "quả táo", "ex": "I eat an apple.", "exMean": "Tôi ăn táo.", "ease": 2.5, "interval": 1,
                        "reps": 1, "lapses": 0, "due": 1, "last": 1, "created": 1 }],
            "passages": [{ "id": "p1", "lang": "en", "title": "Test", "titleMean": "", "created": 1, "vocab": [], "sentences": [{ "ko": "I like apples.", "meaning": "Tôi thích táo." }] }],
-           "settings": { "course": "en", "apiKey": "FAKE", "uiLang": "vi", "model": "gemini-2.5-flash-lite", "newPerDay": 0, "coachGrade": "ai",
+           "settings": { "course": "en", "apiKey": "FAKE", "uiLang": "vi", "model": "gemini-3.5-flash-lite", "newPerDay": 0, "coachGrade": "ai",
                          "speakAuto": True, "talkTts": False, "armyEngine": "ai", "modes": { **MODES, "ko2say": True } } }
     return r"""
 if (!sessionStorage.getItem("seeded")) {
@@ -61,7 +61,7 @@ window.__kinds = [];
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
-    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
+    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     const body = JSON.parse(opts.body), parts = body.contents[body.contents.length - 1].parts, p = body.contents[0].parts[0].text || "";
     const kind = p.startsWith("Transcribe this") ? "hear" : p.includes("preparing a realistic") ? "ieGen" : p.includes("strict IELTS") ? "ieBand"
       : p.includes("live interpreter") ? "ar" : p.includes("role-playing") ? "talk" : p.includes("attached recording") ? "grade"
@@ -242,9 +242,13 @@ def t_tutor_over(page):
     page.click("#tuMic"); page.wait_for_timeout(1800)
     close_overlays(page); idle(page, "E after Translate + tutor")
     sel = open_ar(page); page.click(sel); page.wait_for_timeout(1500)   # ARMY live listening
+    # BTS Live hides the bubble (and the tab bar while listening), so the tutor can't be opened over a running live any more
+    check("E BTS Live hides the tutor's bubble", not page.locator("#tuFab").is_visible())
+    page.click(sel); page.wait_for_timeout(800)   # ⏹ Stop
+    page.click('nav [data-v="read"]'); page.wait_for_timeout(400)
     open_tu(page); page.click("#tuMic"); page.wait_for_timeout(1000)
     s = state(page)
-    check("E ARMY live running → tutor records: only the tutor's mic is open", s["live"] == 1 and s["recs"] == 1, str(s))
+    check("E after ARMY live → tutor records: only the tutor's mic is open", s["live"] == 1 and s["recs"] == 1, str(s))
     page.click("#tuMic"); page.wait_for_timeout(1800)
     a = page.get_attribute("#tu .tu-m.me audio", "src") or ""
     dur = page.evaluate("""async u => { const a = new Audio(u); await new Promise(r => a.onloadedmetadata = r); return a.duration; }""", a) if a else None

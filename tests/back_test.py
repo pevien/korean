@@ -31,7 +31,7 @@ def init(due=True, welcomed=True):
            "passages": [{ "id": "p1", "lang": "en", "title": "Test", "titleMean": "", "created": 1, "vocab": [],
                           "sentences": [{ "ko": "I like apples.", "meaning": "Tôi thích táo." }] }],
            "talk": { "id": "t1", "lang": "en", "created": 1, "scene": "cafe", "topic": "", "turns": [{ "who": "ai", "ko": "Hi!", "mean": "Chào!" }] },
-           "settings": { "course": "en", "apiKey": "FAKE", "uiLang": "vi", "model": "gemini-2.5-flash-lite", "newPerDay": 0, "talkTts": False, "speakAuto": True, "modes": MODES } }   # speakAuto: the one-time "key added → speaking questions on" already happened
+           "settings": { "course": "en", "apiKey": "FAKE", "uiLang": "vi", "model": "gemini-3.5-flash-lite", "newPerDay": 0, "talkTts": False, "speakAuto": True, "modes": MODES } }   # speakAuto: the one-time "key added → speaking questions on" already happened
     return r"""
 if (location.protocol === "http:" && !sessionStorage.getItem("seeded")) {
   sessionStorage.setItem("seeded", "1");
@@ -41,7 +41,7 @@ if (location.protocol === "http:" && !sessionStorage.getItem("seeded")) {
 const realFetch = window.fetch;
 window.fetch = async (url, opts) => {
   if (String(url).includes("generativelanguage")) {
-    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
+    if (String(url).includes("/models?")) return new Response(JSON.stringify({ models: [{ name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }] }));
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "{}" }] } }] }));
   }
   return realFetch(url, opts);

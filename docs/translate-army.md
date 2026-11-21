@@ -75,10 +75,13 @@ The mic is only open during a turn. It is paused while a translation is being re
 | Listening mode | ⚡ Basic, or ✨ AI (🔒 without a key) |
 | Audio source (AI mode, desktop) | 🎙 Microphone, or 🖥 **Tab audio**. For tab audio, share the browser tab and tick "Share tab audio". |
 | ▶ Start / ⏹ Stop | The screen stays awake while listening (Wake Lock) |
-| Subtitle box | A− / A+ text size (0.8–1.8×), and an **Original** toggle to show or hide the source line |
-| 📝 Conversation | Every line, newest first. **💾 Save** (no audio is kept) and **🗑 Clear**. Clear asks for a second tap if there are unsaved lines. |
+| 📝 Conversation | Every line, oldest first and newest at the bottom, like a chat. **💾 Save** (no audio is kept) and **🗑 Clear**. Clear asks for a second tap if there are unsaved lines. Under them: A− / A+ text size (0.8–1.8×), and an **Original** toggle to show or hide the source line. |
 
+- **No big subtitle box:** lives are fast and dense, so the list is the only view. The sentence still being heard (Basic) shows faded under the newest line.
+- **Latest batch tinted:** the lines of the newest translation batch (one AI chunk, or one line in Basic) get a soft purple background; the previous batch goes back to plain. An AI refinement of a draft doesn't count as a new batch.
+- **Scrolling:** while listening, the list follows new lines if you're at the bottom; scrolled up to re-read, it stays put. Start jumps to the bottom; Stop goes back to the top. Switching Basic / AI doesn't scroll.
 - **While listening:** the controls collapse to a slim row.
+- **No tutor bubble** on this screen: the subtitles need the whole screen.
 - **Context for the AI:** a BTS glossary is included in its prompts. It lists the members' stage names and Korean nicknames, plus fandom words (보라해 = "I purple you", 아미, 막내, 위버스…).
 
 ### Saved conversations
@@ -112,6 +115,7 @@ The mic is only open during a turn. It is paused while a translation is being re
   2. **Chrome's on-device Translator**: gives an instant draft, even while the sentence is still being spoken. The first use may download a language pack, and progress is shown.
   3. **Gemini**, if a key exists: lines are re-translated in batches of up to 6, with the previous 4 lines as context. It also fixes speech-recognition mistakes, and its result replaces the draft.
   4. **Fallback**: the on-device Translator, then MyMemory. If both fail, the line shows "(not translated)".
+- **Wrong-language check:** a translation that is just the original copied back, or mostly in the source script (e.g. Hangul left in a Vietnamese line), is thrown away at every step (Gemini, drafts, cache) and the next step is tried.
 
 ### ✨ AI (needs a key)
 
@@ -121,6 +125,7 @@ The mic is only open during a turn. It is paused while a translation is being re
 - **Processing:** each recording becomes 16 kHz WAV and goes to Gemini, which transcribes it and translates it into subtitle lines.
   - It ignores music, singing, noise, and the app's own voice.
   - Chunks that are only silence are skipped, to save quota.
+  - A line whose translation fails the wrong-language check (see Basic) keeps its transcription and is queued for a text-only translation, same steps as Basic.
 - **Slow connection:** if 3 chunks are already waiting, new ones are skipped ("Slow connection — skipped a chunk").
 - **Out of quota:** after 3 errors in a row saying the Gemini quota is used up, the app switches to Basic by itself.
 
@@ -152,7 +157,8 @@ Lets a fan learn a song: the original, its romanization and its meaning, plus th
   1. **Research:** a Google-grounded call (`gemini(…, { search: true })`) that only gathers free-text notes in English — album, exact release date, credits, background, meaning, theories, facts. Asking for search + strict JSON + translation in one call made Gemini skim or skip the search and answer from memory.
   2. **Write:** a plain call turns the notes into album, release date, about, origin & inspiration, meaning, theories and fun facts, in the app's language, keeping the notes' facts exactly and without quoting the lyrics. Album and release date are always given and shown at the top; if nothing else is known only those basics show, with a note.
   - **New songs (e.g. 2026)** are newer than the model's training, so it used to swap in an older song it knew (Into the Sun → Jack in the Box). Both prompts now give today's date and a few lyric lines to identify the song (not to quote), say the song may be recent and to trust the search, and forbid describing a different song. Notes count only if Google really returned results (`opts.meta.grounding` has search queries or sources); otherwise the search is asked once more, then dropped. Google finding no BTS song with the title ("NOT FOUND") shows "check the title"; from memory, a song the model doesn't know returns `{"known":false}` and the tab says so instead of telling another song's story.
-  - Google Search has its own free quota. If step 1 fails (429, or no search on this model), step 2 writes from memory and the story is saved with `searched: false`, shown with a ⚠️ note to tap **Rewrite** later. Every Rewrite tries the search again.
+  - **Free keys:** Google Search grounding isn't on the free tier for Gemini 3+ (Nov 2026). Step 1 is tried on the chosen model, then on `gemini-2.5-flash-lite` (keys that used 2.5 before may still search with it), up to twice each (a model sometimes answers without searching; only an answer with `groundingMetadata` counts).
+  - If no search happens, step 2 writes from memory and the story is saved with `searched: false` and `searchWhy` (what each model answered). It shows a ⚠️ note explaining that free keys can't search with Gemini 3, with Google's answers under **Details**. A refused search (403 included) never stops the story. Every Rewrite tries the search again.
 - **Without a key:** the AI buttons show 🔒 and lead to the key setup. Songs analysed earlier stay readable.
 
 Test: `.venv/bin/python tests/songs_test.py` (Gemini faked, placeholder lyrics).

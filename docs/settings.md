@@ -54,9 +54,11 @@ The key powers word generation, example sentences, passages, AI pronunciation fe
 
 **Model**
 
-- The list comes live from Google and is limited to Gemini Flash and Flash-Lite models, with Flash-Lite first.
-- **Automatic (recommended)** uses the first model in that list.
-  - Before the list has loaded, the defaults are `gemini-2.5-flash-lite`, then `gemini-2.5-flash`.
+- The list comes live from Google and is limited to Gemini 3+ Flash and Flash-Lite models, with Flash-Lite first.
+  - Gemini 2.x is left out: since Sept 2026 Google only serves it to keys that used it before, and 2.5 Flash is deprecated.
+  - A 2.x model picked by hand earlier is switched back to **Automatic**.
+- **Automatic (recommended)** uses the first model in that list (Gemini 3.5 Flash-Lite as of Nov 2026).
+  - Before the list has loaded, the defaults are `gemini-3.5-flash-lite`, then `gemini-3.8-flash`.
 - "Flash-Lite: cheapest, with the most free requests — enough for study and ARMY."
 - "Flash: more accurate and stricter on pronunciation, but fewer free requests."
 - **Model not available:** if a model isn't found or is overloaded, the request is retried once with the next model.

@@ -5,7 +5,7 @@ A floating 💬 bubble in the bottom-right corner opens a chat with an AI tutor.
 ## When it shows
 
 - **Needs a Gemini key.** The bubble only appears while a key is set; adding or removing the key in Settings shows or hides it straight away.
-- **Hidden in Speak → Reading, Talk with AI and Translate.** Those screens have their own mic (and Reading / Talk their own AI coach). An open tutor closes when you go there and comes back elsewhere.
+- **Hidden in Speak → Reading, Talk with AI, Translate and ARMY → BTS Live.** Those screens have their own mic (and Reading / Talk their own AI coach). An open tutor closes when you go there and comes back elsewhere.
 - **Placement:** on a phone the bubble moves up above whatever is pinned to the bottom of the screen (tab bar, study sheet, ARMY controls). On a desktop it opens as a floating panel in the corner.
 
 ## Asking
