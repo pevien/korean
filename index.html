@@ -556,6 +556,10 @@ body.ar-conv-on{overflow:hidden}
 .ar-live .interim .tr{opacity:.85}
 .ar-live .grp + .grp{margin-top:14px}
 .ar-hist{list-style:none;margin:0;padding:0}
+.ar-now:empty{display:none}
+.ar-now{padding:10px 0;border-top:1px solid var(--line)}
+.ar-now .tr{font-size:calc(16px * var(--ar-fs,1));line-height:1.45;opacity:.75}
+.ar-now .ko{font-size:calc(13px * var(--ar-fs,1));color:var(--muted);line-height:1.45;margin-bottom:2px}
 /* just-saved highlight: a layer behind the row, wider than it (into the gutter) but never taller, so it can't spill onto the rows around it */
 #arSavedList li{position:relative;isolation:isolate}
 #arSavedList li::before{content:"";position:absolute;inset:0 -10px;z-index:-1;border-radius:var(--r-md);background:var(--accent-soft);opacity:0;transition:opacity .8s}
@@ -1835,7 +1839,7 @@ if (UI === "vi"){
 // The welcome screen keeps its emoji (so does ARMY's 💜 / BTS / flags — they aren't in the map)
 const EMOJI_IC = { "🎙":"microphone", "🔊":"speaker-high", "🔇":"speaker-slash", "⏹":"stop-fill", "🔒":"lock-simple", "🗑":"trash", "🎧":"headphones", "💡":"lightbulb", "🎯":"cards", "🗣":"user-sound", "📚":"books", "ℹ":"info", "⬆":"export", "💾":"floppy-disk", "📝":"note-pencil", "🖥":"monitor", "📖":"book-open", "🔑":"key", "▶":"play-fill", "🌐":"translate" };
 const EMOJI_RX = /(🎙|🔊|🔇|⏹|🔒|🗑|🎧|💡|🎯|🗣|📚|ℹ|⬆|💾|📝|🖥|📖|🔑|▶|🌐)\uFE0F?/gu;
-const NO_ICONIZE = "#welcome,.ar-live,.ar-hist,script,style,textarea,select,option,svg,[data-noicon]";
+const NO_ICONIZE = "#welcome,.ar-live,.ar-now,.ar-hist,script,style,textarea,select,option,svg,[data-noicon]";
 function iconizeText(n){
   const el = n.parentElement; EMOJI_RX.lastIndex = 0;
   if (!el || !EMOJI_RX.test(n.nodeValue) || el.closest(NO_ICONIZE)) return;
@@ -5569,6 +5573,21 @@ const arTts = () => arTalk() && S.settings.armyTts !== false;
 const arCtxFor = (m, from, to) => m === "talk" ? `Context: a face-to-face everyday conversation between someone speaking ${arName(from)} and someone speaking ${arName(to)}.` : BTS_GLOSSARY;
 const arHow = (to, m = arMode()) => m === "talk" ? `natural, clear ${arName(to)} that a native speaker would actually say in conversation, polite and friendly`
   : `natural, casual ${arName(to)}, like good fan subs, keeping the warm, playful tone`;
+// AI sometimes hands back the original instead of a translation: catch that by the writing system, then translate again
+const AR_SCRIPT = { ko: /[\uac00-\ud7af\u1100-\u11ff\u3130-\u318f]/gu, ja: /[\u3040-\u30ff]/gu, zh: /[\u4e00-\u9fff]/gu, th: /[\u0e00-\u0e7f]/gu,
+  vi: /[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/giu, en: /[a-z]/giu };
+const arCount = (t, re) => (String(t).match(re) || []).length;
+function arUntranslated(tr, src, from, to){
+  if (!tr || from === to) return false;
+  if (arNorm(tr) === arNorm(src) && arCount(src, /\p{L}/gu) > 4) return true;   // copied back verbatim (a bare name like "BTS" may stay)
+  const letters = arCount(tr, /\p{L}/gu); if (!letters) return false;
+  const share = k => arCount(tr, AR_SCRIPT[k]) / letters;
+  if (from === "vi" && to === "en") return share("vi") > 0.15;          // English full of Vietnamese diacritics
+  if (from === "en" || from === "vi") return /^(ko|ja|zh|th)$/.test(to) && arCount(tr, /[a-z]/giu) / letters > 0.5;   // Latin where another script belongs
+  if (from === "zh" && to === "ja") return false;                        // Japanese uses Chinese characters too
+  if (from === "ja" && to === "zh") return share("ja") > 0.3;
+  return share(from) > 0.3;                                              // e.g. Hangul left in a Vietnamese subtitle
+}
 const arTitle = t => (arTalk() ? "🌐 " + L("Phiên dịch", "Interpreter") : "💜 BTS Live") + " · " + arDate(t);
 // languages are remembered per mode: a live is usually 🇰🇷→you, a conversation you⇄🇰🇷
 const AR_DEF = { bts: ["ko", UI === "vi" ? "vi" : "en"], talk: [UI === "vi" ? "vi" : "en", "ko"] };
@@ -6788,21 +6807,19 @@ function renderArmy(){
       <div class="ar-lvl hidden" id="arLvlBar"><i id="arLvl"></i></div>
       <p class="small muted" id="arStatus" style="margin:8px 0 0"></p>
     </div>
-    <div class="card ar-live" id="arLiveCard">
-      <div class="ar-disp">
-        <button id="arFsDown" title="${L("Chữ nhỏ hơn", "Smaller text")}">A−</button>
-        <button id="arFsUp" title="${L("Chữ to hơn", "Bigger text")}">A+</button>
-        <button id="arOrig" title="${L("Hiện/ẩn câu gốc", "Show/hide the original")}">${L("Câu gốc", "Original")}</button>
-      </div>
-      <div id="arLive"></div>
-    </div>
     <div class="card" id="arHistCard">
       <div class="ar-hhead">
         <b>📝 ${L("Hội thoại", "Conversation")}</b>
         <button class="btn2" id="arSave" title="${L("Lưu bản song ngữ vào Hội thoại đã lưu (không lưu giọng nói)", "Save the bilingual transcript to Saved conversations (no audio is kept)")}">${L("💾 Lưu", "💾 Save")}</button>
         <button class="btn-danger" id="arNew" title="${L("Xoá màn hình, bắt đầu hội thoại mới", "Clear the screen and start a new conversation")}">🗑 ${L("Xoá", "Clear")}</button>
       </div>
+      <div class="ar-disp" style="margin:8px 0 0;padding:0">
+        <button id="arFsDown" title="${L("Chữ nhỏ hơn", "Smaller text")}">A−</button>
+        <button id="arFsUp" title="${L("Chữ to hơn", "Bigger text")}">A+</button>
+        <button id="arOrig" title="${L("Hiện/ẩn câu gốc", "Show/hide the original")}">${L("Câu gốc", "Original")}</button>
+      </div>
       <ul class="ar-hist" id="arHist"></ul>
+      <div class="ar-now" id="arLive"></div>
     </div>
 `;
   if ($("#arIn")){
@@ -7234,7 +7251,6 @@ function arUI(msg){
   const b = $("#arGo"); if (!b) return;
   b.classList.toggle("on", AR.on);
   $("#arCtl").classList.toggle("ar-on", AR.on); $("#arCtl").classList.toggle("ar-talk", arTalk()); $("#arHead").classList.toggle("hidden", AR.on);
-  $("#arLiveCard").classList.toggle("hidden", !AR.on);   // when stopped, the newest line is already at the top of the list
   $("#arSetup").classList.toggle("hidden", AR.on); $("#arMini").classList.toggle("hidden", !AR.on);
   b.textContent = AR.on ? (arTalk() ? L("⏹ Kết thúc", "⏹ End") : L("⏹ Dừng", "⏹ Stop")) : arAiAsk() && !arTalk() ? L("🔑 Thêm Gemini key", "🔑 Add a Gemini key") : L("▶ Bắt đầu", "▶ Start");
   $("#arLvlBar").classList.toggle("hidden", !(AR.on && AR.ac));
@@ -7248,22 +7264,25 @@ const arLine = (l, time) => `${time ? `<time>${arTime(l.t)}</time>` : ""}<div cl
 const arTr = l => l.tr ? esc(l.tr) : l.fail ? `<span class="muted">${L("(chưa dịch được)", "(not translated)")}</span>` : `<span class="spinner"></span>`;
 function arRenderLive(){
   if (arTalk()) return arRenderConv();
+  // BTS lives are fast: no big subtitle box, only the sentence still being heard sits under the list (newest last)
   const live = $("#arLive"); if (!live) return;
-  const last = AR.lines[AR.lines.length - 1];
-  let grp = last ? [last] : [];   // the whole latest AI chunk, not only its last sentence
-  if (last && last.c && !AR.interim){ grp = []; for (let i = AR.lines.length - 1; i >= 0 && AR.lines[i].c === last.c && grp.length < 5; i--) grp.unshift(AR.lines[i]); }
-  live.innerHTML = (last || AR.interim)
-    ? (last ? (AR.interim ? `<div class="old">${arLine(last)}</div>` : grp.map(l => `<div class="grp">${arLine(l)}</div>`).join("")) : "")
-      + (AR.interim ? `<div class="interim">${AR.interimTr ? `<div class="ko">${arFlag(arIn())}${esc(AR.interim)}</div><div class="tr">${arFlag(arOut())}${esc(AR.interimTr)}</div>`
-        : `<div class="tr">${arFlag(arIn())}${esc(AR.interim)}</div>`}</div>` : "")
-    : `<div class="muted" style="text-align:center;margin:auto">${ic("heart-sparkle")} ${L("Phụ đề sẽ hiện ở đây", "Subtitles appear here")}</div>`;
+  const stick = arAtBottom();
+  live.innerHTML = AR.interim
+    ? (AR.interimTr ? `<div class="ko">${arFlag(arIn())}${esc(AR.interim)}</div><div class="tr">${arFlag(arOut())}${esc(AR.interimTr)}</div>`
+      : `<div class="tr">${arFlag(arIn())}${esc(AR.interim)}</div>`)
+    : AR.on && !AR.lines.length ? `<div class="muted" style="text-align:center;padding:14px 0">${ic("heart-sparkle")} ${L("Phụ đề sẽ hiện ở đây", "Subtitles appear here")}</div>` : "";
+  const card = $("#arHistCard"); if (card) card.classList.toggle("hidden", !AR.on && !AR.lines.length);
+  if (stick) arToBottom();
 }
+// follow new lines like a chat, but only while the reader is already at the bottom (scrolled up to re-read = leave them there)
+const arAtBottom = () => innerHeight + scrollY >= document.documentElement.scrollHeight - 160;
+const arToBottom = () => scrollTo(0, document.documentElement.scrollHeight);
 function arRender(){
+  const h = $("#arHist");
+  const stick = arAtBottom();
+  if (h) h.innerHTML = AR.lines.map(l => `<li>${arLine(l, true)}</li>`).join("");   // oldest first, newest at the bottom
   arRenderLive();
-  const h = $("#arHist"); if (!h) return;
-  const all = AR.lines.slice().reverse();   // newest first, right under the live box
-  $("#arHistCard").classList.toggle("hidden", !AR.lines.length);
-  h.innerHTML = all.map(l => `<li>${arLine(l, true)}</li>`).join("");
+  if (h && stick) arToBottom();
 }
 const AR_MAX = 3000;
 function arAdd(ko, tr, snap = arSnap(), chunk){
@@ -7314,9 +7333,9 @@ async function arQuickTr(text, from, to){
 /* finished translations are remembered, so a phrase said again is read out instantly */
 const AR_TRC_KEY = "hangulCards.armyTr", arNorm = t => String(t || "").toLowerCase().replace(/[\s.,!?。、，！？…~"'“”‘’-]+/g, "");
 let AR_TRC = {}; try { AR_TRC = JSON.parse(localStorage.getItem(AR_TRC_KEY) || "{}"); } catch(e){}
-const arCacheGet = (ko, from, to) => AR_TRC[from + ">" + to + ":" + arNorm(ko)] || "";
+const arCacheGet = (ko, from, to) => { const t = AR_TRC[from + ">" + to + ":" + arNorm(ko)] || ""; return arUntranslated(t, ko, from, to) ? "" : t; };
 function arCachePut(ko, from, to, tr){
-  if (!tr || !arNorm(ko)) return;
+  if (!tr || !arNorm(ko) || arUntranslated(tr, ko, from, to)) return;
   const k = from + ">" + to + ":" + arNorm(ko); delete AR_TRC[k]; AR_TRC[k] = tr;
   const ks = Object.keys(AR_TRC); if (ks.length > 400) ks.slice(0, ks.length - 400).forEach(x => delete AR_TRC[x]);
   try { localStorage.setItem(AR_TRC_KEY, JSON.stringify(AR_TRC)); } catch(e){}
@@ -7324,7 +7343,7 @@ function arCachePut(ko, from, to, tr){
 function arSayLine(l){ if (!AR.turn && l.tr && !l.spoken && (!l.m || l.m === AR.mode)){ l.spoken = true; arSay(l.tr, l.to); } }
 async function arDraft(l){
   const t = await arQuickTr(l.ko, l.from, l.to);
-  if (t && !l.tr){ l.tr = t; l.draft = true; arSayLine(l); arRender(); arPersist(); arSyncSaved(); }
+  if (t && !l.tr && !arUntranslated(t, l.ko, l.from, l.to)){ l.tr = t; l.draft = true; arSayLine(l); arRender(); arPersist(); arSyncSaved(); }
 }
 let arInterimT = null;
 function arInterimTr(){   // translate the sentence while it's still being spoken
@@ -7355,15 +7374,19 @@ async function arFlushTr(){
       const ctx = arLinesOf(m).filter(l => l.tr).slice(-4).map(l => l.ko).join("\n");
       const prompt = `You are a live interpreter. ${arCtxFor(m, from, to)}
 The lines below come from automatic ${arName(from)} speech recognition, so they may contain recognition mistakes — fix obvious ones from context${m === "talk" ? "" : " (e.g. misheard member names)"}.
-Translate each line into ${arHow(to, m)}.
+Translate each line into ${arHow(to, m)}. Every translation must be written in ${arName(to)} — never return a line in ${arName(from)} or copy it unchanged.
 Earlier lines for context (don't translate): ${ctx || "(none)"}
 Lines: ${JSON.stringify(batch.map(l => l.ko))}
 Return JSON exactly like: {"t":["<translation of line 1>", "..."]} with the same number of items, in order.`;
       const j = extractJSON(await gemini(prompt, []));   // [] = no attachment, but the low (factual) temperature
-      batch.forEach((l, i) => { const t = String(arrOf(j.t)[i] || "").trim(); if (t){ l.tr = t; delete l.draft; arCachePut(l.ko, from, to, t); } });
+      batch.forEach((l, i) => { const t = String(arrOf(j.t)[i] || "").trim(); if (t && !arUntranslated(t, l.ko, from, to)){ l.tr = t; delete l.draft; arCachePut(l.ko, from, to, t); } });
     } catch(e){}
   }
-  for (const l of batch) if (!l.tr) { try { l.tr = await arQuickTr(l.ko, from, to) || await arFreeTr(l.ko, from, to); arCachePut(l.ko, from, to, l.tr); } catch(e){ l.fail = true; } }
+  for (const l of batch) if (!l.tr || l.draft && arUntranslated(l.tr, l.ko, from, to)) {
+    const ok = t => t && !arUntranslated(t, l.ko, from, to) ? t : "";
+    try { const t = ok(await arQuickTr(l.ko, from, to)) || ok(await arFreeTr(l.ko, from, to)); if (t){ l.tr = t; delete l.draft; arCachePut(l.ko, from, to, t); } else if (!l.tr) l.fail = true; }
+    catch(e){ if (!l.tr) l.fail = true; }
+  }
   batch.forEach(arSayLine);
   AR.trBusy = false; arRender(); arPersist(); arSyncSaved();
   arFlushTr();
@@ -7571,7 +7594,7 @@ async function arChunk(blob, snap){
   const ctx = arLinesOf(m).slice(-4).map(l => l.ko).join("\n");
   const prompt = `You are a live interpreter. ${arCtxFor(m, from, to)}
 The attached audio is the next few seconds. Transcribe only the ${arName(from)} speech (ignore music, singing, noise and laughter${m === "talk" ? "; ignore any synthetic voice reading a translation aloud" : ""}). The clip may start or end mid-word — drop cut-off fragments. Keep any words spoken in other languages as they are.
-Split it into short subtitle lines (about one sentence each) and translate each into ${arHow(to, m)}. Don't guess who is speaking.
+Split it into short subtitle lines (about one sentence each) and translate each into ${arHow(to, m)}. "src" stays in ${arName(from)}; "tr" must always be written in ${arName(to)}, never a copy of "src". Don't guess who is speaking.
 Earlier lines for context (don't repeat them): ${ctx || "(none)"}
 If there is no clear speech, return {"lines":[]}.
 Return JSON exactly like: {"lines":[{"src":"<transcription>","tr":"<translation>"}]}`;
@@ -7579,7 +7602,9 @@ Return JSON exactly like: {"lines":[{"src":"<transcription>","tr":"<translation>
     const j = extractJSON(await gemini(prompt, [{ inline_data: { mime_type: "audio/wav", data: b64 } }]));
     AR.quota = 0;
     const chunk = snap.c || Date.now();
-    arrOf(j.lines).forEach(l => { const src = String(l.src || l.ko || "").trim(); if (src) arAdd(src, String(l.tr || "").trim() || null, snap, chunk); });
+    arrOf(j.lines).forEach(l => { const src = String(l.src || l.ko || "").trim(); if (!src) return;
+      const tr = String(l.tr || "").trim();
+      arAdd(src, tr && !arUntranslated(tr, src, from, to) ? tr : null, snap, chunk); });   // no / wrong-language translation: queued for a text-only one
     if (AR.on) arUI(arTalk() ? undefined : "");
   } catch(e){
     if (e.status === 429 && ++AR.quota >= 3 && AR.on){
@@ -7854,7 +7879,7 @@ async function arStart(){
     return;
   }
   if (!AR.on) return;   // Stop was tapped while the mic / screen share was being set up
-  arWake(true); arUI(); scrollTo(0, 0);
+  arWake(true); arUI(); arTalk() ? scrollTo(0, 0) : arToBottom();   // BTS Live: newest lines are at the bottom
 }
 function arStop(){
   if (!AR.on && !AR.stream && !AR.recog) return;
