@@ -556,6 +556,9 @@ body.ar-conv-on{overflow:hidden}
 .ar-live .interim .tr{opacity:.85}
 .ar-live .grp + .grp{margin-top:14px}
 .ar-hist{list-style:none;margin:0;padding:0}
+/* the latest batch of translations gets a soft tint (a layer wider than the row, into the gutter); the batch before goes back to plain */
+.ar-hist li.fresh{position:relative;isolation:isolate}
+.ar-hist li.fresh::before{content:"";position:absolute;inset:0 -10px;z-index:-1;border-radius:var(--r-md);background:var(--army-soft)}
 .ar-now:empty{display:none}
 .ar-now{padding:10px 0;border-top:1px solid var(--line)}
 .ar-now .tr{font-size:calc(16px * var(--ar-fs,1));line-height:1.45;opacity:.75}
@@ -5543,7 +5546,7 @@ bindLangSeg($("#uiLangSeg"));
 /* ---------------- ARMY: live subtitles for BTS lives ---------------- */
 // Listens to speech (mic, or a browser tab's audio with a Gemini key) and shows running translated subtitles.
 // Free mode: browser speech recognition + MyMemory. AI mode: 3–8 s audio chunks, cut at pauses → Gemini transcribes + translates.
-const AR = { on: false, engine: "", recog: null, stream: null, rec: null, lines: [], interim: "", ac: null, raf: 0,
+const AR = { on: false, engine: "", fresh: new Set(), freshKey: null, recog: null, stream: null, rec: null, lines: [], interim: "", ac: null, raf: 0,
   wake: null, chain: Promise.resolve(), queued: 0, quota: 0, trq: [], trBusy: false,
   savedId: "",   // once the live is saved, that saved copy keeps growing with new lines
   view: "" };    // id of the saved conversation being reviewed
@@ -7274,17 +7277,21 @@ function arRenderLive(){
   const card = $("#arHistCard"); if (card) card.classList.toggle("hidden", !AR.on && !AR.lines.length);
   if (stick) arToBottom();
 }
-// follow new lines like a chat, but only while the reader is already at the bottom (scrolled up to re-read = leave them there)
-const arAtBottom = () => innerHeight + scrollY >= document.documentElement.scrollHeight - 160;
+// while listening, follow new lines like a chat — but only if the reader is already at the bottom (scrolled up to re-read = leave them there).
+// stopped (Stop, switching AI / Basic, opening the screen): never move the page
+const arAtBottom = () => AR.on && innerHeight + scrollY >= document.documentElement.scrollHeight - 160;
 const arToBottom = () => scrollTo(0, document.documentElement.scrollHeight);
 function arRender(){
   const h = $("#arHist");
   const stick = arAtBottom();
-  if (h) h.innerHTML = AR.lines.map(l => `<li>${arLine(l, true)}</li>`).join("");   // oldest first, newest at the bottom
+  if (h) h.innerHTML = AR.lines.map(l => `<li${AR.fresh.has(l) ? ' class="fresh"' : ""}>${arLine(l, true)}</li>`).join("");   // oldest first, newest at the bottom
   arRenderLive();
   if (h && stick) arToBottom();
 }
 const AR_MAX = 3000;
+// the newest translation batch (one AI chunk, or one line in Basic), tinted in the list; a new batch replaces the old one.
+// only a line getting its first translation counts — AI refining an on-device draft doesn't bring the tint back
+function arFresh(l, key){ if (key !== AR.freshKey){ AR.freshKey = key; AR.fresh = new Set(); } AR.fresh.add(l); }
 function arAdd(ko, tr, snap = arSnap(), chunk){
   const l = { t: Date.now(), ko, tr: tr || "", from: snap.from, to: snap.to, m: snap.m }, lines = arLinesOf(snap.m);
   if (chunk) l.c = chunk;   // AI engine: lines heard in the same chunk stay together in the live box
@@ -7300,6 +7307,7 @@ function arAdd(ko, tr, snap = arSnap(), chunk){
       AR.trq.push(l); arFlushTr();
     }
   } else arSayLine(l);
+  if (l.tr) arFresh(l, chunk || l);
   AR.interimTr = ""; AR.interimSrc = "";
   arRender(); arPersist(); arSyncSaved();
 }
@@ -7343,7 +7351,7 @@ function arCachePut(ko, from, to, tr){
 function arSayLine(l){ if (!AR.turn && l.tr && !l.spoken && (!l.m || l.m === AR.mode)){ l.spoken = true; arSay(l.tr, l.to); } }
 async function arDraft(l){
   const t = await arQuickTr(l.ko, l.from, l.to);
-  if (t && !l.tr && !arUntranslated(t, l.ko, l.from, l.to)){ l.tr = t; l.draft = true; arSayLine(l); arRender(); arPersist(); arSyncSaved(); }
+  if (t && !l.tr && !arUntranslated(t, l.ko, l.from, l.to)){ l.tr = t; l.draft = true; arFresh(l, l.c || l); arSayLine(l); arRender(); arPersist(); arSyncSaved(); }
 }
 let arInterimT = null;
 function arInterimTr(){   // translate the sentence while it's still being spoken
@@ -7368,7 +7376,7 @@ async function arFlushTr(){
   // one batch = one direction: lines queued before ⇄ keep theirs
   const key = l => l.from + ">" + l.to + ">" + (l.m || AR.mode), first = AR.trq[0], batch = [];
   for (let i = 0; i < AR.trq.length && batch.length < 6;) key(AR.trq[i]) === key(first) ? batch.push(AR.trq.splice(i, 1)[0]) : i++;
-  const { from, to } = first, m = first.m || AR.mode;
+  const { from, to } = first, m = first.m || AR.mode, had = new Set(batch.filter(l => l.tr));
   if (hasKey()){
     try {
       const ctx = arLinesOf(m).filter(l => l.tr).slice(-4).map(l => l.ko).join("\n");
@@ -7388,6 +7396,7 @@ Return JSON exactly like: {"t":["<translation of line 1>", "..."]} with the same
     catch(e){ if (!l.tr) l.fail = true; }
   }
   batch.forEach(arSayLine);
+  batch.forEach(l => { if (l.tr && !had.has(l)) arFresh(l, l.c || batch); });
   AR.trBusy = false; arRender(); arPersist(); arSyncSaved();
   arFlushTr();
 }
@@ -7896,6 +7905,7 @@ function arStop(){
   AR.interim = ""; AR.saying = 0; AR.taint = false; clearTimeout(arStableT);
   if (arTalk()) ttsCancel();
   arWake(false); arUI(""); arRender(); arFlushSaved();
+  if (!arTalk() && $("#arHistCard")) scrollTo(0, 0);   // BTS Live: back to the controls at the top
 }
 
 /* ---------------- init ---------------- */
